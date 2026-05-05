@@ -210,27 +210,36 @@
     <div class="row g-4">
         @forelse($tours as $tour)
         <div class="col-12 col-md-6 col-lg-3">
-            <div class="card item-card h-100">
-                <img src="{{ $tour->destination->image_url ?? 'https://via.placeholder.com/400x300' }}"
-                    class="card-img-top item-img" alt="{{ $tour->title }}">
-                <div class="card-body d-flex flex-column">
-                    <div class="mb-2">
-                        <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i>
-                            {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ</span>
-                    </div>
-                    <h6 class="card-title fw-bold text-dark"
-                        style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                        {{ $tour->title }}
-                    </h6>
-                    <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-danger"></i>
-                        {{ $tour->destination->name ?? '' }}
-                    </p>
-                    <div class="mt-auto">
-                        <div class="text-danger fw-bold fs-5">{{ number_format($tour->base_price, 0, ',', '.') }} VND
+            <!-- Thêm thẻ a bọc ngoài card -->
+            <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none">
+                <div class="card item-card h-100">
+                    @php
+                    $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
+                    @endphp
+
+                    <img src="{{ $primaryImage ? asset($primaryImage->image_url) : 'https://via.placeholder.com/400x300' }}"
+                        class="card-img-top item-img" alt="{{ $tour->title }}"
+                        style="height: 250px; object-fit: cover;">
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-2">
+                            <span class="badge bg-light text-dark border"><i class="bi bi-clock"></i>
+                                {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ</span>
+                        </div>
+                        <h6 class="card-title fw-bold text-dark"
+                            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ $tour->title }}
+                        </h6>
+                        <p class="text-muted small mb-2"><i class="bi bi-geo-alt text-danger"></i>
+                            {{ $tour->destination->name ?? '' }}
+                        </p>
+                        <div class="mt-auto">
+                            <div class="text-danger fw-bold fs-5">{{ number_format($tour->base_price, 0, ',', '.') }}
+                                VND
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         @empty
         <div class="col-12">

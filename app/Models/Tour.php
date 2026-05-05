@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Tour
@@ -39,6 +40,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Tour extends Model
 {
+	use SoftDeletes;
 	protected $table = 'tours';
 
 	protected $casts = [
@@ -50,6 +52,7 @@ class Tour extends Model
 
 	protected $fillable = [
 		'destination_id',
+		'departure_location_id',
 		'title',
 		'slug',
 		'description',
@@ -58,7 +61,10 @@ class Tour extends Model
 		'base_price',
 		'ai_tags'
 	];
-
+	public function departure_location()
+	{
+		return $this->belongsTo(Destination::class, 'departure_location_id');
+	}
 	public function destination()
 	{
 		return $this->belongsTo(Destination::class);

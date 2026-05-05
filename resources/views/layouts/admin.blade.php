@@ -152,12 +152,14 @@
             hình hệ thống</div>
         <ul class="nav flex-column mb-4">
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/destinations*') ? 'active' : '' }}" href="#">
+                <a class="nav-link {{ request()->is('admin/destinations*') ? 'active' : '' }}"
+                    href="{{ route('admin.destinations.index') }}">
                     <i class="bi bi-geo-alt me-2"></i> Điểm đến
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/categories*') ? 'active' : '' }}" href="#">
+                <a class="nav-link {{ request()->is('admin/categories*') ? 'active' : '' }}"
+                    href="{{ route('admin.categories.index') }}">
                     <i class="bi bi-grid me-2"></i> Danh mục
                 </a>
             </li>
@@ -178,12 +180,12 @@
         <ul class="nav flex-column">
             <li class="nav-item">
                 <a class="nav-link" href="#">
-                    <i class="bi bi-star me-2"></i> Đánh giá (Reviews)
+                    <i class="bi bi-star me-2"></i> Đánh giá
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="#">
-                    <i class="bi bi-megaphone me-2"></i> Mã giảm giá (Coupons)
+                    <i class="bi bi-megaphone me-2"></i> Mã giảm giá
                 </a>
             </li>
         </ul>

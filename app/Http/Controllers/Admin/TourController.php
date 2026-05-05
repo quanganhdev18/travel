@@ -38,6 +38,7 @@ class TourController extends Controller
             'title' => 'required|max:255',
             'base_price' => 'required|numeric',
             'destination_id' => 'required|exists:destinations,id',
+            'departure_location_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
         ]);
@@ -49,6 +50,7 @@ class TourController extends Controller
         $tour->description = $request->description;
         $tour->base_price = $request->base_price;
         $tour->destination_id = $request->destination_id;
+        $tour->departure_location_id = $request->departure_location_id;
         $tour->duration_days = $request->duration_days;
         $tour->duration_nights = $request->duration_nights;
         $tour->save();
@@ -110,7 +112,7 @@ class TourController extends Controller
     public function storeImages(Request $request, $id)
     {
         $request->validate([
-            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Chỉ chấp nhận file ảnh
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // Chỉ chấp nhận file ảnh
         ]);
 
         if ($request->hasFile('images')) {
@@ -127,5 +129,129 @@ class TourController extends Controller
         }
 
         return back()->with('success', 'Đã tải ảnh lên thành công!');
+    }
+
+    // 1. Hiển thị form Sửa
+    public function edit($id)
+    {
+        $tour = Tour::with('categories')->findOrFail($id);
+        $destinations = Destination::all();
+        $categories = Category::all();
+
+        // Lấy danh sách ID danh mục mà tour đang có để check vào checkbox
+        $tourCategoryIds = $tour->categories->pluck('id')->toArray();
+
+        return view('admin.tours.edit', compact('tour', 'destinations', 'categories', 'tourCategoryIds'));
+    }
+
+    // 2. Xử lý Cập nhật
+    public function update(Request $request, $id)
+    {
+        $tour = Tour::findOrFail($id);
+        $tour->title = $request->title;
+        $tour->description = $request->description;
+        $tour->base_price = $request->base_price;
+        $tour->destination_id = $request->destination_id;
+        $tour->departure_location_id = $request->departure_location_id;
+        $tour->duration_days = $request->duration_days;
+        $tour->duration_nights = $request->duration_nights;
+
+        // Nếu có cập nhật ảnh đại diện
+        if ($request->hasFile('primary_image')) {
+            $path = $request->file('primary_image')->store('tours', 'public');
+            // Xóa ảnh chính cũ, tạo ảnh chính mới
+            $tour->tour_images()->where('is_primary', 1)->delete();
+            $tour->tour_images()->create([
+                'image_url' => '/storage/' . $path,
+                'is_primary' => 1
+            ]);
+        }
+
+        $tour->save();
+
+        if ($request->has('categories')) {
+            $tour->categories()->sync($request->categories);
+        }
+
+        return redirect()->route('admin.tours.index')->with('success', 'Cập nhật tour thành công!');
+    }
+
+    // 3. Xóa mềm (Đưa vào thùng rác)
+    public function destroy($id)
+    {
+        Tour::findOrFail($id)->delete();
+        return back()->with('success', 'Đã chuyển tour vào thùng rác!');
+    }
+
+    // 4. Xem thùng rác
+    public function trash()
+    {
+        // Lấy các tour đã bị xóa
+        $tours = Tour::onlyTrashed()->with('destination')->latest()->paginate(10);
+        return view('admin.tours.trash', compact('tours'));
+    }
+
+    // 5. Khôi phục
+    public function restore($id)
+    {
+        Tour::withTrashed()->findOrFail($id)->restore();
+        return back()->with('success', 'Đã khôi phục tour thành công!');
+    }
+
+    // 6. Xóa vĩnh viễn (Tùy chọn)
+    public function forceDelete($id)
+    {
+        Tour::withTrashed()->findOrFail($id)->forceDelete();
+        return back()->with('success', 'Đã xóa vĩnh viễn tour!');
+    }
+    public function setPrimaryImage($tourId, $imageId)
+    {
+        // 1. Đưa tất cả các ảnh của tour này về trạng thái không phải ảnh chính (0)
+        TourImage::where('tour_id', $tourId)->update(['is_primary' => 0]);
+
+        // 2. Tìm bức ảnh được chọn và đặt nó làm ảnh chính (1)
+        $image = TourImage::where('tour_id', $tourId)->findOrFail($imageId);
+        $image->is_primary = 1;
+        $image->save();
+
+        return back()->with('success', 'Đã thay đổi ảnh chính thành công!');
+    }
+    // Nhớ kiểm tra ở đầu file đã có dòng này chưa nhé: use Illuminate\Support\Facades\Storage;
+
+    public function destroyImage($tourId, $imageId)
+    {
+        // Tìm ảnh dựa trên ID ảnh và ID tour để đảm bảo bảo mật
+        $image = TourImage::where('tour_id', $tourId)->findOrFail($imageId);
+
+        // 1. Xóa file vật lý trong thư mục storage
+        // Do image_url lưu trong DB có dạng "/storage/tours/ten-file.jpg"
+        // Cần cắt bỏ chữ "/storage/" để hàm Storage::delete hiểu được đường dẫn đúng
+        $path = str_replace('/storage/', '', $image->image_url);
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        // 2. Xóa dữ liệu trong Database
+        $image->delete();
+
+        return back()->with('success', 'Đã xóa ảnh thành công!');
+    }
+    public function show($slug)
+    {
+        $tour = Tour::with([
+            'destination',
+            'departure_location',
+            'tour_images',
+            'tour_schedules' => function ($query) {
+                $query->where('departure_date', '>=', now())->where('status', 'available')->orderBy('departure_date', 'asc');
+            },
+            'tour_itineraries.activities'
+        ])->where('slug', $slug)->firstOrFail();
+
+        $allActivities = $tour->tour_itineraries->flatMap->activities;
+        $groupedActivities = $allActivities->groupBy('activity_type');
+
+        return view('frontend.tours.show', compact('tour', 'groupedActivities'));
     }
 }

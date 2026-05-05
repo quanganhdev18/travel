@@ -1,8 +1,20 @@
 @extends('layouts.admin')
 
-@section('page-title', 'Thêm Tour Du Lịch Mới')
+@section('page-title', 'Chỉnh sửa Tour Du Lịch - ' . $tour->title)
 
 @section('content')
+<!-- Thêm Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ route('admin.tours.index') }}" class="text-decoration-none fw-semibold">
+                <i class="bi bi-box-seam me-1"></i>Quản lý Tour
+            </a>
+        </li>
+        <li class="breadcrumb-item text-muted">{{ \Illuminate\Support\Str::limit($tour->title, 40) }}</li>
+        <li class="breadcrumb-item active fw-bold" aria-current="page">Chỉnh sửa</li>
+    </ol>
+</nav>
 <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-4">
         @if(session('success'))
@@ -10,36 +22,38 @@
             <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
         </div>
         @endif
-        <form action="{{ route('admin.tours.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.tours.update', $tour->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
-
+            @method('PUT')
             <div class="row g-4">
                 <div class="col-md-8">
                     <div class="mb-3">
                         <label class="form-label text-muted">Tên Tour</label>
-                        <input type="text" name="title" class="form-control" placeholder="Nhập tên tour hiển thị..."
-                            required>
+                        <input type="text" name="title" value="{{$tour->title}}" class="form-control"
+                            placeholder="Nhập tên tour hiển thị..." required>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted">Mô tả chi tiết</label>
                         <textarea name="description" class="form-control" rows="6"
-                            placeholder="Viết vài dòng mô tả về trải nghiệm của tour này..."></textarea>
+                            placeholder="Viết vài dòng mô tả về trải nghiệm của tour này...">{{ old('description', $tour->description) }}</textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted">Giá cơ bản (VNĐ)</label>
-                            <input type="number" name="base_price" class="form-control" placeholder="VD: 1500000"
-                                required>
+                            <input type="number" name="base_price" value="{{$tour->base_price}}" class="form-control"
+                                placeholder="VD: 1500000" required>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label text-muted">Số ngày</label>
-                            <input type="number" name="duration_days" class="form-control" value="1" min="1" required>
+                            <input type="number" name="duration_days" value="{{$tour->duration_days}}"
+                                class="form-control" value="1" min="1" required>
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="form-label text-muted">Số đêm</label>
-                            <input type="number" name="duration_nights" class="form-control" value="0" min="0" required>
+                            <input type="number" name="duration_nights" value="{{$tour->duration_nights}}"
+                                class="form-control" value="0" min="0" required>
                         </div>
                     </div>
                 </div>
@@ -48,6 +62,20 @@
                     <div class="mb-3">
                         <label class="form-label text-muted">Ảnh đại diện Tour</label>
                         <input type="file" name="primary_image" class="form-control" accept="image/*">
+                        <div class="form-text">Bỏ trống nếu muốn giữ nguyên ảnh cũ.</div>
+
+                        @php
+                        // Lấy ảnh được đánh dấu là ảnh chính trong thư viện của tour này
+                        $primaryImage = $tour->tour_images->where('is_primary', 1)->first();
+                        @endphp
+
+                        @if($primaryImage)
+                        <div class="mt-3 p-2 border rounded bg-light text-center">
+                            <span class="text-muted small d-block mb-2 text-start">Ảnh hiện tại:</span>
+                            <img src="{{ $primaryImage->image_url }}" alt="Ảnh chính" class="rounded shadow-sm"
+                                style="max-height: 160px; max-width: 100%; object-fit: cover;">
+                        </div>
+                        @endif
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Điểm khởi hành <span class="text-danger">*</span></label>
@@ -66,7 +94,10 @@
                         <select name="destination_id" class="form-select" required>
                             <option value="">-- Chọn điểm đến --</option>
                             @foreach($destinations as $dest)
-                            <option value="{{ $dest->id }}">{{ $dest->name }}</option>
+                            <option value="{{ $dest->id }}"
+                                {{ (old('destination_id', $tour->destination_id ?? '') == $dest->id) ? 'selected' : '' }}>
+                                {{ $dest->name }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
@@ -76,8 +107,8 @@
                         <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
                             @foreach($categories as $cat)
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="categories[]"
-                                    value="{{ $cat->id }}" id="cat_{{ $cat->id }}">
+                                <input type="checkbox" name="categories[]" value="{{ $cat->id }}"
+                                    {{ in_array($cat->id, $tourCategoryIds) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="cat_{{ $cat->id }}">
                                     {{ $cat->name }}
                                 </label>

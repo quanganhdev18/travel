@@ -44,4 +44,8 @@ class TourItinerary extends Model
 	{
 		return $this->belongsTo(Tour::class);
 	}
+	public function activities()
+	{
+		return $this->hasMany(TourActivity::class, 'tour_itinerary_id');
+	}
 }

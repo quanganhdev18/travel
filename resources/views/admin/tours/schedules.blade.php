@@ -2,11 +2,40 @@
 @section('page-title', 'Quản lý lịch trình: ' . $tour->title)
 
 @section('content')
+<!-- Thêm Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+            <a href="{{ route('admin.tours.index') }}" class="text-decoration-none fw-semibold">
+                <i class="bi bi-box-seam me-1"></i>Quản lý Tour
+            </a>
+        </li>
+        <li class="breadcrumb-item text-muted">{{ \Illuminate\Support\Str::limit($tour->title, 40) }}</li>
+        <li class="breadcrumb-item active fw-bold" aria-current="page">Lịch trình</li>
+    </ol>
+</nav>
 <div class="row">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white fw-bold">Thêm lịch trình mới</div>
             <div class="card-body">
+                <!-- Bắt đầu phần hiển thị thông báo -->
+                @if ($errors->any())
+                <div class="alert alert-danger small">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+
+                @if (session('success'))
+                <div class="alert alert-success small">
+                    {{ session('success') }}
+                </div>
+                @endif
+                <!-- Kết thúc phần hiển thị thông báo -->
                 <form action="{{ route('admin.tours.schedules.store', $tour->id) }}" method="POST">
                     @csrf
                     <div class="mb-3">

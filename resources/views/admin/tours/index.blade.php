@@ -5,9 +5,14 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0 text-dark">Quản lý Tour</h4>
-    <a href="{{ route('admin.tours.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Thêm Tour mới
-    </a>
+    <div>
+        <a href="{{ route('admin.tours.trash') }}" class="btn btn-outline-danger me-2">
+            <i class="bi bi-trash"></i> Thùng rác
+        </a>
+        <a href="{{ route('admin.tours.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Thêm Tour mới
+        </a>
+    </div>
 </div>
 
 <div class="card border-0 shadow-sm rounded-3">
@@ -48,20 +53,36 @@
                         </td>
                         <td class="text-end pe-4">
                             <div class="btn-group shadow-sm">
+                                <!-- đổi tên title để phân biệt rõ với chương trình chi tiết -->
                                 <a href="{{ route('admin.tours.schedules', $tour->id) }}"
-                                    class="btn btn-sm btn-white border" title="Lịch trình">
+                                    class="btn btn-sm btn-white border" title="Ngày khởi hành">
                                     <i class="bi bi-calendar3"></i>
                                 </a>
+
+                                <!-- nút mới thêm để quản lý chương trình (itineraries) -->
+                                <a href="{{ route('admin.tours.itineraries.index', $tour->id) }}"
+                                    class="btn btn-sm btn-white border text-success"
+                                    title="Chương trình tour (Itinerary)">
+                                    <i class="bi bi-list-task"></i>
+                                </a>
+
                                 <a href="{{ route('admin.tours.images', $tour->id) }}"
                                     class="btn btn-sm btn-white border" title="Thư viện ảnh">
                                     <i class="bi bi-images"></i>
                                 </a>
-                                <a href="#" class="btn btn-sm btn-white border text-primary" title="Chỉnh sửa">
+                                <a href="{{ route('admin.tours.edit', $tour->id) }}"
+                                    class="btn btn-sm btn-white border text-primary" title="Chỉnh sửa">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <button class="btn btn-sm btn-white border text-danger" title="Xóa">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                <form action="{{ route('admin.tours.destroy', $tour->id) }}" method="POST"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Bạn có chắc muốn chuyển tour này vào thùng rác?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-white border text-danger" title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
