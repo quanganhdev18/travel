@@ -1,9 +1,8 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\HomeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -19,14 +18,13 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__ . '/auth.php';
 
-use App\Http\Controllers\Admin\TourController;
-use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\TourActivityController;
+use App\Http\Controllers\Admin\TourController;
+use App\Http\Controllers\Admin\TourItineraryController;
 
 Route::prefix('admin')->middleware(['auth'])->group(function () {
-
 
     // Quản lý Lịch trình (Itineraries)
     Route::get('tours/{tour}/itineraries', [TourItineraryController::class, 'index'])->name('admin.tours.itineraries.index');
@@ -37,10 +35,10 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::post('itineraries/{itinerary}/activities', [TourActivityController::class, 'store'])->name('admin.itineraries.activities.store');
     Route::delete('activities/{activity}', [TourActivityController::class, 'destroy'])->name('admin.activities.destroy');
     // Route quản lý Điểm đến
-    Route::resource('destinations', DestinationController::class)->except(['show'])->names('admin.destinations');;
+    Route::resource('destinations', DestinationController::class)->except(['show'])->names('admin.destinations');
 
     // Route quản lý Danh mục
-    Route::resource('categories', CategoryController::class)->except(['show'])->names('admin.categories');;
+    Route::resource('categories', CategoryController::class)->except(['show'])->names('admin.categories');
     Route::get('/tours/create', [TourController::class, 'create'])->name('admin.tours.create');
     Route::post('/tours', [TourController::class, 'store'])->name('admin.tours.store');
     // Thùng rác
@@ -67,3 +65,22 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
     Route::delete('/tours/{tourId}/images/{imageId}', [TourController::class, 'destroyImage'])->name('admin.tours.images.destroy');
 });
 Route::get('/tours/{slug}', [TourController::class, 'show'])->name('frontend.tours.show');
+
+use App\Http\Controllers\Frontend\FlightController;
+
+Route::get('/flights', [FlightController::class, 'search'])->name('frontend.flights.search');
+
+use App\Http\Controllers\Frontend\TourBookingController;
+
+Route::middleware(['auth'])->group(function () {
+    // Route đặt Tour
+    Route::post('/tours/checkout', [TourBookingController::class, 'checkout'])->name('frontend.tours.checkout');
+
+    // Route này để lưu vào Database và chuyển sang Duffel API
+    Route::post('/tours/book', [TourBookingController::class, 'store'])->name('frontend.tours.store');
+
+    // Route đặt vé máy bay (Duffel)
+    Route::get('/flights/checkout', [FlightController::class, 'checkout'])->name('frontend.flights.checkout');
+    Route::post('/flights/book', [FlightController::class, 'book'])->name('frontend.flights.book');
+    Route::get('/my-bookings', [\App\Http\Controllers\Frontend\UserController::class, 'myBookings'])->name('user.bookings');
+});
