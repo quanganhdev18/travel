@@ -95,6 +95,16 @@ class TourBookingController extends Controller
         $passenger->passenger_type = 'adult';
         $passenger->save();
 
+        $schedule = \App\Models\TourSchedule::with('tour')->find($request->schedule_id);
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($request->customer_email)->send(
+                new \App\Mail\TourBookingMail($booking, $schedule, $request->customer_name, $request->customer_phone)
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Lỗi gửi mail đặt tour: ' . $e->getMessage());
+        }
+
         if ($request->transport_type === 'flight') {
             $schedule = TourSchedule::with('tour.destination', 'tour.departure_location')->find($request->schedule_id);
             $departureDate = Carbon::parse($schedule->departure_date)->format('Y-m-d');
