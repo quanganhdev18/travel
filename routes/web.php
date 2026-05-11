@@ -23,8 +23,14 @@ use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\Admin\BookingController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\BannerController;
 
 Route::prefix('admin')->middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/bookings', [BookingController::class, 'index'])->name('admin.bookings.index');
+    Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus'])->name('admin.bookings.update_status');
 
     // Quản lý Lịch trình (Itineraries)
     Route::get('tours/{tour}/itineraries', [TourItineraryController::class, 'index'])->name('admin.tours.itineraries.index');
@@ -39,6 +45,10 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 
     // Route quản lý Danh mục
     Route::resource('categories', CategoryController::class)->except(['show'])->names('admin.categories');
+    
+    // Route quản lý Banners
+    Route::resource('banners', BannerController::class)->except(['show'])->names('admin.banners');
+
     Route::get('/tours/create', [TourController::class, 'create'])->name('admin.tours.create');
     Route::post('/tours', [TourController::class, 'store'])->name('admin.tours.store');
     // Thùng rác

@@ -5,134 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Travel Wonder - Nền tảng du lịch hàng đầu')</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        main {
-            flex: 1;
-        }
-
-        .navbar {
-            padding: 12px 0;
-            border-bottom: 1px solid #eaeaea;
-        }
-
-        .navbar-brand {
-            font-weight: 800;
-            color: #007CE8 !important;
-            font-size: 24px;
-        }
-
-        .navbar-brand span {
-            color: #1a2b4c;
-        }
-
-        .nav-link {
-            font-weight: 500;
-            color: #4a5568 !important;
-            padding: 8px 16px !important;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: #007CE8 !important;
-        }
-
-        .btn-login {
-            color: #007CE8;
-            border: 1px solid #007CE8;
-            font-weight: 600;
-            padding: 8px 20px;
-            border-radius: 8px;
-            transition: all 0.2s;
-            background: transparent;
-        }
-
-        .btn-login:hover {
-            background: #e6f2fd;
-        }
-
-        .btn-register {
-            background: #007CE8;
-            color: white;
-            border: none;
-            font-weight: 600;
-            padding: 8px 20px;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-
-        .btn-register:hover {
-            background: #0066c0;
-            color: white;
-        }
-
-        .footer {
-            background-color: #1a2b4c;
-            color: #a0aec0;
-            padding: 60px 0 20px;
-            font-size: 14px;
-        }
-
-        .footer-title {
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-        }
-
-        .footer-link {
-            color: #a0aec0;
-            text-decoration: none;
-            display: block;
-            margin-bottom: 12px;
-            transition: color 0.2s;
-        }
-
-        .footer-link:hover {
-            color: white;
-        }
-
-        .social-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border-radius: 50%;
-            margin-right: 10px;
-            transition: background 0.2s;
-            text-decoration: none;
-        }
-
-        .social-icon:hover {
-            background: #007CE8;
-            color: white;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: 40px;
-            padding-top: 20px;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/premium-theme.css') }}">
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-premium fixed-top {{ request()->is('/') ? '' : 'navbar-solid' }}">
         <div class="container">
             <a class="navbar-brand" href="{{ url('/') }}">
                 <i class="bi bi-cursor-fill"></i> Travel<span>Wonder</span>
@@ -165,11 +48,11 @@
                     </li>
                     @guest
                     <li class="nav-item me-2 mb-2 mb-lg-0">
-                        <a class="btn-login text-decoration-none d-block text-center" href="{{ route('login') }}">Đăng
+                        <a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login') }}">Đăng
                             nhập</a>
                     </li>
                     <li class="nav-item">
-                        <a class="btn-register text-decoration-none d-block text-center"
+                        <a class="btn-register-premium text-decoration-none d-block text-center"
                             href="{{ route('register') }}">Đăng ký</a>
                     </li>
                     @else
@@ -208,7 +91,7 @@
         </div>
     </nav>
 
-    <main>
+    <main class="{{ request()->is('/') ? '' : 'pt-5 mt-4' }}">
         @if(session('success'))
         <div class="container mt-4">
             <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
@@ -230,7 +113,7 @@
         @yield('content')
     </main>
 
-    <footer class="footer">
+    <footer class="footer-premium">
         <div class="container">
             <div class="row g-4">
                 <div class="col-lg-4 col-md-6">
@@ -241,10 +124,10 @@
                     <p class="mb-4">Đối tác du lịch đáng tin cậy của bạn. Chúng tôi mang đến những trải nghiệm du lịch
                         tuyệt vời với mức giá tốt nhất, kết nối hàng ngàn điểm đến trên toàn thế giới.</p>
                     <div class="d-flex">
-                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-icon"><i class="bi bi-youtube"></i></a>
-                        <a href="#" class="social-icon"><i class="bi bi-twitter-x"></i></a>
+                        <a href="#" class="social-circle"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-circle"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-circle"><i class="bi bi-youtube"></i></a>
+                        <a href="#" class="social-circle"><i class="bi bi-twitter-x"></i></a>
                     </div>
                 </div>
 
@@ -283,6 +166,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/animations.js') }}"></script>
 </body>
 
 </html>

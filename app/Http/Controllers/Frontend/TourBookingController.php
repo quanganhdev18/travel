@@ -84,6 +84,7 @@ class TourBookingController extends Controller
         $booking->children_count = $request->children;
         $booking->total_price = $request->total_price;
         $booking->booking_status = 'pending';
+        $booking->transport_type = $request->transport_type;
         $booking->save();
 
         $passenger = new BookingPassenger;

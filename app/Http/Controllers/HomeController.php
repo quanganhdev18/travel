@@ -13,8 +13,17 @@ class HomeController extends Controller
     public function index()
     {
         $banners = Banner::where('is_active', 1)
+            ->where(function($q) {
+                $q->where('position', 'hero')->orWhereNull('position');
+            })
             ->orderBy('sort_order')
             ->take(5)
+            ->get();
+
+        $adBanners = Banner::where('is_active', 1)
+            ->where('position', 'home_ads')
+            ->orderBy('sort_order')
+            ->take(3)
             ->get();
 
         // Lọc các điểm đến có tồn tại trong cột destination_id của bảng tours
@@ -36,6 +45,6 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
-        return view('welcome', compact('banners', 'destinations', 'categories', 'tours', 'tickets'));
+        return view('welcome', compact('banners', 'adBanners', 'destinations', 'categories', 'tours', 'tickets'));
     }
 }
