@@ -28,15 +28,35 @@
             <div class="row g-4">
                 <div class="col-md-8">
                     <div class="mb-3">
-                        <label class="form-label text-muted">Tên Tour</label>
-                        <input type="text" name="title" value="{{$tour->title}}" class="form-control"
-                            placeholder="Nhập tên tour hiển thị..." required>
+                        <label class="form-label text-muted">Tên Tour <span class="text-danger">*</span></label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" style="width: 100px;">Tiếng Việt</span>
+                            <input type="text" name="title[vi]" value="{{ old('title.vi', $tour->getTranslation('title', 'vi', false)) }}" class="form-control" placeholder="Nhập tên tour hiển thị..." required>
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" style="width: 100px;">English</span>
+                            <input type="text" name="title[en]" value="{{ old('title.en', $tour->getTranslation('title', 'en', false)) }}" class="form-control" placeholder="Tour name...">
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" style="width: 100px;">中文</span>
+                            <input type="text" name="title[zh]" value="{{ old('title.zh', $tour->getTranslation('title', 'zh', false)) }}" class="form-control" placeholder="旅游名称...">
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label text-muted">Mô tả chi tiết</label>
-                        <textarea name="description" class="form-control" rows="6"
-                            placeholder="Viết vài dòng mô tả về trải nghiệm của tour này...">{{ old('description', $tour->description) }}</textarea>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">Tiếng Việt</span>
+                            <textarea name="description[vi]" class="form-control" rows="3" placeholder="Viết vài dòng mô tả về trải nghiệm của tour này...">{{ old('description.vi', $tour->getTranslation('description', 'vi', false)) }}</textarea>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">English</span>
+                            <textarea name="description[en]" class="form-control" rows="3" placeholder="Tour description...">{{ old('description.en', $tour->getTranslation('description', 'en', false)) }}</textarea>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">中文</span>
+                            <textarea name="description[zh]" class="form-control" rows="3" placeholder="旅游描述...">{{ old('description.zh', $tour->getTranslation('description', 'zh', false)) }}</textarea>
+                        </div>
                     </div>
 
                     <div class="row">

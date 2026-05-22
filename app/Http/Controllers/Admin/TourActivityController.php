@@ -15,12 +15,18 @@ class TourActivityController extends Controller
         $request->validate([
             'activity_type' => 'required|string',
             'start_time' => 'nullable',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'title.vi' => 'required|string|max:255',
+            'title.en' => 'nullable|string|max:255',
+            'title.zh' => 'nullable|string|max:255',
             'image_upload' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120'
         ]);
 
-        $data = $request->except('image_upload');
+        $data = $request->except(['image_upload', 'title', 'description']);
+        $data['title'] = [
+            'vi' => $request->title['vi'],
+            'en' => $request->title['en'] ?? $request->title['vi'],
+            'zh' => $request->title['zh'] ?? $request->title['vi'],
+        ];
 
         if ($request->hasFile('image_upload')) {
             $path = $request->file('image_upload')->store('activities', 'public');

@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * Class Tour
@@ -38,15 +39,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Tour extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasTranslations;
 
     protected $table = 'tours';
 
     protected $casts = [
         'destination_id' => 'int',
+        'departure_location_id' => 'int',
         'duration_days' => 'int',
         'duration_nights' => 'int',
-        'base_price' => 'float',
+        'base_price' => 'float'
+    ];
+
+    public $translatable = [
+        'title',
+        'description'
     ];
 
     protected $fillable = [

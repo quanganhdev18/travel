@@ -37,12 +37,33 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Tiêu đề ngày</label>
-                        <input type="text" name="title" class="form-control" placeholder="VD: Khám phá đảo ngọc"
-                            required>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">Tiếng Việt</span>
+                            <input type="text" name="title[vi]" class="form-control form-control-sm" placeholder="VD: Khám phá đảo ngọc" required>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">English</span>
+                            <input type="text" name="title[en]" class="form-control form-control-sm" placeholder="VD: Discover the pearl island">
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">中文</span>
+                            <input type="text" name="title[zh]" class="form-control form-control-sm" placeholder="VD: 探索珍珠岛">
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Mô tả tổng quan</label>
-                        <textarea name="description" class="form-control" rows="3"></textarea>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">Tiếng Việt</span>
+                            <textarea name="description[vi]" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">English</span>
+                            <textarea name="description[en]" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary mb-1">中文</span>
+                            <textarea name="description[zh]" class="form-control form-control-sm" rows="2"></textarea>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Lưu ngày</button>
                 </form>
@@ -108,31 +129,43 @@
                 </div>
 
                 <form action="{{ route('admin.itineraries.activities.store', $day->id) }}" method="POST"
-                    enctype="multipart/form-data" class="row g-2 align-items-end border-top pt-3">
+                    enctype="multipart/form-data" class="border-top pt-3">
                     @csrf
-                    <div class="col-md-3">
-                        <label class="form-label small">Phân loại</label>
-                        <select name="activity_type" class="form-select form-select-sm" required>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Dining">Dining</option>
-                            <option value="Attractions">Attractions</option>
-                            <option value="Others">Others</option>
-                        </select>
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-md-3">
+                            <label class="form-label small">Phân loại</label>
+                            <select name="activity_type" class="form-select form-select-sm" required>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Dining">Dining</option>
+                                <option value="Attractions">Attractions</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Giờ bắt đầu</label>
+                            <input type="time" name="start_time" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label small">Ảnh tải lên</label>
+                            <input type="file" name="image_upload" class="form-control form-control-sm" accept="image/*">
+                        </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label small">Giờ bắt đầu</label>
-                        <input type="time" name="start_time" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small">Tên hoạt động</label>
-                        <input type="text" name="title" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label small">Ảnh tải lên</label>
-                        <input type="file" name="image_upload" class="form-control form-control-sm" accept="image/*">
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-sm btn-success w-100">Thêm</button>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small">Tên HĐ (VI)</label>
+                            <input type="text" name="title[vi]" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Tên HĐ (EN)</label>
+                            <input type="text" name="title[en]" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Tên HĐ (ZH)</label>
+                            <input type="text" name="title[zh]" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-success w-100">Thêm</button>
+                        </div>
                     </div>
                 </form>
             </div>

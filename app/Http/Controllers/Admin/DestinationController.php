@@ -23,11 +23,24 @@ class DestinationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|max:255',
+            'name.vi' => 'required|max:255',
+            'name.en' => 'nullable|max:255',
+            'name.zh' => 'nullable|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120'
         ]);
 
-        $data = $request->only(['name', 'description']);
+        $data = [
+            'name' => [
+                'vi' => $request->name['vi'],
+                'en' => $request->name['en'] ?? $request->name['vi'],
+                'zh' => $request->name['zh'] ?? $request->name['vi'],
+            ],
+            'description' => [
+                'vi' => $request->description['vi'] ?? '',
+                'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
+                'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
+            ]
+        ];
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('destinations', 'public');
@@ -47,11 +60,24 @@ class DestinationController extends Controller
     public function update(Request $request, Destination $destination)
     {
         $request->validate([
-            'name' => 'required|max:255',
+            'name.vi' => 'required|max:255',
+            'name.en' => 'nullable|max:255',
+            'name.zh' => 'nullable|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120'
         ]);
 
-        $data = $request->only(['name', 'description']);
+        $data = [
+            'name' => [
+                'vi' => $request->name['vi'],
+                'en' => $request->name['en'] ?? $request->name['vi'],
+                'zh' => $request->name['zh'] ?? $request->name['vi'],
+            ],
+            'description' => [
+                'vi' => $request->description['vi'] ?? '',
+                'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
+                'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
+            ]
+        ];
 
         if ($request->hasFile('image')) {
             // Xóa ảnh cũ nếu có

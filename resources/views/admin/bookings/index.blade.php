@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('page-title', 'Quản lý Đơn đặt chỗ (Bookings)')
+@section('page-title', 'Quản lý Đơn đặt chỗ')
 
 @section('content')
 <div class="row g-4 mb-4">
@@ -76,6 +76,7 @@
                     <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Đã thanh toán</option>
                     <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
                     <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
+                    <option value="needs_flight" {{ request('status') == 'needs_flight' ? 'selected' : '' }}>Cần xuất vé MB</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -90,7 +91,7 @@
 
 <div class="admin-card border-0">
     <div class="admin-card-header bg-white py-3">
-        <h5 class="admin-card-title"><i class="bi bi-list-ul me-2"></i>Danh sách Booking</h5>
+        <h5 class="admin-card-title"><i class="bi bi-list-ul me-2"></i>Danh sách Đơn đặt chỗ</h5>
         <button class="btn btn-admin btn-admin-primary"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</button>
     </div>
     <div class="admin-card-body p-0">
@@ -221,10 +222,18 @@
                         <div class="mb-2"><span class="text-muted me-2">Khởi hành:</span> <strong class="text-dark">{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Hành khách:</span> <strong class="text-dark">{{ $booking->adults_count }} NL, {{ $booking->children_count }} TE</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Vé Máy Bay:</span> 
-                            @if($booking->pnr_code)
-                                <span class="badge-soft badge-soft-danger">{{ $booking->pnr_code }}</span>
+                            @if($booking->transport_type == 'flight')
+                                <form action="{{ route('admin.bookings.update_pnr', $booking->id) }}" method="POST" class="d-inline-flex align-items-center mt-1">
+                                    @csrf
+                                    <input type="text" name="pnr_code" value="{{ $booking->pnr_code }}" class="form-control form-control-sm me-2" placeholder="Nhập mã PNR..." style="max-width: 150px;">
+                                    <button type="submit" class="btn btn-sm btn-primary">Lưu</button>
+                                </form>
                             @else
-                                <span class="text-muted">Tự túc / Chưa xuất vé</span>
+                                @if($booking->pnr_code)
+                                    <span class="badge-soft badge-soft-danger">{{ $booking->pnr_code }}</span>
+                                @else
+                                    <span class="text-muted">Tự túc / Không yêu cầu</span>
+                                @endif
                             @endif
                         </div>
                     </div>

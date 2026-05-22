@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * Class Category
@@ -25,11 +26,17 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Category extends Model
 {
+	use HasTranslations;
+
 	protected $table = 'categories';
 
 	protected $fillable = [
 		'name',
 		'slug'
+	];
+
+	public $translatable = [
+		'name'
 	];
 
 	public function tour_categories()

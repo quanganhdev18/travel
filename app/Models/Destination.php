@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\HasTranslations;
 
 /**
  * Class Destination
@@ -27,12 +28,19 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Destination extends Model
 {
+	use HasTranslations;
+
 	protected $table = 'destinations';
 
 	protected $fillable = [
 		'name',
 		'description',
 		'image_url'
+	];
+
+	public $translatable = [
+		'name',
+		'description'
 	];
 
 	public function tickets()

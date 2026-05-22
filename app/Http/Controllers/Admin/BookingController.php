@@ -26,7 +26,13 @@ class BookingController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('booking_status', $request->status);
+            if ($request->status === 'needs_flight') {
+                $query->where('transport_type', 'flight')
+                    ->whereNull('pnr_code')
+                    ->whereIn('booking_status', ['confirmed', 'paid']);
+            } else {
+                $query->where('booking_status', $request->status);
+            }
         }
 
         $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -49,13 +55,26 @@ class BookingController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,paid,cancelled,completed'
+            'status' => 'required|in:pending,confirmed,paid,cancelled,completed',
         ]);
 
         $booking = Booking::findOrFail($id);
         $booking->booking_status = $request->status;
         $booking->save();
 
-        return back()->with('success', 'cập nhật trạng thái đơn hàng thành công.');
+        return back()->with('success', 'Cập nhật trạng thái đơn hàng thành công.');
+    }
+
+    public function updatePnr(Request $request, $id)
+    {
+        $request->validate([
+            'pnr_code' => 'required|string|max:20',
+        ]);
+
+        $booking = Booking::findOrFail($id);
+        $booking->pnr_code = strtoupper($request->pnr_code);
+        $booking->save();
+
+        return back()->with('success', 'Cập nhật mã PNR thành công.');
     }
 }

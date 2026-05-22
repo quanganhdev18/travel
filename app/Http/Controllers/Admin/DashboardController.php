@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Tour;
 use App\Models\User;
+use App\Models\TourSchedule;
 
 class DashboardController extends Controller
 {
@@ -17,8 +18,15 @@ class DashboardController extends Controller
         $totalRevenue = Booking::where('booking_status', 'confirmed')->sum('total_price');
         $totalUsers = User::count();
 
-        $recentBookings = Booking::with(['tour_schedule.tour', 'user'])
-            ->orderBy('created_at', 'desc')
+        $today = now()->startOfDay();
+
+        $ongoingTours = TourSchedule::with(['tour', 'schedule_guides.tour_guide'])
+            ->withCount(['bookings as total_guests' => function ($q) {
+                $q->select(\DB::raw('SUM(adults_count + children_count)'));
+            }])
+            ->where('departure_date', '<=', $today)
+            ->where('return_date', '>=', $today)
+            ->orderBy('departure_date', 'asc')
             ->take(5)
             ->get();
 
@@ -27,7 +35,7 @@ class DashboardController extends Controller
             'totalBookings',
             'totalRevenue',
             'totalUsers',
-            'recentBookings'
+            'ongoingTours'
         ));
     }
 }

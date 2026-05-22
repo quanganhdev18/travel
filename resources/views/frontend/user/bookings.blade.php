@@ -104,7 +104,7 @@
                     <div class="col-md-3 text-center text-md-end ps-md-4">
                         <div class="text-muted small fw-500 mb-1 text-uppercase">Tổng thanh toán</div>
                         <div class="fw-bold text-dark" style="font-size: 1.5rem;">
-                            {{ number_format($booking->total_price, 0, ',', '.') }}<span class="fs-6 text-muted ms-1">₫</span>
+                            {!! format_currency($booking->total_price) !!}
                         </div>
                     </div>
                 </div>

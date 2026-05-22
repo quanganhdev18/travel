@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'fpt_ai' => [
+        'key' => env('FPT_AI_API_KEY'),
+    ],
+
 ];

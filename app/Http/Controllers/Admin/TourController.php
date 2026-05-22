@@ -35,7 +35,9 @@ class TourController extends Controller
     {
         // 1. Validate dữ liệu
         $request->validate([
-            'title' => 'required|max:255',
+            'title.vi' => 'required|max:255',
+            'title.en' => 'nullable|max:255',
+            'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
             'destination_id' => 'required|exists:destinations,id',
             'departure_location_id' => 'required|exists:destinations,id',
@@ -45,9 +47,17 @@ class TourController extends Controller
 
         // 2. Tạo Tour và tự động sinh slug
         $tour = new Tour();
-        $tour->title = $request->title;
-        $tour->slug = Str::slug($request->title) . '-' . time(); // Đảm bảo slug là duy nhất
-        $tour->description = $request->description;
+        $tour->title = [
+            'vi' => $request->title['vi'],
+            'en' => $request->title['en'] ?? $request->title['vi'],
+            'zh' => $request->title['zh'] ?? $request->title['vi'],
+        ];
+        $tour->slug = Str::slug($request->title['vi']) . '-' . time(); // Đảm bảo slug là duy nhất
+        $tour->description = [
+            'vi' => $request->description['vi'] ?? '',
+            'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
+            'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
+        ];
         $tour->base_price = $request->base_price;
         $tour->destination_id = $request->destination_id;
         $tour->departure_location_id = $request->departure_location_id;
@@ -147,9 +157,28 @@ class TourController extends Controller
     // 2. Xử lý Cập nhật
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'title.vi' => 'required|max:255',
+            'title.en' => 'nullable|max:255',
+            'title.zh' => 'nullable|max:255',
+            'base_price' => 'required|numeric',
+            'destination_id' => 'required|exists:destinations,id',
+            'departure_location_id' => 'required|exists:destinations,id',
+            'duration_days' => 'required|integer',
+            'duration_nights' => 'required|integer',
+        ]);
+
         $tour = Tour::findOrFail($id);
-        $tour->title = $request->title;
-        $tour->description = $request->description;
+        $tour->title = [
+            'vi' => $request->title['vi'],
+            'en' => $request->title['en'] ?? $request->title['vi'],
+            'zh' => $request->title['zh'] ?? $request->title['vi'],
+        ];
+        $tour->description = [
+            'vi' => $request->description['vi'] ?? '',
+            'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
+            'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
+        ];
         $tour->base_price = $request->base_price;
         $tour->destination_id = $request->destination_id;
         $tour->departure_location_id = $request->departure_location_id;

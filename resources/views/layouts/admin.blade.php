@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelWonder Admin Panel</title>
+    <title>Hệ thống Quản trị TravelWonder</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -295,12 +295,22 @@
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/bookings*') ? 'active' : '' }}" href="{{ route('admin.bookings.index') }}">
-                    <i class="bi bi-cart-check"></i> Đơn đặt chỗ (Bookings)
+                    <i class="bi bi-cart-check"></i> Đơn đặt chỗ
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tours*') ? 'active' : '' }}" href="{{ route('admin.tours.index') }}">
                     <i class="bi bi-briefcase"></i> Sản phẩm Tour
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
+                    <i class="bi bi-compass"></i> Điều hành Tour
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/tour-guides*') ? 'active' : '' }}" href="{{ route('admin.tour_guides.index') }}">
+                    <i class="bi bi-person-badge"></i> Hướng dẫn viên
                 </a>
             </li>
             <li class="nav-item">
@@ -418,7 +428,7 @@
         
         <!-- Footer -->
         <div class="text-center text-muted small mt-4 pt-4 border-top">
-            &copy; {{ date('Y') }} Travel Wonder Admin System. All rights reserved.
+            &copy; {{ date('Y') }} Hệ thống Quản trị Travel Wonder. Bảo lưu mọi quyền.
         </div>
     </div>
 

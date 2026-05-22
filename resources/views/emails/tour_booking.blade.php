@@ -21,7 +21,7 @@
             <p style="margin: 5px 0;">Ngày khởi hành:
                 {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}</p>
             <p style="margin: 5px 0;">Số lượng khách: {{ $booking->adults_count + $booking->children_count }} người</p>
-            <p style="margin: 5px 0;">Tổng thanh toán: {{ number_format($booking->total_price, 0, ',', '.') }} VNĐ</p>
+            <p style="margin: 5px 0;">Tổng thanh toán: {!! format_currency($booking->total_price) !!}</p>
             <p style="margin: 5px 0;">Tình trạng: <span style="color: #d97706;">Chờ xử lý</span></p>
         </div>
 

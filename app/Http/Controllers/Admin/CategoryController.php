@@ -22,11 +22,19 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|max:255|unique:categories,name']);
+        $request->validate([
+            'name.vi' => 'required|max:255',
+            'name.en' => 'nullable|max:255',
+            'name.zh' => 'nullable|max:255',
+        ]);
 
         Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name) // Tự động tạo slug từ tên[cite: 7]
+            'name' => [
+                'vi' => $request->name['vi'],
+                'en' => $request->name['en'] ?? $request->name['vi'],
+                'zh' => $request->name['zh'] ?? $request->name['vi'],
+            ],
+            'slug' => Str::slug($request->name['vi'])
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Thêm danh mục thành công!');
@@ -39,11 +47,19 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $request->validate(['name' => 'required|max:255|unique:categories,name,' . $category->id]);
+        $request->validate([
+            'name.vi' => 'required|max:255',
+            'name.en' => 'nullable|max:255',
+            'name.zh' => 'nullable|max:255',
+        ]);
 
         $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name)
+            'name' => [
+                'vi' => $request->name['vi'],
+                'en' => $request->name['en'] ?? $request->name['vi'],
+                'zh' => $request->name['zh'] ?? $request->name['vi'],
+            ],
+            'slug' => Str::slug($request->name['vi'])
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Cập nhật thành công!');

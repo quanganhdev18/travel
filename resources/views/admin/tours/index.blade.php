@@ -65,7 +65,7 @@
                                 </a>
 
                                 <a href="{{ route('admin.tours.itineraries.index', $tour->id) }}"
-                                    class="btn btn-action text-success bg-success bg-opacity-10" title="Lịch trình chi tiết (Itinerary)">
+                                    class="btn btn-action text-success bg-success bg-opacity-10" title="Lịch trình chi tiết">
                                     <i class="bi bi-list-task"></i>
                                 </a>
 

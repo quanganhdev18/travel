@@ -17,7 +17,7 @@
             <h3 style="margin-top: 0;">Mã chuẩn chi (PNR): <span
                     style="color: #e53e3e; font-size: 24px;">{{ $pnrCode }}</span></h3>
             <p>Mã đơn tour: #{{ $booking->id }}</p>
-            <p>Tổng tiền thanh toán: {{ number_format($booking->total_price, 0, ',', '.') }} VNĐ</p>
+            <p><strong>Tổng tiền thanh toán:</strong> {!! format_currency($booking->total_price) !!}</p>
         </div>
 
         <p style="margin-top: 20px;">Anh/chị vui lòng lưu lại mã PNR này và xuất trình tại quầy thủ tục của hãng hàng

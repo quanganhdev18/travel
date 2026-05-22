@@ -19,13 +19,26 @@ class TourItineraryController extends Controller
     {
         $request->validate([
             'day_number' => 'required|integer|min:1|max:' . $tour->duration_days,
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'title.vi' => 'required|string|max:255',
+            'title.en' => 'nullable|string|max:255',
+            'title.zh' => 'nullable|string|max:255',
         ], [
             'day_number.max' => 'Số ngày không được vượt quá tổng số ngày của tour (' . $tour->duration_days . ' ngày).'
         ]);
 
-        $tour->tour_itineraries()->create($request->all());
+        $data = $request->except(['title', 'description']);
+        $data['title'] = [
+            'vi' => $request->title['vi'],
+            'en' => $request->title['en'] ?? $request->title['vi'],
+            'zh' => $request->title['zh'] ?? $request->title['vi'],
+        ];
+        $data['description'] = [
+            'vi' => $request->description['vi'] ?? '',
+            'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
+            'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
+        ];
+
+        $tour->tour_itineraries()->create($data);
         return back()->with('success', 'Thêm ngày lịch trình thành công!');
     }
 

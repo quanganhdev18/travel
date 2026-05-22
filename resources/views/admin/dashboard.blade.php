@@ -78,53 +78,66 @@
 </div>
 
 <div class="row g-4">
-    <!-- Bảng Đơn đặt chỗ mới nhất -->
+    <!-- Bảng Tour đang diễn ra -->
     <div class="col-lg-8">
         <div class="admin-card h-100">
             <div class="admin-card-header">
-                <h5 class="admin-card-title"><i class="bi bi-list-check me-2 text-primary"></i>Đơn đặt chỗ mới nhất</h5>
-                <a href="{{ route('admin.bookings.index') }}" class="btn btn-sm btn-light border">Xem tất cả</a>
+                <h5 class="admin-card-title"><i class="bi bi-compass me-2 text-primary"></i>Các tour đang diễn ra</h5>
+                <a href="{{ route('admin.ongoing_tours.index') }}" class="btn btn-sm btn-light border">Xem tất cả</a>
             </div>
             <div class="admin-card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Mã Đơn</th>
-                                <th>Khách Hàng</th>
-                                <th>Sản Phẩm (Tour)</th>
-                                <th>Tổng Tiền</th>
-                                <th>Trạng Thái</th>
+                                <th>Tên Tour</th>
+                                <th>Khởi Hành</th>
+                                <th>Số Khách</th>
+                                <th>Hướng Dẫn Viên</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($recentBookings as $booking)
+                            @forelse($ongoingTours as $schedule)
                             <tr>
-                                <td><span class="fw-bold text-dark">#{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</span></td>
                                 <td>
-                                    <div class="fw-500 text-dark">{{ $booking->user->name ?? 'Khách lẻ' }}</div>
-                                    <div class="small text-muted">{{ $booking->created_at->format('d/m/Y H:i') }}</div>
-                                </td>
-                                <td>
-                                    <div class="fw-500 text-dark text-truncate" style="max-width: 200px;" title="{{ $booking->tour_schedule->tour->title ?? 'N/A' }}">
-                                        {{ $booking->tour_schedule->tour->title ?? 'N/A' }}
+                                    <div class="fw-bold text-dark text-truncate" style="max-width: 250px;" title="{{ $schedule->tour->title ?? '' }}">
+                                        {{ $schedule->tour->title ?? 'N/A' }}
                                     </div>
+                                    <small class="text-muted">Mã: #{{ str_pad($schedule->id, 5, '0', STR_PAD_LEFT) }}</small>
                                 </td>
-                                <td class="fw-bold text-danger">{{ number_format($booking->total_price, 0, ',', '.') }} ₫</td>
+                                <td>
+                                    <div class="fw-500 text-primary">
+                                        {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}
+                                    </div>
+                                    <small class="text-muted">Đến {{ \Carbon\Carbon::parse($schedule->return_date)->format('d/m/Y') }}</small>
+                                </td>
                                 <td>
                                     @php
-                                        $badgeClass = 'badge-soft-secondary';
-                                        $statusStr = strtolower($booking->booking_status);
-                                        if($statusStr == 'confirmed' || $statusStr == 'đã xác nhận') $badgeClass = 'badge-soft-success';
-                                        if($statusStr == 'pending' || $statusStr == 'chờ xử lý') $badgeClass = 'badge-soft-warning';
-                                        if($statusStr == 'cancelled' || $statusStr == 'đã hủy') $badgeClass = 'badge-soft-danger';
+                                        $guests = $schedule->total_guests ?? 0;
+                                        $percent = $schedule->capacity > 0 ? round(($guests / $schedule->capacity) * 100) : 0;
                                     @endphp
-                                    <span class="badge-soft {{ $badgeClass }}">{{ ucfirst($booking->booking_status) }}</span>
+                                    <div class="fw-bold">{{ $guests }} / {{ $schedule->capacity }}</div>
+                                    <div class="progress mt-1" style="height: 5px; width: 80px;">
+                                        <div class="progress-bar bg-{{ $percent >= 100 ? 'danger' : 'success' }}" style="width: {{ $percent }}%"></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if($schedule->schedule_guides->count() > 0)
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach($schedule->schedule_guides as $sg)
+                                                <span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill px-2 py-1">
+                                                    <i class="bi bi-person-fill me-1"></i>{{ $sg->tour_guide->name ?? 'N/A' }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="badge-soft badge-soft-warning px-2 py-1">Chưa phân công</span>
+                                    @endif
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">Không có đơn đặt chỗ nào.</td>
+                                <td colspan="4" class="text-center py-4 text-muted">Không có tour nào đang diễn ra hôm nay.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -138,7 +151,7 @@
     <div class="col-lg-4">
         <div class="admin-card h-100">
             <div class="admin-card-header">
-                <h5 class="admin-card-title"><i class="bi bi-pie-chart me-2 text-primary"></i>Tổng quan Booking</h5>
+                <h5 class="admin-card-title"><i class="bi bi-pie-chart me-2 text-primary"></i>Tổng quan Đơn đặt chỗ</h5>
             </div>
             <div class="admin-card-body d-flex align-items-center justify-content-center">
                 <div style="width: 100%; max-width: 250px;">

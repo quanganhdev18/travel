@@ -21,8 +21,8 @@
     </div>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-        <h1 class="hero-title">Khám Phá Thế Giới Cùng TravelWonder</h1>
-        <p class="hero-subtitle">Hàng ngàn điểm đến tuyệt đẹp và trải nghiệm khó quên đang chờ đón bạn. Bắt đầu hành trình ngay hôm nay!</p>
+        <h1 class="hero-title">{{ __('Khám Phá Thế Giới Cùng TravelWonder') }}</h1>
+        <p class="hero-subtitle">{{ __('Hàng ngàn điểm đến tuyệt đẹp và trải nghiệm khó quên đang chờ đón bạn. Bắt đầu hành trình ngay hôm nay!') }}</p>
     </div>
 </section>
 
@@ -32,58 +32,58 @@
         <ul class="nav nav-tabs search-tabs" id="searchTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="tour-tab" data-bs-toggle="tab" data-bs-target="#tour"
-                    type="button" role="tab"><i class="bi bi-briefcase-fill me-2"></i>Tour Du Lịch</button>
+                    type="button" role="tab"><i class="bi bi-briefcase-fill me-2"></i>{{ __('Tour Du Lịch') }}</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="ticket-tab" data-bs-toggle="tab" data-bs-target="#ticket" type="button"
-                    role="tab"><i class="bi bi-ticket-perforated-fill me-2"></i>Vé Tham Quan</button>
+                    role="tab"><i class="bi bi-ticket-perforated-fill me-2"></i>{{ __('Vé Tham Quan') }}</button>
             </li>
         </ul>
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
                 <form action="#" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-4">
-                        <label class="form-label text-muted small fw-bold">Điểm đến</label>
+                        <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
                             <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="Bạn muốn đi đâu?">
+                                placeholder="{{ __('Bạn muốn đi đâu?') }}">
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label text-muted small fw-bold">Ngày khởi hành</label>
+                        <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
                         <input type="date" class="form-control search-form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label text-muted small fw-bold">Số khách</label>
+                        <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
                         <select class="form-select search-form-control">
-                            <option value="1">1 Người lớn, 0 Trẻ em</option>
-                            <option value="2">2 Người lớn, 0 Trẻ em</option>
-                            <option value="3">Gia đình</option>
+                            <option value="1">{{ __('1 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="2">{{ __('2 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="3">{{ __('Gia đình') }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-search-primary w-100"><i
-                                class="bi bi-search me-2"></i>Tìm kiếm</button>
+                                class="bi bi-search me-2"></i>{{ __('Tìm kiếm') }}</button>
                     </div>
                 </form>
             </div>
             <div class="tab-pane fade" id="ticket" role="tabpanel">
                 <form action="#" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-7">
-                        <label class="form-label text-muted small fw-bold">Tìm công viên giải trí, sự kiện</label>
+                        <label class="form-label text-muted small fw-bold">{{ __('Tìm công viên giải trí, sự kiện') }}</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
                             <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="Tìm kiếm hoạt động vui chơi...">
+                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}">
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label text-muted small fw-bold">Ngày sử dụng</label>
+                        <label class="form-label text-muted small fw-bold">{{ __('Ngày sử dụng') }}</label>
                         <input type="date" class="form-control search-form-control">
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" class="btn btn-search-primary w-100">Tìm vé</button>
+                        <button type="submit" class="btn btn-search-primary w-100">{{ __('Tìm vé') }}</button>
                     </div>
                 </form>
             </div>
@@ -95,8 +95,8 @@
 <section class="container py-5 reveal-up">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
-            <h2 class="section-heading">Điểm đến thịnh hành</h2>
-            <p class="section-subheading mb-0">Khám phá những vùng đất được yêu thích nhất.</p>
+            <h2 class="section-heading">{{ __('Điểm đến thịnh hành') }}</h2>
+            <p class="section-subheading mb-0">{{ __('Khám phá những vùng đất được yêu thích nhất.') }}</p>
         </div>
     </div>
     <div class="row g-4">
@@ -115,7 +115,7 @@
         </div>
         @empty
         <div class="col-12">
-            <p class="text-muted">Đang cập nhật điểm đến.</p>
+            <p class="text-muted">{{ __('Đang cập nhật điểm đến.') }}</p>
         </div>
         @endforelse
     </div>
@@ -125,10 +125,10 @@
 <section class="container py-5 reveal-up">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
-            <h2 class="section-heading">Tour Du Lịch Trọn Gói</h2>
-            <p class="section-subheading mb-0">Trải nghiệm dịch vụ 5 sao với giá ưu đãi.</p>
+            <h2 class="section-heading">{{ __('Tour Du Lịch Trọn Gói') }}</h2>
+            <p class="section-subheading mb-0">{{ __('Trải nghiệm dịch vụ 5 sao với giá ưu đãi.') }}</p>
         </div>
-        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block" style="color:var(--primary-color); border-color:var(--primary-color);">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block" style="color:var(--primary-color); border-color:var(--primary-color);">{{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="row g-4">
         @forelse($tours as $tour)
@@ -149,8 +149,8 @@
                             <i class="bi bi-geo-alt text-danger"></i> {{ $tour->destination->name ?? 'Việt Nam' }}
                         </div>
                         <div class="price-wrap">
-                            <span class="text-muted small">Chỉ từ</span>
-                            <div class="price-val">{{ number_format($tour->base_price, 0, ',', '.') }}₫</div>
+                            <span class="text-muted small">{{ __('Chỉ từ') }}</span>
+                            <div class="price-val">{{ format_currency($tour->base_price) }}</div>
                         </div>
                     </div>
                 </div>
@@ -158,7 +158,7 @@
         </div>
         @empty
         <div class="col-12">
-            <p class="text-muted">Đang cập nhật tour.</p>
+            <p class="text-muted">{{ __('Đang cập nhật tour.') }}</p>
         </div>
         @endforelse
     </div>
@@ -194,10 +194,10 @@
 <section class="container py-5 mb-5 reveal-up">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
-            <h2 class="section-heading">Vé Vui Chơi & Hoạt Động</h2>
-            <p class="section-subheading mb-0">Giải trí không giới hạn với hàng ngàn sự kiện.</p>
+            <h2 class="section-heading">{{ __('Vé Vui Chơi & Hoạt Động') }}</h2>
+            <p class="section-subheading mb-0">{{ __('Giải trí không giới hạn với hàng ngàn sự kiện.') }}</p>
         </div>
-        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block" style="color:var(--primary-color); border-color:var(--primary-color);">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block" style="color:var(--primary-color); border-color:var(--primary-color);">{{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="row g-4">
         @forelse($tickets as $ticket)
@@ -213,15 +213,15 @@
                         <i class="bi bi-geo-alt text-danger"></i> {{ $ticket->destination->name ?? 'Điểm vui chơi' }}
                     </div>
                     <div class="price-wrap">
-                        <span class="text-muted small">Từ</span>
-                        <div class="price-val" style="font-size: 1.1rem;">Tra cứu giá</div>
+                        <span class="text-muted small">{{ __('Từ') }}</span>
+                        <div class="price-val" style="font-size: 1.1rem;">{{ __('Tra cứu giá') }}</div>
                     </div>
                 </div>
             </div>
         </div>
         @empty
         <div class="col-12">
-            <p class="text-muted">Đang cập nhật vé tham quan.</p>
+            <p class="text-muted">{{ __('Đang cập nhật vé tham quan.') }}</p>
         </div>
         @endforelse
     </div>
