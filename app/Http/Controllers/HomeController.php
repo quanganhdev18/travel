@@ -47,4 +47,27 @@ class HomeController extends Controller
 
         return view('welcome', compact('banners', 'adBanners', 'destinations', 'categories', 'tours', 'tickets'));
     }
+
+    public function tours()
+    {
+        $banners = Banner::where('is_active', 1)
+            ->where(function($q) {
+                $q->where('position', 'hero')->orWhereNull('position');
+            })
+            ->orderBy('sort_order')
+            ->take(5)
+            ->get();
+
+        $adBanners = Banner::where('is_active', 1)
+            ->where('position', 'home_ads')
+            ->orderBy('sort_order')
+            ->take(3)
+            ->get();
+
+        $tours = Tour::with(['destination', 'tour_images'])
+            ->latest()
+            ->paginate(12);
+
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners'));
+    }
 }
