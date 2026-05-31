@@ -82,6 +82,9 @@
                     <button class="filter-chip">{{ __('Máy bay + Khách sạn') }}</button>
                     <button class="filter-chip">{{ __('Xe + Khách sạn') }}</button>
                 </div>
+                <a href="{{ route('frontend.tours.search') }}" class="btn-xem-them text-decoration-none">
+                    {{ __('Xem thêm') }} <i class="bi bi-arrow-right-circle-fill"></i>
+                </a>
             </div>
 
             <div class="row g-4 px-3">
@@ -95,8 +98,21 @@
                                 </span>
                                 @php
                                 $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
+                                $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                $destName = mb_strtolower($tour->destination->name ?? '', 'UTF-8');
+                                if (str_contains($destName, 'nha trang') || str_contains($destName, 'phú quốc') || str_contains($destName, 'quy nhơn') || str_contains($destName, 'vũng tàu') || str_contains($destName, 'biển')) {
+                                    $fallbackImage = 'https://images.unsplash.com/photo-1596395819057-cbcf88eb0dfb?q=80&w=800'; // beach
+                                } elseif (str_contains($destName, 'hà nội') || str_contains($destName, 'sapa') || str_contains($destName, 'đà lạt') || str_contains($destName, 'mộc châu')) {
+                                    $fallbackImage = 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=800'; // mountain/culture
+                                } elseif (str_contains($destName, 'hạ long') || str_contains($destName, 'vịnh')) {
+                                    $fallbackImage = 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800'; // halong bay
+                                } elseif (str_contains($destName, 'đà nẵng') || str_contains($destName, 'hội an') || str_contains($destName, 'huế')) {
+                                    $fallbackImage = 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800'; // hoi an/danang
+                                } elseif (str_contains($destName, 'hồ chí minh') || str_contains($destName, 'sài gòn')) {
+                                    $fallbackImage = 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800'; // HCM
+                                }
                                 @endphp
-                                <img src="{{ $primaryImage ? asset($primaryImage->image_url) : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800' }}"
+                                <img src="{{ $primaryImage ? asset($primaryImage->image_url) : $fallbackImage }}"
                                     alt="{{ $tour->title }}">
                             </div>
                             <div class="combo-card-body">
@@ -112,12 +128,12 @@
                                         </div>
                                         <div class="combo-specs-item">
                                             <i class="bi bi-car-front"></i>
-                                            <span>Xe</span>
+                                            <span>{{ __('Xe') }}</span>
                                         </div>
                                     </div>
                                     <div class="combo-specs-item mt-1">
                                         <i class="bi bi-building"></i>
-                                        <span>Khách sạn tương đương 4*</span>
+                                        <span>{{ __('Khách sạn tương đương 4*') }}</span>
                                     </div>
                                 </div>
                                 <div class="combo-footer">
@@ -138,9 +154,6 @@
                 @endforelse
             </div>
             
-            <div class="mt-5 d-flex justify-content-center">
-                {{ $tours->links('pagination::bootstrap-5') }}
-            </div>
         </div>
     </div>
 </section>
