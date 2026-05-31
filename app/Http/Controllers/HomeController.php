@@ -13,8 +13,9 @@ class HomeController extends Controller
     public function index()
     {
         $banners = Banner::where('is_active', 1)
-            ->where(function($q) {
-                $q->where('position', 'hero')->orWhereNull('position');
+            ->where(function ($q) {
+                $q->where('position', 'hero')
+                  ->orWhereNull('position');
             })
             ->orderBy('sort_order')
             ->take(5)
@@ -26,16 +27,18 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        // Lọc các điểm đến có tồn tại trong cột destination_id của bảng tours
         $destinations = Destination::whereIn('id', function ($query) {
-            $query->select('destination_id')->from('tours')->whereNull('deleted_at');
-        })->take(6)->get();
+            $query->select('destination_id')
+                ->from('tours')
+                ->whereNull('deleted_at');
+        })
+            ->take(6)
+            ->get();
 
         $categories = Category::all();
 
-        // Tôi bổ sung thêm 'tour_images' vào with() để tối ưu hóa truy vấn (tránh lỗi N+1)
-        // vì ngoài giao diện welcome.blade.php anh đang gọi đến ảnh của tour
-        $tours = Tour::with(['destination', 'tour_images'])
+        $tours = Tour::with(['destination', 'tour_images', 'departure_location'])
+            ->whereNull('deleted_at')
             ->latest()
             ->take(8)
             ->get();
@@ -45,6 +48,13 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
-        return view('welcome', compact('banners', 'adBanners', 'destinations', 'categories', 'tours', 'tickets'));
+        return view('welcome', compact(
+            'banners',
+            'adBanners',
+            'destinations',
+            'categories',
+            'tours',
+            'tickets'
+        ));
     }
 }
