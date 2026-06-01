@@ -14,28 +14,6 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * Class Tour
- *
- * @property int $id
- * @property int $destination_id
- * @property string $title
- * @property string $slug
- * @property string|null $description
- * @property int $duration_days
- * @property int $duration_nights
- * @property float $base_price
- * @property string|null $ai_tags
- * @property Carbon $created_at
- * @property Carbon $updated_at
- * @property Destination $destination
- * @property Collection|Review[] $reviews
- * @property Collection|TourCategory[] $tour_categories
- * @property Collection|TourImage[] $tour_images
- * @property Collection|TourItinerary[] $tour_itineraries
- * @property Collection|TourSchedule[] $tour_schedules
- * @property Collection|TourVideo[] $tour_videos
- * @property Collection|Wishlist[] $wishlists
- * @property Collection|Category[] $categories
- * @property UserIdentity|null $identity
  */
 class Tour extends Model
 {
@@ -48,12 +26,12 @@ class Tour extends Model
         'departure_location_id' => 'int',
         'duration_days' => 'int',
         'duration_nights' => 'int',
-        'base_price' => 'float'
+        'base_price' => 'float',
     ];
 
     public $translatable = [
-        'title',
-        'description'
+        //'title',
+        //'description',
     ];
 
     protected $fillable = [
@@ -75,51 +53,72 @@ class Tour extends Model
 
     public function destination()
     {
-        return $this->belongsTo(Destination::class);
+        return $this->belongsTo(Destination::class, 'destination_id');
     }
 
     public function reviews()
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(Review::class, 'tour_id');
     }
 
     public function tour_categories()
     {
-        return $this->hasMany(TourCategory::class);
+        return $this->hasMany(TourCategory::class, 'tour_id');
     }
 
     public function tour_images()
     {
-        return $this->hasMany(TourImage::class);
+        return $this->hasMany(TourImage::class, 'tour_id');
     }
 
     public function tour_itineraries()
     {
-        return $this->hasMany(TourItinerary::class);
+        return $this->hasMany(TourItinerary::class, 'tour_id')
+            ->orderBy('day_number', 'asc');
     }
 
     public function tour_schedules()
     {
-        return $this->hasMany(TourSchedule::class);
+        return $this->hasMany(TourSchedule::class, 'tour_id')
+            ->orderBy('departure_date', 'asc');
     }
 
     public function tour_videos()
     {
-        return $this->hasMany(TourVideo::class);
+        return $this->hasMany(TourVideo::class, 'tour_id');
     }
 
     public function wishlists()
     {
-        return $this->hasMany(Wishlist::class);
+        return $this->hasMany(Wishlist::class, 'tour_id');
     }
 
     public function categories()
     {
-        return $this->belongsToMany(Category::class, 'tour_categories', 'tour_id', 'category_id');
+        return $this->belongsToMany(
+            Category::class,
+            'tour_categories',
+            'tour_id',
+            'category_id'
+        );
     }
 
     public function identity()
     {
-        return $this->hasOne(UserIdentity::class);
+        return $this->hasOne(UserIdentity::class, 'tour_id');
+    }
+
+    public function primaryImage()
+    {
+        return $this->hasOne(TourImage::class, 'tour_id')
+            ->where('is_primary', 1);
+    }
+
+    public function activeSchedules()
+    {
+        return $this->hasMany(TourSchedule::class, 'tour_id')
+            ->where('departure_date', '>=', now())
+            ->where('status', 'available')
+            ->orderBy('departure_date', 'asc');
     }
 }
