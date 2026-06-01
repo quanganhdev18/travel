@@ -6,8 +6,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
@@ -17,7 +15,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Tour extends Model
 {
-    use SoftDeletes, HasTranslations;
+    use HasTranslations, SoftDeletes;
 
     protected $table = 'tours';
 
@@ -30,8 +28,8 @@ class Tour extends Model
     ];
 
     public $translatable = [
-        //'title',
-        //'description',
+        'title',
+        'description',
     ];
 
     protected $fillable = [

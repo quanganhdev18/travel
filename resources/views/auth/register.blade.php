@@ -52,21 +52,27 @@
                                 <label for="name" class="form-label">Họ và tên</label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
                                     name="name" value="{{ old('name') }}" required autofocus autocomplete="name">
-                                @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="invalid-feedback" id="name-feedback">
+                                    @error('name') {{ $message }} @enderror
+                                </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="email" class="form-label">Địa chỉ Email</label>
                                 <input type="email" class="form-control @error('email') is-invalid @enderror" id="email"
                                     name="email" value="{{ old('email') }}" required autocomplete="username">
-                                @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="invalid-feedback" id="email-feedback">
+                                    @error('email') {{ $message }} @enderror
+                                </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="password" class="form-label">Mật khẩu</label>
                                 <input type="password" class="form-control @error('password') is-invalid @enderror"
                                     id="password" name="password" required autocomplete="new-password">
-                                @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <div class="invalid-feedback" id="password-feedback">
+                                    @error('password') {{ $message }} @enderror
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -75,12 +81,13 @@
                                     class="form-control @error('password_confirmation') is-invalid @enderror"
                                     id="password_confirmation" name="password_confirmation" required
                                     autocomplete="new-password">
-                                @error('password_confirmation') <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <div class="invalid-feedback" id="password_confirmation-feedback">
+                                    @error('password_confirmation') {{ $message }} @enderror
+                                </div>
                             </div>
 
                             <div class="d-grid gap-2 mt-4">
-                                <button type="submit" class="btn btn-primary fw-bold">Đăng ký tài khoản</button>
+                                <button type="submit" class="btn btn-primary fw-bold" id="btn-submit">Đăng ký tài khoản</button>
                             </div>
 
                             <div class="text-center mt-3 small">
@@ -94,6 +101,187 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const passwordConfirmInput = document.getElementById('password_confirmation');
+        const submitBtn = document.getElementById('btn-submit');
+
+        let emailTimeout = null;
+        let isEmailValid = false;
+
+        // If the fields are already populated by old values, validate them
+        if (nameInput.value.trim() !== '') validateName();
+        if (emailInput.value.trim() !== '') validateEmail();
+        if (passwordInput.value !== '') validatePassword();
+        if (passwordConfirmInput.value !== '') validatePasswordConfirmation();
+
+        function setValid(input, feedbackEl, isValid, errorMsg = '') {
+            if (isValid) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+                feedbackEl.textContent = '';
+            } else {
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+                feedbackEl.textContent = errorMsg;
+            }
+            checkFormValidity();
+        }
+
+        function validateName() {
+            const val = nameInput.value.trim();
+            const feedback = document.getElementById('name-feedback');
+            if (val === '') {
+                setValid(nameInput, feedback, false, 'Vui lòng nhập họ và tên.');
+                return false;
+            } else if (val.length < 3) {
+                setValid(nameInput, feedback, false, 'Họ và tên phải dài ít nhất 3 ký tự.');
+                return false;
+            } else {
+                setValid(nameInput, feedback, true);
+                return true;
+            }
+        }
+
+        function validateEmail() {
+            const val = emailInput.value.trim();
+            const feedback = document.getElementById('email-feedback');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (val === '') {
+                setValid(emailInput, feedback, false, 'Vui lòng nhập địa chỉ email.');
+                isEmailValid = false;
+                return;
+            } else if (!emailRegex.test(val)) {
+                setValid(emailInput, feedback, false, 'Địa chỉ email không đúng định dạng.');
+                isEmailValid = false;
+                return;
+            }
+
+            clearTimeout(emailTimeout);
+            emailTimeout = setTimeout(() => {
+                fetch(`/api/check-email?email=${encodeURIComponent(val)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.exists) {
+                            setValid(emailInput, feedback, false, 'Địa chỉ email này đã được sử dụng.');
+                            isEmailValid = false;
+                        } else {
+                            setValid(emailInput, feedback, true);
+                            isEmailValid = true;
+                        }
+                    })
+                    .catch(() => {
+                        setValid(emailInput, feedback, true);
+                        isEmailValid = true;
+                    });
+            }, 500);
+        }
+
+        function validatePassword() {
+            const val = passwordInput.value;
+            const feedback = document.getElementById('password-feedback');
+            if (val === '') {
+                setValid(passwordInput, feedback, false, 'Vui lòng nhập mật khẩu.');
+                return false;
+            } else if (val.length < 8) {
+                setValid(passwordInput, feedback, false, 'Mật khẩu phải dài ít nhất 8 ký tự.');
+                return false;
+            } else {
+                setValid(passwordInput, feedback, true);
+                if (passwordConfirmInput.value !== '') {
+                    validatePasswordConfirmation();
+                }
+                return true;
+            }
+        }
+
+        function validatePasswordConfirmation() {
+            const val = passwordConfirmInput.value;
+            const passwordVal = passwordInput.value;
+            const feedback = document.getElementById('password_confirmation-feedback');
+            if (val === '') {
+                setValid(passwordConfirmInput, feedback, false, 'Vui lòng xác nhận mật khẩu.');
+                return false;
+            } else if (val !== passwordVal) {
+                setValid(passwordConfirmInput, feedback, false, 'Mật khẩu xác nhận không khớp.');
+                return false;
+            } else {
+                setValid(passwordConfirmInput, feedback, true);
+                return true;
+            }
+        }
+
+        function checkFormValidity() {
+            const nameOk = nameInput.value.trim().length >= 3;
+            const passOk = passwordInput.value.length >= 8;
+            const passConfirmOk = passwordConfirmInput.value === passwordInput.value && passwordConfirmInput.value !== '';
+            
+            const allOk = nameOk && isEmailValid && passOk && passConfirmOk;
+            submitBtn.disabled = !allOk;
+        }
+
+        let isComposingName = false;
+        let isComposingEmail = false;
+        let isComposingPassword = false;
+        let isComposingPasswordConfirm = false;
+
+        nameInput.addEventListener('compositionstart', () => {
+            isComposingName = true;
+        });
+        nameInput.addEventListener('compositionend', () => {
+            isComposingName = false;
+            checkFormValidity();
+        });
+        nameInput.addEventListener('input', (e) => {
+            if (isComposingName || (e && e.isComposing)) return;
+            checkFormValidity();
+        });
+        nameInput.addEventListener('blur', validateName);
+
+        emailInput.addEventListener('compositionstart', () => {
+            isComposingEmail = true;
+        });
+        emailInput.addEventListener('compositionend', () => {
+            isComposingEmail = false;
+            validateEmail();
+        });
+        emailInput.addEventListener('input', (e) => {
+            if (isComposingEmail || (e && e.isComposing)) return;
+            validateEmail();
+        });
+        emailInput.addEventListener('blur', validateEmail);
+
+        passwordInput.addEventListener('compositionstart', () => {
+            isComposingPassword = true;
+        });
+        passwordInput.addEventListener('compositionend', () => {
+            isComposingPassword = false;
+            validatePassword();
+        });
+        passwordInput.addEventListener('input', (e) => {
+            if (isComposingPassword || (e && e.isComposing)) return;
+            validatePassword();
+        });
+        passwordInput.addEventListener('blur', validatePassword);
+
+        passwordConfirmInput.addEventListener('compositionstart', () => {
+            isComposingPasswordConfirm = true;
+        });
+        passwordConfirmInput.addEventListener('compositionend', () => {
+            isComposingPasswordConfirm = false;
+            validatePasswordConfirmation();
+        });
+        passwordConfirmInput.addEventListener('input', (e) => {
+            if (isComposingPasswordConfirm || (e && e.isComposing)) return;
+            validatePasswordConfirmation();
+        });
+        passwordConfirmInput.addEventListener('blur', validatePasswordConfirmation);
+    });
+    </script>
 </body>
 
 </html>

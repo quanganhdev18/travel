@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\TourBookingMail;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\TourSchedule;
@@ -10,6 +11,8 @@ use App\Models\UserIdentity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class TourBookingController extends Controller
 {
@@ -23,7 +26,7 @@ class TourBookingController extends Controller
             'customer_phone' => 'required|string|max:20',
             'customer_email' => 'required|email|max:255',
             'total_price' => 'required|numeric',
-            'transport_type' => 'required|in:flight,self',
+            'transport_type' => 'required|in:flight,bus,self',
             'identity_number' => 'required|string|max:20',
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:male,female,other',
@@ -67,12 +70,12 @@ class TourBookingController extends Controller
 
         if ($request->hasFile('front_image')) {
             $frontPath = $request->file('front_image')->store('identities', 'public');
-            $identity->front_image_url = '/storage/' . $frontPath;
+            $identity->front_image_url = '/storage/'.$frontPath;
         }
 
         if ($request->hasFile('back_image')) {
             $backPath = $request->file('back_image')->store('identities', 'public');
-            $identity->back_image_url = '/storage/' . $backPath;
+            $identity->back_image_url = '/storage/'.$backPath;
         }
 
         $identity->save();
@@ -96,14 +99,14 @@ class TourBookingController extends Controller
         $passenger->passenger_type = 'adult';
         $passenger->save();
 
-        $schedule = \App\Models\TourSchedule::with('tour')->find($request->schedule_id);
+        $schedule = TourSchedule::with('tour')->find($request->schedule_id);
 
         try {
-            \Illuminate\Support\Facades\Mail::to($request->customer_email)->send(
-                new \App\Mail\TourBookingMail($booking, $schedule, $request->customer_name, $request->customer_phone)
+            Mail::to($request->customer_email)->send(
+                new TourBookingMail($booking, $schedule, $request->customer_name, $request->customer_phone)
             );
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Lỗi gửi mail đặt tour: ' . $e->getMessage());
+            Log::error('Lỗi gửi mail đặt tour: '.$e->getMessage());
         }
 
         if ($request->transport_type === 'flight') {
@@ -132,8 +135,12 @@ class TourBookingController extends Controller
                 'departure_date' => $departureDate,
                 'passengers' => $totalPassengers,
                 'cabin_class' => 'economy',
-                'tour_booking_id' => $booking->id
+                'tour_booking_id' => $booking->id,
             ])->with('success', 'đặt tour thành công. hệ thống đang tìm chuyến bay phù hợp.');
+        }
+
+        if ($request->transport_type === 'bus') {
+            return redirect()->route('home')->with('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận lịch trình di chuyển bằng xe.');
         }
 
         return redirect()->route('home')->with('success', 'đặt tour thành công. chúng tôi sẽ liên hệ sớm để xác nhận lịch trình tự túc.');

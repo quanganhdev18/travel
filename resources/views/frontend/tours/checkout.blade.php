@@ -155,7 +155,7 @@
                         </h4>
 
                         <div class="row g-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <input type="radio" class="btn-check" name="transport_type" id="transport_flight" value="flight" checked>
                                 <label class="transport-option w-100 p-4 text-start" for="transport_flight">
                                     <div class="d-flex align-items-center">
@@ -167,7 +167,19 @@
                                     </div>
                                 </label>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <input type="radio" class="btn-check" name="transport_type" id="transport_bus" value="bus">
+                                <label class="transport-option w-100 p-4 text-start" for="transport_bus">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-bus-front text-muted" style="font-size: 32px;"></i>
+                                        <div class="ms-3">
+                                            <div class="fw-bold fs-5 text-dark">{{ __('Xe Khách / Ô Tô') }}</div>
+                                            <div class="small text-muted mt-1">{{ __('Đặt xe ghép, xe giường nằm') }}</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-4">
                                 <input type="radio" class="btn-check" name="transport_type" id="transport_self" value="self">
                                 <label class="transport-option w-100 p-4 text-start" for="transport_self">
                                     <div class="d-flex align-items-center">

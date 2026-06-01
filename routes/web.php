@@ -1,35 +1,39 @@
 <?php
 
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/debug-schema', function() {
-    $columns = \Illuminate\Support\Facades\Schema::getColumnListing('tours');
+Route::get('/debug-schema', function () {
+    $columns = Schema::getColumnListing('tours');
+
     return implode(', ', $columns);
 });
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
 Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
 
-use App\Http\Controllers\AppSettingsController;
-
-// Frontend Controllers
-use App\Http\Controllers\Frontend\TourController as FrontendTourController;
-use App\Http\Controllers\Frontend\FlightController;
-use App\Http\Controllers\Frontend\TourBookingController;
-use App\Http\Controllers\Frontend\UserController;
-use App\Http\Controllers\Frontend\OcrController;
-
-// Admin Controllers
 use App\Http\Controllers\Admin\BannerController;
+// Frontend Controllers
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
+use App\Http\Controllers\Admin\OngoingTourController;
+// Admin Controllers
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
-use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\Admin\TourGuideController;
-use App\Http\Controllers\Admin\OngoingTourController;
+use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\AppSettingsController;
+use App\Http\Controllers\Frontend\FlightController;
+use App\Http\Controllers\Frontend\OcrController;
+use App\Http\Controllers\Frontend\TourBookingController;
+use App\Http\Controllers\Frontend\TourController as FrontendTourController;
+use App\Http\Controllers\Frontend\UserController;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +42,7 @@ use App\Http\Controllers\Admin\OngoingTourController;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
 
 Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
     ->name('locale.switch');
@@ -220,4 +225,10 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-require __DIR__ . '/auth.php';
+Route::get('/api/check-email', function (Request $request) {
+    $exists = User::where('email', $request->email)->exists();
+
+    return response()->json(['exists' => $exists]);
+})->name('api.check-email');
+
+require __DIR__.'/auth.php';

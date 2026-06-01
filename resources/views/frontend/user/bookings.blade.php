@@ -88,16 +88,26 @@
                     </div>
                     
                     <div class="col-md-3 mb-4 mb-md-0 px-md-4">
-                        <div class="text-muted small fw-500 mb-1 text-uppercase text-center text-md-start">Mã Vé Máy Bay (PNR)</div>
-                        @if($booking->pnr_code)
-                        <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                            <i class="bi bi-airplane text-danger fs-4 me-2"></i>
-                            <div class="fw-bold text-danger fs-4 tracking-wide" style="letter-spacing: 2px;">{{ $booking->pnr_code }}</div>
-                        </div>
+                        <div class="text-muted small fw-500 mb-1 text-uppercase text-center text-md-start">Phương thức di chuyển</div>
+                        @if($booking->transport_type == 'flight')
+                            @if($booking->pnr_code)
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+                                <i class="bi bi-airplane text-danger fs-4 me-2"></i>
+                                <div class="fw-bold text-danger fs-4 tracking-wide" style="letter-spacing: 2px;">{{ $booking->pnr_code }}</div>
+                            </div>
+                            @else
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-start text-warning mt-2">
+                                <i class="bi bi-airplane fs-5 me-2"></i> Chờ vé máy bay
+                            </div>
+                            @endif
+                        @elseif($booking->transport_type == 'bus')
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-start text-info mt-2">
+                                <i class="bi bi-bus-front fs-5 me-2"></i> Đi bằng xe ô tô/xe khách
+                            </div>
                         @else
-                        <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted mt-2">
-                            <i class="bi bi-car-front fs-5 me-2 opacity-50"></i> Di chuyển tự túc
-                        </div>
+                            <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted mt-2">
+                                <i class="bi bi-car-front fs-5 me-2 opacity-50"></i> Di chuyển tự túc
+                            </div>
                         @endif
                     </div>
                     
