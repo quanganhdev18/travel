@@ -116,6 +116,47 @@
                         <div class="fw-bold text-dark" style="font-size: 1.5rem;">
                             {!! format_currency($booking->total_price) !!}
                         </div>
+                        <div class="mt-3">
+                            @php
+                                $latestPayment = $booking->payments->sortByDesc('created_at')->first();
+                                $paymentStatus = $latestPayment ? $latestPayment->payment_status : 'pending';
+                                $paymentMethod = $latestPayment ? $latestPayment->payment_method : 'cod';
+                            @endphp
+
+                            @if($paymentStatus === 'success')
+                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Đã thanh toán (VNPay)
+                                </span>
+                            @elseif($paymentStatus === 'pending')
+                                @if($paymentMethod === 'vnpay')
+                                    <div class="d-flex flex-column align-items-center align-items-md-end gap-2">
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
+                                            <i class="bi bi-hourglass-split me-1"></i> Chờ thanh toán (VNPay)
+                                        </span>
+                                        @if($booking->booking_status !== 'cancelled')
+                                            <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1 fw-bold">
+                                                <i class="bi bi-credit-card me-1"></i> Thanh toán ngay
+                                            </a>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="badge bg-secondary text-white rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
+                                        <i class="bi bi-wallet2 me-1"></i> COD / Chuyển khoản
+                                    </span>
+                                @endif
+                            @else
+                                <div class="d-flex flex-column align-items-center align-items-md-end gap-2">
+                                    <span class="badge bg-danger text-white rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
+                                        <i class="bi bi-x-circle-fill me-1"></i> Thanh toán thất bại
+                                    </span>
+                                    @if($booking->booking_status !== 'cancelled')
+                                        <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1 fw-bold">
+                                            <i class="bi bi-arrow-clockwise me-1"></i> Thử lại VNPay
+                                        </a>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>

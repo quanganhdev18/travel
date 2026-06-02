@@ -193,6 +193,40 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Section 4: Phương Thức Thanh Toán -->
+                    <div class="mb-5">
+                        <h4 class="form-section-title">
+                            <i class="bi bi-credit-card"></i>
+                            {{ __('Phương Thức Thanh Toán') }}
+                        </h4>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="payment_method" id="payment_cod" value="cod" checked>
+                                <label class="transport-option w-100 p-4 text-start" for="payment_cod">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-wallet2 text-muted" style="font-size: 32px;"></i>
+                                        <div class="ms-3">
+                                            <div class="fw-bold fs-5 text-dark">{{ __('Tiền mặt / Chuyển khoản') }}</div>
+                                            <div class="small text-muted mt-1">{{ __('Thanh toán sau hoặc trực tiếp') }}</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="radio" class="btn-check" name="payment_method" id="payment_vnpay" value="vnpay">
+                                <label class="transport-option w-100 p-4 text-start" for="payment_vnpay">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-credit-card-2-back text-muted" style="font-size: 32px;"></i>
+                                        <div class="ms-3">
+                                            <div class="fw-bold fs-5 text-dark">{{ __('Thanh toán qua VNPay') }}</div>
+                                            <div class="small text-muted mt-1">{{ __('Cổng thanh toán điện tử VNPay') }}</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Submit Button -->
                     <button type="submit" class="btn btn-register-premium w-100 py-3 fs-5 mt-3">

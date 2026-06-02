@@ -50,6 +50,12 @@ Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
 Route::get('/currency/{currency}', [AppSettingsController::class, 'switchCurrency'])
     ->name('currency.switch');
 
+// VNPay Callbacks
+Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
+    ->name('frontend.tours.vnpay_return');
+Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
+    ->name('frontend.tours.vnpay_ipn');
+
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
@@ -103,6 +109,10 @@ Route::middleware(['auth'])->group(function () {
     // Vé đã đặt của user
     Route::get('/my-bookings', [UserController::class, 'myBookings'])
         ->name('user.bookings');
+
+    // Thanh toán lại bằng VNPay
+    Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
+        ->name('frontend.bookings.pay_vnpay');
 });
 
 /*
@@ -223,7 +233,7 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 | Auth Routes
 |--------------------------------------------------------------------------
-*/
+|*/
 
 Route::get('/api/check-email', function (Request $request) {
     $exists = User::where('email', $request->email)->exists();
