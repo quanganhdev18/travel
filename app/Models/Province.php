@@ -11,36 +11,35 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Province
- * 
+ *
  * @property int $id
  * @property string|null $name
  * @property string|null $name_slug
  * @property string|null $full_name
  * @property string|null $type
- * 
  * @property Collection|Ward[] $wards
- *
- * @package App\Models
  */
 class Province extends Model
 {
-	protected $table = 'provinces';
-	public $incrementing = false;
-	public $timestamps = false;
+    protected $table = 'provinces';
 
-	protected $casts = [
-		'id' => 'int'
-	];
+    public $incrementing = false;
 
-	protected $fillable = [
-		'name',
-		'name_slug',
-		'full_name',
-		'type'
-	];
+    public $timestamps = false;
 
-	public function wards()
-	{
-		return $this->hasMany(Ward::class);
-	}
+    protected $casts = [
+        'id' => 'int',
+    ];
+
+    protected $fillable = [
+        'name',
+        'name_slug',
+        'full_name',
+        'type',
+    ];
+
+    public function wards()
+    {
+        return $this->hasMany(Ward::class);
+    }
 }

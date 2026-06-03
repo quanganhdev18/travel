@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class BookingAddon
- * 
+ *
  * @property int $id
  * @property int $booking_id
  * @property int|null $addon_id
@@ -20,38 +20,35 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $quantity
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Booking $booking
  * @property Addon|null $addon
- *
- * @package App\Models
  */
 class BookingAddon extends Model
 {
-	protected $table = 'booking_addons';
+    protected $table = 'booking_addons';
 
-	protected $casts = [
-		'booking_id' => 'int',
-		'addon_id' => 'int',
-		'price' => 'float',
-		'quantity' => 'int'
-	];
+    protected $casts = [
+        'booking_id' => 'int',
+        'addon_id' => 'int',
+        'price' => 'float',
+        'quantity' => 'int',
+    ];
 
-	protected $fillable = [
-		'booking_id',
-		'addon_id',
-		'addon_name',
-		'price',
-		'quantity'
-	];
+    protected $fillable = [
+        'booking_id',
+        'addon_id',
+        'addon_name',
+        'price',
+        'quantity',
+    ];
 
-	public function booking()
-	{
-		return $this->belongsTo(Booking::class);
-	}
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
+    }
 
-	public function addon()
-	{
-		return $this->belongsTo(Addon::class);
-	}
+    public function addon()
+    {
+        return $this->belongsTo(Addon::class);
+    }
 }

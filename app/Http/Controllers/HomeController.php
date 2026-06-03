@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Ticket;
 use App\Models\Tour;
+use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
@@ -15,7 +16,7 @@ class HomeController extends Controller
         $banners = Banner::where('is_active', 1)
             ->where(function ($q) {
                 $q->where('position', 'hero')
-                  ->orWhereNull('position');
+                    ->orWhereNull('position');
             })
             ->orderBy('sort_order')
             ->take(5)
@@ -61,7 +62,7 @@ class HomeController extends Controller
     public function tours()
     {
         $banners = Banner::where('is_active', 1)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where('position', 'hero')->orWhereNull('position');
             })
             ->orderBy('sort_order')
@@ -81,14 +82,14 @@ class HomeController extends Controller
         return view('frontend.tours.index', compact('banners', 'tours', 'adBanners'));
     }
 
-    public function searchTours(\Illuminate\Http\Request $request)
+    public function searchTours(Request $request)
     {
         $banners = Banner::where('is_active', true)->where('position', 'top')->get();
         $destinations = Destination::all();
         $categories = Category::all();
-        
+
         $query = Tour::with(['destination', 'tour_images']);
-        
+
         if ($request->filled('departure_id')) {
             $query->where('departure_location_id', $request->departure_id);
         }
@@ -106,7 +107,7 @@ class HomeController extends Controller
                 $query->where('base_price', '>', 20000000);
             }
         }
-        
+
         if ($request->filled('sort')) {
             if ($request->sort == 'price_asc') {
                 $query->orderBy('base_price', 'asc');
@@ -118,9 +119,9 @@ class HomeController extends Controller
         } else {
             $query->latest();
         }
-        
+
         $tours = $query->get();
-        
+
         return view('frontend.tours.search', compact('tours', 'destinations', 'categories', 'banners'));
     }
 }

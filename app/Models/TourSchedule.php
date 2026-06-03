@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class TourSchedule
- * 
+ *
  * @property int $id
  * @property int $tour_id
  * @property Carbon $departure_date
@@ -22,46 +22,43 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Tour $tour
  * @property Collection|Booking[] $bookings
  * @property Collection|ScheduleGuide[] $schedule_guides
- *
- * @package App\Models
  */
 class TourSchedule extends Model
 {
-	protected $table = 'tour_schedules';
+    protected $table = 'tour_schedules';
 
-	protected $casts = [
-		'tour_id' => 'int',
-		'departure_date' => 'datetime',
-		'return_date' => 'datetime',
-		'capacity' => 'int',
-		'available_seats' => 'int'
-	];
+    protected $casts = [
+        'tour_id' => 'int',
+        'departure_date' => 'datetime',
+        'return_date' => 'datetime',
+        'capacity' => 'int',
+        'available_seats' => 'int',
+    ];
 
-	protected $fillable = [
-		'tour_id',
-		'departure_date',
-		'return_date',
-		'capacity',
-		'available_seats',
-		'status'
-	];
+    protected $fillable = [
+        'tour_id',
+        'departure_date',
+        'return_date',
+        'capacity',
+        'available_seats',
+        'status',
+    ];
 
-	public function tour()
-	{
-		return $this->belongsTo(Tour::class);
-	}
+    public function tour()
+    {
+        return $this->belongsTo(Tour::class);
+    }
 
-	public function bookings()
-	{
-		return $this->hasMany(Booking::class);
-	}
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
 
-	public function schedule_guides()
-	{
-		return $this->hasMany(ScheduleGuide::class);
-	}
+    public function schedule_guides()
+    {
+        return $this->hasMany(ScheduleGuide::class);
+    }
 }

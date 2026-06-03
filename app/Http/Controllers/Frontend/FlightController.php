@@ -3,8 +3,13 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\FlightTicketMail;
+use App\Models\Booking;
+use App\Models\BookingPassenger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 
 class FlightController extends Controller
 {
@@ -22,7 +27,7 @@ class FlightController extends Controller
         }
 
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('DUFFEL_ACCESS_TOKEN'),
+            'Authorization' => 'Bearer '.env('DUFFEL_ACCESS_TOKEN'),
             'Duffel-Version' => 'v2',
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
@@ -48,6 +53,48 @@ class FlightController extends Controller
 
         return view('frontend.flights.index', compact('offers'));
     }
+
+    public function searchApi(Request $request)
+    {
+        $origin = $request->input('origin', 'HAN');
+        $destination = $request->input('destination', 'SGN');
+        $departureDate = $request->input('departure_date', date('Y-m-d', strtotime('+7 days')));
+        $passengersCount = (int) $request->input('passengers', 1);
+        $cabinClass = $request->input('cabin_class', 'economy');
+
+        $passengers = [];
+        for ($i = 0; $i < $passengersCount; $i++) {
+            $passengers[] = ['type' => 'adult'];
+        }
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.env('DUFFEL_ACCESS_TOKEN'),
+            'Duffel-Version' => 'v2',
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->post('https://api.duffel.com/air/offer_requests', [
+            'data' => [
+                'slices' => [
+                    [
+                        'origin' => $origin,
+                        'destination' => $destination,
+                        'departure_date' => $departureDate,
+                    ],
+                ],
+                'passengers' => $passengers,
+                'cabin_class' => $cabinClass,
+            ],
+        ]);
+
+        if (! $response->successful()) {
+            return response()->json(['success' => false, 'message' => 'Lỗi từ Duffel API']);
+        }
+
+        $offers = $response->json()['data']['offers'] ?? [];
+
+        return response()->json(['success' => true, 'data' => $offers]);
+    }
+
     public function checkout(Request $request)
     {
         $offerId = $request->query('offer_id');
@@ -59,10 +106,10 @@ class FlightController extends Controller
         $totalCurrency = $request->query('total_currency');
 
         $passenger = null;
-        $user = \Illuminate\Support\Facades\Auth::user();
+        $user = Auth::user();
 
         if ($tourBookingId) {
-            $passenger = \App\Models\BookingPassenger::where('booking_id', $tourBookingId)->first();
+            $passenger = BookingPassenger::where('booking_id', $tourBookingId)->first();
         }
 
         return view('frontend.flights.checkout', compact('offerId', 'passengerId', 'tourBookingId', 'passenger', 'user', 'totalAmount', 'totalCurrency'));
@@ -70,8 +117,8 @@ class FlightController extends Controller
 
     public function book(Request $request)
     {
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('DUFFEL_ACCESS_TOKEN'),
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer '.env('DUFFEL_ACCESS_TOKEN'),
             'Duffel-Version' => 'v2',
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
@@ -88,21 +135,21 @@ class FlightController extends Controller
                         'phone_number' => str_replace(' ', '', $request->phone_number), // Xóa khoảng trắng để tránh lỗi format
                         'email' => $request->email,
                         'born_on' => $request->born_on,
-                        'gender' => $request->gender
-                    ]
+                        'gender' => $request->gender,
+                    ],
                 ],
                 // BẮT BUỘC: Cung cấp thông tin thanh toán cho Duffel
                 'payments' => [
                     [
                         'type' => 'balance', // Dùng số dư khả dụng (phù hợp môi trường test)
                         'amount' => strval($request->total_amount),
-                        'currency' => $request->total_currency
-                    ]
-                ]
-            ]
+                        'currency' => $request->total_currency,
+                    ],
+                ],
+            ],
         ]);
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             // Tạm thời hiển thị toàn bộ lỗi từ API ra màn hình để dễ dàng tìm lỗi nếu còn vướng mắc
             dd('Chi tiết lỗi từ hệ thống vé máy bay:', $response->json());
         }
@@ -111,22 +158,22 @@ class FlightController extends Controller
         $bookingRef = $response->json()['data']['booking_reference'] ?? 'Chưa cấp mã PNR';
 
         // tìm đơn đặt tour và cập nhật mã pnr
-        $booking = \App\Models\Booking::find($request->tour_booking_id);
+        $booking = Booking::find($request->tour_booking_id);
         if ($booking) {
             $booking->pnr_code = $bookingRef;
             $booking->save();
         }
 
         // gửi email cho khách hàng
-        $passengerName = $request->family_name . ' ' . $request->given_name;
+        $passengerName = $request->family_name.' '.$request->given_name;
         try {
-            \Illuminate\Support\Facades\Mail::to($request->email)->send(
-                new \App\Mail\FlightTicketMail($booking, $bookingRef, $passengerName)
+            Mail::to($request->email)->send(
+                new FlightTicketMail($booking, $bookingRef, $passengerName)
             );
         } catch (\Exception $e) {
             // bỏ qua lỗi gửi mail để không làm gián đoạn trải nghiệm hiển thị thông báo
         }
 
-        return redirect()->route('home')->with('success', 'Tuyệt vời! Mã chuẩn chi chuyến bay (PNR) của bạn là: ' . $bookingRef . '. Vé điện tử đã được gửi vào email của bạn.');
+        return redirect()->route('home')->with('success', 'Tuyệt vời! Mã chuẩn chi chuyến bay (PNR) của bạn là: '.$bookingRef.'. Vé điện tử đã được gửi vào email của bạn.');
     }
 }

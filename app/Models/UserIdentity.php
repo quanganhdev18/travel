@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class UserIdentity
- * 
+ *
  * @property int $id
  * @property int $user_id
  * @property string $identity_number
@@ -29,41 +29,38 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $verification_status
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property User $user
- *
- * @package App\Models
  */
 class UserIdentity extends Model
 {
-	protected $table = 'user_identities';
+    protected $table = 'user_identities';
 
-	protected $casts = [
-		'user_id' => 'int',
-		'date_of_birth' => 'datetime',
-		'issue_date' => 'datetime',
-		'expiry_date' => 'datetime'
-	];
+    protected $casts = [
+        'user_id' => 'int',
+        'date_of_birth' => 'datetime',
+        'issue_date' => 'datetime',
+        'expiry_date' => 'datetime',
+    ];
 
-	protected $fillable = [
-		'user_id',
-		'identity_number',
-		'full_name',
-		'date_of_birth',
-		'gender',
-		'nationality',
-		'place_of_origin',
-		'place_of_residence',
-		'issue_date',
-		'expiry_date',
-		'issue_place',
-		'front_image_url',
-		'back_image_url',
-		'verification_status'
-	];
+    protected $fillable = [
+        'user_id',
+        'identity_number',
+        'full_name',
+        'date_of_birth',
+        'gender',
+        'nationality',
+        'place_of_origin',
+        'place_of_residence',
+        'issue_date',
+        'expiry_date',
+        'issue_place',
+        'front_image_url',
+        'back_image_url',
+        'verification_status',
+    ];
 
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

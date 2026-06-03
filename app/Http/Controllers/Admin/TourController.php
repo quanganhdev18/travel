@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Destination;
 use App\Models\Category;
-use App\Models\TourSchedule;
+use App\Models\Destination;
 use App\Models\Tour;
 use App\Models\TourImage;
-use Illuminate\Support\Str;
+use App\Models\TourSchedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TourController extends Controller
 {
@@ -23,6 +23,7 @@ class TourController extends Controller
 
         return view('admin.tours.index', compact('tours'));
     }
+
     public function create()
     {
         $destinations = Destination::all();
@@ -39,6 +40,7 @@ class TourController extends Controller
             'title.en' => 'nullable|max:255',
             'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
+            'child_price' => 'nullable|numeric',
             'destination_id' => 'required|exists:destinations,id',
             'departure_location_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
@@ -46,19 +48,20 @@ class TourController extends Controller
         ]);
 
         // 2. Tạo Tour và tự động sinh slug
-        $tour = new Tour();
+        $tour = new Tour;
         $tour->title = [
             'vi' => $request->title['vi'],
             'en' => $request->title['en'] ?? $request->title['vi'],
             'zh' => $request->title['zh'] ?? $request->title['vi'],
         ];
-        $tour->slug = Str::slug($request->title['vi']) . '-' . time(); // Đảm bảo slug là duy nhất
+        $tour->slug = Str::slug($request->title['vi']).'-'.time(); // Đảm bảo slug là duy nhất
         $tour->description = [
             'vi' => $request->description['vi'] ?? '',
             'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
             'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
         ];
         $tour->base_price = $request->base_price;
+        $tour->child_price = $request->child_price;
         $tour->destination_id = $request->destination_id;
         $tour->departure_location_id = $request->departure_location_id;
         $tour->duration_days = $request->duration_days;
@@ -69,8 +72,8 @@ class TourController extends Controller
             $path = $request->file('primary_image')->store('tours', 'public');
 
             $tour->images()->create([
-                'image_url' => '/storage/' . $path,
-                'is_primary' => 1 // Đánh dấu đây là ảnh chính[cite: 8]
+                'image_url' => '/storage/'.$path,
+                'is_primary' => 1, // Đánh dấu đây là ảnh chính[cite: 8]
             ]);
         }
 
@@ -83,11 +86,11 @@ class TourController extends Controller
         return redirect()->route('admin.tours.schedules', $tour->id)->with('success', 'Đã tạo tour, vui lòng thêm lịch trình!');
     }
 
-
     // Hiển thị danh sách lịch trình của một tour
     public function schedules($id)
     {
         $tour = Tour::with('tour_schedules')->findOrFail($id);
+
         return view('admin.tours.schedules', compact('tour'));
     }
 
@@ -111,6 +114,7 @@ class TourController extends Controller
 
         return back()->with('success', 'Đã thêm lịch trình mới thành công!');
     }
+
     public function images($id)
     {
         // Lưu ý: tour_images là tên hàm quan hệ anh đã xác nhận ở Model Tour.php
@@ -132,8 +136,8 @@ class TourController extends Controller
 
                 TourImage::create([
                     'tour_id' => $id,
-                    'image_url' => '/storage/' . $path, // Lưu đường dẫn để hiển thị ra web[cite: 8]
-                    'is_primary' => 0
+                    'image_url' => '/storage/'.$path, // Lưu đường dẫn để hiển thị ra web[cite: 8]
+                    'is_primary' => 0,
                 ]);
             }
         }
@@ -162,6 +166,7 @@ class TourController extends Controller
             'title.en' => 'nullable|max:255',
             'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
+            'child_price' => 'nullable|numeric',
             'destination_id' => 'required|exists:destinations,id',
             'departure_location_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
@@ -180,6 +185,7 @@ class TourController extends Controller
             'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
         ];
         $tour->base_price = $request->base_price;
+        $tour->child_price = $request->child_price;
         $tour->destination_id = $request->destination_id;
         $tour->departure_location_id = $request->departure_location_id;
         $tour->duration_days = $request->duration_days;
@@ -191,8 +197,8 @@ class TourController extends Controller
             // Xóa ảnh chính cũ, tạo ảnh chính mới
             $tour->tour_images()->where('is_primary', 1)->delete();
             $tour->tour_images()->create([
-                'image_url' => '/storage/' . $path,
-                'is_primary' => 1
+                'image_url' => '/storage/'.$path,
+                'is_primary' => 1,
             ]);
         }
 
@@ -209,6 +215,7 @@ class TourController extends Controller
     public function destroy($id)
     {
         Tour::findOrFail($id)->delete();
+
         return back()->with('success', 'Đã chuyển tour vào thùng rác!');
     }
 
@@ -217,6 +224,7 @@ class TourController extends Controller
     {
         // Lấy các tour đã bị xóa
         $tours = Tour::onlyTrashed()->with('destination')->latest()->paginate(10);
+
         return view('admin.tours.trash', compact('tours'));
     }
 
@@ -224,6 +232,7 @@ class TourController extends Controller
     public function restore($id)
     {
         Tour::withTrashed()->findOrFail($id)->restore();
+
         return back()->with('success', 'Đã khôi phục tour thành công!');
     }
 
@@ -231,8 +240,10 @@ class TourController extends Controller
     public function forceDelete($id)
     {
         Tour::withTrashed()->findOrFail($id)->forceDelete();
+
         return back()->with('success', 'Đã xóa vĩnh viễn tour!');
     }
+
     public function setPrimaryImage($tourId, $imageId)
     {
         // 1. Đưa tất cả các ảnh của tour này về trạng thái không phải ảnh chính (0)
@@ -266,6 +277,7 @@ class TourController extends Controller
 
         return back()->with('success', 'Đã xóa ảnh thành công!');
     }
+
     public function show($slug)
     {
         $tour = Tour::with([
@@ -275,7 +287,7 @@ class TourController extends Controller
             'tour_schedules' => function ($query) {
                 $query->where('departure_date', '>=', now())->where('status', 'available')->orderBy('departure_date', 'asc');
             },
-            'tour_itineraries.activities'
+            'tour_itineraries.activities',
         ])->where('slug', $slug)->firstOrFail();
 
         $allActivities = $tour->tour_itineraries->flatMap->activities;

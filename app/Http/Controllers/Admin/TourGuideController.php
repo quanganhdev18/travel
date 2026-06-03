@@ -11,6 +11,7 @@ class TourGuideController extends Controller
     public function index()
     {
         $tourGuides = TourGuide::withCount('schedule_guides')->latest()->paginate(10);
+
         return view('admin.tour_guides.index', compact('tourGuides'));
     }
 
@@ -55,6 +56,7 @@ class TourGuideController extends Controller
     public function destroy(TourGuide $tourGuide)
     {
         $tourGuide->delete();
+
         return redirect()->route('admin.tour_guides.index')->with('success', 'Đã xóa Hướng dẫn viên!');
     }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 
 class BannerController extends Controller
@@ -13,6 +12,7 @@ class BannerController extends Controller
     public function index()
     {
         $banners = Banner::orderBy('sort_order')->get();
+
         return view('admin.banners.index', compact('banners'));
     }
 
@@ -30,22 +30,22 @@ class BannerController extends Controller
             'target_url' => 'nullable|string',
             'position' => 'nullable|string|in:hero,home_ads',
             'sort_order' => 'nullable|integer',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ]);
 
         $data = $request->except(['image']);
         $data['is_active'] = $request->has('is_active') ? 1 : 0;
-        
-        if (!$request->filled('sort_order')) {
+
+        if (! $request->filled('sort_order')) {
             $data['sort_order'] = Banner::max('sort_order') + 1;
         }
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imageName = time().'_'.$image->getClientOriginalName();
             $image->move(public_path('uploads/banners'), $imageName);
-            $data['image_url'] = 'uploads/banners/' . $imageName;
-        } elseif (!$request->filled('image_url')) {
+            $data['image_url'] = 'uploads/banners/'.$imageName;
+        } elseif (! $request->filled('image_url')) {
             return back()->with('error', 'Vui lòng tải ảnh lên hoặc nhập URL ảnh')->withInput();
         }
 
@@ -68,7 +68,7 @@ class BannerController extends Controller
             'target_url' => 'nullable|string',
             'position' => 'nullable|string|in:hero,home_ads',
             'sort_order' => 'nullable|integer',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ]);
 
         $data = $request->except(['image']);
@@ -79,11 +79,11 @@ class BannerController extends Controller
             if ($banner->image_url && file_exists(public_path($banner->image_url))) {
                 unlink(public_path($banner->image_url));
             }
-            
+
             $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
+            $imageName = time().'_'.$image->getClientOriginalName();
             $image->move(public_path('uploads/banners'), $imageName);
-            $data['image_url'] = 'uploads/banners/' . $imageName;
+            $data['image_url'] = 'uploads/banners/'.$imageName;
         }
 
         $banner->update($data);

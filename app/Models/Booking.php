@@ -45,6 +45,8 @@ class Booking extends Model
         'discount_amount' => 'float',
         'adults_count' => 'int',
         'children_count' => 'int',
+        'transport_price' => 'float',
+        'transport_data' => 'array',
     ];
 
     protected $fillable = [
@@ -58,6 +60,8 @@ class Booking extends Model
         'booking_status',
         'pnr_code',
         'transport_type',
+        'transport_price',
+        'transport_data',
     ];
 
     public function user()

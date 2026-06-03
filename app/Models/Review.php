@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Review
- * 
+ *
  * @property int $id
  * @property int $user_id
  * @property int $tour_id
@@ -19,36 +19,33 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $comment
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property User $user
  * @property Tour $tour
- *
- * @package App\Models
  */
 class Review extends Model
 {
-	protected $table = 'reviews';
+    protected $table = 'reviews';
 
-	protected $casts = [
-		'user_id' => 'int',
-		'tour_id' => 'int',
-		'rating' => 'int'
-	];
+    protected $casts = [
+        'user_id' => 'int',
+        'tour_id' => 'int',
+        'rating' => 'int',
+    ];
 
-	protected $fillable = [
-		'user_id',
-		'tour_id',
-		'rating',
-		'comment'
-	];
+    protected $fillable = [
+        'user_id',
+        'tour_id',
+        'rating',
+        'comment',
+    ];
 
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-	public function tour()
-	{
-		return $this->belongsTo(Tour::class);
-	}
+    public function tour()
+    {
+        return $this->belongsTo(Tour::class);
+    }
 }

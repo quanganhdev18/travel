@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class TicketBooking
- * 
+ *
  * @property int $id
  * @property int $user_id
  * @property int $ticket_option_id
@@ -25,63 +25,60 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $qr_code_url
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property User $user
  * @property TicketOption $ticket_option
  * @property Coupon|null $coupon
  * @property Collection|Invoice[] $invoices
  * @property Collection|Payment[] $payments
- *
- * @package App\Models
  */
 class TicketBooking extends Model
 {
-	protected $table = 'ticket_bookings';
+    protected $table = 'ticket_bookings';
 
-	protected $casts = [
-		'user_id' => 'int',
-		'ticket_option_id' => 'int',
-		'quantity' => 'int',
-		'total_price' => 'float',
-		'discount_amount' => 'float',
-		'coupon_id' => 'int',
-		'visit_date' => 'datetime'
-	];
+    protected $casts = [
+        'user_id' => 'int',
+        'ticket_option_id' => 'int',
+        'quantity' => 'int',
+        'total_price' => 'float',
+        'discount_amount' => 'float',
+        'coupon_id' => 'int',
+        'visit_date' => 'datetime',
+    ];
 
-	protected $fillable = [
-		'user_id',
-		'ticket_option_id',
-		'quantity',
-		'total_price',
-		'discount_amount',
-		'coupon_id',
-		'visit_date',
-		'booking_status',
-		'qr_code_url'
-	];
+    protected $fillable = [
+        'user_id',
+        'ticket_option_id',
+        'quantity',
+        'total_price',
+        'discount_amount',
+        'coupon_id',
+        'visit_date',
+        'booking_status',
+        'qr_code_url',
+    ];
 
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-	public function ticket_option()
-	{
-		return $this->belongsTo(TicketOption::class);
-	}
+    public function ticket_option()
+    {
+        return $this->belongsTo(TicketOption::class);
+    }
 
-	public function coupon()
-	{
-		return $this->belongsTo(Coupon::class);
-	}
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
 
-	public function invoices()
-	{
-		return $this->hasMany(Invoice::class);
-	}
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
 
-	public function payments()
-	{
-		return $this->hasMany(Payment::class);
-	}
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

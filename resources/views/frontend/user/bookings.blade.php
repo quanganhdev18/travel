@@ -65,97 +65,112 @@
                     </div>
                 </div>
                 
-                <div class="card-body p-4 p-md-5 row align-items-center">
-                    <div class="col-md-6 mb-4 mb-md-0 border-md-end pe-md-4">
-                        <div class="d-flex align-items-start">
-                            <div class="bg-light p-3 rounded-4 me-3 d-none d-sm-block">
-                                <i class="bi bi-briefcase text-primary fs-3"></i>
-                            </div>
-                            <div>
-                                <div class="text-muted small fw-500 mb-1 text-uppercase">Thông tin Tour</div>
-                                <h4 class="fw-bold text-dark mb-2" style="font-size: 1.1rem; line-height: 1.4;">
-                                    {{ $booking->tour_schedule->tour->title ?? 'Tên tour không tồn tại' }}
-                                </h4>
-                                @if(isset($booking->tour_schedule))
-                                <div class="text-muted small fw-500">
-                                    <i class="bi bi-geo-alt me-1 text-danger"></i> {{ $booking->tour_schedule->tour->destination->name ?? '' }} 
-                                    <span class="mx-2">|</span> 
-                                    <i class="bi bi-calendar-check me-1 text-success"></i> Khởi hành: {{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}
+                <div class="card-body p-4 p-md-5">
+                    <div class="row g-4">
+                        <div class="col-lg-7">
+                            <div class="d-flex align-items-start h-100">
+                                <div class="bg-light p-3 rounded-4 me-3 d-none d-sm-flex align-items-center justify-content-center" style="min-width: 64px; height: 64px;">
+                                    <i class="bi bi-briefcase text-primary fs-3"></i>
                                 </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-3 mb-4 mb-md-0 px-md-4">
-                        <div class="text-muted small fw-500 mb-1 text-uppercase text-center text-md-start">Phương thức di chuyển</div>
-                        @if($booking->transport_type == 'flight')
-                            @if($booking->pnr_code)
-                            <div class="d-flex align-items-center justify-content-center justify-content-md-start">
-                                <i class="bi bi-airplane text-danger fs-4 me-2"></i>
-                                <div class="fw-bold text-danger fs-4 tracking-wide" style="letter-spacing: 2px;">{{ $booking->pnr_code }}</div>
-                            </div>
-                            @else
-                            <div class="d-flex align-items-center justify-content-center justify-content-md-start text-warning mt-2">
-                                <i class="bi bi-airplane fs-5 me-2"></i> Chờ vé máy bay
-                            </div>
-                            @endif
-                        @elseif($booking->transport_type == 'bus')
-                            <div class="d-flex align-items-center justify-content-center justify-content-md-start text-info mt-2">
-                                <i class="bi bi-bus-front fs-5 me-2"></i> Đi bằng xe ô tô/xe khách
-                            </div>
-                        @else
-                            <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted mt-2">
-                                <i class="bi bi-car-front fs-5 me-2 opacity-50"></i> Di chuyển tự túc
-                            </div>
-                        @endif
-                    </div>
-                    
-                    <div class="col-md-3 text-center text-md-end ps-md-4">
-                        <div class="text-muted small fw-500 mb-1 text-uppercase">Tổng thanh toán</div>
-                        <div class="fw-bold text-dark" style="font-size: 1.5rem;">
-                            {!! format_currency($booking->total_price) !!}
-                        </div>
-                        <div class="mt-3">
-                            @php
-                                $latestPayment = $booking->payments->sortByDesc('created_at')->first();
-                                $paymentStatus = $latestPayment ? $latestPayment->payment_status : 'pending';
-                                $paymentMethod = $latestPayment ? $latestPayment->payment_method : 'cod';
-                            @endphp
-
-                            @if($paymentStatus === 'success')
-                                <span class="badge bg-success text-white rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
-                                    <i class="bi bi-check-circle-fill me-1"></i> Đã thanh toán (VNPay)
-                                </span>
-                            @elseif($paymentStatus === 'pending')
-                                @if($paymentMethod === 'vnpay')
-                                    <div class="d-flex flex-column align-items-center align-items-md-end gap-2">
-                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
-                                            <i class="bi bi-hourglass-split me-1"></i> Chờ thanh toán (VNPay)
-                                        </span>
-                                        @if($booking->booking_status !== 'cancelled')
-                                            <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1 fw-bold">
-                                                <i class="bi bi-credit-card me-1"></i> Thanh toán ngay
-                                            </a>
-                                        @endif
+                                <div>
+                                    <div class="text-muted small fw-500 mb-1 text-uppercase">Thông tin Tour</div>
+                                    <h4 class="fw-bold text-dark mb-2" style="font-size: 1.15rem; line-height: 1.4;">
+                                        {{ $booking->tour_schedule->tour->title ?? 'Tên tour không tồn tại' }}
+                                    </h4>
+                                    @if(isset($booking->tour_schedule))
+                                    <div class="d-flex flex-wrap gap-3 text-muted small fw-500 mt-3">
+                                        <div class="d-flex align-items-center"><i class="bi bi-geo-alt text-danger me-1 fs-5"></i> {{ $booking->tour_schedule->tour->destination->name ?? '' }}</div>
+                                        <div class="d-flex align-items-center"><i class="bi bi-calendar-check text-success me-1 fs-5"></i> {{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</div>
+                                        <div class="d-flex align-items-center"><i class="bi bi-people text-info me-1 fs-5"></i> {{ $booking->adults_count }} người lớn, {{ $booking->children_count }} trẻ em</div>
                                     </div>
-                                @else
-                                    <span class="badge bg-secondary text-white rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
-                                        <i class="bi bi-wallet2 me-1"></i> COD / Chuyển khoản
-                                    </span>
-                                @endif
-                            @else
-                                <div class="d-flex flex-column align-items-center align-items-md-end gap-2">
-                                    <span class="badge bg-danger text-white rounded-pill px-3 py-2 fw-semibold" style="font-size: 0.8rem;">
-                                        <i class="bi bi-x-circle-fill me-1"></i> Thanh toán thất bại
-                                    </span>
-                                    @if($booking->booking_status !== 'cancelled')
-                                        <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 mt-1 fw-bold">
-                                            <i class="bi bi-arrow-clockwise me-1"></i> Thử lại VNPay
-                                        </a>
                                     @endif
                                 </div>
-                            @endif
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-5">
+                            <div class="bg-light rounded-4 p-4 h-100 border border-light-subtle">
+                                <h6 class="fw-bold mb-3 border-bottom pb-2">Chi tiết thanh toán</h6>
+                                
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Phương thức di chuyển:</span>
+                                    <span class="fw-500 text-end">
+                                        @if($booking->transport_type == 'flight')
+                                            <i class="bi bi-airplane text-danger me-1"></i> Máy bay 
+                                            @if($booking->pnr_code) 
+                                                <br><span class="text-danger fw-bold tracking-wide" style="letter-spacing: 1px;">(PNR: {{ $booking->pnr_code }})</span>
+                                            @else 
+                                                <br><span class="text-warning">(Chờ vé)</span>
+                                            @endif
+                                        @elseif($booking->transport_type == 'bus')
+                                            <i class="bi bi-bus-front text-info me-1"></i> Xe ô tô/khách
+                                        @else
+                                            <i class="bi bi-car-front text-muted me-1"></i> Tự túc
+                                        @endif
+                                    </span>
+                                </div>
+
+                                @if($booking->transport_price > 0)
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Phí di chuyển:</span>
+                                    <span class="fw-500">{!! format_currency($booking->transport_price) !!}</span>
+                                </div>
+                                @endif
+
+                                @if($booking->discount_amount > 0)
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Giảm giá:</span>
+                                    <span class="text-success fw-500">-{!! format_currency($booking->discount_amount) !!}</span>
+                                </div>
+                                @endif
+
+                                <div class="d-flex justify-content-between mt-3 pt-3 border-top">
+                                    <span class="fw-bold text-dark mt-1">Tổng thanh toán:</span>
+                                    <span class="fw-bold text-primary" style="font-size: 1.3rem;">{!! format_currency($booking->total_price) !!}</span>
+                                </div>
+
+                                <div class="mt-4">
+                                    @php
+                                        $latestPayment = $booking->payments->sortByDesc('created_at')->first();
+                                        $paymentStatus = $latestPayment ? $latestPayment->payment_status : 'pending';
+                                        $paymentMethod = $latestPayment ? $latestPayment->payment_method : 'cod';
+                                    @endphp
+
+                                    @if($paymentStatus === 'success')
+                                        <div class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Đã thanh toán ({{ strtoupper($paymentMethod) }})
+                                        </div>
+                                    @elseif($paymentStatus === 'pending')
+                                        @if($paymentMethod === 'vnpay')
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
+                                                    <i class="bi bi-hourglass-split me-1"></i> Chờ thanh toán (VNPay)
+                                                </div>
+                                                @if($booking->booking_status !== 'cancelled')
+                                                    <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill fw-bold w-100 py-2 mt-1">
+                                                        <i class="bi bi-credit-card me-1"></i> Thanh toán ngay
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
+                                                <i class="bi bi-wallet2 me-1"></i> COD / Chuyển khoản
+                                            </div>
+                                        @endif
+                                    @else
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
+                                                <i class="bi bi-x-circle-fill me-1"></i> Thanh toán thất bại
+                                            </div>
+                                            @if($booking->booking_status !== 'cancelled')
+                                                <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold w-100 py-2 mt-1">
+                                                    <i class="bi bi-arrow-clockwise me-1"></i> Thử lại VNPay
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

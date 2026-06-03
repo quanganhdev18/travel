@@ -372,14 +372,23 @@
 
             <div class="col-lg-4">
                 <div class="premium-card booking-sidebar p-4 p-md-5 reveal-up">
-                    <div class="d-flex align-items-end mb-4 pb-3 border-bottom">
-                        <div class="booking-price">
-                            {{ format_currency($tour->base_price ?? 0) }}
+                    <div class="d-flex flex-column mb-4 pb-3 border-bottom">
+                        <div class="d-flex align-items-end mb-2">
+                            <div class="booking-price">
+                                {{ format_currency($tour->base_price ?? 0) }}
+                            </div>
+                            <span class="ms-2 text-muted mb-2">
+                                / người lớn
+                            </span>
                         </div>
-
-                        <span class="ms-2 text-muted mb-2">
-                            / khách
-                        </span>
+                        <div class="d-flex align-items-end">
+                            <div class="fs-5 fw-bold text-info">
+                                {{ format_currency($tour->child_price ?? (($tour->base_price ?? 0) * 0.75)) }}
+                            </div>
+                            <span class="ms-2 text-muted">
+                                / trẻ em
+                            </span>
+                        </div>
                     </div>
 
                     <h5 class="mb-4 fw-bold text-dark fs-5">
@@ -408,39 +417,109 @@
                         <form action="{{ route('frontend.tours.checkout') }}" method="POST">
                             @csrf
 
-                            <div class="d-flex overflow-auto gap-3 pb-3 mb-4" style="scrollbar-width: none;">
+<style>
+    .schedule-card-label {
+        border: 2px solid #e9ecef;
+        border-radius: 14px;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        background-color: #fff;
+    }
+    .schedule-card-label:hover {
+        border-color: #b8daff;
+        background-color: #f8fbff;
+    }
+    .btn-check:checked + .schedule-card-label {
+        border-color: var(--primary-color);
+        background-color: rgba(0, 124, 232, 0.04);
+        box-shadow: 0 4px 15px rgba(0, 124, 232, 0.12);
+    }
+    .btn-check:disabled + .schedule-card-label {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background-color: #f8f9fa;
+    }
+    .schedule-wrapper {
+        max-height: 340px;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+    /* Custom scrollbar */
+    .schedule-wrapper::-webkit-scrollbar {
+        width: 6px;
+    }
+    .schedule-wrapper::-webkit-scrollbar-track {
+        background: #f1f1f1; 
+        border-radius: 10px;
+    }
+    .schedule-wrapper::-webkit-scrollbar-thumb {
+        background: #c1c1c1; 
+        border-radius: 10px;
+    }
+    .schedule-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8; 
+    }
+</style>
+
+                            <div class="schedule-wrapper d-flex flex-column gap-3 mb-4 pb-4 border-bottom">
+                                @php
+                                    $hasAvailableSchedule = false;
+                                @endphp
                                 @foreach($tour->tour_schedules as $index => $schedule)
                                     @php
                                         \Carbon\Carbon::setLocale('vi');
                                         $date = \Carbon\Carbon::parse($schedule->departure_date);
                                         $dayOfWeek = ucfirst($date->translatedFormat('l'));
-
-                                        if ($dayOfWeek == 'Chủ nhật') {
-                                            $dayOfWeek = 'CN';
+                                        $formattedDate = $date->format('d/m/Y');
+                                        
+                                        $isFull = $schedule->available_seats <= 0;
+                                        $seatClass = $schedule->available_seats < 5 ? 'text-danger' : 'text-success';
+                                        
+                                        if (!$isFull && !$hasAvailableSchedule) {
+                                            $isChecked = true;
+                                            $hasAvailableSchedule = true;
+                                        } else {
+                                            $isChecked = false;
                                         }
-
-                                        $dayMonth = $date->format('d/m');
                                     @endphp
 
-                                    <div>
+                                    <div class="position-relative">
                                         <input type="radio"
                                                class="btn-check"
                                                name="schedule_id"
                                                id="schedule-{{ $schedule->id }}"
                                                value="{{ $schedule->id }}"
-                                               {{ $index == 0 ? 'checked' : '' }}
+                                               {{ $isChecked ? 'checked' : '' }}
+                                               {{ $isFull ? 'disabled' : '' }}
                                                required>
 
-                                        <label class="schedule-btn d-flex flex-column align-items-center"
+                                        <label class="schedule-card-label w-100 p-3 m-0 d-flex justify-content-between align-items-center"
                                                for="schedule-{{ $schedule->id }}">
-                                            <span class="fw-bold fs-6 mb-1">
-                                                {{ $dayOfWeek }}
-                                            </span>
+                                            
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-light rounded p-2 text-center me-3 border" style="min-width: 65px;">
+                                                    <div class="fw-bold fs-4 text-primary lh-1">{{ $date->format('d') }}</div>
+                                                    <div class="small text-muted mt-1 fw-500">Thg {{ $date->format('m') }}</div>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-dark fs-6">{{ $dayOfWeek }}</div>
+                                                    <div class="small text-muted mt-1"><i class="bi bi-calendar2-check text-primary me-1"></i> Khởi hành: {{ $formattedDate }}</div>
+                                                </div>
+                                            </div>
 
-                                            <span class="small opacity-75">
-                                                {{ $dayMonth }}
-                                            </span>
+                                            <div class="text-end ms-2">
+                                                @if($isFull)
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>Hết chỗ</span>
+                                                @else
+                                                    <div class="small text-muted mb-1">Số chỗ trống</div>
+                                                    <span class="badge bg-light text-dark border px-2 py-1 fs-6"><span class="{{ $seatClass }} fw-bold">{{ $schedule->available_seats }}</span></span>
+                                                @endif
+                                            </div>
                                         </label>
+                                        
+                                        @if($isFull)
+                                            <div class="position-absolute top-0 start-0 w-100 h-100 rounded-3" style="background: rgba(255,255,255,0.5); z-index: 1;"></div>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -520,6 +599,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const basePriceVND = {{ $tour->base_price ?? 0 }};
+        const childPriceVND = {{ $tour->child_price ?? (($tour->base_price ?? 0) * 0.75) }};
         const currency = '{{ Session::get("currency", "VND") }}';
 
         let rate = 1;
@@ -564,8 +644,7 @@
 
             const adults = parseInt(adultsInput.value) || 0;
             const children = parseInt(childrenInput.value) || 0;
-            const totalPersons = adults + children;
-            const totalVND = basePriceVND * totalPersons;
+            const totalVND = (basePriceVND * adults) + (childPriceVND * children);
             const convertedTotal = totalVND / rate;
 
             let formatted = new Intl.NumberFormat(currency === 'VND' ? 'vi-VN' : 'en-US', {

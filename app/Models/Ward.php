@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Ward
- * 
+ *
  * @property int $id
  * @property int|null $province_id
  * @property string|null $name
@@ -19,34 +19,33 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $name_with_type
  * @property string|null $path
  * @property string|null $path_with_type
- * 
  * @property Province|null $province
- *
- * @package App\Models
  */
 class Ward extends Model
 {
-	protected $table = 'wards';
-	public $incrementing = false;
-	public $timestamps = false;
+    protected $table = 'wards';
 
-	protected $casts = [
-		'id' => 'int',
-		'province_id' => 'int'
-	];
+    public $incrementing = false;
 
-	protected $fillable = [
-		'province_id',
-		'name',
-		'slug',
-		'type',
-		'name_with_type',
-		'path',
-		'path_with_type'
-	];
+    public $timestamps = false;
 
-	public function province()
-	{
-		return $this->belongsTo(Province::class);
-	}
+    protected $casts = [
+        'id' => 'int',
+        'province_id' => 'int',
+    ];
+
+    protected $fillable = [
+        'province_id',
+        'name',
+        'slug',
+        'type',
+        'name_with_type',
+        'path',
+        'path_with_type',
+    ];
+
+    public function province()
+    {
+        return $this->belongsTo(Province::class);
+    }
 }

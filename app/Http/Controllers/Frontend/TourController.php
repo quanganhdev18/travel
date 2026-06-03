@@ -17,8 +17,8 @@ class TourController extends Controller
             'tour_itineraries.activities',
             'categories',
         ])
-        ->where('slug', $slug)
-        ->firstOrFail();
+            ->where('slug', $slug)
+            ->firstOrFail();
 
         $groupedActivities = $tour->tour_itineraries
             ->flatMap->activities

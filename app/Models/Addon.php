@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Addon
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string|null $description
@@ -21,32 +21,29 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool|null $is_active
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Collection|Booking[] $bookings
- *
- * @package App\Models
  */
 class Addon extends Model
 {
-	protected $table = 'addons';
+    protected $table = 'addons';
 
-	protected $casts = [
-		'price' => 'float',
-		'is_active' => 'bool'
-	];
+    protected $casts = [
+        'price' => 'float',
+        'is_active' => 'bool',
+    ];
 
-	protected $fillable = [
-		'name',
-		'description',
-		'price',
-		'image_url',
-		'is_active'
-	];
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'image_url',
+        'is_active',
+    ];
 
-	public function bookings()
-	{
-		return $this->belongsToMany(Booking::class, 'booking_addons')
-					->withPivot('id', 'addon_name', 'price', 'quantity')
-					->withTimestamps();
-	}
+    public function bookings()
+    {
+        return $this->belongsToMany(Booking::class, 'booking_addons')
+            ->withPivot('id', 'addon_name', 'price', 'quantity')
+            ->withTimestamps();
+    }
 }

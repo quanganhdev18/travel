@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\TourSchedule;
 use App\Models\TourGuide;
+use App\Models\TourSchedule;
 use Illuminate\Http\Request;
 
 class OngoingTourController extends Controller
@@ -23,7 +23,7 @@ class OngoingTourController extends Controller
             $query->where('departure_date', '>', $today);
         } elseif ($status === 'ongoing') {
             $query->where('departure_date', '<=', $today)
-                  ->where('return_date', '>=', $today);
+                ->where('return_date', '>=', $today);
         }
 
         $schedules = $query->orderBy('departure_date', 'asc')->paginate(15);

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class BookingPassenger
- * 
+ *
  * @property int $id
  * @property int $booking_id
  * @property string $full_name
@@ -21,31 +21,28 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $passenger_type
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Booking $booking
- *
- * @package App\Models
  */
 class BookingPassenger extends Model
 {
-	protected $table = 'booking_passengers';
+    protected $table = 'booking_passengers';
 
-	protected $casts = [
-		'booking_id' => 'int',
-		'date_of_birth' => 'datetime'
-	];
+    protected $casts = [
+        'booking_id' => 'int',
+        'date_of_birth' => 'datetime',
+    ];
 
-	protected $fillable = [
-		'booking_id',
-		'full_name',
-		'date_of_birth',
-		'identity_number',
-		'gender',
-		'passenger_type'
-	];
+    protected $fillable = [
+        'booking_id',
+        'full_name',
+        'date_of_birth',
+        'identity_number',
+        'gender',
+        'passenger_type',
+    ];
 
-	public function booking()
-	{
-		return $this->belongsTo(Booking::class);
-	}
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class);
+    }
 }

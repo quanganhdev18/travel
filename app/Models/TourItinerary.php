@@ -20,10 +20,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $description
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
  * @property Tour $tour
- *
- * @package App\Models
  */
 class TourItinerary extends Model
 {

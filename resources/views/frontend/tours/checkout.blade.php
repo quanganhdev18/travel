@@ -53,7 +53,10 @@
                     <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
                     <input type="hidden" name="adults" value="{{ $adults }}">
                     <input type="hidden" name="children" value="{{ $children }}">
-                    <input type="hidden" name="total_price" value="{{ $totalPrice }}">
+                    <input type="hidden" name="total_price" id="input_total_price" value="{{ $totalPrice }}">
+                    <input type="hidden" name="transport_price" id="input_transport_price" value="0">
+                    <input type="hidden" name="transport_data" id="input_transport_data" value="">
+
 
                     <!-- Section 1: Thông Tin Hành Khách Chính -->
                     <div class="mb-5">
@@ -82,69 +85,98 @@
                         </div>
                     </div>
 
-                    <!-- Section 2: Thông Tin Định Danh -->
+                    <!-- Section 2: Danh sách Hành khách -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
-                            <i class="bi bi-card-heading"></i>
-                            {{ __('Định Danh (CCCD/Hộ Chiếu)') }}
+                            <i class="bi bi-people"></i>
+                            {{ __('Thông Tin Hành Khách') }}
                         </h4>
 
-                        <!-- Upload Images -->
-                        <div class="row g-4 mb-4 bg-light p-4 rounded-4 border">
-                            <div class="col-md-6">
-                                <label class="form-label fw-600 text-dark">{{ __('Ảnh Mặt Trước') }} <span class="text-danger">*</span></label>
-                                <input type="file" name="front_image" id="front_image" class="form-control search-form-control bg-white"
-                                    accept="image/*" {{ !$identity || !$identity->front_image_url ? 'required' : '' }}>
+                        @for($i = 0; $i < $adults; $i++)
+                        <div class="card mb-4 border shadow-sm">
+                            <div class="card-header bg-light fw-bold text-primary d-flex justify-content-between align-items-center">
+                                <span>{{ __('Người lớn') }} {{ $i + 1 }}</span>
+                                @if($i == 0) <span class="badge bg-primary">Người đại diện</span> @endif
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-600 text-dark">{{ __('Ảnh Mặt Sau') }} <span class="text-danger">*</span></label>
-                                <input type="file" name="back_image" id="back_image" class="form-control search-form-control bg-white"
-                                    accept="image/*" {{ !$identity || !$identity->back_image_url ? 'required' : '' }}>
-                            </div>
-                            <div class="col-12 mt-3 text-center">
-                                <button type="button" class="btn btn-outline-primary rounded-pill px-4" id="btn-scan-cccd">
-                                    <i class="bi bi-upc-scan me-2"></i>{{ __('Quét & Tự Động Điền') }}
-                                </button>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
+                                        <input type="text" name="passengers[adult][{{$i}}][full_name]" class="form-control" required placeholder="Nhập tên đầy đủ" {{ $i == 0 ? 'id=customer_name' : '' }} value="{{ $i == 0 ? ($identity->full_name ?? $user->name) : '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
+                                        <input type="text" name="passengers[adult][{{$i}}][identity_number]" class="form-control" required placeholder="Nhập số CCCD/Passport" {{ $i == 0 ? 'id=identity_number' : '' }} value="{{ $i == 0 ? ($identity->identity_number ?? '') : '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
+                                        <input type="date" name="passengers[adult][{{$i}}][date_of_birth]" class="form-control" required {{ $i == 0 ? 'id=date_of_birth' : '' }} value="{{ $i == 0 ? ($identity->date_of_birth ?? '') : '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
+                                        <select name="passengers[adult][{{$i}}][gender]" class="form-select" required {{ $i == 0 ? 'id=gender' : '' }}>
+                                            <option value="">{{ __('-- Chọn --') }}</option>
+                                            <option value="male" {{ $i == 0 && ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
+                                            <option value="female" {{ $i == 0 && ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
+                                            <option value="other" {{ $i == 0 && ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
+                                        </select>
+                                    </div>
+                                    
+                                    @if($i == 0)
+                                        <input type="hidden" name="issue_date" id="issue_date" value="{{ $identity->issue_date ?? '2020-01-01' }}">
+                                        <input type="hidden" name="expiry_date" id="expiry_date" value="{{ $identity->expiry_date ?? '2040-01-01' }}">
+                                        <input type="hidden" name="issue_place" id="issue_place" value="{{ $identity->issue_place ?? 'Hà Nội' }}">
+                                        
+                                        <div class="col-12 mt-3 p-3 bg-light rounded border">
+                                            <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
+                                            <div class="row g-2">
+                                                <div class="col-md-5">
+                                                    <input type="file" name="front_image" id="front_image" class="form-control form-control-sm" accept="image/*" placeholder="Mặt trước">
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <input type="file" name="back_image" id="back_image" class="form-control form-control-sm" accept="image/*" placeholder="Mặt sau">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <button type="button" class="btn btn-primary btn-sm w-100 h-100" id="btn-scan-cccd">
+                                                        <i class="bi bi-upc-scan"></i> Quét
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
+                        @endfor
 
-                        <!-- Identity Details -->
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="identity_number" id="identity_number" class="form-control search-form-control"
-                                    value="{{ $identity->identity_number ?? '' }}" required placeholder="{{ __('Nhập số CCCD') }}">
+                        @for($i = 0; $i < $children; $i++)
+                        <div class="card mb-4 border shadow-sm">
+                            <div class="card-header bg-light fw-bold text-info">
+                                {{ __('Trẻ em') }} {{ $i + 1 }}
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="date_of_birth" id="date_of_birth" class="form-control search-form-control"
-                                    value="{{ $identity->date_of_birth ?? '' }}" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
-                                <select name="gender" id="gender" class="form-select search-form-control" required>
-                                    <option value="">{{ __('-- Chọn --') }}</option>
-                                    <option value="male" {{ ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
-                                    <option value="female" {{ ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
-                                    <option value="other" {{ ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Ngày Cấp') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="issue_date" id="issue_date" class="form-control search-form-control"
-                                    value="{{ $identity->issue_date ?? '' }}" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Ngày Hết Hạn') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="expiry_date" id="expiry_date" class="form-control search-form-control"
-                                    value="{{ $identity->expiry_date ?? '' }}" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-600 text-dark">{{ __('Nơi Cấp') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="issue_place" id="issue_place" class="form-control search-form-control"
-                                    value="{{ $identity->issue_place ?? '' }}" required placeholder="{{ __('Vd: Công an TP Hà Nội') }}">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
+                                        <input type="text" name="passengers[child][{{$i}}][full_name]" class="form-control" required placeholder="Nhập tên đầy đủ">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
+                                        <input type="date" name="passengers[child][{{$i}}][date_of_birth]" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
+                                        <select name="passengers[child][{{$i}}][gender]" class="form-select" required>
+                                            <option value="">{{ __('-- Chọn --') }}</option>
+                                            <option value="male">{{ __('Nam') }}</option>
+                                            <option value="female">{{ __('Nữ') }}</option>
+                                            <option value="other">{{ __('Khác') }}</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        @endfor
                     </div>
 
                     <!-- Section 3: Phương Thức Vận Chuyển -->
@@ -154,43 +186,49 @@
                             {{ __('Di Chuyển Đến Điểm Khởi Hành') }}
                         </h4>
 
-                        <div class="row g-4">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_flight" value="flight" checked>
-                                <label class="transport-option w-100 p-4 text-start" for="transport_flight">
+                                <input type="radio" class="btn-check" name="transport_type" id="transport_flight" value="flight">
+                                <label class="transport-option w-100 p-3 text-start" for="transport_flight">
                                     <div class="d-flex align-items-center">
-                                        <i class="bi bi-airplane text-muted" style="font-size: 32px;"></i>
+                                        <i class="bi bi-airplane text-muted" style="font-size: 28px;"></i>
                                         <div class="ms-3">
-                                            <div class="fw-bold fs-5 text-dark">{{ __('Đặt Vé Máy Bay') }}</div>
-                                            <div class="small text-muted mt-1">{{ __('Tìm chuyến bay tiện lợi') }}</div>
+                                            <div class="fw-bold fs-6 text-dark">{{ __('Vé Máy Bay') }}</div>
                                         </div>
                                     </div>
                                 </label>
                             </div>
                             <div class="col-md-4">
                                 <input type="radio" class="btn-check" name="transport_type" id="transport_bus" value="bus">
-                                <label class="transport-option w-100 p-4 text-start" for="transport_bus">
+                                <label class="transport-option w-100 p-3 text-start" for="transport_bus">
                                     <div class="d-flex align-items-center">
-                                        <i class="bi bi-bus-front text-muted" style="font-size: 32px;"></i>
+                                        <i class="bi bi-bus-front text-muted" style="font-size: 28px;"></i>
                                         <div class="ms-3">
-                                            <div class="fw-bold fs-5 text-dark">{{ __('Xe Khách / Ô Tô') }}</div>
-                                            <div class="small text-muted mt-1">{{ __('Đặt xe ghép, xe giường nằm') }}</div>
+                                            <div class="fw-bold fs-6 text-dark">{{ __('Xe Khách') }}</div>
                                         </div>
                                     </div>
                                 </label>
                             </div>
                             <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_self" value="self">
-                                <label class="transport-option w-100 p-4 text-start" for="transport_self">
+                                <input type="radio" class="btn-check" name="transport_type" id="transport_self" value="self" checked>
+                                <label class="transport-option w-100 p-3 text-start" for="transport_self">
                                     <div class="d-flex align-items-center">
-                                        <i class="bi bi-car-front text-muted" style="font-size: 32px;"></i>
+                                        <i class="bi bi-car-front text-muted" style="font-size: 28px;"></i>
                                         <div class="ms-3">
-                                            <div class="fw-bold fs-5 text-dark">{{ __('Tự Túc Di Chuyển') }}</div>
-                                            <div class="small text-muted mt-1">{{ __('Tự đến điểm khởi hành') }}</div>
+                                            <div class="fw-bold fs-6 text-dark">{{ __('Tự Túc') }}</div>
                                         </div>
                                     </div>
                                 </label>
                             </div>
+                        </div>
+                        
+                        <!-- Vùng hiển thị kết quả phương tiện (AJAX) -->
+                        <div id="transport_options_container" style="display: none;" class="p-4 bg-light rounded border">
+                            <div id="transport_loading" style="display: none;" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <div class="mt-2 text-muted">Đang tìm kiếm chuyến đi phù hợp nhất...</div>
+                            </div>
+                            <div id="transport_results"></div>
                         </div>
                     </div>
                     <!-- Section 4: Phương Thức Thanh Toán -->
@@ -263,7 +301,7 @@
                     @if($children > 0)
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted fw-500">{{ __('Trẻ em:') }}</span>
-                        <strong class="text-dark">{{ $children }} × {{ format_currency($schedule->tour->base_price) }}</strong>
+                        <strong class="text-dark">{{ $children }} × {{ format_currency($schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75)) }}</strong>
                     </div>
                     @endif
                     <div class="d-flex justify-content-between align-items-center pt-2">
@@ -274,8 +312,12 @@
 
                 <!-- Total Price -->
                 <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="transport_fee_row" style="display: none !important;">
+                        <span class="text-muted fw-500">{{ __('Phí di chuyển:') }}</span>
+                        <strong class="text-dark" id="display_transport_price">0 đ</strong>
+                    </div>
                     <div class="text-muted fw-500 mb-2">{{ __('Tổng Tiền Cần Thanh Toán:') }}</div>
-                    <div class="text-danger fw-bold lh-1" style="font-size: 2rem;">
+                    <div class="text-danger fw-bold lh-1" style="font-size: 2rem;" id="display_total_price">
                         {!! format_currency($totalPrice) !!}
                     </div>
                 </div>
@@ -386,5 +428,202 @@
         if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
         return dobStr;
     }
+
+    // TRANSPORT DYNAMIC LOGIC
+    @php
+        $iataMap = [
+            'Đà Nẵng' => 'DAD',
+            'Thành Phố Hồ Chí Minh' => 'SGN',
+            'Hà Nội' => 'HAN',
+            'Phú Quốc' => 'PQC',
+            'Nha Trang' => 'CXR',
+            'Huế' => 'HUI',
+            'Vinh' => 'VII',
+            'Đà Lạt' => 'DLI',
+            'Hải Phòng' => 'HPH',
+        ];
+        $departureLoc = $schedule->tour->departure_location->name ?? '';
+        $destinationLoc = $schedule->tour->destination->name ?? '';
+        $originCode = $iataMap[$departureLoc] ?? 'HAN';
+        $destinationCode = $iataMap[$destinationLoc] ?? 'SGN';
+        $departureDate = \Carbon\Carbon::parse($schedule->departure_date)->format('Y-m-d');
+    @endphp
+
+    const transportRadios = document.querySelectorAll('input[name="transport_type"]');
+    const transportContainer = document.getElementById('transport_options_container');
+    const transportLoading = document.getElementById('transport_loading');
+    const transportResults = document.getElementById('transport_results');
+    
+    const inputTransportPrice = document.getElementById('input_transport_price');
+    const inputTransportData = document.getElementById('input_transport_data');
+    const inputTotalPrice = document.getElementById('input_total_price');
+    
+    const displayTransportPrice = document.getElementById('display_transport_price');
+    const displayTotalPrice = document.getElementById('display_total_price');
+    const transportFeeRow = document.getElementById('transport_fee_row');
+
+    const baseTourPrice = {{ $totalPrice }};
+    const totalPersonsCount = {{ $totalPersons }};
+
+    function formatCurrencyVND(amount) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+
+    function updateTotalDisplay(transportPrice = 0) {
+        const finalPrice = baseTourPrice + transportPrice;
+        
+        inputTransportPrice.value = transportPrice;
+        inputTotalPrice.value = finalPrice;
+        
+        if (transportPrice > 0) {
+            transportFeeRow.style.setProperty('display', 'flex', 'important');
+            displayTransportPrice.textContent = formatCurrencyVND(transportPrice);
+        } else {
+            transportFeeRow.style.setProperty('display', 'none', 'important');
+        }
+        
+        displayTotalPrice.textContent = formatCurrencyVND(finalPrice);
+    }
+
+    // Function handle selecting a transport option
+    window.selectTransportOption = function(price, dataStr) {
+        // Parse data
+        let data = JSON.parse(decodeURIComponent(dataStr));
+        inputTransportData.value = JSON.stringify(data);
+        
+        // Highlight selected
+        document.querySelectorAll('.transport-item-card').forEach(el => el.classList.remove('border-primary', 'bg-light'));
+        event.currentTarget.classList.add('border-primary', 'bg-light');
+        
+        // Update price
+        updateTotalDisplay(parseFloat(price));
+    };
+
+    transportRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Reset state
+            updateTotalDisplay(0);
+            inputTransportData.value = '';
+            
+            if (this.value === 'self') {
+                transportContainer.style.display = 'none';
+                return;
+            }
+            
+            transportContainer.style.display = 'block';
+            transportLoading.style.display = 'block';
+            transportResults.innerHTML = '';
+            
+            if (this.value === 'flight') {
+                // Fetch Flight
+                fetch(`/api/flights/search?passengers=${totalPersonsCount}&origin={{ $originCode }}&destination={{ $destinationCode }}&departure_date={{ $departureDate }}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        transportLoading.style.display = 'none';
+                        // Chỉ lọc các chuyến bay của Duffel Airways
+                        let duffelOffers = (data.data || []).filter(offer => (offer.owner.name || '').includes('Duffel'));
+                        
+                        if(data.success && duffelOffers.length > 0) {
+                            let html = '<h5 class="fw-bold mb-3">Chọn Chuyến Bay</h5>';
+                            duffelOffers.forEach(offer => {
+                                let priceVND = parseFloat(offer.total_amount) * 25000;
+                                if (offer.total_currency === 'VND') {
+                                    priceVND = parseFloat(offer.total_amount);
+                                }
+                                
+                                let slice = offer.slices[0];
+                                let segmentFirst = slice.segments[0];
+                                let segmentLast = slice.segments[slice.segments.length - 1];
+                                
+                                let departTime = new Date(segmentFirst.departing_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                                let arriveTime = new Date(segmentLast.arriving_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                                
+                                let dur = slice.duration || '';
+                                let hMatch = dur.match(/(\d+)H/);
+                                let mMatch = dur.match(/(\d+)M/);
+                                let durationStr = (hMatch ? hMatch[1] + 'h ' : '') + (mMatch ? mMatch[1] + 'm' : '0m');
+                                
+                                let originCode = slice.origin.iata_code || '';
+                                let destCode = slice.destination.iata_code || '';
+
+                                let dataStr = encodeURIComponent(JSON.stringify({
+                                    offer_id: offer.id,
+                                    provider: offer.owner.name,
+                                    price: priceVND
+                                }));
+                                
+                                html += `
+                                <div class="card mb-3 transport-item-card" style="cursor:pointer;" onclick="selectTransportOption(${priceVND}, '${dataStr}')">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="fw-bold text-primary"><i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}</div>
+                                            <div class="fw-bold text-danger fs-5">+ ${formatCurrencyVND(priceVND)}</div>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3">
+                                            <div class="text-center">
+                                                <div class="fw-bold fs-4 text-dark lh-1 mb-1">${departTime}</div>
+                                                <div class="small fw-500 text-muted">${originCode}</div>
+                                            </div>
+                                            <div class="text-center flex-grow-1 px-4">
+                                                <div class="small text-muted mb-2 fw-500">${durationStr}</div>
+                                                <div class="position-relative w-100" style="height: 2px; background-color: #dee2e6;">
+                                                    <i class="bi bi-airplane-fill text-primary position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f8f9fa; padding: 0 5px;"></i>
+                                                </div>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="fw-bold fs-4 text-dark lh-1 mb-1">${arriveTime}</div>
+                                                <div class="small fw-500 text-muted">${destCode}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                            });
+                            transportResults.innerHTML = html;
+                        } else {
+                            transportResults.innerHTML = '<div class="alert alert-warning">Không tìm thấy chuyến bay mẫu của Duffel Airways phù hợp.</div>';
+                        }
+                    })
+                    .catch(err => {
+                        transportLoading.style.display = 'none';
+                        transportResults.innerHTML = '<div class="alert alert-danger">Lỗi kết nối khi tìm chuyến bay.</div>';
+                    });
+            } else if (this.value === 'bus') {
+                // Mock Bus Data
+                setTimeout(() => {
+                    transportLoading.style.display = 'none';
+                    let buses = [
+                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', price: 400000 * totalPersonsCount },
+                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', price: 350000 * totalPersonsCount }
+                    ];
+                    
+                    let html = '<h5 class="fw-bold mb-3">Chọn Chuyến Xe</h5>';
+                    buses.forEach(bus => {
+                        let dataStr = encodeURIComponent(JSON.stringify({
+                            bus_id: bus.id,
+                            provider: bus.name,
+                            time: bus.time,
+                            price: bus.price
+                        }));
+                        
+                        html += `
+                        <div class="card mb-3 transport-item-card" style="cursor:pointer;" onclick="selectTransportOption(${bus.price}, '${dataStr}')">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
+                                    <div class="small text-muted">Khởi hành: ${bus.time}</div>
+                                </div>
+                                <div class="fw-bold text-danger fs-5">
+                                    + ${formatCurrencyVND(bus.price)}
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    });
+                    transportResults.innerHTML = html;
+                }, 800);
+            }
+        });
+    });
 </script>
 @endsection

@@ -25,6 +25,7 @@ class Tour extends Model
         'duration_days' => 'int',
         'duration_nights' => 'int',
         'base_price' => 'float',
+        'child_price' => 'float',
     ];
 
     public $translatable = [
@@ -41,6 +42,7 @@ class Tour extends Model
         'duration_days',
         'duration_nights',
         'base_price',
+        'child_price',
         'ai_tags',
     ];
 

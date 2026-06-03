@@ -63,6 +63,8 @@ Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
 // Tìm chuyến bay
 Route::get('/flights', [FlightController::class, 'search'])
     ->name('frontend.flights.search');
+Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
+    ->name('api.flights.search');
 
 /*
 |--------------------------------------------------------------------------

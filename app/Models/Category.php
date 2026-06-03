@@ -13,34 +13,31 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * Class Category
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string $slug
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Collection|TourCategory[] $tour_categories
- *
- * @package App\Models
  */
 class Category extends Model
 {
-	use HasTranslations;
+    use HasTranslations;
 
-	protected $table = 'categories';
+    protected $table = 'categories';
 
-	protected $fillable = [
-		'name',
-		'slug'
-	];
+    protected $fillable = [
+        'name',
+        'slug',
+    ];
 
-	public $translatable = [
-		'name'
-	];
+    public $translatable = [
+        'name',
+    ];
 
-	public function tour_categories()
-	{
-		return $this->hasMany(TourCategory::class);
-	}
+    public function tour_categories()
+    {
+        return $this->hasMany(TourCategory::class);
+    }
 }
