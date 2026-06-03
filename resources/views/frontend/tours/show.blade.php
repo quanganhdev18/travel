@@ -182,8 +182,8 @@
         })
         ->values();
 
-    $destinationName = $tour->destination->name ?? 'Điểm đến';
-    $departureName = $tour->departure_location->name ?? 'Đang cập nhật';
+    $destinationName = $tour->destination->name ?? __('Điểm đến');
+    $departureName = $tour->departure_location->name ?? __('Đang cập nhật');
 @endphp
 
 <div class="tour-detail-wrapper">
@@ -193,7 +193,7 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">
                     <a href="{{ route('home') }}" class="text-decoration-none text-primary fw-500">
-                        Trang chủ
+                        {{ __('Trang chủ') }}
                     </a>
                 </li>
 
@@ -217,7 +217,7 @@
             <div class="d-flex flex-wrap gap-4 tour-info-line mb-4">
                 <span class="d-flex align-items-center">
                     <i class="bi bi-geo-alt fs-5 me-2 text-danger"></i>
-                    Khởi hành từ:
+                    {{ __('Khởi hành từ:') }}
                     <strong class="ms-1 text-dark">
                         {{ $departureName }}
                     </strong>
@@ -225,7 +225,7 @@
 
                 <span class="d-flex align-items-center">
                     <i class="bi bi-clock fs-5 me-2 text-warning"></i>
-                    {{ $tour->duration_days ?? 0 }} ngày {{ $tour->duration_nights ?? 0 }} đêm
+                    {{ $tour->duration_days ?? 0 }} {{ __('ngày') }} {{ $tour->duration_nights ?? 0 }} {{ __('đêm') }}
                 </span>
             </div>
 
@@ -249,7 +249,7 @@
                         </div>
                     @empty
                         <div class="alert alert-warning mb-0">
-                            Tour này chưa có ảnh phụ trong database.
+                            {{ __('Tour này chưa có ảnh phụ.') }}
                         </div>
                     @endforelse
                 </div>
@@ -261,17 +261,17 @@
 
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
                     <h3 class="section-heading mb-4 text-dark fs-4">
-                        Tổng quan
+                        {{ __('Tổng quan') }}
                     </h3>
 
                     <p class="tour-content-text mb-0">
-                        {!! nl2br(e($tour->description ?? 'Đang cập nhật mô tả tour.')) !!}
+                        {!! nl2br(e($tour->description ?? __('Đang cập nhật mô tả tour.'))) !!}
                     </p>
                 </div>
 
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
                     <h3 class="section-heading mb-4 text-dark fs-4">
-                        Lịch trình chi tiết
+                        {{ __('Lịch trình chi tiết') }}
                     </h3>
 
                     @if($tour->tour_itineraries->count())
@@ -289,7 +289,7 @@
                                             type="button"
                                             role="tab">
                                         <div class="small text-uppercase mb-1" style="opacity: 0.8; letter-spacing: 1px;">
-                                            Ngày {{ $itinerary->day_number }}
+                                            {{ __('Ngày') }} {{ $itinerary->day_number }}
                                         </div>
 
                                         <div class="fw-bold">
@@ -308,12 +308,12 @@
                                          role="tabpanel">
 
                                         <h4 class="mb-4 fw-bold text-dark">
-                                            Ngày {{ $itinerary->day_number }}:
+                                            {{ __('Ngày') }} {{ $itinerary->day_number }}:
                                             {{ $itinerary->title }}
                                         </h4>
 
                                         <p class="tour-content-text">
-                                            {!! nl2br(e($itinerary->description ?? 'Đang cập nhật lịch trình.')) !!}
+                                            {!! nl2br(e($itinerary->description ?? __('Đang cập nhật lịch trình.'))) !!}
                                         </p>
 
                                         @if($itinerary->activities && $itinerary->activities->count())
@@ -332,21 +332,21 @@
                         </div>
                     @else
                         <p class="text-muted mb-0">
-                            Chưa có lịch trình chi tiết.
+                            {{ __('Chưa có lịch trình chi tiết.') }}
                         </p>
                     @endif
                 </div>
 
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
                     <h3 class="section-heading mb-4 text-dark fs-4">
-                        Các hoạt động nổi bật
+                        {{ __('Các hoạt động nổi bật') }}
                     </h3>
 
                     @if(isset($groupedActivities) && $groupedActivities->isNotEmpty())
                         @foreach($groupedActivities as $type => $activities)
                             <div class="mb-4">
                                 <h5 class="fw-bold text-dark mb-3">
-                                    {{ $type ?: 'Hoạt động' }}
+                                    {{ $type ?: __('Hoạt động') }}
                                 </h5>
 
                                 @foreach($activities as $activity)
@@ -364,7 +364,7 @@
                         @endforeach
                     @else
                         <p class="text-muted mb-0">
-                            Chưa có thông tin hoạt động chi tiết.
+                            {{ __('Chưa có thông tin hoạt động chi tiết.') }}
                         </p>
                     @endif
                 </div>
@@ -378,7 +378,7 @@
                                 {{ format_currency($tour->base_price ?? 0) }}
                             </div>
                             <span class="ms-2 text-muted mb-2">
-                                / người lớn
+                                / {{ __('người lớn') }}
                             </span>
                         </div>
                         <div class="d-flex align-items-end">
@@ -386,13 +386,13 @@
                                 {{ format_currency($tour->child_price ?? (($tour->base_price ?? 0) * 0.75)) }}
                             </div>
                             <span class="ms-2 text-muted">
-                                / trẻ em
+                                / {{ __('trẻ em') }}
                             </span>
                         </div>
                     </div>
 
                     <h5 class="mb-4 fw-bold text-dark fs-5">
-                        Chọn lịch trình khởi hành
+                        {{ __('Chọn lịch trình khởi hành') }}
                     </h5>
 
                     @if ($errors->any())
@@ -407,15 +407,14 @@
 
                     @if($tour->tour_schedules->isEmpty())
                         <div class="alert alert-warning mb-4 rounded-4">
-                            Hiện tại tour này chưa có lịch khởi hành mới. Vui lòng quay lại sau!
+                            {{ __('Hiện tại tour này chưa có lịch khởi hành mới. Vui lòng quay lại sau!') }}
                         </div>
 
                         <button type="button" class="btn btn-secondary w-100 py-3 fs-5" disabled>
-                            Tạm ngưng nhận khách
+                            {{ __('Tạm ngưng nhận khách') }}
                         </button>
                     @else
-                        <form action="{{ route('frontend.tours.checkout') }}" method="POST">
-                            @csrf
+                        <form action="{{ route('frontend.tours.checkout') }}" method="GET">
 
 <style>
     .schedule-card-label {
@@ -499,19 +498,19 @@
                                             <div class="d-flex align-items-center">
                                                 <div class="bg-light rounded p-2 text-center me-3 border" style="min-width: 65px;">
                                                     <div class="fw-bold fs-4 text-primary lh-1">{{ $date->format('d') }}</div>
-                                                    <div class="small text-muted mt-1 fw-500">Thg {{ $date->format('m') }}</div>
+                                                    <div class="small text-muted mt-1 fw-500">{{ __('Thg') }} {{ $date->format('m') }}</div>
                                                 </div>
                                                 <div>
                                                     <div class="fw-bold text-dark fs-6">{{ $dayOfWeek }}</div>
-                                                    <div class="small text-muted mt-1"><i class="bi bi-calendar2-check text-primary me-1"></i> Khởi hành: {{ $formattedDate }}</div>
+                                                    <div class="small text-muted mt-1"><i class="bi bi-calendar2-check text-primary me-1"></i> {{ __('Khởi hành:') }} {{ $formattedDate }}</div>
                                                 </div>
                                             </div>
 
                                             <div class="text-end ms-2">
                                                 @if($isFull)
-                                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>Hết chỗ</span>
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>{{ __('Hết chỗ') }}</span>
                                                 @else
-                                                    <div class="small text-muted mb-1">Số chỗ trống</div>
+                                                    <div class="small text-muted mb-1">{{ __('Số chỗ trống') }}</div>
                                                     <span class="badge bg-light text-dark border px-2 py-1 fs-6"><span class="{{ $seatClass }} fw-bold">{{ $schedule->available_seats }}</span></span>
                                                 @endif
                                             </div>
@@ -527,7 +526,7 @@
                             <div class="row g-3 mb-4 pb-4 border-bottom">
                                 <div class="col-6">
                                     <label class="form-label mb-2 fw-600 text-dark">
-                                        Người lớn
+                                        {{ __('Người lớn') }}
                                     </label>
 
                                     <div class="input-group">
@@ -547,7 +546,7 @@
 
                                 <div class="col-6">
                                     <label class="form-label mb-2 fw-600 text-dark">
-                                        Trẻ em
+                                        {{ __('Trẻ em') }}
                                     </label>
 
                                     <div class="input-group">
@@ -568,7 +567,7 @@
 
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <span class="text-muted fw-600">
-                                    Tổng cộng:
+                                    {{ __('Tổng cộng:') }}
                                 </span>
 
                                 <span class="booking-total" id="totalPrice">
@@ -578,13 +577,13 @@
 
                             @auth
                                 <button type="submit" class="btn btn-register-premium w-100 py-3 fs-5">
-                                    Đặt Ngay Chuyến Đi
+                                    {{ __('Đặt Ngay Chuyến Đi') }}
                                 </button>
                             @else
                                 <a href="{{ route('login') }}"
                                    class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
                                    style="border: 2px solid var(--primary-color);">
-                                    Đăng nhập để Đặt
+                                    {{ __('Đăng nhập để Đặt') }}
                                 </a>
                             @endauth
                         </form>

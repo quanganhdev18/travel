@@ -121,4 +121,9 @@ class Tour extends Model
             ->where('status', 'available')
             ->orderBy('departure_date', 'asc');
     }
+
+    public function tickets()
+    {
+        return $this->belongsToMany(Ticket::class, 'tour_tickets', 'tour_id', 'ticket_id');
+    }
 }

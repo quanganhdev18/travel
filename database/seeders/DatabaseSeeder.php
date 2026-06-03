@@ -19,6 +19,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call([
+            TicketSeeder::class,
+        ]);
+
         // 1. Seed Users
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],

@@ -56,10 +56,6 @@ Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
 Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
     ->name('frontend.tours.vnpay_ipn');
 
-// Chi tiết Tour
-Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
-    ->name('frontend.tours.show');
-
 // Tìm chuyến bay
 Route::get('/flights', [FlightController::class, 'search'])
     ->name('frontend.flights.search');
@@ -95,7 +91,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('ocr.scan-cccd');
 
     // Đặt Tour
-    Route::post('/tours/checkout', [TourBookingController::class, 'checkout'])
+    Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
         ->name('frontend.tours.checkout');
 
     Route::post('/tours/book', [TourBookingController::class, 'store'])
@@ -117,13 +113,17 @@ Route::middleware(['auth'])->group(function () {
         ->name('frontend.bookings.pay_vnpay');
 });
 
+// Chi tiết Tour
+Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
+    ->name('frontend.tours.show');
+
 /*
 |--------------------------------------------------------------------------
 | Admin
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->middleware(['auth'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
 

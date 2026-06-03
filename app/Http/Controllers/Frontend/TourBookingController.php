@@ -8,6 +8,8 @@ use App\Mail\TourBookingMail;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\Payment;
+use App\Models\TicketBooking;
+use App\Models\TicketOption;
 use App\Models\TourSchedule;
 use App\Models\UserIdentity;
 use Illuminate\Http\JsonResponse;
@@ -114,7 +116,26 @@ class TourBookingController extends Controller
             $calculatedPrice = ($schedule->tour->base_price * $request->adults) + ($childPrice * $request->children);
 
             $transportPrice = $request->input('transport_price', 0);
-            $finalTotalPrice = $calculatedPrice + $transportPrice;
+
+            // Tính tiền vé tham quan
+            $ticketPrice = 0;
+            $selectedTickets = [];
+            if ($request->filled('tickets') && is_array($request->tickets)) {
+                foreach ($request->tickets as $ticketOptionId => $qty) {
+                    if ($qty > 0) {
+                        $opt = TicketOption::find($ticketOptionId);
+                        if ($opt) {
+                            $ticketPrice += $opt->price * $qty;
+                            $selectedTickets[] = [
+                                'option' => $opt,
+                                'qty' => $qty,
+                            ];
+                        }
+                    }
+                }
+            }
+
+            $finalTotalPrice = $calculatedPrice + $transportPrice + $ticketPrice;
 
             $transportData = null;
             if ($request->filled('transport_data')) {
@@ -132,6 +153,19 @@ class TourBookingController extends Controller
             $booking->transport_price = $transportPrice;
             $booking->transport_data = $transportData;
             $booking->save();
+
+            // Lưu TicketBooking
+            foreach ($selectedTickets as $item) {
+                $tb = new TicketBooking;
+                $tb->user_id = $user->id;
+                $tb->booking_id = $booking->id; // Khóa ngoại mới thêm
+                $tb->ticket_option_id = $item['option']->id;
+                $tb->quantity = $item['qty'];
+                $tb->total_price = $item['option']->price * $item['qty'];
+                $tb->visit_date = $schedule->departure_date; // Mặc định dùng ngày khởi hành tour
+                $tb->booking_status = 'pending';
+                $tb->save();
+            }
 
             if (isset($request->passengers['adult'])) {
                 foreach ($request->passengers['adult'] as $adult) {
@@ -280,7 +314,7 @@ class TourBookingController extends Controller
             'children' => 'required|integer|min:0',
         ]);
 
-        $schedule = TourSchedule::with('tour')->findOrFail($request->schedule_id);
+        $schedule = TourSchedule::with(['tour.tickets.ticket_options'])->findOrFail($request->schedule_id);
         $totalPersons = $request->adults + $request->children;
 
         if ($schedule->available_seats < $totalPersons) {

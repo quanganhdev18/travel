@@ -130,8 +130,8 @@
                         <img src="{{ $dest->image_url ?? 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=600' }}"
                             alt="{{ $dest->name ?? 'Điểm đến' }}">
                         <div class="dest-overlay">
-                            <h5>{{ $dest->name ?? 'Điểm đến' }}</h5>
-                            <span class="dest-count">100+ Tours</span>
+                            <h5>{{ $dest->name ?? __('Điểm đến') }}</h5>
+                            <span class="dest-count">100+ {{ __('Tours') }}</span>
                         </div>
                     </div>
                 </a>
@@ -226,7 +226,7 @@
                     <div class="px-3 pb-3">
                         <a href="{{ route('frontend.tours.show', $tourSlug) }}"
                            class="btn btn-primary w-100">
-                            Xem chi tiết
+                            {{ __('Xem chi tiết') }}
                         </a>
                     </div>
                 </div>
@@ -289,7 +289,7 @@
                 <div class="premium-card">
                     <div class="card-img-wrapper">
                         <span class="badge-glass">
-                            <i class="bi bi-star-fill text-warning me-1"></i>Hot
+                            <i class="bi bi-star-fill text-warning me-1"></i>{{ __('Hot') }}
                         </span>
 
                         <img src="https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800"

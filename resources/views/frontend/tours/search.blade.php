@@ -210,7 +210,7 @@
                                 <div class="combo-card h-100">
                                     <div class="combo-card-img-wrapper" style="height: 240px;">
                                         <span class="combo-badge">
-                                            <span class="badge-icon">Hot</span> Deal
+                                            <span class="badge-icon">{{ __('Hot') }}</span> {{ __('Deal') }}
                                         </span>
                                         @php
                                         $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
@@ -255,7 +255,7 @@
                                         <div class="combo-footer mt-auto pt-3">
                                             <div>
                                                 <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
+                                                <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
                                             </div>
                                             <button class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</button>
                                         </div>

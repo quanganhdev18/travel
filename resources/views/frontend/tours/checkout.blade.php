@@ -226,11 +226,50 @@
                         <div id="transport_options_container" style="display: none;" class="p-4 bg-light rounded border">
                             <div id="transport_loading" style="display: none;" class="text-center py-4">
                                 <div class="spinner-border text-primary" role="status"></div>
-                                <div class="mt-2 text-muted">Đang tìm kiếm chuyến đi phù hợp nhất...</div>
+                                <div class="mt-2 text-muted">{{ __('Đang tìm kiếm chuyến đi phù hợp nhất...') }}</div>
                             </div>
                             <div id="transport_results"></div>
                         </div>
                     </div>
+                    
+                    @if($schedule->tour->tickets && count($schedule->tour->tickets) > 0)
+                    <!-- Section: Vé Tham Quan -->
+                    <div class="mb-5">
+                        <h4 class="form-section-title">
+                            <i class="bi bi-ticket-detailed"></i>
+                            {{ __('Vé Tham Quan (Tùy chọn)') }}
+                        </h4>
+                        
+                        <div class="row g-4">
+                            @foreach($schedule->tour->tickets as $ticket)
+                                <div class="col-12">
+                                    <div class="card border shadow-sm">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0 fw-bold text-primary">{{ $ticket->title }}</h6>
+                                            <small class="text-muted">{{ $ticket->description }}</small>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <ul class="list-group list-group-flush">
+                                                @foreach($ticket->ticket_options as $option)
+                                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                                    <div>
+                                                        <div class="fw-bold">{{ $option->name }}</div>
+                                                        <div class="text-danger fw-bold">{{ format_currency($option->price) }}</div>
+                                                    </div>
+                                                    <div class="d-flex align-items-center" style="width: 120px;">
+                                                        <input type="number" name="tickets[{{ $option->id }}]" class="form-control ticket-qty-input text-center" value="0" min="0" max="99" data-price="{{ $option->price }}">
+                                                    </div>
+                                                </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Section 4: Phương Thức Thanh Toán -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
@@ -315,6 +354,10 @@
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="transport_fee_row" style="display: none !important;">
                         <span class="text-muted fw-500">{{ __('Phí di chuyển:') }}</span>
                         <strong class="text-dark" id="display_transport_price">0 đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="ticket_fee_row" style="display: none !important;">
+                        <span class="text-muted fw-500">{{ __('Vé tham quan:') }}</span>
+                        <strong class="text-dark" id="display_ticket_price">0 đ</strong>
                     </div>
                     <div class="text-muted fw-500 mb-2">{{ __('Tổng Tiền Cần Thanh Toán:') }}</div>
                     <div class="text-danger fw-bold lh-1" style="font-size: 2rem;" id="display_total_price">
@@ -461,29 +504,77 @@
     const displayTransportPrice = document.getElementById('display_transport_price');
     const displayTotalPrice = document.getElementById('display_total_price');
     const transportFeeRow = document.getElementById('transport_fee_row');
+    
+    const displayTicketPrice = document.getElementById('display_ticket_price');
+    const ticketFeeRow = document.getElementById('ticket_fee_row');
 
     const baseTourPrice = {{ $totalPrice }};
     const totalPersonsCount = {{ $totalPersons }};
+    
+    let currentTransportPrice = 0;
+    let currentTicketPrice = 0;
 
-    function formatCurrencyVND(amount) {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    const currency = '{{ Session::get("currency", "VND") }}';
+    let rate = 1;
+    let symbol = ' VNĐ';
+    let prefix = false;
+
+    switch (currency) {
+        case 'USD': rate = 25000; symbol = '$'; prefix = true; break;
+        case 'EUR': rate = 27000; symbol = '€'; prefix = true; break;
+        case 'CNY': rate = 3500; symbol = '¥'; prefix = true; break;
+        case 'VND':
+        default: rate = 1; symbol = ' VNĐ'; prefix = false; break;
     }
 
-    function updateTotalDisplay(transportPrice = 0) {
-        const finalPrice = baseTourPrice + transportPrice;
+    function formatCurrencyDynamic(amount) {
+        const converted = amount / rate;
+        let formatted = new Intl.NumberFormat(currency === 'VND' ? 'vi-VN' : 'en-US', {
+            minimumFractionDigits: currency === 'VND' ? 0 : 2,
+            maximumFractionDigits: currency === 'VND' ? 0 : 2
+        }).format(converted);
+        return prefix ? symbol + formatted : formatted + symbol;
+    }
+
+    function updateTotalDisplay(transportPrice = currentTransportPrice, ticketPrice = currentTicketPrice) {
+        currentTransportPrice = transportPrice;
+        currentTicketPrice = ticketPrice;
+        
+        const finalPrice = baseTourPrice + transportPrice + ticketPrice;
         
         inputTransportPrice.value = transportPrice;
         inputTotalPrice.value = finalPrice;
         
         if (transportPrice > 0) {
             transportFeeRow.style.setProperty('display', 'flex', 'important');
-            displayTransportPrice.textContent = formatCurrencyVND(transportPrice);
+            displayTransportPrice.textContent = formatCurrencyDynamic(transportPrice);
         } else {
             transportFeeRow.style.setProperty('display', 'none', 'important');
         }
         
-        displayTotalPrice.textContent = formatCurrencyVND(finalPrice);
+        if (ticketPrice > 0) {
+            ticketFeeRow.style.setProperty('display', 'flex', 'important');
+            displayTicketPrice.textContent = formatCurrencyDynamic(ticketPrice);
+        } else {
+            ticketFeeRow.style.setProperty('display', 'none', 'important');
+        }
+        
+        displayTotalPrice.textContent = formatCurrencyDynamic(finalPrice);
     }
+
+    // Xử lý khi thay đổi số lượng vé tham quan
+    const ticketInputs = document.querySelectorAll('.ticket-qty-input');
+    ticketInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            let totalTicket = 0;
+            ticketInputs.forEach(inp => {
+                let qty = parseInt(inp.value);
+                if(isNaN(qty) || qty < 0) qty = 0;
+                totalTicket += qty * parseFloat(inp.dataset.price);
+            });
+            updateTotalDisplay(currentTransportPrice, totalTicket);
+        });
+    });
 
     // Function handle selecting a transport option
     window.selectTransportOption = function(price, dataStr) {
@@ -501,8 +592,8 @@
 
     transportRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            // Reset state
-            updateTotalDisplay(0);
+        // Reset state (chỉ reset phương tiện, giữ nguyên vé)
+            updateTotalDisplay(0, currentTicketPrice);
             inputTransportData.value = '';
             
             if (this.value === 'self') {
@@ -524,7 +615,7 @@
                         let duffelOffers = (data.data || []).filter(offer => (offer.owner.name || '').includes('Duffel'));
                         
                         if(data.success && duffelOffers.length > 0) {
-                            let html = '<h5 class="fw-bold mb-3">Chọn Chuyến Bay</h5>';
+                            let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Bay") }}</h5>';
                             duffelOffers.forEach(offer => {
                                 let priceVND = parseFloat(offer.total_amount) * 25000;
                                 if (offer.total_currency === 'VND') {
@@ -557,7 +648,7 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div class="fw-bold text-primary"><i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}</div>
-                                            <div class="fw-bold text-danger fs-5">+ ${formatCurrencyVND(priceVND)}</div>
+                                            <div class="fw-bold text-danger fs-5">+ ${formatCurrencyDynamic(priceVND)}</div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3">
                                             <div class="text-center">
@@ -581,12 +672,12 @@
                             });
                             transportResults.innerHTML = html;
                         } else {
-                            transportResults.innerHTML = '<div class="alert alert-warning">Không tìm thấy chuyến bay mẫu của Duffel Airways phù hợp.</div>';
+                            transportResults.innerHTML = '<div class="alert alert-warning">{{ __("Không tìm thấy chuyến bay mẫu của Duffel Airways phù hợp.") }}</div>';
                         }
                     })
                     .catch(err => {
                         transportLoading.style.display = 'none';
-                        transportResults.innerHTML = '<div class="alert alert-danger">Lỗi kết nối khi tìm chuyến bay.</div>';
+                        transportResults.innerHTML = '<div class="alert alert-danger">{{ __("Lỗi kết nối khi tìm chuyến bay.") }}</div>';
                     });
             } else if (this.value === 'bus') {
                 // Mock Bus Data
@@ -597,7 +688,7 @@
                         { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', price: 350000 * totalPersonsCount }
                     ];
                     
-                    let html = '<h5 class="fw-bold mb-3">Chọn Chuyến Xe</h5>';
+                    let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Xe") }}</h5>';
                     buses.forEach(bus => {
                         let dataStr = encodeURIComponent(JSON.stringify({
                             bus_id: bus.id,
@@ -611,10 +702,10 @@
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
-                                    <div class="small text-muted">Khởi hành: ${bus.time}</div>
+                                    <div class="small text-muted">{{ __("Khởi hành:") }} ${bus.time}</div>
                                 </div>
                                 <div class="fw-bold text-danger fs-5">
-                                    + ${formatCurrencyVND(bus.price)}
+                                    + ${formatCurrencyDynamic(bus.price)}
                                 </div>
                             </div>
                         </div>
