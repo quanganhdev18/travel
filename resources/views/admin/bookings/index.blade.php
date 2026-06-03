@@ -95,7 +95,7 @@
         <button class="btn btn-admin btn-admin-primary"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</button>
     </div>
     <div class="admin-card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="min-height: 400px;">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
@@ -183,7 +183,7 @@
                                         <form action="{{ route('admin.bookings.update_status', $booking->id) }}" method="POST">
                                             @csrf
                                             <input type="hidden" name="status" value="{{ $key }}">
-                                            <button type="submit" class="dropdown-item py-2 {{ $booking->booking_status == $key ? 'bg-light text-primary fw-bold' : '' }}">
+                                            <button type="button" onclick="this.closest('form').submit();" class="dropdown-item py-2 {{ $booking->booking_status == $key ? 'bg-light text-primary fw-bold' : '' }}">
                                                 @if($booking->booking_status == $key) <i class="bi bi-check-lg me-2"></i> @else <span style="margin-left: 24px;"></span> @endif
                                                 {{ $val[1] }}
                                             </button>
