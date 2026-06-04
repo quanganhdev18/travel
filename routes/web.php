@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
+use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
@@ -67,6 +68,8 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 | Profile
 |--------------------------------------------------------------------------
 */
+
+Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])
@@ -112,6 +115,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
         ->name('frontend.bookings.pay_vnpay');
 });
+
+// Điểm đến
+Route::get('/destinations', [\App\Http\Controllers\Frontend\DestinationController::class, 'index'])
+    ->name('frontend.destinations.index');
 
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])

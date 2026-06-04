@@ -49,29 +49,30 @@
 
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
-                <form action="#" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted">
                                 <i class="bi bi-geo-alt"></i>
                             </span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Bạn muốn đi đâu?') }}">
+                            <input type="text" name="keyword" class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Bạn muốn đi đâu?') }}" value="{{ request('keyword') }}">
                         </div>
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="departure_date" class="form-control search-form-control" value="{{ request('departure_date') }}" min="{{ date('Y-m-d') }}">
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
-                        <select class="form-select search-form-control">
-                            <option value="1">{{ __('1 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="2">{{ __('2 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="3">{{ __('Gia đình') }}</option>
+                        <select name="guests" class="form-select search-form-control">
+                            <option value="">{{ __('Chọn số khách') }}</option>
+                            <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>{{ __('1 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>{{ __('2 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>{{ __('Gia đình') }}</option>
                         </select>
                     </div>
 
@@ -84,7 +85,7 @@
             </div>
 
             <div class="tab-pane fade" id="ticket" role="tabpanel">
-                <form action="#" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tickets.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-7">
                         <label class="form-label text-muted small fw-bold">
                             {{ __('Tìm công viên giải trí, sự kiện') }}
@@ -93,14 +94,14 @@
                             <span class="input-group-text bg-white border-end-0 text-muted">
                                 <i class="bi bi-search"></i>
                             </span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}">
+                            <input type="text" name="keyword" class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}" value="{{ request('keyword') }}">
                         </div>
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày sử dụng') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="use_date" class="form-control search-form-control" value="{{ request('use_date') }}" min="{{ date('Y-m-d') }}">
                     </div>
 
                     <div class="col-md-2">
@@ -124,8 +125,8 @@
 
     <div class="row g-4">
         @forelse($destinations as $dest)
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="#" class="text-decoration-none">
+            <div class="col-6 col-md-6 col-lg-3">
+                <a href="{{ route('frontend.tours.search', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
                     <div class="dest-card-premium">
                         <img src="{{ $dest->image_url ?? 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=600' }}"
                             alt="{{ $dest->name ?? 'Điểm đến' }}">
@@ -151,7 +152,7 @@
             <p class="section-subheading mb-0">{{ __('Trải nghiệm dịch vụ 5 sao với giá ưu đãi.') }}</p>
         </div>
 
-        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
+        <a href="{{ route('frontend.tours.search') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
             style="color:var(--primary-color); border-color:var(--primary-color);">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
@@ -277,7 +278,7 @@
             <p class="section-subheading mb-0">{{ __('Giải trí không giới hạn với hàng ngàn sự kiện.') }}</p>
         </div>
 
-        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
+        <a href="{{ route('frontend.tickets.search') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
             style="color:var(--primary-color); border-color:var(--primary-color);">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>

@@ -41,25 +41,26 @@
         </ul>
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
-                <form action="#" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Bạn muốn đi đâu?') }}">
+                            <input type="text" name="keyword" class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Bạn muốn đi đâu?') }}" value="{{ request('keyword') }}">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="departure_date" class="form-control search-form-control" value="{{ request('departure_date') }}" min="{{ date('Y-m-d') }}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
-                        <select class="form-select search-form-control">
-                            <option value="1">{{ __('1 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="2">{{ __('2 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="3">{{ __('Gia đình') }}</option>
+                        <select name="guests" class="form-select search-form-control">
+                            <option value="">{{ __('Chọn số khách') }}</option>
+                            <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>{{ __('1 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>{{ __('2 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>{{ __('Gia đình') }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -141,7 +142,7 @@
                         <!-- Ngày đi từ -->
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Ngày đi từ') }}</div>
-                            <input type="date" class="form-control" name="date" value="{{ request('date') }}">
+                            <input type="date" class="form-control" name="departure_date" value="{{ request('departure_date') }}">
                         </div>
 
                         <!-- Xếp hạng sao -->
@@ -187,92 +188,8 @@
 
                 <!-- Main Content Area -->
                 <div class="col-lg-9">
-                    <!-- Top Bar -->
-                    <div class="search-results-header">
-                        <div class="search-results-count">
-                            {{ __('Kết quả:') }} <span>{{ $tours->count() }} {{ __('gói combo') }}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small text-nowrap">{{ __('Sắp xếp theo:') }}</span>
-                            <select class="form-select border-0 bg-transparent fw-medium" name="sort" style="width: auto;" onchange="document.getElementById('searchForm').submit()">
-                                <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>{{ __('Mới nhất') }}</option>
-                                <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('Giá từ thấp đến cao') }}</option>
-                                <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('Giá từ cao đến thấp') }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Grid of Tours -->
-                    <div class="row g-4">
-                        @forelse($tours as $tour)
-                        <div class="col-12 col-md-6">
-                            <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
-                                <div class="combo-card h-100">
-                                    <div class="combo-card-img-wrapper" style="height: 240px;">
-                                        <span class="combo-badge">
-                                            <span class="badge-icon">{{ __('Hot') }}</span> {{ __('Deal') }}
-                                        </span>
-                                        @php
-                                        $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
-                                        $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
-                                        $destName = mb_strtolower($tour->destination->name ?? '', 'UTF-8');
-                                        if (str_contains($destName, 'nha trang') || str_contains($destName, 'phú quốc') || str_contains($destName, 'quy nhơn') || str_contains($destName, 'vũng tàu') || str_contains($destName, 'biển')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1596395819057-cbcf88eb0dfb?q=80&w=800';
-                                        } elseif (str_contains($destName, 'hà nội') || str_contains($destName, 'sapa') || str_contains($destName, 'đà lạt') || str_contains($destName, 'mộc châu')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=800';
-                                        } elseif (str_contains($destName, 'hạ long') || str_contains($destName, 'vịnh')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800';
-                                        } elseif (str_contains($destName, 'đà nẵng') || str_contains($destName, 'hội an') || str_contains($destName, 'huế')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800';
-                                        } elseif (str_contains($destName, 'hồ chí minh') || str_contains($destName, 'sài gòn')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800';
-                                        }
-                                        @endphp
-                                        <img src="{{ $primaryImage ? asset($primaryImage->image_url) : $fallbackImage }}"
-                                            alt="{{ $tour->title }}" class="w-100 h-100 object-fit-cover">
-                                    </div>
-                                    <div class="combo-card-body">
-                                        <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
-                                        <div class="combo-stars" style="font-size: 0.9rem;">
-                                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                                        </div>
-                                        <div class="combo-specs">
-                                            <div class="combo-specs-row justify-content-between mb-1">
-                                                <div class="combo-specs-item">
-                                                    <i class="bi bi-geo-alt" style="font-size: 0.9rem;"></i>
-                                                    <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
-                                                </div>
-                                                <div class="combo-specs-item">
-                                                    <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
-                                                    <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="combo-specs-item">
-                                                <i class="bi bi-building" style="font-size: 0.9rem;"></i>
-                                                <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương 4*') }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="combo-footer mt-auto pt-3">
-                                            <div>
-                                                <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
-                                            </div>
-                                            <button class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        @empty
-                        <div class="col-12">
-                            <div class="alert alert-info text-center py-5 rounded-4 bg-white border-0 shadow-sm">
-                                <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
-                                <h5 class="fw-bold">{{ __('Không tìm thấy kết quả nào') }}</h5>
-                                <p class="text-muted">{{ __('Vui lòng thử điều chỉnh lại bộ lọc tìm kiếm.') }}</p>
-                                <a href="{{ route('frontend.tours.search') }}" class="btn btn-outline-primary rounded-pill mt-2">{{ __('Xóa bộ lọc') }}</a>
-                            </div>
-                        </div>
-                        @endforelse
+                    <div id="results-container">
+                        @include('frontend.tours._results')
                     </div>
                 </div>
             </div>
@@ -280,4 +197,80 @@
     </div>
 </section>
 
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('searchForm');
+        const container = document.getElementById('results-container');
+
+        function fetchResults(url) {
+            const loading = document.getElementById('loading-overlay');
+            if(loading) loading.classList.remove('d-none');
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                container.innerHTML = html;
+                window.history.pushState({}, '', url);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = form.action + '?' + params.toString();
+            fetchResults(url);
+        });
+
+        form.addEventListener('change', function(e) {
+            if (e.target.name === 'sort' || e.target.type === 'radio' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.type === 'date') {
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+        
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'sortSelect') {
+                // Remove the old hidden sort input if exists
+                let oldSort = form.querySelector('input[name="sort"][type="hidden"]');
+                if (oldSort) oldSort.remove();
+                
+                // Add new hidden sort input
+                const hiddenSort = document.createElement('input');
+                hiddenSort.type = 'hidden';
+                hiddenSort.name = 'sort';
+                hiddenSort.value = e.target.value;
+                form.appendChild(hiddenSort);
+                
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+
+        // Handle pagination clicks
+        document.addEventListener('click', function(e) {
+            const pageLink = e.target.closest('.ajax-pagination a');
+            if (pageLink) {
+                e.preventDefault();
+                fetchResults(pageLink.href);
+                // Scroll to top of results
+                document.querySelector('.search-results-header').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+</script>
 @endsection

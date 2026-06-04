@@ -33,7 +33,7 @@ class HomeController extends Controller
                 ->from('tours')
                 ->whereNull('deleted_at');
         })
-            ->take(6)
+            ->take(4)
             ->get();
 
         $categories = Category::all();
@@ -96,6 +96,31 @@ class HomeController extends Controller
         if ($request->filled('destination_id')) {
             $query->where('destination_id', $request->destination_id);
         }
+
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%{$keyword}%")
+                    ->orWhereHas('destination', function ($qDest) use ($keyword) {
+                        $qDest->where('name', 'like', "%{$keyword}%");
+                    });
+            });
+        }
+
+        if ($request->filled('departure_date') || $request->filled('guests')) {
+            $query->whereHas('tour_schedules', function ($q) use ($request) {
+                if ($request->filled('departure_date')) {
+                    $q->whereDate('departure_date', $request->departure_date);
+                }
+
+                $guests = $request->filled('guests') ? (int) $request->guests : 1;
+                if ($guests === 3) {
+                    $guests = 4;
+                } // Gia đình => 4
+
+                $q->where('available_seats', '>=', $guests);
+            });
+        }
         if ($request->filled('budget')) {
             if ($request->budget == 'under_5m') {
                 $query->where('base_price', '<', 5000000);
@@ -120,7 +145,11 @@ class HomeController extends Controller
             $query->latest();
         }
 
-        $tours = $query->get();
+        $tours = $query->paginate(6)->withQueryString();
+
+        if ($request->ajax()) {
+            return view('frontend.tours._results', compact('tours'))->render();
+        }
 
         return view('frontend.tours.search', compact('tours', 'destinations', 'categories', 'banners'));
     }
