@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
@@ -14,28 +15,40 @@ class AppSettingsController extends Controller
      */
     private const COOKIE_LIFETIME_MINUTES = 60 * 24 * 365; // 1 năm
 
-    public function switchLocale(string $locale): RedirectResponse
+    /**
+     * Kiểm tra xem người dùng đã đồng ý sử dụng cookie chưa.
+     */
+    private function hasCookieConsent(Request $request): bool
+    {
+        return $request->cookie('cookie_consent') === 'accepted';
+    }
+
+    public function switchLocale(Request $request, string $locale): RedirectResponse
     {
         $locales = ['vi', 'en', 'zh'];
         if (in_array($locale, $locales)) {
             Session::put('locale', $locale);
             App::setLocale($locale);
 
-            // Lưu vào cookie 1 năm để duy trì khi quay lại trang
-            Cookie::queue('app_locale', $locale, self::COOKIE_LIFETIME_MINUTES);
+            // Chỉ lưu vào cookie nếu người dùng đã đồng ý sử dụng cookie
+            if ($this->hasCookieConsent($request)) {
+                Cookie::queue('app_locale', $locale, self::COOKIE_LIFETIME_MINUTES);
+            }
         }
 
         return back();
     }
 
-    public function switchCurrency(string $currency): RedirectResponse
+    public function switchCurrency(Request $request, string $currency): RedirectResponse
     {
         $currencies = ['VND', 'USD', 'EUR', 'CNY'];
         if (in_array($currency, $currencies)) {
             Session::put('currency', $currency);
 
-            // Lưu vào cookie 1 năm để duy trì khi quay lại trang
-            Cookie::queue('app_currency', $currency, self::COOKIE_LIFETIME_MINUTES);
+            // Chỉ lưu vào cookie nếu người dùng đã đồng ý sử dụng cookie
+            if ($this->hasCookieConsent($request)) {
+                Cookie::queue('app_currency', $currency, self::COOKIE_LIFETIME_MINUTES);
+            }
         }
 
         return back();
