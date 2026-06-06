@@ -151,24 +151,32 @@
                                     alt="{{ $tour->title }}">
                             </div>
                             <div class="combo-card-body">
-                                <h3 class="combo-title">{{ $tour->title }}</h3>
-                                <div class="combo-stars">
-                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                                <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
+                                <div class="combo-stars" style="font-size: 0.9rem;">
+                                    @php $stars = $tour->hotel_stars ?? 4; @endphp
+                                    @for($i=1; $i<=$stars; $i++)
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    @endfor
                                 </div>
                                 <div class="combo-specs">
-                                    <div class="combo-specs-row justify-content-between">
+                                    <div class="combo-specs-row justify-content-between mb-1">
                                         <div class="combo-specs-item">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span class="text-truncate" style="max-width: 140px;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
+                                            <i class="bi bi-geo-alt" style="font-size: 0.9rem;"></i>
+                                            <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
                                         </div>
                                         <div class="combo-specs-item">
-                                            <i class="bi bi-car-front"></i>
-                                            <span>{{ __('Xe') }}</span>
+                                            @if($tour->transport_type === 'xe')
+                                            <i class="bi bi-car-front" style="font-size: 0.9rem;"></i>
+                                            <span style="font-size: 0.85rem;">{{ __('Xe') }}</span>
+                                            @else
+                                            <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
+                                            <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
+                                            @endif
                                         </div>
                                     </div>
-                                    <div class="combo-specs-item mt-1">
-                                        <i class="bi bi-building"></i>
-                                        <span>{{ __('Khách sạn tương đương 4*') }}</span>
+                                    <div class="combo-specs-item">
+                                        <i class="bi bi-building" style="font-size: 0.9rem;"></i>
+                                        <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương') }} {{ $stars }}*</span>
                                     </div>
                                 </div>
                                 <div class="combo-footer">
