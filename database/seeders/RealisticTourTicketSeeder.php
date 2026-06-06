@@ -207,7 +207,7 @@ class RealisticTourTicketSeeder extends Seeder
                     'https://images.unsplash.com/photo-1559827260-dc66d52bef19?q=80&w=800',
                 ],
                 'itineraries' => [
-                    ['day' => 1, 'title' => 'Hà Nội → Hạ Long - Du thuyền', 'description' => "Xe đón tại Hà Nội, di chuyển đến bến tàu Hạ Long. Lên du thuyền, ăn trưa trên vịnh. Tham quan hang Thiên Cung, hòn Chó Đá. Tối ngủ trên tàu giữa vịnh."],
+                    ['day' => 1, 'title' => 'Hà Nội → Hạ Long - Du thuyền', 'description' => 'Xe đón tại Hà Nội, di chuyển đến bến tàu Hạ Long. Lên du thuyền, ăn trưa trên vịnh. Tham quan hang Thiên Cung, hòn Chó Đá. Tối ngủ trên tàu giữa vịnh.'],
                     ['day' => 2, 'title' => 'Cát Bà - Đảo Khỉ - Trekking', 'description' => "Di chuyển bằng tàu cao tốc sang đảo Cát Bà. Sáng: Tham quan Đảo Khỉ - đảo tự nhiên với hàng trăm con khỉ vàng hoang dã.\n\nChiều: Trekking nhẹ trong Vườn Quốc gia Cát Bà - khu dự trữ sinh quyển thế giới, ngắm cảnh từ đỉnh Ngự Lâm.\n\nTối: Nghỉ tại khách sạn trên đảo Cát Bà, tự do dạo phố và thưởng thức hải sản."],
                     ['day' => 3, 'title' => 'Bãi tắm Cát Cò - Về Hà Nội', 'description' => "Sáng: Tắm biển tại bãi Cát Cò 1 - bãi biển đẹp nhất Cát Bà với nước biển trong xanh.\n\nTrưa: Thưởng thức hải sản tươi đặc sản: tôm hùm, sam biển, hàu sữa.\n\nChiều: Di chuyển về Hà Nội qua phà Gót - Phù Long, ngắm cảnh đồng quê Bắc Bộ trên đường về."],
                 ],

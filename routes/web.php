@@ -117,7 +117,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Điểm đến
-Route::get('/destinations', [\App\Http\Controllers\Frontend\DestinationController::class, 'index'])
+Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController::class, 'index'])
     ->name('frontend.destinations.index');
 
 // Chi tiết Tour
@@ -133,6 +133,12 @@ Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
+
+    // User Management
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class)
+        ->names('admin.users');
+    Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
+        ->name('admin.users.toggle-status');
 
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
