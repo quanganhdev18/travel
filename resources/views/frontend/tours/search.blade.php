@@ -41,25 +41,28 @@
         </ul>
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
-                <form action="#" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
-                        <div class="input-group">
+                        <div class="input-group autocomplete-wrapper">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Bạn muốn đi đâu?') }}">
+                            <input type="text" name="keyword" data-dest-autocomplete
+                                class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Bạn muốn đi đâu?') }}"
+                                value="{{ request('keyword') }}"
+                                autocomplete="off">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
-                        <select class="form-select search-form-control">
-                            <option value="1">{{ __('1 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="2">{{ __('2 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="3">{{ __('Gia đình') }}</option>
+                        <select name="guests" class="form-select search-form-control">
+                            <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>{{ __('1 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>{{ __('2 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>{{ __('Gia đình') }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -74,13 +77,13 @@
                         <label class="form-label text-muted small fw-bold">{{ __('Tìm công viên giải trí, sự kiện') }}</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}">
+                            <input type="text" name="keyword" class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}" value="{{ request('keyword') }}">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày sử dụng') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-search-primary w-100">{{ __('Tìm vé') }}</button>

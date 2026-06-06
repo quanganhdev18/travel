@@ -30,8 +30,8 @@ class Tour extends Model
     ];
 
     public $translatable = [
-        //'title',
-        //'description',
+        'title',
+        'description',
     ];
 
     protected $fillable = [

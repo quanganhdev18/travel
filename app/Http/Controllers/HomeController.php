@@ -48,20 +48,23 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
+        $allDestinations = Destination::all();
+
         return view('welcome', compact(
             'banners',
             'adBanners',
             'destinations',
             'categories',
             'tours',
-            'tickets'
+            'tickets',
+            'allDestinations'
         ));
     }
 
-    public function tours()
+    public function tours(\Illuminate\Http\Request $request)
     {
         $banners = Banner::where('is_active', 1)
-            ->where(function($q) {
+            ->where(function ($q) {
                 $q->where('position', 'hero')->orWhereNull('position');
             })
             ->orderBy('sort_order')
@@ -74,11 +77,39 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        $tours = Tour::with(['destination', 'tour_images'])
-            ->latest()
-            ->take(12)->get();
+        $query = Tour::with(['destination', 'tour_images'])->whereNull('deleted_at');
 
-        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners'));
+        if ($request->filled('keyword')) {
+            $keyword = mb_strtolower($request->keyword, 'UTF-8');
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%'])
+                    ->orWhereHas('destination', function ($q2) use ($keyword) {
+                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%']);
+                    });
+            });
+        }
+
+        if ($request->filled('date')) {
+            $date = $request->date;
+            $query->whereHas('activeSchedules', function ($q) use ($date) {
+                $q->whereDate('departure_date', '>=', $date);
+            });
+        }
+
+        if ($request->filled('budget')) {
+            match ($request->budget) {
+                'under_5m' => $query->where('base_price', '<', 5000000),
+                '5m_to_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
+                '10m_to_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
+                'over_20m' => $query->where('base_price', '>', 20000000),
+                default => null,
+            };
+        }
+
+        $tours = $query->latest()->get();
+        $allDestinations = Destination::orderBy('name')->get(['id', 'name']);
+
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations'));
     }
 
     public function searchTours(\Illuminate\Http\Request $request)
@@ -88,6 +119,23 @@ class HomeController extends Controller
         $categories = Category::all();
         
         $query = Tour::with(['destination', 'tour_images']);
+        
+        if ($request->filled('keyword')) {
+            $keyword = mb_strtolower($request->keyword, 'UTF-8');
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%'])
+                  ->orWhereHas('destination', function ($q2) use ($keyword) {
+                      $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%']);
+                  });
+            });
+        }
+        
+        if ($request->filled('date')) {
+            $date = $request->date;
+            $query->whereHas('activeSchedules', function ($q) use ($date) {
+                $q->whereDate('departure_date', '>=', $date);
+            });
+        }
         
         if ($request->filled('departure_id')) {
             $query->where('departure_location_id', $request->departure_id);
@@ -122,5 +170,24 @@ class HomeController extends Controller
         $tours = $query->get();
         
         return view('frontend.tours.search', compact('tours', 'destinations', 'categories', 'banners'));
+    }
+
+    public function searchDestinations(\Illuminate\Http\Request $request)
+    {
+        $keyword = mb_strtolower($request->get('q', ''), 'UTF-8');
+
+        if (strlen($keyword) < 1) {
+            return response()->json([]);
+        }
+
+        $destinations = Destination::whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%'])
+            ->orderBy('name')
+            ->limit(10)
+            ->get(['id', 'name']);
+
+        return response()->json($destinations->map(fn ($d) => [
+            'id' => $d->id,
+            'name' => $d->name,
+        ]));
     }
 }

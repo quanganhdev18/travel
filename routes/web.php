@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/debug-schema', function() {
     $columns = \Illuminate\Support\Facades\Schema::getColumnListing('tours');
@@ -9,6 +11,7 @@ Route::get('/debug-schema', function() {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
 Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
+Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 
 use App\Http\Controllers\AppSettingsController;
 

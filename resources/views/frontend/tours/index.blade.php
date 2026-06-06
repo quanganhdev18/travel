@@ -29,33 +29,68 @@
 <!-- Search Widget -->
 <div class="container search-widget-wrapper">
     <div class="glass-panel search-glass px-4 py-3">
-        <form action="#" method="GET" class="row g-3 align-items-end">
+        <form action="{{ route('frontend.tours.index') }}" method="GET" class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
-                <div class="input-group">
+                <div class="input-group autocomplete-wrapper">
                     <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
-                    <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                        placeholder="{{ __('Bạn muốn đi đâu?') }}">
+                    <input type="text" name="keyword" data-dest-autocomplete
+                        class="form-control search-form-control border-start-0 ps-0"
+                        placeholder="{{ __('Bạn muốn đi đâu?') }}"
+                        value="{{ request('keyword') }}"
+                        autocomplete="off">
                 </div>
             </div>
             <div class="col-md-3">
                 <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                <input type="date" class="form-control search-form-control">
+                <input type="date" name="date" class="form-control search-form-control"
+                    value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
             </div>
             <div class="col-md-3">
                 <label class="form-label text-muted small fw-bold">{{ __('Mức giá') }}</label>
-                <select class="form-select search-form-control">
+                <select name="budget" class="form-select search-form-control">
                     <option value="">{{ __('Tất cả mức giá') }}</option>
-                    <option value="1">{{ __('Dưới 5 triệu') }}</option>
-                    <option value="2">{{ __('Từ 5 - 10 triệu') }}</option>
-                    <option value="3">{{ __('Trên 10 triệu') }}</option>
+                    <option value="under_5m" {{ request('budget') == 'under_5m' ? 'selected' : '' }}>{{ __('Dưới ₫5M') }}</option>
+                    <option value="5m_to_10m" {{ request('budget') == '5m_to_10m' ? 'selected' : '' }}>{{ __('₫5M - ₫10M') }}</option>
+                    <option value="10m_to_20m" {{ request('budget') == '10m_to_20m' ? 'selected' : '' }}>{{ __('₫10M - ₫20M') }}</option>
+                    <option value="over_20m" {{ request('budget') == 'over_20m' ? 'selected' : '' }}>{{ __('Trên ₫20M') }}</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-search-primary w-100"><i
-                        class="bi bi-search me-2"></i>{{ __('Tìm kiếm') }}</button>
+                <button type="submit" class="btn btn-search-primary w-100">
+                    <i class="bi bi-search me-2"></i>{{ __('Tìm kiếm') }}
+                </button>
             </div>
         </form>
+        @if(request()->hasAny(['keyword', 'date', 'budget']))
+        <div class="d-flex align-items-center gap-3 mt-3 pt-2 border-top">
+            <small class="text-muted">
+                <i class="bi bi-funnel me-1"></i>
+                {{ __('Kết quả') }}: <strong class="text-primary">{{ $tours->count() }}</strong> {{ __('tour') }}
+                @if(request('keyword'))
+                    <span class="badge bg-primary bg-opacity-10 text-primary ms-1">
+                        <i class="bi bi-geo-alt me-1"></i>{{ request('keyword') }}
+                    </span>
+                @endif
+                @if(request('budget'))
+                    @php
+                        $budgetLabels = [
+                            'under_5m' => 'Dưới ₫5M',
+                            '5m_to_10m' => '₫5M - ₫10M',
+                            '10m_to_20m' => '₫10M - ₫20M',
+                            'over_20m' => 'Trên ₫20M',
+                        ];
+                    @endphp
+                    <span class="badge bg-success bg-opacity-10 text-success ms-1">
+                        <i class="bi bi-currency-dollar me-1"></i>{{ $budgetLabels[request('budget')] ?? '' }}
+                    </span>
+                @endif
+            </small>
+            <a href="{{ route('frontend.tours.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill">
+                <i class="bi bi-x me-1"></i>{{ __('Xóa bộ lọc') }}
+            </a>
+        </div>
+        @endif
     </div>
 </div>
 
