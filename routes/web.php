@@ -3,8 +3,6 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\ProfileController;
 
 Route::get('/debug-schema', function () {
     $columns = Schema::getColumnListing('tours');
