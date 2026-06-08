@@ -3,6 +3,8 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/debug-schema', function () {
     $columns = Schema::getColumnListing('tours');
@@ -12,6 +14,7 @@ Route::get('/debug-schema', function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
 Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
+Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 
 use App\Http\Controllers\Admin\BannerController;
 // Frontend Controllers
@@ -29,6 +32,7 @@ use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
+use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
@@ -75,6 +79,8 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 |--------------------------------------------------------------------------
 */
 
+Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
@@ -120,6 +126,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('frontend.bookings.pay_vnpay');
 });
 
+// Điểm đến
+Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController::class, 'index'])
+    ->name('frontend.destinations.index');
+
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
@@ -133,6 +143,12 @@ Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
+
+    // User Management
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class)
+        ->names('admin.users');
+    Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
+        ->name('admin.users.toggle-status');
 
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])

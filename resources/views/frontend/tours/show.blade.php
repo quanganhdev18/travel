@@ -133,6 +133,53 @@
         margin-bottom: 14px;
     }
 
+    .custom-accordion .accordion-item {
+        border: none;
+        background-color: transparent;
+        margin-bottom: 16px;
+    }
+    .custom-accordion .accordion-header {
+        background-color: transparent;
+    }
+    .custom-accordion .accordion-button {
+        background-color: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 16px !important;
+        padding: 16px 24px;
+        color: var(--dark-blue);
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        transition: all 0.3s ease;
+    }
+    .custom-accordion .accordion-button:not(.collapsed) {
+        background-color: rgba(0, 124, 232, 0.05);
+        color: var(--primary-color);
+        border-color: rgba(0, 124, 232, 0.1);
+        box-shadow: none;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+    }
+    .custom-accordion .accordion-button:focus {
+        box-shadow: none;
+    }
+    .custom-accordion .accordion-collapse {
+        background-color: #fff;
+        border: 1px solid rgba(0, 124, 232, 0.1);
+        border-top: none;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
+    .custom-accordion .accordion-body {
+        padding: 24px;
+        color: var(--text-muted);
+        line-height: 1.8;
+    }
+    .last-border-none:last-child {
+        border-bottom: none !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
     @media (max-width: 768px) {
         .gallery-main {
             height: 280px;
@@ -156,31 +203,25 @@
     $fallbackImage = asset('uploads/images/no-image.jpg');
 
     $tourImages = $tour->tour_images ?? collect();
+    $allImages = collect();
 
-    $primaryImage = $tourImages->where('is_primary', 1)->first()
-        ?? $tourImages->first();
-
+    // Primary image first
+    $primaryImage = $tourImages->where('is_primary', 1)->first() ?? $tourImages->first();
     if ($primaryImage && !empty($primaryImage->image_url)) {
-        $mainImage = \Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])
-            ? $primaryImage->image_url
-            : asset(ltrim($primaryImage->image_url, '/'));
+        $allImages->push(\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://']) ? $primaryImage->image_url : asset(ltrim($primaryImage->image_url, '/')));
     } else {
-        $mainImage = $fallbackImage;
+        $allImages->push($fallbackImage);
     }
 
-    $subImageList = $tourImages
-        ->where('id', '!=', optional($primaryImage)->id)
-        ->take(2)
-        ->map(function ($img) use ($fallbackImage) {
-            if (!$img || empty($img->image_url)) {
-                return $fallbackImage;
+    // Other images
+    if ($primaryImage) {
+        $otherImages = $tourImages->where('id', '!=', $primaryImage->id);
+        foreach ($otherImages as $img) {
+            if ($img && !empty($img->image_url)) {
+                $allImages->push(\Illuminate\Support\Str::startsWith($img->image_url, ['http://', 'https://']) ? $img->image_url : asset(ltrim($img->image_url, '/')));
             }
-
-            return \Illuminate\Support\Str::startsWith($img->image_url, ['http://', 'https://'])
-                ? $img->image_url
-                : asset(ltrim($img->image_url, '/'));
-        })
-        ->values();
+        }
+    }
 
     $destinationName = $tour->destination->name ?? __('Điểm đến');
     $departureName = $tour->departure_location->name ?? __('Đang cập nhật');
@@ -229,144 +270,139 @@
                 </span>
             </div>
 
-            <div class="row g-3 mb-4">
-                <div class="col-md-8">
-                    <div class="overflow-hidden-rounded">
-                        <img src="{{ $mainImage }}"
-                             class="w-100 gallery-main"
-                             alt="{{ $tourTitle }}"
-                             onerror="this.onerror=null;this.src='{{ $fallbackImage }}';">
-                    </div>
-                </div>
-
-                <div class="col-md-4 d-flex flex-column gap-3">
-                    @forelse($subImageList as $subImageUrl)
-                        <div class="overflow-hidden-rounded h-50">
-                            <img src="{{ $subImageUrl }}"
-                                 class="w-100 gallery-sub"
-                                 alt="{{ $tourTitle }}"
-                                 onerror="this.onerror=null;this.src='{{ $fallbackImage }}';">
-                        </div>
-                    @empty
-                        <div class="alert alert-warning mb-0">
-                            {{ __('Tour này chưa có ảnh phụ.') }}
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-5">
+        <div class="row g-4">
             <div class="col-lg-8">
-
-                <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
-                    <h3 class="section-heading mb-4 text-dark fs-4">
-                        {{ __('Tổng quan') }}
-                    </h3>
-
-                    <p class="tour-content-text mb-0">
-                        {!! nl2br(e($tour->description ?? __('Đang cập nhật mô tả tour.'))) !!}
-                    </p>
-                </div>
-
-                <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
-                    <h3 class="section-heading mb-4 text-dark fs-4">
-                        {{ __('Lịch trình chi tiết') }}
-                    </h3>
-
-                    @if($tour->tour_itineraries->count())
-                        <div class="d-flex flex-column flex-md-row align-items-start gap-4">
-                            <div class="nav flex-column nav-pills tour-nav-tabs w-100"
-                                 style="max-width: 260px;"
-                                 id="itinerary-tabs"
-                                 role="tablist"
-                                 aria-orientation="vertical">
-
-                                @foreach($tour->tour_itineraries as $index => $itinerary)
-                                    <button class="nav-link mb-2 {{ $index == 0 ? 'active' : '' }}"
-                                            data-bs-toggle="pill"
-                                            data-bs-target="#day-{{ $itinerary->id }}"
-                                            type="button"
-                                            role="tab">
-                                        <div class="small text-uppercase mb-1" style="opacity: 0.8; letter-spacing: 1px;">
-                                            {{ __('Ngày') }} {{ $itinerary->day_number }}
-                                        </div>
-
-                                        <div class="fw-bold">
-                                            {{ $itinerary->title }}
-                                        </div>
-                                    </button>
-                                @endforeach
-                            </div>
-
-                            <div class="tab-content w-100 p-4 rounded-4 bg-white shadow-sm border-0"
-                                 id="itinerary-tabContent">
-
-                                @foreach($tour->tour_itineraries as $index => $itinerary)
-                                    <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}"
-                                         id="day-{{ $itinerary->id }}"
-                                         role="tabpanel">
-
-                                        <h4 class="mb-4 fw-bold text-dark">
-                                            {{ __('Ngày') }} {{ $itinerary->day_number }}:
-                                            {{ $itinerary->title }}
-                                        </h4>
-
-                                        <p class="tour-content-text">
-                                            {!! nl2br(e($itinerary->description ?? __('Đang cập nhật lịch trình.'))) !!}
-                                        </p>
-
-                                        @if($itinerary->activities && $itinerary->activities->count())
-                                            <ul class="mt-3">
-                                                @foreach($itinerary->activities as $activity)
-                                                    <li class="tour-content-text mb-2">
-                                                        <strong>{{ $activity->title }}:</strong>
-                                                        {{ $activity->description }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @else
-                        <p class="text-muted mb-0">
-                            {{ __('Chưa có lịch trình chi tiết.') }}
-                        </p>
-                    @endif
-                </div>
-
-                <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
-                    <h3 class="section-heading mb-4 text-dark fs-4">
-                        {{ __('Các hoạt động nổi bật') }}
-                    </h3>
-
-                    @if(isset($groupedActivities) && $groupedActivities->isNotEmpty())
-                        @foreach($groupedActivities as $type => $activities)
-                            <div class="mb-4">
-                                <h5 class="fw-bold text-dark mb-3">
-                                    {{ $type ?: __('Hoạt động') }}
-                                </h5>
-
-                                @foreach($activities as $activity)
-                                    <div class="activity-simple-item">
-                                        <div class="fw-bold text-dark mb-1">
-                                            {{ $activity->title }}
-                                        </div>
-
-                                        <div class="text-muted small lh-lg">
-                                            {{ $activity->description }}
-                                        </div>
-                                    </div>
-                                @endforeach
+                <!-- Image Slider -->
+                <div id="tourImageCarousel" class="carousel slide mb-5 overflow-hidden-rounded shadow-sm" data-bs-ride="carousel">
+                    <div class="carousel-indicators">
+                        @foreach($allImages as $index => $img)
+                            <button type="button" data-bs-target="#tourImageCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index == 0 ? 'active' : '' }}" aria-current="{{ $index == 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>
+                        @endforeach
+                    </div>
+                    <div class="carousel-inner">
+                        @foreach($allImages as $index => $img)
+                            <div class="carousel-item {{ $index == 0 ? 'active' : '' }}">
+                                <img src="{{ $img }}" class="d-block w-100 gallery-main" alt="{{ $tourTitle }}" onerror="this.onerror=null;this.src='{{ $fallbackImage }}';">
                             </div>
                         @endforeach
-                    @else
-                        <p class="text-muted mb-0">
-                            {{ __('Chưa có thông tin hoạt động chi tiết.') }}
-                        </p>
+                    </div>
+                    @if($allImages->count() > 1)
+                        <button class="carousel-control-prev" type="button" data-bs-target="#tourImageCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#tourImageCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
                     @endif
+                </div>
+
+                <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
+                    <div class="accordion custom-accordion" id="masterAccordion">
+                        
+                        <!-- Tổng Quan -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-overview">
+                                <button class="accordion-button fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-overview" aria-expanded="true" aria-controls="collapse-overview">
+                                    <i class="bi bi-info-circle-fill text-primary me-3 fs-4"></i>
+                                    {{ __('Tổng quan') }}
+                                </button>
+                            </h2>
+                            <div id="collapse-overview" class="accordion-collapse collapse show" aria-labelledby="heading-overview" data-bs-parent="#masterAccordion">
+                                <div class="accordion-body">
+                                    <p class="tour-content-text mb-0">
+                                        {!! nl2br(e($tour->description ?? __('Đang cập nhật mô tả tour.'))) !!}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lịch trình chi tiết -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-itinerary">
+                                <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-itinerary" aria-expanded="false" aria-controls="collapse-itinerary">
+                                    <i class="bi bi-map-fill text-success me-3 fs-4"></i>
+                                    {{ __('Lịch trình chi tiết') }}
+                                </button>
+                            </h2>
+                            <div id="collapse-itinerary" class="accordion-collapse collapse" aria-labelledby="heading-itinerary" data-bs-parent="#masterAccordion">
+                                <div class="accordion-body">
+                                    @if($tour->tour_itineraries->count())
+                                        <div class="itinerary-list">
+                                            @foreach($tour->tour_itineraries as $index => $itinerary)
+                                                <div class="mb-4 pb-4 border-bottom last-border-none">
+                                                    <h5 class="fw-bold text-dark mb-3">
+                                                        <span class="badge bg-primary me-2">{{ __('Ngày') }} {{ $itinerary->day_number }}</span> 
+                                                        {{ $itinerary->title }}
+                                                    </h5>
+                                                    <p class="mb-3 tour-content-text">{!! nl2br(e($itinerary->description ?? __('Đang cập nhật lịch trình.'))) !!}</p>
+                                                    
+                                                    @if($itinerary->activities && $itinerary->activities->count())
+                                                        <ul class="list-unstyled mb-0">
+                                                            @foreach($itinerary->activities as $activity)
+                                                                <li class="mb-3 d-flex align-items-start">
+                                                                    <i class="bi bi-check-circle-fill text-success me-3 mt-1 fs-5"></i>
+                                                                    <div>
+                                                                        <strong class="text-dark d-block mb-1">{{ $activity->title }}</strong>
+                                                                        <span class="small">{{ $activity->description }}</span>
+                                                                    </div>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <p class="text-muted mb-0">
+                                            {{ __('Chưa có lịch trình chi tiết.') }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Các hoạt động nổi bật -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-activities">
+                                <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-activities" aria-expanded="false" aria-controls="collapse-activities">
+                                    <i class="bi bi-star-fill text-warning me-3 fs-4"></i>
+                                    {{ __('Các hoạt động nổi bật') }}
+                                </button>
+                            </h2>
+                            <div id="collapse-activities" class="accordion-collapse collapse" aria-labelledby="heading-activities" data-bs-parent="#masterAccordion">
+                                <div class="accordion-body">
+                                    @if(isset($groupedActivities) && $groupedActivities->isNotEmpty())
+                                        @foreach($groupedActivities as $type => $activities)
+                                            <div class="mb-4 last-border-none border-bottom pb-4">
+                                                <h6 class="fw-bold text-dark text-uppercase mb-4" style="letter-spacing: 1px;">
+                                                    {{ $type ?: __('Hoạt động') }}
+                                                </h6>
+                                                
+                                                @foreach($activities as $activity)
+                                                    <div class="mb-3 d-flex align-items-start gap-3">
+                                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
+                                                            <i class="bi bi-activity text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-dark mb-1">{{ $activity->title }}</div>
+                                                            <div class="small">{{ $activity->description }}</div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <p class="text-muted mb-0">
+                                            {{ __('Chưa có thông tin hoạt động chi tiết.') }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
@@ -591,6 +627,7 @@
                 </div>
             </div>
         </div>
+        </div> <!-- Close mb-5 reveal-up -->
 
     </div>
 </div>

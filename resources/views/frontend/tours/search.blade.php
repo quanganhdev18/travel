@@ -41,25 +41,28 @@
         </ul>
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
-                <form action="#" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
-                        <div class="input-group">
+                        <div class="input-group autocomplete-wrapper">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Bạn muốn đi đâu?') }}">
+                            <input type="text" name="keyword" data-dest-autocomplete
+                                class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Bạn muốn đi đâu?') }}"
+                                value="{{ request('keyword') }}"
+                                autocomplete="off">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
-                        <select class="form-select search-form-control">
-                            <option value="1">{{ __('1 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="2">{{ __('2 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="3">{{ __('Gia đình') }}</option>
+                        <select name="guests" class="form-select search-form-control">
+                            <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>{{ __('1 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>{{ __('2 Người lớn, 0 Trẻ em') }}</option>
+                            <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>{{ __('Gia đình') }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -74,13 +77,13 @@
                         <label class="form-label text-muted small fw-bold">{{ __('Tìm công viên giải trí, sự kiện') }}</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}">
+                            <input type="text" name="keyword" class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Tìm kiếm hoạt động vui chơi...') }}" value="{{ request('keyword') }}">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày sử dụng') }}</label>
-                        <input type="date" class="form-control search-form-control">
+                        <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-search-primary w-100">{{ __('Tìm vé') }}</button>
@@ -97,22 +100,64 @@
         <form action="{{ route('frontend.tours.search') }}" method="GET" id="searchForm">
             <div class="row g-4">
                 
-                <!-- Left Sidebar Filters -->
+<!-- Left Sidebar Filters -->
                 <div class="col-lg-3">
                     <div class="sidebar-filter">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <div class="fw-bold fs-5"><i class="bi bi-sliders me-2"></i>{{ __('Tìm kiếm nâng cao') }}</div>
                             <a href="{{ route('frontend.tours.search') }}" class="text-decoration-none text-muted small">{{ __('Đặt lại') }}</a>
                         </div>
-                        
+
+                        {{-- Active filter summary --}}
+                        @php
+                            $activeFilters = array_filter([
+                                'keyword'        => request('keyword'),
+                                'transport'      => request('transport'),
+                                'departure_id'   => request('departure_id'),
+                                'destination_id' => request('destination_id'),
+                                'date'           => request('date'),
+                                'stars'          => request('stars'),
+                                'budget'         => request('budget'),
+                            ]);
+                        @endphp
+                        @if(count($activeFilters) > 0)
+                        <div class="mb-3 d-flex flex-wrap gap-1">
+                            @if(request('keyword'))
+                                <span class="badge bg-primary bg-opacity-10 text-primary fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
+                                    <i class="bi bi-geo-alt me-1"></i>{{ request('keyword') }}
+                                </span>
+                            @endif
+                            @if(request('transport'))
+                                <span class="badge bg-info bg-opacity-10 text-info fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
+                                    <i class="bi bi-{{ request('transport') === 'bay' ? 'airplane' : 'car-front' }} me-1"></i>{{ request('transport') === 'bay' ? 'Chuyến bay' : 'Xe' }}
+                                </span>
+                            @endif
+                            @if(request('stars'))
+                                <span class="badge bg-warning bg-opacity-10 text-warning fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
+                                    <i class="bi bi-star-fill me-1"></i>{{ request('stars') }} sao
+                                </span>
+                            @endif
+                            @if(request('budget'))
+                                @php $bl = ['under_5m'=>'< ₫5M','5m_to_10m'=>'₫5-10M','10m_to_20m'=>'₫10-20M','over_20m'=>'> ₫20M']; @endphp
+                                <span class="badge bg-success bg-opacity-10 text-success fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
+                                    {{ $bl[request('budget')] ?? '' }}
+                                </span>
+                            @endif
+                        </div>
+                        @endif
+
                         <!-- Phương tiện -->
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Phương tiện') }}</div>
                             <div class="filter-btn-group">
+                                <input type="radio" class="btn-check" name="transport" id="transport_all" value="" {{ !request('transport') ? 'checked' : '' }}>
+                                <label class="filter-btn" for="transport_all">{{ __('Tất cả') }}</label>
+
                                 <input type="radio" class="btn-check" name="transport" id="transport1" value="xe" {{ request('transport') == 'xe' ? 'checked' : '' }}>
-                                <label class="filter-btn" for="transport1">{{ __('Xe') }}</label>
+                                <label class="filter-btn" for="transport1"><i class="bi bi-car-front me-1"></i>{{ __('Xe') }}</label>
+
                                 <input type="radio" class="btn-check" name="transport" id="transport2" value="bay" {{ request('transport') == 'bay' ? 'checked' : '' }}>
-                                <label class="filter-btn" for="transport2">{{ __('Chuyến bay') }}</label>
+                                <label class="filter-btn" for="transport2"><i class="bi bi-airplane me-1"></i>{{ __('Chuyến bay') }}</label>
                             </div>
                         </div>
 
@@ -122,7 +167,9 @@
                             <select class="form-select" name="departure_id">
                                 <option value="">{{ __('Tất cả') }}</option>
                                 @foreach($destinations as $destination)
-                                    <option value="{{ $destination->id }}" {{ request('departure_id') == $destination->id ? 'selected' : '' }}>{{ $destination->name }}</option>
+                                    <option value="{{ $destination->id }}" {{ request('departure_id') == $destination->id ? 'selected' : '' }}>
+                                        {{ $destination->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -133,7 +180,9 @@
                             <select class="form-select" name="destination_id">
                                 <option value="">{{ __('Tất cả') }}</option>
                                 @foreach($destinations as $destination)
-                                    <option value="{{ $destination->id }}" {{ request('destination_id') == $destination->id ? 'selected' : '' }}>{{ $destination->name }}</option>
+                                    <option value="{{ $destination->id }}" {{ request('destination_id') == $destination->id ? 'selected' : '' }}>
+                                        {{ $destination->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -141,23 +190,35 @@
                         <!-- Ngày đi từ -->
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Ngày đi từ') }}</div>
-                            <input type="date" class="form-control" name="date" value="{{ request('date') }}">
+                            <input type="date" class="form-control" name="date"
+                                value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                         </div>
 
                         <!-- Xếp hạng sao -->
                         <div class="mb-4">
-                            <div class="filter-section-title d-flex justify-content-between">
-                                {{ __('Xếp hạng sao') }} <i class="bi bi-chevron-up"></i>
+                            <div class="filter-section-title d-flex justify-content-between align-items-center">
+                                <span>{{ __('Xếp hạng sao') }}</span>
+                                @if(request('stars'))
+                                    <a href="{{ request()->fullUrlWithQuery(['stars' => '']) }}" class="text-muted small text-decoration-none">
+                                        <i class="bi bi-x-circle"></i>
+                                    </a>
+                                @endif
                             </div>
-                            <div class="filter-checkbox-list">
+                            <div class="filter-checkbox-list mt-2">
                                 @for($i = 5; $i >= 1; $i--)
-                                <label class="filter-checkbox">
-                                    <input type="radio" name="stars" value="{{ $i }}" {{ request('stars') == $i ? 'checked' : '' }}>
-                                    <div class="stars">
+                                <label class="filter-checkbox d-flex align-items-center gap-2 py-1 cursor-pointer {{ request('stars') == $i ? 'text-warning fw-bold' : '' }}">
+                                    <input type="radio" name="stars" value="{{ $i }}"
+                                        class="form-check-input mt-0" style="width:16px;height:16px;"
+                                        {{ request('stars') == $i ? 'checked' : '' }}>
+                                    <div class="stars d-flex gap-1" style="color:#f59e0b; font-size:0.9rem;">
                                         @for($j = 1; $j <= $i; $j++)
                                         <i class="bi bi-star-fill"></i>
                                         @endfor
+                                        @for($k = $i+1; $k <= 5; $k++)
+                                        <i class="bi bi-star text-muted" style="opacity:0.3;"></i>
+                                        @endfor
                                     </div>
+                                    <span class="text-muted small">{{ $i }} sao</span>
                                 </label>
                                 @endfor
                             </div>
@@ -167,12 +228,15 @@
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Ngân sách') }}</div>
                             <div class="filter-btn-grid">
+                                <input type="radio" class="btn-check" name="budget" id="budget0" value="" {{ !request('budget') ? 'checked' : '' }}>
+                                <label class="filter-btn" for="budget0">{{ __('Tất cả') }}</label>
+
                                 <input type="radio" class="btn-check" name="budget" id="budget1" value="under_5m" {{ request('budget') == 'under_5m' ? 'checked' : '' }}>
                                 <label class="filter-btn" for="budget1">{{ __('Dưới ₫5M') }}</label>
 
                                 <input type="radio" class="btn-check" name="budget" id="budget2" value="5m_to_10m" {{ request('budget') == '5m_to_10m' ? 'checked' : '' }}>
                                 <label class="filter-btn" for="budget2">{{ __('₫5M - ₫10M') }}</label>
-                                
+
                                 <input type="radio" class="btn-check" name="budget" id="budget3" value="10m_to_20m" {{ request('budget') == '10m_to_20m' ? 'checked' : '' }}>
                                 <label class="filter-btn" for="budget3">{{ __('₫10M - ₫20M') }}</label>
 
@@ -181,7 +245,9 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">{{ __('Áp dụng') }}</button>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">
+                            <i class="bi bi-funnel me-2"></i>{{ __('Áp dụng bộ lọc') }}
+                        </button>
                     </div>
                 </div>
 
@@ -210,7 +276,7 @@
                                 <div class="combo-card h-100">
                                     <div class="combo-card-img-wrapper" style="height: 240px;">
                                         <span class="combo-badge">
-                                            <span class="badge-icon">{{ __('Hot') }}</span> {{ __('Deal') }}
+                                            <span class="badge-icon">Hot</span> Deal
                                         </span>
                                         @php
                                         $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
@@ -234,7 +300,10 @@
                                     <div class="combo-card-body">
                                         <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
                                         <div class="combo-stars" style="font-size: 0.9rem;">
-                                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                                            @php $stars = $tour->hotel_stars ?? 4; @endphp
+                                            @for($i=1; $i<=$stars; $i++)
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                            @endfor
                                         </div>
                                         <div class="combo-specs">
                                             <div class="combo-specs-row justify-content-between mb-1">
@@ -243,21 +312,26 @@
                                                     <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
                                                 </div>
                                                 <div class="combo-specs-item">
+                                                    @if($tour->transport_type === 'xe')
+                                                    <i class="bi bi-car-front" style="font-size: 0.9rem;"></i>
+                                                    <span style="font-size: 0.85rem;">{{ __('Xe') }}</span>
+                                                    @else
                                                     <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
                                                     <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="combo-specs-item">
                                                 <i class="bi bi-building" style="font-size: 0.9rem;"></i>
-                                                <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương 4*') }}</span>
+                                                <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương') }} {{ $stars }}*</span>
                                             </div>
                                         </div>
                                         <div class="combo-footer mt-auto pt-3">
                                             <div>
                                                 <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
+                                                <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
                                             </div>
-                                            <button class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</button>
+                                            <span class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -280,4 +354,80 @@
     </div>
 </section>
 
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('searchForm');
+        const container = document.getElementById('results-container');
+
+        function fetchResults(url) {
+            const loading = document.getElementById('loading-overlay');
+            if(loading) loading.classList.remove('d-none');
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                container.innerHTML = html;
+                window.history.pushState({}, '', url);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = form.action + '?' + params.toString();
+            fetchResults(url);
+        });
+
+        form.addEventListener('change', function(e) {
+            if (e.target.name === 'sort' || e.target.type === 'radio' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.type === 'date') {
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+        
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'sortSelect') {
+                // Remove the old hidden sort input if exists
+                let oldSort = form.querySelector('input[name="sort"][type="hidden"]');
+                if (oldSort) oldSort.remove();
+                
+                // Add new hidden sort input
+                const hiddenSort = document.createElement('input');
+                hiddenSort.type = 'hidden';
+                hiddenSort.name = 'sort';
+                hiddenSort.value = e.target.value;
+                form.appendChild(hiddenSort);
+                
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+
+        // Handle pagination clicks
+        document.addEventListener('click', function(e) {
+            const pageLink = e.target.closest('.ajax-pagination a');
+            if (pageLink) {
+                e.preventDefault();
+                fetchResults(pageLink.href);
+                // Scroll to top of results
+                document.querySelector('.search-results-header').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+</script>
 @endsection
