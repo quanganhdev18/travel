@@ -1,0 +1,326 @@
+<?php
+
+use App\Models\Booking;
+use App\Models\Destination;
+use App\Models\Payment;
+use App\Models\Tour;
+use App\Models\TourSchedule;
+use App\Models\User;
+use Carbon\Carbon;
+
+beforeEach(function () {
+    // Create destination
+    $destination = Destination::create([
+        'name' => 'Đà Nẵng',
+        'description' => 'Thành phố đáng sống',
+    ]);
+
+    // Create tour
+    $this->tour = Tour::create([
+        'destination_id' => $destination->id,
+        'title' => 'Khám phá Đà Nẵng - Hội An',
+        'slug' => 'tour-da-nang-3-ngay-2-dem',
+        'description' => 'Hành trình khám phá miền Trung',
+        'duration_days' => 3,
+        'duration_nights' => 2,
+        'base_price' => 3500000,
+    ]);
+
+    // Create tour schedule
+    $this->schedule = TourSchedule::create([
+        'tour_id' => $this->tour->id,
+        'departure_date' => Carbon::now()->addDays(10)->toDateTimeString(),
+        'return_date' => Carbon::now()->addDays(12)->toDateTimeString(),
+        'capacity' => 20,
+        'available_seats' => 20,
+        'status' => 'available',
+    ]);
+});
+
+test('guest cannot access checkout', function () {
+    $response = $this->post(route('frontend.tours.checkout', [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+    ]));
+
+    $response->assertRedirect('/login');
+});
+
+test('authenticated user can access checkout with valid parameters', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.checkout', [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+    ]));
+
+    $response->assertOk();
+    $response->assertViewIs('frontend.tours.checkout');
+    $response->assertViewHas('totalPrice', 7000000);
+});
+
+test('booking stores successfully for flight transport', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+        'customer_name' => 'Nguyễn Văn A',
+        'customer_phone' => '0987654321',
+        'customer_email' => 'customer@example.com',
+        'total_price' => 7000000,
+        'transport_type' => 'flight',
+        'identity_number' => '036123456789',
+        'date_of_birth' => '1996-05-18',
+        'gender' => 'male',
+        'issue_date' => '2021-05-18',
+        'expiry_date' => '2036-05-18',
+        'issue_place' => 'Cục Cảnh sát',
+        'payment_method' => 'cod',
+    ]);
+
+    $this->assertDatabaseHas('bookings', [
+        'user_id' => $user->id,
+        'tour_schedule_id' => $this->schedule->id,
+        'transport_type' => 'flight',
+    ]);
+
+    $booking = Booking::where('user_id', $user->id)->first();
+    $response->assertRedirect(route('frontend.flights.search', [
+        'origin' => 'HAN', // default because destination isn't mapped
+        'destination' => 'DAD', // mapped 'Đà Nẵng' => 'DAD'
+        'departure_date' => Carbon::parse($this->schedule->departure_date)->format('Y-m-d'),
+        'passengers' => 2,
+        'cabin_class' => 'economy',
+        'tour_booking_id' => $booking->id,
+    ]));
+});
+
+test('booking stores successfully for bus transport', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+        'customer_name' => 'Nguyễn Văn A',
+        'customer_phone' => '0987654321',
+        'customer_email' => 'customer@example.com',
+        'total_price' => 7000000,
+        'transport_type' => 'bus',
+        'identity_number' => '036123456789',
+        'date_of_birth' => '1996-05-18',
+        'gender' => 'male',
+        'issue_date' => '2021-05-18',
+        'expiry_date' => '2036-05-18',
+        'issue_place' => 'Cục Cảnh sát',
+        'payment_method' => 'cod',
+    ]);
+
+    $this->assertDatabaseHas('bookings', [
+        'user_id' => $user->id,
+        'tour_schedule_id' => $this->schedule->id,
+        'transport_type' => 'bus',
+    ]);
+
+    $response->assertRedirect(route('home'));
+    $response->assertSessionHas('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận lịch trình di chuyển bằng xe.');
+});
+
+test('booking stores successfully for self transport', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+        'customer_name' => 'Nguyễn Văn A',
+        'customer_phone' => '0987654321',
+        'customer_email' => 'customer@example.com',
+        'total_price' => 7000000,
+        'transport_type' => 'self',
+        'identity_number' => '036123456789',
+        'date_of_birth' => '1996-05-18',
+        'gender' => 'male',
+        'issue_date' => '2021-05-18',
+        'expiry_date' => '2036-05-18',
+        'issue_place' => 'Cục Cảnh sát',
+        'payment_method' => 'cod',
+    ]);
+
+    $this->assertDatabaseHas('bookings', [
+        'user_id' => $user->id,
+        'tour_schedule_id' => $this->schedule->id,
+        'transport_type' => 'self',
+    ]);
+
+    $response->assertRedirect(route('home'));
+    $response->assertSessionHas('success', 'đặt tour thành công. chúng tôi sẽ liên hệ sớm để xác nhận lịch trình tự túc.');
+});
+
+test('booking redirects to vnpay when vnpay payment is chosen', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+        'customer_name' => 'Nguyễn Văn A',
+        'customer_phone' => '0987654321',
+        'customer_email' => 'customer@example.com',
+        'total_price' => 7000000,
+        'transport_type' => 'self',
+        'identity_number' => '036123456789',
+        'date_of_birth' => '1996-05-18',
+        'gender' => 'male',
+        'issue_date' => '2021-05-18',
+        'expiry_date' => '2036-05-18',
+        'issue_place' => 'Cục Cảnh sát',
+        'payment_method' => 'vnpay',
+    ]);
+
+    $this->assertDatabaseHas('bookings', [
+        'user_id' => $user->id,
+        'total_price' => 7000000,
+    ]);
+
+    $this->assertDatabaseHas('payments', [
+        'amount' => 7000000,
+        'payment_method' => 'vnpay',
+        'payment_status' => 'pending',
+    ]);
+
+    $response->assertRedirect();
+    $targetUrl = $response->headers->get('Location');
+    expect($targetUrl)->toContain('https://sandbox.vnpayment.vn/paymentv2/vpcpay.html');
+    expect($targetUrl)->toContain('vnp_TmnCode=32Z7UQKT');
+});
+
+test('vnpay return handles successful payment correctly', function () {
+    $user = User::factory()->create();
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'tour_schedule_id' => $this->schedule->id,
+        'total_price' => 7000000,
+        'adults_count' => 2,
+        'booking_status' => 'pending',
+        'transport_type' => 'self',
+    ]);
+
+    $txnRef = $booking->id.'_12345678';
+    $payment = Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => 7000000,
+        'payment_method' => 'vnpay',
+        'transaction_code' => $txnRef,
+        'payment_status' => 'pending',
+    ]);
+
+    $params = [
+        'vnp_Amount' => '700000000',
+        'vnp_BankCode' => 'NCB',
+        'vnp_CardType' => 'ATM',
+        'vnp_OrderInfo' => 'Thanh toan',
+        'vnp_PayDate' => '20260602120000',
+        'vnp_ResponseCode' => '00',
+        'vnp_TmnCode' => '32Z7UQKT',
+        'vnp_TransactionNo' => '12345',
+        'vnp_TxnRef' => $txnRef,
+    ];
+
+    ksort($params);
+    $hashData = '';
+    $i = 0;
+    foreach ($params as $key => $value) {
+        if ($i == 1) {
+            $hashData .= '&'.urlencode($key).'='.urlencode($value);
+        } else {
+            $hashData .= urlencode($key).'='.urlencode($value);
+            $i = 1;
+        }
+    }
+    $secureHash = hash_hmac('sha512', $hashData, 'I2TIA05T0LLQAHM0I2BT73VVIX88TKJA');
+    $params['vnp_SecureHash'] = $secureHash;
+
+    $response = $this->actingAs($user)->get(route('frontend.tours.vnpay_return', $params));
+
+    $response->assertRedirect(route('user.bookings'));
+    $response->assertSessionHas('success', 'Thanh toán đặt tour qua VNPay thành công!');
+
+    $this->assertDatabaseHas('payments', [
+        'id' => $payment->id,
+        'payment_status' => 'success',
+    ]);
+
+    $this->assertDatabaseHas('bookings', [
+        'id' => $booking->id,
+        'booking_status' => 'confirmed',
+    ]);
+});
+
+test('vnpay ipn updates payment status correctly', function () {
+    $user = User::factory()->create();
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'tour_schedule_id' => $this->schedule->id,
+        'total_price' => 7000000,
+        'adults_count' => 2,
+        'booking_status' => 'pending',
+        'transport_type' => 'self',
+    ]);
+
+    $txnRef = $booking->id.'_12345678';
+    $payment = Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => 7000000,
+        'payment_method' => 'vnpay',
+        'transaction_code' => $txnRef,
+        'payment_status' => 'pending',
+    ]);
+
+    $params = [
+        'vnp_Amount' => '700000000',
+        'vnp_BankCode' => 'NCB',
+        'vnp_CardType' => 'ATM',
+        'vnp_OrderInfo' => 'Thanh toan',
+        'vnp_PayDate' => '20260602120000',
+        'vnp_ResponseCode' => '00',
+        'vnp_TmnCode' => '32Z7UQKT',
+        'vnp_TransactionNo' => '12345',
+        'vnp_TxnRef' => $txnRef,
+    ];
+
+    ksort($params);
+    $hashData = '';
+    $i = 0;
+    foreach ($params as $key => $value) {
+        if ($i == 1) {
+            $hashData .= '&'.urlencode($key).'='.urlencode($value);
+        } else {
+            $hashData .= urlencode($key).'='.urlencode($value);
+            $i = 1;
+        }
+    }
+    $secureHash = hash_hmac('sha512', $hashData, 'I2TIA05T0LLQAHM0I2BT73VVIX88TKJA');
+    $params['vnp_SecureHash'] = $secureHash;
+
+    $response = $this->get(route('frontend.tours.vnpay_ipn', $params));
+
+    $response->assertJson([
+        'RspCode' => '00',
+        'Message' => 'Confirm success',
+    ]);
+
+    $this->assertDatabaseHas('payments', [
+        'id' => $payment->id,
+        'payment_status' => 'success',
+    ]);
+
+    $this->assertDatabaseHas('bookings', [
+        'id' => $booking->id,
+        'booking_status' => 'confirmed',
+    ]);
+});

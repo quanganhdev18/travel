@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Tour;
-use App\Models\User;
 use App\Models\TourSchedule;
+use App\Models\User;
 
 class DashboardController extends Controller
 {

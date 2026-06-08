@@ -6,9 +6,12 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * Class User
@@ -32,6 +35,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  */
 class User extends Authenticatable
 {
+    use HasFactory;
+    use Notifiable;
+
     protected $table = 'users';
 
     protected $hidden = [
@@ -44,8 +50,82 @@ class User extends Authenticatable
         'password',
         'phone',
         'role',
+        'is_active',
         'preferences',
     ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+    ];
+
+    // Role checking methods
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::ADMIN->value;
+    }
+
+    public function isStaff(): bool
+    {
+        return $this->role === UserRole::STAFF->value;
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->role === UserRole::CUSTOMER->value;
+    }
+
+    public function hasRole(string|UserRole $role): bool
+    {
+        $roleValue = $role instanceof UserRole ? $role->value : $role;
+
+        return $this->role === $roleValue;
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        $roleValues = collect($roles)->map(function ($role) {
+            return $role instanceof UserRole ? $role->value : $role;
+        })->toArray();
+
+        return in_array($this->role, $roleValues);
+    }
+
+    public function canAccessAdmin(): bool
+    {
+        return $this->hasAnyRole([UserRole::ADMIN, UserRole::STAFF]);
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return UserRole::tryFrom($this->role)?->label() ?? 'Không xác định';
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->is_active ? 'Hoạt động' : 'Bị khóa';
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return $this->is_active ? 'success' : 'danger';
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    public function activate(): void
+    {
+        $this->update(['is_active' => true]);
+    }
+
+    public function deactivate(): void
+    {
+        $this->update(['is_active' => false]);
+    }
 
     public function bookings()
     {

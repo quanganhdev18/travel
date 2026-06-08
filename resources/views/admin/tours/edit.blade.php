@@ -60,20 +60,23 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">Giá cơ bản (VNĐ)</label>
-                            <input type="number" name="base_price" value="{{$tour->base_price}}" class="form-control"
-                                placeholder="VD: 1500000" required>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted">Giá cơ bản (Người lớn)</label>
+                            <input type="number" name="base_price" value="{{$tour->base_price}}" class="form-control" placeholder="VD: 1500000" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted">Giá trẻ em (VNĐ)</label>
+                            <input type="number" name="child_price" value="{{$tour->child_price}}" class="form-control" placeholder="VD: 1000000 (Tùy chọn)">
+                        </div>
+                        <div class="col-md-2 mb-3">
                             <label class="form-label text-muted">Số ngày</label>
                             <input type="number" name="duration_days" value="{{$tour->duration_days}}"
-                                class="form-control" value="1" min="1" required>
+                                class="form-control" min="1" required>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-2 mb-3">
                             <label class="form-label text-muted">Số đêm</label>
                             <input type="number" name="duration_nights" value="{{$tour->duration_nights}}"
-                                class="form-control" value="0" min="0" required>
+                                class="form-control" min="0" required>
                         </div>
                     </div>
                 </div>

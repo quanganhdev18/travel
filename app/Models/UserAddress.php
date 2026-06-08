@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class UserAddress
- * 
+ *
  * @property int $id
  * @property int $user_id
  * @property bool|null $is_default
@@ -23,33 +23,30 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $detailed_address
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property User $user
- *
- * @package App\Models
  */
 class UserAddress extends Model
 {
-	protected $table = 'user_addresses';
+    protected $table = 'user_addresses';
 
-	protected $casts = [
-		'user_id' => 'int',
-		'is_default' => 'bool'
-	];
+    protected $casts = [
+        'user_id' => 'int',
+        'is_default' => 'bool',
+    ];
 
-	protected $fillable = [
-		'user_id',
-		'is_default',
-		'address_type',
-		'receiver_name',
-		'phone',
-		'province_id',
-		'ward_id',
-		'detailed_address'
-	];
+    protected $fillable = [
+        'user_id',
+        'is_default',
+        'address_type',
+        'receiver_name',
+        'phone',
+        'province_id',
+        'ward_id',
+        'detailed_address',
+    ];
 
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

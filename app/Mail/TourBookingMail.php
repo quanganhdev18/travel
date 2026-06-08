@@ -13,8 +13,11 @@ class TourBookingMail extends Mailable
     use Queueable, SerializesModels;
 
     public $booking;
+
     public $schedule;
+
     public $customerName;
+
     public $customerPhone;
 
     public function __construct($booking, $schedule, $customerName, $customerPhone)

@@ -58,7 +58,22 @@ class BookingController extends Controller
             'status' => 'required|in:pending,confirmed,paid,cancelled,completed',
         ]);
 
-        $booking = Booking::findOrFail($id);
+        $booking = Booking::with('tour_schedule')->findOrFail($id);
+
+        if ($request->status === 'cancelled' && $booking->booking_status !== 'cancelled') {
+            $totalPersons = $booking->adults_count + $booking->children_count;
+            if ($booking->tour_schedule) {
+                $booking->tour_schedule->increment('available_seats', $totalPersons);
+            }
+        }
+
+        if ($request->status !== 'cancelled' && $booking->booking_status === 'cancelled') {
+            $totalPersons = $booking->adults_count + $booking->children_count;
+            if ($booking->tour_schedule) {
+                $booking->tour_schedule->decrement('available_seats', $totalPersons);
+            }
+        }
+
         $booking->booking_status = $request->status;
         $booking->save();
 

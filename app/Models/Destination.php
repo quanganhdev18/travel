@@ -13,43 +13,40 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * Class Destination
- * 
+ *
  * @property int $id
  * @property string $name
  * @property string|null $description
  * @property string|null $image_url
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Collection|Ticket[] $tickets
  * @property Collection|Tour[] $tours
- *
- * @package App\Models
  */
 class Destination extends Model
 {
-	use HasTranslations;
+    use HasTranslations;
 
-	protected $table = 'destinations';
+    protected $table = 'destinations';
 
-	protected $fillable = [
-		'name',
-		'description',
-		'image_url'
-	];
+    protected $fillable = [
+        'name',
+        'description',
+        'image_url',
+    ];
 
-	public $translatable = [
-		'name',
-		'description'
-	];
+    public $translatable = [
+        'name',
+        'description',
+    ];
 
-	public function tickets()
-	{
-		return $this->hasMany(Ticket::class);
-	}
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class);
+    }
 
-	public function tours()
-	{
-		return $this->hasMany(Tour::class);
-	}
+    public function tours()
+    {
+        return $this->hasMany(Tour::class);
+    }
 }

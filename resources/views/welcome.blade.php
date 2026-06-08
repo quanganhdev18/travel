@@ -87,7 +87,7 @@
             </div>
 
             <div class="tab-pane fade" id="ticket" role="tabpanel">
-                <form action="#" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tickets.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-7">
                         <label class="form-label text-muted small fw-bold">
                             {{ __('Tìm công viên giải trí, sự kiện') }}
@@ -127,14 +127,14 @@
 
     <div class="row g-4">
         @forelse($destinations as $dest)
-            <div class="col-6 col-md-4 col-lg-2">
-                <a href="#" class="text-decoration-none">
+            <div class="col-6 col-md-6 col-lg-3">
+                <a href="{{ route('frontend.tours.search', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
                     <div class="dest-card-premium">
                         <img src="{{ $dest->image_url ?? 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=600' }}"
                             alt="{{ $dest->name ?? 'Điểm đến' }}">
                         <div class="dest-overlay">
-                            <h5>{{ $dest->name ?? 'Điểm đến' }}</h5>
-                            <span class="dest-count">100+ Tours</span>
+                            <h5>{{ $dest->name ?? __('Điểm đến') }}</h5>
+                            <span class="dest-count">100+ {{ __('Tours') }}</span>
                         </div>
                     </div>
                 </a>
@@ -154,7 +154,7 @@
             <p class="section-subheading mb-0">{{ __('Trải nghiệm dịch vụ 5 sao với giá ưu đãi.') }}</p>
         </div>
 
-        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
+        <a href="{{ route('frontend.tours.search') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
             style="color:var(--primary-color); border-color:var(--primary-color);">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
@@ -229,7 +229,7 @@
                     <div class="px-3 pb-3">
                         <a href="{{ route('frontend.tours.show', $tourSlug) }}"
                            class="btn btn-primary w-100">
-                            Xem chi tiết
+                            {{ __('Xem chi tiết') }}
                         </a>
                     </div>
                 </div>
@@ -280,7 +280,7 @@
             <p class="section-subheading mb-0">{{ __('Giải trí không giới hạn với hàng ngàn sự kiện.') }}</p>
         </div>
 
-        <a href="#" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
+        <a href="{{ route('frontend.tickets.search') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
             style="color:var(--primary-color); border-color:var(--primary-color);">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
@@ -292,7 +292,7 @@
                 <div class="premium-card">
                     <div class="card-img-wrapper">
                         <span class="badge-glass">
-                            <i class="bi bi-star-fill text-warning me-1"></i>Hot
+                            <i class="bi bi-star-fill text-warning me-1"></i>{{ __('Hot') }}
                         </span>
 
                         <img src="https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800"

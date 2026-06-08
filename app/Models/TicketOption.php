@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class TicketOption
- * 
+ *
  * @property int $id
  * @property int $ticket_id
  * @property string $name
@@ -22,38 +22,35 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $conditions
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
  * @property Ticket $ticket
  * @property Collection|TicketBooking[] $ticket_bookings
- *
- * @package App\Models
  */
 class TicketOption extends Model
 {
-	protected $table = 'ticket_options';
+    protected $table = 'ticket_options';
 
-	protected $casts = [
-		'ticket_id' => 'int',
-		'price' => 'float',
-		'original_price' => 'float'
-	];
+    protected $casts = [
+        'ticket_id' => 'int',
+        'price' => 'float',
+        'original_price' => 'float',
+    ];
 
-	protected $fillable = [
-		'ticket_id',
-		'name',
-		'description',
-		'price',
-		'original_price',
-		'conditions'
-	];
+    protected $fillable = [
+        'ticket_id',
+        'name',
+        'description',
+        'price',
+        'original_price',
+        'conditions',
+    ];
 
-	public function ticket()
-	{
-		return $this->belongsTo(Ticket::class);
-	}
+    public function ticket()
+    {
+        return $this->belongsTo(Ticket::class);
+    }
 
-	public function ticket_bookings()
-	{
-		return $this->hasMany(TicketBooking::class);
-	}
+    public function ticket_bookings()
+    {
+        return $this->hasMany(TicketBooking::class);
+    }
 }

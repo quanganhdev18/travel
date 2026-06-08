@@ -448,6 +448,7 @@ CREATE TABLE users (
   id bigint(20) UNSIGNED NOT NULL,
   name varchar(255) NOT NULL,
   email varchar(255) NOT NULL,
+  email_verified_at timestamp NULL DEFAULT NULL,
   password varchar(255) NOT NULL,
   phone varchar(20) DEFAULT NULL,
   role enum('admin','customer') DEFAULT 'customer',

@@ -355,3 +355,79 @@
 </section>
 
 @endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('searchForm');
+        const container = document.getElementById('results-container');
+
+        function fetchResults(url) {
+            const loading = document.getElementById('loading-overlay');
+            if(loading) loading.classList.remove('d-none');
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                container.innerHTML = html;
+                window.history.pushState({}, '', url);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            const url = form.action + '?' + params.toString();
+            fetchResults(url);
+        });
+
+        form.addEventListener('change', function(e) {
+            if (e.target.name === 'sort' || e.target.type === 'radio' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.type === 'date') {
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+        
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'sortSelect') {
+                // Remove the old hidden sort input if exists
+                let oldSort = form.querySelector('input[name="sort"][type="hidden"]');
+                if (oldSort) oldSort.remove();
+                
+                // Add new hidden sort input
+                const hiddenSort = document.createElement('input');
+                hiddenSort.type = 'hidden';
+                hiddenSort.name = 'sort';
+                hiddenSort.value = e.target.value;
+                form.appendChild(hiddenSort);
+                
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }
+            }
+        });
+
+        // Handle pagination clicks
+        document.addEventListener('click', function(e) {
+            const pageLink = e.target.closest('.ajax-pagination a');
+            if (pageLink) {
+                e.preventDefault();
+                fetchResults(pageLink.href);
+                // Scroll to top of results
+                document.querySelector('.search-results-header').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+</script>
+@endsection

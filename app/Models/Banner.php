@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Banner
- * 
+ *
  * @property int $id
  * @property string $title
  * @property string $image_url
@@ -23,28 +23,26 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $end_date
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
- * @package App\Models
  */
 class Banner extends Model
 {
-	protected $table = 'banners';
+    protected $table = 'banners';
 
-	protected $casts = [
-		'sort_order' => 'int',
-		'is_active' => 'bool',
-		'start_date' => 'datetime',
-		'end_date' => 'datetime'
-	];
+    protected $casts = [
+        'sort_order' => 'int',
+        'is_active' => 'bool',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
 
-	protected $fillable = [
-		'title',
-		'image_url',
-		'target_url',
-		'position',
-		'sort_order',
-		'is_active',
-		'start_date',
-		'end_date'
-	];
+    protected $fillable = [
+        'title',
+        'image_url',
+        'target_url',
+        'position',
+        'sort_order',
+        'is_active',
+        'start_date',
+        'end_date',
+    ];
 }

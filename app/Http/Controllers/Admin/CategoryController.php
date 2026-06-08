@@ -12,6 +12,7 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::latest()->paginate(10);
+
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -34,7 +35,7 @@ class CategoryController extends Controller
                 'en' => $request->name['en'] ?? $request->name['vi'],
                 'zh' => $request->name['zh'] ?? $request->name['vi'],
             ],
-            'slug' => Str::slug($request->name['vi'])
+            'slug' => Str::slug($request->name['vi']),
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Thêm danh mục thành công!');
@@ -59,7 +60,7 @@ class CategoryController extends Controller
                 'en' => $request->name['en'] ?? $request->name['vi'],
                 'zh' => $request->name['zh'] ?? $request->name['vi'],
             ],
-            'slug' => Str::slug($request->name['vi'])
+            'slug' => Str::slug($request->name['vi']),
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Cập nhật thành công!');
@@ -72,6 +73,7 @@ class CategoryController extends Controller
 
         // Tiến hành xóa danh mục
         $category->delete();
+
         return back()->with('success', 'Đã xóa danh mục an toàn!');
     }
 }

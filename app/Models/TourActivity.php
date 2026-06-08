@@ -13,7 +13,7 @@ class TourActivity extends Model
 
     public $translatable = [
         'title',
-        'description'
+        'description',
     ];
 
     protected $fillable = [
@@ -23,7 +23,7 @@ class TourActivity extends Model
         'end_time',
         'title',
         'description',
-        'image_url'
+        'image_url',
     ];
 
     public function tour_itinerary()

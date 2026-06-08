@@ -95,7 +95,7 @@
         <button class="btn btn-admin btn-admin-primary"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</button>
     </div>
     <div class="admin-card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="min-height: 400px;">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
@@ -126,9 +126,19 @@
                             <div class="small text-primary mt-1"><i class="bi bi-calendar3 me-1"></i>{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</div>
                         </td>
                         <td>
-                            @if($booking->pnr_code)
-                            <span class="badge-soft badge-soft-danger px-2">
-                                <i class="bi bi-airplane me-1"></i>{{ $booking->pnr_code }}
+                            @if($booking->transport_type == 'flight')
+                                @if($booking->pnr_code)
+                                <span class="badge-soft badge-soft-danger px-2">
+                                    <i class="bi bi-airplane me-1"></i>{{ $booking->pnr_code }}
+                                </span>
+                                @else
+                                <span class="badge-soft badge-soft-warning px-2">
+                                    <i class="bi bi-airplane me-1"></i>Chờ vé
+                                </span>
+                                @endif
+                            @elseif($booking->transport_type == 'bus')
+                            <span class="badge-soft badge-soft-info px-2">
+                                <i class="bi bi-bus-front me-1"></i>Đi bằng xe
                             </span>
                             @else
                             <span class="badge-soft badge-soft-secondary px-2">
@@ -173,7 +183,7 @@
                                         <form action="{{ route('admin.bookings.update_status', $booking->id) }}" method="POST">
                                             @csrf
                                             <input type="hidden" name="status" value="{{ $key }}">
-                                            <button type="submit" class="dropdown-item py-2 {{ $booking->booking_status == $key ? 'bg-light text-primary fw-bold' : '' }}">
+                                            <button type="button" onclick="this.closest('form').submit();" class="dropdown-item py-2 {{ $booking->booking_status == $key ? 'bg-light text-primary fw-bold' : '' }}">
                                                 @if($booking->booking_status == $key) <i class="bi bi-check-lg me-2"></i> @else <span style="margin-left: 24px;"></span> @endif
                                                 {{ $val[1] }}
                                             </button>
@@ -221,19 +231,18 @@
                         <div class="mb-2"><span class="text-muted me-2">Tên tour:</span> <strong class="text-dark">{{ $booking->tour_schedule->tour->title ?? 'N/A' }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Khởi hành:</span> <strong class="text-dark">{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Hành khách:</span> <strong class="text-dark">{{ $booking->adults_count }} NL, {{ $booking->children_count }} TE</strong></div>
-                        <div class="mb-2"><span class="text-muted me-2">Vé Máy Bay:</span> 
+                        <div class="mb-2"><span class="text-muted me-2">Vận chuyển:</span> 
                             @if($booking->transport_type == 'flight')
+                                <span class="badge bg-danger mb-2">Máy bay</span>
                                 <form action="{{ route('admin.bookings.update_pnr', $booking->id) }}" method="POST" class="d-inline-flex align-items-center mt-1">
                                     @csrf
                                     <input type="text" name="pnr_code" value="{{ $booking->pnr_code }}" class="form-control form-control-sm me-2" placeholder="Nhập mã PNR..." style="max-width: 150px;">
                                     <button type="submit" class="btn btn-sm btn-primary">Lưu</button>
                                 </form>
+                            @elseif($booking->transport_type == 'bus')
+                                <span class="badge bg-info text-white">Xe khách / Ô tô</span>
                             @else
-                                @if($booking->pnr_code)
-                                    <span class="badge-soft badge-soft-danger">{{ $booking->pnr_code }}</span>
-                                @else
-                                    <span class="text-muted">Tự túc / Không yêu cầu</span>
-                                @endif
+                                <span class="text-muted">Tự túc</span>
                             @endif
                         </div>
                     </div>

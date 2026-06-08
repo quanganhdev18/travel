@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -26,13 +26,13 @@ return new class extends Migration
                 $updates = [];
                 foreach ($columns as $column) {
                     $val = $record->$column;
-                    if (!is_null($val) && !is_array(json_decode($val, true))) {
+                    if (! is_null($val) && ! is_array(json_decode($val, true))) {
                         $updates[$column] = json_encode(['vi' => $val], JSON_UNESCAPED_UNICODE);
-                    } else if (is_null($val)) {
+                    } elseif (is_null($val)) {
                         $updates[$column] = json_encode(['vi' => ''], JSON_UNESCAPED_UNICODE);
                     }
                 }
-                if (!empty($updates)) {
+                if (! empty($updates)) {
                     DB::table($tableName)->where('id', $record->id)->update($updates);
                 }
             }
@@ -63,12 +63,12 @@ return new class extends Migration
                         $updates[$column] = $decoded['vi'] ?? ($decoded['en'] ?? '');
                     }
                 }
-                if (!empty($updates)) {
+                if (! empty($updates)) {
                     DB::table($tableName)->where('id', $record->id)->update($updates);
                 }
             }
 
-            Schema::table($tableName, function (Blueprint $table) use ($columns, $tableName) {
+            Schema::table($tableName, function (Blueprint $table) use ($columns) {
                 foreach ($columns as $column) {
                     if ($column === 'description') {
                         $table->text($column)->nullable()->change();

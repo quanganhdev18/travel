@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 
-Route::get('/debug-schema', function() {
-    $columns = \Illuminate\Support\Facades\Schema::getColumnListing('tours');
+Route::get('/debug-schema', function () {
+    $columns = Schema::getColumnListing('tours');
+
     return implode(', ', $columns);
 });
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -13,26 +16,28 @@ Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.t
 Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 
-use App\Http\Controllers\AppSettingsController;
-
-// Frontend Controllers
-use App\Http\Controllers\Frontend\TourController as FrontendTourController;
-use App\Http\Controllers\Frontend\FlightController;
-use App\Http\Controllers\Frontend\TourBookingController;
-use App\Http\Controllers\Frontend\UserController;
-use App\Http\Controllers\Frontend\OcrController;
-
-// Admin Controllers
 use App\Http\Controllers\Admin\BannerController;
+// Frontend Controllers
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
+use App\Http\Controllers\Admin\OngoingTourController;
+// Admin Controllers
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
-use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\Admin\TourGuideController;
-use App\Http\Controllers\Admin\OngoingTourController;
+use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\AppSettingsController;
+use App\Http\Controllers\Frontend\FlightController;
+use App\Http\Controllers\Frontend\OcrController;
+use App\Http\Controllers\Frontend\TicketController;
+use App\Http\Controllers\Frontend\TourBookingController;
+use App\Http\Controllers\Frontend\TourController as FrontendTourController;
+use App\Http\Controllers\Frontend\UserController;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,6 +46,7 @@ use App\Http\Controllers\Admin\OngoingTourController;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
 
 Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
     ->name('locale.switch');
@@ -48,19 +54,25 @@ Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
 Route::get('/currency/{currency}', [AppSettingsController::class, 'switchCurrency'])
     ->name('currency.switch');
 
-// Chi tiết Tour
-Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
-    ->name('frontend.tours.show');
+// VNPay Callbacks
+Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
+    ->name('frontend.tours.vnpay_return');
+Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
+    ->name('frontend.tours.vnpay_ipn');
 
 // Tìm chuyến bay
 Route::get('/flights', [FlightController::class, 'search'])
     ->name('frontend.flights.search');
+Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
+    ->name('api.flights.search');
 
 /*
 |--------------------------------------------------------------------------
 | Profile
 |--------------------------------------------------------------------------
 */
+
+Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])
@@ -85,7 +97,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('ocr.scan-cccd');
 
     // Đặt Tour
-    Route::post('/tours/checkout', [TourBookingController::class, 'checkout'])
+    Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
         ->name('frontend.tours.checkout');
 
     Route::post('/tours/book', [TourBookingController::class, 'store'])
@@ -101,7 +113,19 @@ Route::middleware(['auth'])->group(function () {
     // Vé đã đặt của user
     Route::get('/my-bookings', [UserController::class, 'myBookings'])
         ->name('user.bookings');
+
+    // Thanh toán lại bằng VNPay
+    Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
+        ->name('frontend.bookings.pay_vnpay');
 });
+
+// Điểm đến
+Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController::class, 'index'])
+    ->name('frontend.destinations.index');
+
+// Chi tiết Tour
+Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
+    ->name('frontend.tours.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -109,9 +133,15 @@ Route::middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->middleware(['auth'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
+
+    // User Management
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class)
+        ->names('admin.users');
+    Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
+        ->name('admin.users.toggle-status');
 
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
@@ -221,6 +251,12 @@ Route::prefix('admin')->middleware(['auth'])->group(function () {
 |--------------------------------------------------------------------------
 | Auth Routes
 |--------------------------------------------------------------------------
-*/
+|*/
 
-require __DIR__ . '/auth.php';
+Route::get('/api/check-email', function (Request $request) {
+    $exists = User::where('email', $request->email)->exists();
+
+    return response()->json(['exists' => $exists]);
+})->name('api.check-email');
+
+require __DIR__.'/auth.php';

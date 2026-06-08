@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Session;
 
-if (!function_exists('format_currency')) {
+if (! function_exists('format_currency')) {
     /**
      * Định dạng tiền tệ và chuyển đổi theo cấu hình cứng
      * Mặc định DB lưu giá VNĐ.
@@ -26,14 +26,14 @@ if (!function_exists('format_currency')) {
         // Định dạng hiển thị
         switch ($currency) {
             case 'USD':
-                return '$' . number_format($convertedAmount, 2);
+                return '$'.number_format($convertedAmount, 2);
             case 'EUR':
-                return '€' . number_format($convertedAmount, 2);
+                return '€'.number_format($convertedAmount, 2);
             case 'CNY':
-                return '¥' . number_format($convertedAmount, 2);
+                return '¥'.number_format($convertedAmount, 2);
             case 'VND':
             default:
-                return number_format($convertedAmount, 0, ',', '.') . ' VNĐ';
+                return number_format($convertedAmount, 0, ',', '.').' VNĐ';
         }
     }
 }

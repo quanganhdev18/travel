@@ -13,7 +13,9 @@ class FlightTicketMail extends Mailable
     use Queueable, SerializesModels;
 
     public $booking;
+
     public $pnrCode;
+
     public $passengerName;
 
     public function __construct($booking, $pnrCode, $passengerName)

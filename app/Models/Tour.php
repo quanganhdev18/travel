@@ -6,8 +6,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
@@ -17,7 +15,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Tour extends Model
 {
-    use SoftDeletes, HasTranslations;
+    use HasTranslations, SoftDeletes;
 
     protected $table = 'tours';
 
@@ -27,6 +25,7 @@ class Tour extends Model
         'duration_days' => 'int',
         'duration_nights' => 'int',
         'base_price' => 'float',
+        'child_price' => 'float',
     ];
 
     public $translatable = [
@@ -43,6 +42,7 @@ class Tour extends Model
         'duration_days',
         'duration_nights',
         'base_price',
+        'child_price',
         'ai_tags',
     ];
 
@@ -120,5 +120,10 @@ class Tour extends Model
             ->where('departure_date', '>=', now())
             ->where('status', 'available')
             ->orderBy('departure_date', 'asc');
+    }
+
+    public function tickets()
+    {
+        return $this->belongsToMany(Ticket::class, 'tour_tickets', 'tour_id', 'ticket_id');
     }
 }

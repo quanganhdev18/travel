@@ -12,6 +12,7 @@ class DestinationController extends Controller
     public function index()
     {
         $destinations = Destination::latest()->paginate(10);
+
         return view('admin.destinations.index', compact('destinations'));
     }
 
@@ -26,7 +27,7 @@ class DestinationController extends Controller
             'name.vi' => 'required|max:255',
             'name.en' => 'nullable|max:255',
             'name.zh' => 'nullable|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $data = [
@@ -39,12 +40,12 @@ class DestinationController extends Controller
                 'vi' => $request->description['vi'] ?? '',
                 'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
                 'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
-            ]
+            ],
         ];
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('destinations', 'public');
-            $data['image_url'] = '/storage/' . $path;
+            $data['image_url'] = '/storage/'.$path;
         }
 
         Destination::create($data);
@@ -63,7 +64,7 @@ class DestinationController extends Controller
             'name.vi' => 'required|max:255',
             'name.en' => 'nullable|max:255',
             'name.zh' => 'nullable|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $data = [
@@ -76,7 +77,7 @@ class DestinationController extends Controller
                 'vi' => $request->description['vi'] ?? '',
                 'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
                 'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
-            ]
+            ],
         ];
 
         if ($request->hasFile('image')) {
@@ -85,7 +86,7 @@ class DestinationController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $destination->image_url));
             }
             $path = $request->file('image')->store('destinations', 'public');
-            $data['image_url'] = '/storage/' . $path;
+            $data['image_url'] = '/storage/'.$path;
         }
 
         $destination->update($data);
@@ -97,7 +98,7 @@ class DestinationController extends Controller
     {
         // Kiểm tra xem điểm đến này có đang chứa tour nào không
         if ($destination->tours()->count() > 0) {
-            return back()->with('error', 'Không thể xóa! Điểm đến này đang gắn với ' . $destination->tours()->count() . ' tour. Cần đưa các tour đó vào thùng rác hoặc chuyển sang điểm đến khác trước.');
+            return back()->with('error', 'Không thể xóa! Điểm đến này đang gắn với '.$destination->tours()->count().' tour. Cần đưa các tour đó vào thùng rác hoặc chuyển sang điểm đến khác trước.');
         }
 
         // Nếu an toàn, tiến hành xóa ảnh vật lý
@@ -107,6 +108,7 @@ class DestinationController extends Controller
 
         // Xóa điểm đến
         $destination->delete();
+
         return back()->with('success', 'Đã xóa điểm đến an toàn!');
     }
 }

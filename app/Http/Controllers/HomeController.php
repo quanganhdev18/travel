@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Ticket;
 use App\Models\Tour;
+use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
@@ -15,7 +16,7 @@ class HomeController extends Controller
         $banners = Banner::where('is_active', 1)
             ->where(function ($q) {
                 $q->where('position', 'hero')
-                  ->orWhereNull('position');
+                    ->orWhereNull('position');
             })
             ->orderBy('sort_order')
             ->take(5)
@@ -32,7 +33,7 @@ class HomeController extends Controller
                 ->from('tours')
                 ->whereNull('deleted_at');
         })
-            ->take(6)
+            ->take(4)
             ->get();
 
         $categories = Category::all();

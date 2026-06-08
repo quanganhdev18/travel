@@ -102,7 +102,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-1 gap-lg-4">
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ url('/') }}">{{ __('Trang chủ') }}</a></li>
-                        <li class="nav-item"><a class="nav-link fs-6" href="#">{{ __('Điểm đến') }}</a></li>
+                        <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.destinations.index') }}">{{ __('Điểm đến') }}</a></li>
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tours.index') }}">{{ __('Tour trọn gói') }}</a></li>
                         <li class="nav-item"><a class="nav-link fs-6" href="#">{{ __('Vé tham quan') }}</a></li>
                         <li class="nav-item"><a class="nav-link text-danger fs-6" href="#"><i class="bi bi-tags-fill me-1"></i>{{ __('Khuyến mãi') }}</a></li>
