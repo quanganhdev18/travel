@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsGuide;
 use App\Http\Middleware\SetLocale;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             SetLocale::class,
+            CheckUserActive::class,
         ]);
 
         $middleware->redirectUsersTo(function (Request $request) {

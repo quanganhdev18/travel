@@ -74,6 +74,18 @@ class Booking extends Model
         return $this->belongsTo(TourSchedule::class);
     }
 
+    public function tour()
+    {
+        return $this->hasOneThrough(
+            Tour::class,
+            TourSchedule::class,
+            'id', // Foreign key on tour_schedules table
+            'id', // Foreign key on tours table
+            'tour_schedule_id', // Local key on bookings table
+            'tour_id' // Local key on tour_schedules table
+        );
+    }
+
     public function coupon()
     {
         return $this->belongsTo(Coupon::class);
