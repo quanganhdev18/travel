@@ -19,15 +19,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([
-            TicketSeeder::class,
-        ]);
+        // Note: TicketSeeder will be called later after destinations are created
+        // $this->call([
+        //     TicketSeeder::class,
+        // ]);
 
         // 1. Seed Users
         User::firstOrCreate(
             ['email' => 'admin@gmail.com'],
             [
-                'name' => 'quản trị viên',
+                'name' => 'Quản trị viên',
                 'password' => Hash::make('12345678'),
                 'role' => 'admin',
                 'phone' => '0987654321',
@@ -35,9 +36,19 @@ class DatabaseSeeder extends Seeder
         );
 
         User::firstOrCreate(
+            ['email' => 'staff@gmail.com'],
+            [
+                'name' => 'Nhân viên',
+                'password' => Hash::make('12345678'),
+                'role' => 'staff',
+                'phone' => '0912345678',
+            ]
+        );
+
+        User::firstOrCreate(
             ['email' => 'user@gmail.com'],
             [
-                'name' => 'khách hàng',
+                'name' => 'Khách hàng',
                 'password' => Hash::make('12345678'),
                 'role' => 'customer',
             ]

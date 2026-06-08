@@ -50,6 +50,16 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Check if user account is active
+        $user = Auth::user();
+        if (! $user->is_active) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

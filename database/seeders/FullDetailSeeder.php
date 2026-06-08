@@ -59,7 +59,7 @@ class FullDetailSeeder extends Seeder
                     TourItinerary::create([
                         'tour_id' => $tour->id,
                         'day_number' => $d,
-                        'title' => 'Ngày ' . $d . ': Khám phá cảnh đẹp',
+                        'title' => 'Ngày '.$d.': Khám phá cảnh đẹp',
                         'description' => $faker->paragraphs(2, true),
                     ]);
                 }
@@ -72,7 +72,7 @@ class FullDetailSeeder extends Seeder
                     $depDate = Carbon::now()->addDays($faker->numberBetween(2, 30));
                     $days = $tour->duration_days ?: rand(2, 4);
                     $retDate = (clone $depDate)->addDays($days);
-                    
+
                     $capacity = rand(20, 40);
                     TourSchedule::create([
                         'tour_id' => $tour->id,
