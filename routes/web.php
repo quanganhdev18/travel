@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
 use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\AppSettingsController;
+use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
 use App\Http\Controllers\Frontend\TicketController;
@@ -53,6 +54,12 @@ Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
 
 Route::get('/currency/{currency}', [AppSettingsController::class, 'switchCurrency'])
     ->name('currency.switch');
+
+Route::post('/cookie-consent/accept', [CookieConsentController::class, 'accept'])
+    ->name('cookie.consent.accept');
+
+Route::post('/cookie-consent/decline', [CookieConsentController::class, 'decline'])
+    ->name('cookie.consent.decline');
 
 // VNPay Callbacks
 Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
