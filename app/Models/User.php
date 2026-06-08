@@ -48,6 +48,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'role',
         'preferences',
     ];
 
@@ -89,5 +90,10 @@ class User extends Authenticatable
     public function identity()
     {
         return $this->hasOne(UserIdentity::class);
+    }
+
+    public function tour_guide()
+    {
+        return $this->hasOne(TourGuide::class);
     }
 }

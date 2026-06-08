@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class IsAdmin
+class IsGuide
 {
     /**
      * Handle an incoming request.
@@ -15,10 +15,10 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && in_array(auth()->user()->role, ['admin', 'staff'])) {
+        if (auth()->check() && auth()->user()->role === 'guide') {
             return $next($request);
         }
 
-        abort(403, 'Bạn không có quyền truy cập trang quản trị.');
+        abort(403, 'Bạn không có quyền truy cập dành cho Hướng dẫn viên.');
     }
 }

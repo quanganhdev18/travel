@@ -32,6 +32,7 @@ use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
+use App\Http\Controllers\Guide\ScheduleController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -117,7 +118,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Điểm đến
-Route::get('/destinations', [\App\Http\Controllers\Frontend\DestinationController::class, 'index'])
+Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController::class, 'index'])
     ->name('frontend.destinations.index');
 
 // Chi tiết Tour
@@ -137,6 +138,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
         ->name('admin.bookings.index');
+
+    // Quản lý tài khoản (Users)
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class)
+        ->except(['show'])
+        ->names('admin.users');
 
     Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus'])
         ->name('admin.bookings.update_status');
@@ -236,6 +242,22 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/ongoing-tours/{schedule}/assign-guides', [OngoingTourController::class, 'assignGuides'])
         ->name('admin.ongoing_tours.assign_guides');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Guide Interface
+|--------------------------------------------------------------------------
+*/
+Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Guide\DashboardController::class, 'index'])
+        ->name('guide.dashboard');
+
+    Route::get('/schedules', [ScheduleController::class, 'index'])
+        ->name('guide.schedules.index');
+
+    Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
+        ->name('guide.schedules.show');
 });
 
 /*

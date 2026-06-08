@@ -15,6 +15,20 @@
                     @method('PUT')
                     
                     <div class="mb-3">
+                        <label class="form-label">Tài khoản liên kết</label>
+                        <select name="user_id" class="form-select @error('user_id') is-invalid @enderror">
+                            <option value="">-- Không liên kết --</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}" {{ old('user_id', $tourGuide->user_id) == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }} ({{ $user->email }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Chọn tài khoản (role = guide) để HDV có thể đăng nhập.</div>
+                        @error('user_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label fw-500">Họ và Tên <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" required value="{{ old('name', $tourGuide->name) }}">
                     </div>

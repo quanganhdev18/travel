@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\IsGuide;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,8 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->redirectUsersTo(function (Request $request) {
-            if (auth()->check() && auth()->user()->role === 'admin') {
-                return route('admin.dashboard');
+            if (auth()->check()) {
+                if (in_array(auth()->user()->role, ['admin', 'staff'])) {
+                    return route('admin.dashboard');
+                }
+                if (auth()->user()->role === 'guide') {
+                    return route('guide.dashboard');
+                }
             }
 
             return '/';
@@ -30,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => IsAdmin::class,
+            'guide' => IsGuide::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

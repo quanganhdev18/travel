@@ -280,89 +280,25 @@
         <a href="{{ url('/') }}" class="admin-brand">
             <i class="bi bi-cursor-fill"></i>
             <div>Travel<span>Wonder</span></div>
-        </a>
-
-        <div class="group-title">Bảng điều khiển</div>
+              <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                <a class="nav-link {{ request()->routeIs('guide.dashboard') ? 'active' : '' }}" href="{{ route('guide.dashboard') }}">
                     <i class="bi bi-grid-1x2"></i> Tổng quan
                 </a>
             </li>
         </ul>
 
-        <div class="group-title">Nghiệp vụ kinh doanh</div>
+        <div class="group-title">Nghiệp vụ Hướng dẫn viên</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}" href="{{ route('admin.bookings.index') }}">
-                    <i class="bi bi-calendar-check me-2"></i>
-                    Quản lý Booking
-                </a>
-            </li>
-
-
-            <li class="nav-heading mt-3 mb-2 text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Quản lý chung</li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/tours*') ? 'active' : '' }}" href="{{ route('admin.tours.index') }}">
-                    <i class="bi bi-briefcase"></i> Sản phẩm Tour
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
-                    <i class="bi bi-compass"></i> Điều hành Tour
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/tour-guides*') ? 'active' : '' }}" href="{{ route('admin.tour_guides.index') }}">
-                    <i class="bi bi-person-badge"></i> Hướng dẫn viên
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/tickets*') ? 'active' : '' }}" href="#">
-                    <i class="bi bi-ticket-perforated"></i> Vé tham quan
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/invoices*') ? 'active' : '' }}" href="#">
-                    <i class="bi bi-receipt"></i> Hóa đơn & Thu chi
+                <a class="nav-link {{ request()->routeIs('guide.schedules.*') ? 'active' : '' }}" href="{{ route('guide.schedules.index') }}">
+                    <i class="bi bi-calendar-event me-2"></i>
+                    Lịch trình Tour
                 </a>
             </li>
         </ul>
-
-        <div class="group-title">Cấu hình hệ thống</div>
-        <ul class="nav flex-column mb-3">
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/destinations*') ? 'active' : '' }}" href="{{ route('admin.destinations.index') }}">
-                    <i class="bi bi-geo-alt"></i> Điểm đến
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/categories*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">
-                    <i class="bi bi-tags"></i> Danh mục Tour
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/banners*') ? 'active' : '' }}" href="{{ route('admin.banners.index') }}">
-                    <i class="bi bi-images"></i> Banner quảng cáo
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
-                    <i class="bi bi-people"></i> Tài khoản & Phân quyền
-                </a>
-            </li>
-        </ul>
-
-        <div class="group-title">Tiện ích</div>
-        <ul class="nav flex-column mb-4">
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-star"></i> Đánh giá khách hàng
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-megaphone"></i> Khuyến mãi & Coupon
+    </div>�n mãi & Coupon
                 </a>
             </li>
         </ul>
