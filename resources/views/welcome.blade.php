@@ -52,24 +52,26 @@
                 <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
-                        <div class="input-group">
+                        <div class="input-group autocomplete-wrapper">
                             <span class="input-group-text bg-white border-end-0 text-muted">
                                 <i class="bi bi-geo-alt"></i>
                             </span>
-                            <input type="text" name="keyword" class="form-control search-form-control border-start-0 ps-0"
-                                placeholder="{{ __('Bạn muốn đi đâu?') }}" value="{{ request('keyword') }}">
+                            <input type="text" name="keyword" data-dest-autocomplete
+                                class="form-control search-form-control border-start-0 ps-0"
+                                placeholder="{{ __('Bạn muốn đi đâu?') }}"
+                                value="{{ request('keyword') }}"
+                                autocomplete="off">
                         </div>
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                        <input type="date" name="departure_date" class="form-control search-form-control" value="{{ request('departure_date') }}" min="{{ date('Y-m-d') }}">
+                        <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
                         <select name="guests" class="form-select search-form-control">
-                            <option value="">{{ __('Chọn số khách') }}</option>
                             <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>{{ __('1 Người lớn, 0 Trẻ em') }}</option>
                             <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>{{ __('2 Người lớn, 0 Trẻ em') }}</option>
                             <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>{{ __('Gia đình') }}</option>
@@ -101,7 +103,7 @@
 
                     <div class="col-md-3">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày sử dụng') }}</label>
-                        <input type="date" name="use_date" class="form-control search-form-control" value="{{ request('use_date') }}" min="{{ date('Y-m-d') }}">
+                        <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                     </div>
 
                     <div class="col-md-2">
