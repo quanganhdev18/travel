@@ -15,7 +15,7 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && in_array(auth()->user()->role, ['admin', 'staff'])) {
+        if (auth()->check() && auth()->user()->hasAnyRole(['Super Admin', 'Admin', 'Staff'])) {
             return $next($request);
         }
 

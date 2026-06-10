@@ -50,7 +50,7 @@
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
                 <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
                         <div class="input-group autocomplete-wrapper">
                             <span class="input-group-text bg-white border-end-0 text-muted">
@@ -64,18 +64,9 @@
                         </div>
                     </div>
 
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
                         <input type="date" name="date" class="form-control search-form-control" value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label text-muted small fw-bold">{{ __('Số khách') }}</label>
-                        <select name="guests" class="form-select search-form-control">
-                            <option value="1" {{ request('guests') == '1' ? 'selected' : '' }}>{{ __('1 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="2" {{ request('guests') == '2' ? 'selected' : '' }}>{{ __('2 Người lớn, 0 Trẻ em') }}</option>
-                            <option value="3" {{ request('guests') == '3' ? 'selected' : '' }}>{{ __('Gia đình') }}</option>
-                        </select>
                     </div>
 
                     <div class="col-md-2">

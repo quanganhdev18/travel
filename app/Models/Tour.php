@@ -126,4 +126,10 @@ class Tour extends Model
     {
         return $this->belongsToMany(Ticket::class, 'tour_tickets', 'tour_id', 'ticket_id');
     }
+
+    public function addons()
+    {
+        return $this->belongsToMany(Addon::class, 'tour_addons', 'tour_id', 'addon_id')
+            ->withTimestamps();
+    }
 }

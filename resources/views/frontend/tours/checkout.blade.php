@@ -31,6 +31,19 @@
     .btn-check:checked + .transport-option i {
         color: var(--primary-color) !important;
     }
+
+    /* Wizard Styles */
+    .wizard-steps { display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative; }
+    .wizard-steps::before { content: ''; position: absolute; top: 20px; left: 10%; width: 80%; height: 2px; background: #e2e8f0; z-index: 1; }
+    .wizard-step { position: relative; z-index: 2; text-align: center; background: white; padding: 0 10px; flex: 1; }
+    .wizard-step-circle { width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 8px auto; transition: all 0.3s; border: 4px solid white; }
+    .wizard-step.active .wizard-step-circle { background: var(--primary-color); color: white; box-shadow: 0 0 0 4px rgba(0, 124, 232, 0.2); }
+    .wizard-step.completed .wizard-step-circle { background: #10b981; color: white; }
+    .wizard-step-title { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+    .wizard-step.active .wizard-step-title { color: var(--primary-color); font-weight: 600; }
+    .wizard-panel { display: none; }
+    .wizard-panel.active { display: block; animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <div class="container py-5">
@@ -46,9 +59,17 @@
                         {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }} - 
                         {{ \Carbon\Carbon::parse($schedule->return_date)->format('d/m/Y') }}
                     </p>
+                    @if($holidaySurcharge > 0)
+                        <div class="alert alert-warning mt-3 mb-0 d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+                            <div>
+                                <strong>Lưu ý phụ thu dịp Lễ/Tết:</strong> Tour khởi hành vào dịp lễ nên áp dụng phụ thu {{ $holidaySurcharge }}%. Giá trên đã bao gồm phụ thu.
+                            </div>
+                        </div>
+                    @endif
                 </div>
 
-                <form action="{{ route('frontend.tours.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('frontend.tours.store') }}" method="POST" id="checkout-form" enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
                     <input type="hidden" name="adults" value="{{ $adults }}">
@@ -57,9 +78,26 @@
                     <input type="hidden" name="transport_price" id="input_transport_price" value="0">
                     <input type="hidden" name="transport_data" id="input_transport_data" value="">
 
+                    <!-- Wizard Progress -->
+                    <div class="wizard-steps">
+                        <div class="wizard-step active" id="step-nav-1">
+                            <div class="wizard-step-circle">1</div>
+                            <div class="wizard-step-title">Hành Khách</div>
+                        </div>
+                        <div class="wizard-step" id="step-nav-2">
+                            <div class="wizard-step-circle">2</div>
+                            <div class="wizard-step-title">Dịch Vụ</div>
+                        </div>
+                        <div class="wizard-step" id="step-nav-3">
+                            <div class="wizard-step-circle">3</div>
+                            <div class="wizard-step-title">Thanh Toán</div>
+                        </div>
+                    </div>
 
-                    <!-- Section 1: Thông Tin Hành Khách Chính -->
-                    <div class="mb-5">
+                    <!-- WIZARD STEP 1 -->
+                    <div class="wizard-panel active" id="step-panel-1">
+                        <!-- Section 1: Thông Tin Hành Khách Chính -->
+                        <div class="mb-5">
                         <h4 class="form-section-title">
                             <i class="bi bi-person-badge"></i>
                             {{ __('Thông Tin Liên Hệ') }}
@@ -178,9 +216,18 @@
                         </div>
                         @endfor
                     </div>
+                    
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-primary px-5 py-2 btn-next" data-next="2">
+                                Tiếp tục <i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div> <!-- END WIZARD STEP 1 -->
 
-                    <!-- Section 3: Phương Thức Vận Chuyển -->
-                    <div class="mb-5">
+                    <!-- WIZARD STEP 2 -->
+                    <div class="wizard-panel" id="step-panel-2">
+                        <!-- Section 3: Phương Thức Vận Chuyển -->
+                        <div class="mb-5">
                         <h4 class="form-section-title">
                             <i class="bi bi-airplane"></i>
                             {{ __('Di Chuyển Đến Điểm Khởi Hành') }}
@@ -224,6 +271,17 @@
                         
                         <!-- Vùng hiển thị kết quả phương tiện (AJAX) -->
                         <div id="transport_options_container" style="display: none;" class="p-4 bg-light rounded border">
+                            <div class="mb-4 pb-3 border-bottom">
+                                <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ __('Chọn điểm xuất phát của bạn') }}</label>
+                                <select id="customer_origin_select" class="form-select form-select-lg border-primary shadow-sm" style="max-width: 400px;">
+                                    <option value="HAN">{{ __('Hà Nội (HAN)') }}</option>
+                                    <option value="SGN" selected>{{ __('TP. Hồ Chí Minh (SGN)') }}</option>
+                                    <option value="DAD">{{ __('Đà Nẵng (DAD)') }}</option>
+                                    <option value="HPH">{{ __('Hải Phòng (HPH)') }}</option>
+                                    <option value="VCA">{{ __('Cần Thơ (VCA)') }}</option>
+                                    <option value="PQC">{{ __('Phú Quốc (PQC)') }}</option>
+                                </select>
+                            </div>
                             <div id="transport_loading" style="display: none;" class="text-center py-4">
                                 <div class="spinner-border text-primary" role="status"></div>
                                 <div class="mt-2 text-muted">{{ __('Đang tìm kiếm chuyến đi phù hợp nhất...') }}</div>
@@ -270,45 +328,168 @@
                     </div>
                     @endif
 
-                    <!-- Section 4: Phương Thức Thanh Toán -->
+                    @if($schedule->tour->addons && count($schedule->tour->addons) > 0)
+                    <!-- Section: Dịch vụ Addon -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
-                            <i class="bi bi-credit-card"></i>
-                            {{ __('Phương Thức Thanh Toán') }}
+                            <i class="bi bi-plus-circle-dotted"></i>
+                            {{ __('Dịch vụ bổ sung (Add-ons)') }}
                         </h4>
-
+                        
                         <div class="row g-4">
-                            <div class="col-md-6">
-                                <input type="radio" class="btn-check" name="payment_method" id="payment_cod" value="cod" checked>
-                                <label class="transport-option w-100 p-4 text-start" for="payment_cod">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-wallet2 text-muted" style="font-size: 32px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-5 text-dark">{{ __('Tiền mặt / Chuyển khoản') }}</div>
-                                            <div class="small text-muted mt-1">{{ __('Thanh toán sau hoặc trực tiếp') }}</div>
+                            @foreach($schedule->tour->addons as $addon)
+                                @if($addon->is_active)
+                                <div class="col-12">
+                                    <div class="card border shadow-sm">
+                                        <div class="card-body p-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                            <div class="d-flex align-items-center gap-3">
+                                                @if($addon->image_url)
+                                                    <img src="{{ asset($addon->image_url) }}" alt="{{ $addon->name }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                                @else
+                                                    <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                                        <i class="bi bi-image text-muted"></i>
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold text-primary">{{ $addon->name }}</h6>
+                                                    <div class="text-danger fw-bold" id="addon_price_display_{{ $addon->id }}" data-base-price="{{ $addon->price }}">{{ format_currency($addon->price) }}</div>
+                                                    @if($addon->description)
+                                                        <small class="text-muted d-block mt-1">{{ $addon->description }}</small>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div>
+                                                    <label class="small text-muted mb-1">Ngày sử dụng</label>
+                                                    <input type="date" name="addons[{{ $addon->id }}][usage_date]" class="form-control form-control-sm addon-date-input" 
+                                                        value="{{ \Carbon\Carbon::parse($schedule->departure_date)->format('Y-m-d') }}"
+                                                        min="{{ \Carbon\Carbon::parse($schedule->departure_date)->format('Y-m-d') }}"
+                                                        max="{{ \Carbon\Carbon::parse($schedule->return_date)->format('Y-m-d') }}"
+                                                        data-addon-id="{{ $addon->id }}"
+                                                        >
+                                                </div>
+                                                <div>
+                                                    <label class="small text-muted mb-1">Số lượng</label>
+                                                    <input type="number" name="addons[{{ $addon->id }}][qty]" class="form-control form-control-sm addon-qty-input text-center" style="width: 70px;" value="0" min="0" max="99" data-addon-id="{{ $addon->id }}">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </label>
-                            </div>
-                            <div class="col-md-6">
-                                <input type="radio" class="btn-check" name="payment_method" id="payment_vnpay" value="vnpay">
-                                <label class="transport-option w-100 p-4 text-start" for="payment_vnpay">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-credit-card-2-back text-muted" style="font-size: 32px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-5 text-dark">{{ __('Thanh toán qua VNPay') }}</div>
-                                            <div class="small text-muted mt-1">{{ __('Cổng thanh toán điện tử VNPay') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
+                                </div>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
+                    @endif
 
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn btn-register-premium w-100 py-3 fs-5 mt-3">
-                        <i class="bi bi-shield-check me-2"></i> {{ __('Xác Nhận Thanh Toán') }}
-                    </button>
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary px-4 py-2 btn-prev" data-prev="1">
+                                <i class="bi bi-arrow-left me-2"></i> Quay lại
+                            </button>
+                            <button type="button" class="btn btn-primary px-5 py-2 btn-next" data-next="3">
+                                Tiếp tục <i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div> <!-- END WIZARD STEP 2 -->
+
+                    <!-- WIZARD STEP 3 -->
+                    <div class="wizard-panel" id="step-panel-3">
+                        <!-- Section 4: Hình Thức Thanh Toán (100% or 30%) -->
+                        <div class="mb-5">
+                            <h4 class="form-section-title">
+                                <i class="bi bi-cash-coin"></i>
+                                {{ __('Hình Thức Thanh Toán') }}
+                            </h4>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <input type="radio" class="btn-check" name="payment_type" id="payment_type_full" value="full" checked>
+                                    <label class="transport-option w-100 p-4 text-start" for="payment_type_full">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-check2-all text-muted" style="font-size: 32px;"></i>
+                                            <div class="ms-3">
+                                                <div class="fw-bold fs-5 text-dark">{{ __('Thanh toán 100%') }}</div>
+                                                <div class="small text-muted mt-1">{{ __('Thanh toán toàn bộ giá trị đơn hàng') }}</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="radio" class="btn-check" name="payment_type" id="payment_type_deposit" value="deposit">
+                                    <label class="transport-option w-100 p-4 text-start" for="payment_type_deposit">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-pie-chart text-muted" style="font-size: 32px;"></i>
+                                            <div class="ms-3">
+                                                <div class="fw-bold fs-5 text-dark">{{ __('Đặt cọc 30% giữ chỗ') }}</div>
+                                                <div class="small text-muted mt-1">{{ __('Phần còn lại thanh toán sau') }}</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Phương Thức Thanh Toán -->
+                        <div class="mb-5">
+                            <h4 class="form-section-title">
+                                <i class="bi bi-credit-card"></i>
+                                {{ __('Phương Thức Thanh Toán') }}
+                            </h4>
+
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <input type="radio" class="btn-check" name="payment_method" id="payment_transfer" value="transfer" checked>
+                                    <label class="transport-option w-100 p-4 text-start" for="payment_transfer">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-bank text-muted" style="font-size: 32px;"></i>
+                                            <div class="ms-3">
+                                                <div class="fw-bold fs-5 text-dark">{{ __('Tiền mặt / Chuyển khoản') }}</div>
+                                                <div class="small text-muted mt-1">{{ __('Chuyển khoản thủ công hoặc nộp tiền mặt') }}</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="radio" class="btn-check" name="payment_method" id="payment_vnpay" value="vnpay">
+                                    <label class="transport-option w-100 p-4 text-start" for="payment_vnpay">
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-qr-code-scan text-muted" style="font-size: 32px;"></i>
+                                            <div class="ms-3">
+                                                <div class="fw-bold fs-5 text-dark">{{ __('Thanh toán qua VNPay') }}</div>
+                                                <div class="small text-muted mt-1">{{ __('Cổng thanh toán điện tử an toàn') }}</div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section: Mã Khuyến Mãi -->
+                        <div class="mb-5">
+                            <h4 class="form-section-title">
+                                <i class="bi bi-tags"></i>
+                                {{ __('Mã Khuyến Mãi') }}
+                            </h4>
+                            <div class="card border-0 bg-light p-4 rounded-4">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control form-control-lg border-primary" id="coupon_code_input" name="coupon_code" placeholder="{{ __('Nhập mã giảm giá') }}">
+                                    <button class="btn btn-primary px-4" type="button" id="btn_apply_coupon">{{ __('Áp dụng') }}</button>
+                                </div>
+                                <div id="coupon_message" class="small mt-2" style="display: none;"></div>
+                                <input type="hidden" name="discount_amount" id="input_discount_amount" value="0">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary px-4 py-2 btn-prev" data-prev="2">
+                                <i class="bi bi-arrow-left me-2"></i> Quay lại
+                            </button>
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-register-premium px-5 py-2 fs-5">
+                                <i class="bi bi-shield-check me-2"></i> {{ __('Xác Nhận Thanh Toán') }}
+                            </button>
+                        </div>
+                    </div> <!-- END WIZARD STEP 3 -->
                 </form>
             </div>
         </div>
@@ -359,9 +540,25 @@
                         <span class="text-muted fw-500">{{ __('Vé tham quan:') }}</span>
                         <strong class="text-dark" id="display_ticket_price">0 đ</strong>
                     </div>
-                    <div class="text-muted fw-500 mb-2">{{ __('Tổng Tiền Cần Thanh Toán:') }}</div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="addon_fee_row" style="display: none !important;">
+                        <span class="text-muted fw-500">{{ __('Dịch vụ thêm:') }}</span>
+                        <strong class="text-dark" id="display_addon_price">0 đ</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="coupon_fee_row" style="display: none !important;">
+                        <span class="text-success fw-500"><i class="bi bi-tag-fill me-1"></i>{{ __('Giảm giá:') }}</span>
+                        <strong class="text-success" id="display_coupon_discount">0 đ</strong>
+                    </div>
+                    <div class="text-muted fw-500 mb-2">{{ __('Tổng Tiền Đơn Hàng:') }}</div>
                     <div class="text-danger fw-bold lh-1" style="font-size: 2rem;" id="display_total_price">
                         {!! format_currency($totalPrice) !!}
+                    </div>
+
+                    <div id="deposit_amount_row" style="display: none;" class="mt-4 pt-3 border-top border-primary border-2">
+                        <div class="text-primary fw-500 mb-2"><i class="bi bi-check2-circle me-1"></i>{{ __('Cần Thanh Toán Ngay (Cọc 30%):') }}</div>
+                        <div class="text-primary fw-bold lh-1" style="font-size: 1.8rem;" id="display_deposit_price">
+                            0 đ
+                        </div>
+                        <div class="text-muted small mt-2">{{ __('Còn lại (70%) thanh toán sau:') }} <span class="fw-bold text-dark" id="display_remaining_price">0 đ</span></div>
                     </div>
                 </div>
 
@@ -486,9 +683,7 @@
             'Hải Phòng' => 'HPH',
         ];
         $departureLoc = $schedule->tour->departure_location->name ?? '';
-        $destinationLoc = $schedule->tour->destination->name ?? '';
-        $originCode = $iataMap[$departureLoc] ?? 'HAN';
-        $destinationCode = $iataMap[$destinationLoc] ?? 'SGN';
+        $tourDepartureCode = $iataMap[$departureLoc] ?? 'SGN';
         $departureDate = \Carbon\Carbon::parse($schedule->departure_date)->format('Y-m-d');
     @endphp
 
@@ -540,7 +735,7 @@
         currentTransportPrice = transportPrice;
         currentTicketPrice = ticketPrice;
         
-        const finalPrice = baseTourPrice + transportPrice + ticketPrice;
+        const finalPrice = baseTourPrice + transportPrice + ticketPrice + currentAddonPrice;
         
         inputTransportPrice.value = transportPrice;
         inputTotalPrice.value = finalPrice;
@@ -557,6 +752,15 @@
             displayTicketPrice.textContent = formatCurrencyDynamic(ticketPrice);
         } else {
             ticketFeeRow.style.setProperty('display', 'none', 'important');
+        }
+
+        const displayAddonPrice = document.getElementById('display_addon_price');
+        const addonFeeRow = document.getElementById('addon_fee_row');
+        if (currentAddonPrice > 0) {
+            addonFeeRow.style.setProperty('display', 'flex', 'important');
+            displayAddonPrice.textContent = formatCurrencyDynamic(currentAddonPrice);
+        } else {
+            addonFeeRow.style.setProperty('display', 'none', 'important');
         }
         
         displayTotalPrice.textContent = formatCurrencyDynamic(finalPrice);
@@ -576,38 +780,101 @@
         });
     });
 
-    // Function handle selecting a transport option
+    // Xử lý Dịch vụ Addon
+    const holidaysData = @json($holidays);
+    let currentAddonPrice = 0;
+    
+    function getHolidaySurcharge(dateStr) {
+        let maxSurcharge = 0;
+        holidaysData.forEach(holiday => {
+            if (dateStr >= holiday.start_date && dateStr <= holiday.end_date) {
+                if (parseFloat(holiday.price_increase_percentage) > maxSurcharge) {
+                    maxSurcharge = parseFloat(holiday.price_increase_percentage);
+                }
+            }
+        });
+        return maxSurcharge;
+    }
+
+    function updateAddonsTotal() {
+        let totalAddons = 0;
+        const addonRows = document.querySelectorAll('.addon-qty-input');
+        addonRows.forEach(input => {
+            let qty = parseInt(input.value);
+            if(isNaN(qty) || qty < 0) qty = 0;
+            
+            if(qty > 0) {
+                const addonId = input.dataset.addonId;
+                const dateInput = document.querySelector(`.addon-date-input[data-addon-id="${addonId}"]`);
+                const usageDate = dateInput.value;
+                const priceDisplay = document.getElementById(`addon_price_display_${addonId}`);
+                const basePrice = parseFloat(priceDisplay.dataset.basePrice);
+                
+                const surcharge = getHolidaySurcharge(usageDate);
+                const finalPrice = basePrice * (1 + surcharge / 100);
+                
+                totalAddons += finalPrice * qty;
+                
+                if(surcharge > 0) {
+                    priceDisplay.innerHTML = `${formatCurrencyDynamic(finalPrice)} <span class="badge bg-danger ms-1 px-1 py-0" style="font-size:0.6rem">+${surcharge}% Lễ</span>`;
+                } else {
+                    priceDisplay.innerHTML = formatCurrencyDynamic(basePrice);
+                }
+            } else {
+                const addonId = input.dataset.addonId;
+                const priceDisplay = document.getElementById(`addon_price_display_${addonId}`);
+                const basePrice = parseFloat(priceDisplay.dataset.basePrice);
+                priceDisplay.innerHTML = formatCurrencyDynamic(basePrice);
+            }
+        });
+        
+        currentAddonPrice = totalAddons;
+        updateTotalDisplay(currentTransportPrice, currentTicketPrice);
+    }
+
+    const addonInputs = document.querySelectorAll('.addon-qty-input, .addon-date-input');
+    addonInputs.forEach(input => {
+        input.addEventListener('change', updateAddonsTotal);
+        input.addEventListener('input', updateAddonsTotal);
+    });
+
     window.selectTransportOption = function(price, dataStr) {
         // Parse data
         let data = JSON.parse(decodeURIComponent(dataStr));
         inputTransportData.value = JSON.stringify(data);
         
         // Highlight selected
-        document.querySelectorAll('.transport-item-card').forEach(el => el.classList.remove('border-primary', 'bg-light'));
-        event.currentTarget.classList.add('border-primary', 'bg-light');
+        document.querySelectorAll('.transport-item-card').forEach(el => {
+            el.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+            const icon = el.querySelector('.selected-icon');
+            if(icon) icon.style.display = 'none';
+        });
+        
+        event.currentTarget.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        const icon = event.currentTarget.querySelector('.selected-icon');
+        if(icon) icon.style.display = 'block';
         
         // Update price
         updateTotalDisplay(parseFloat(price));
     };
 
-    transportRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-        // Reset state (chỉ reset phương tiện, giữ nguyên vé)
-            updateTotalDisplay(0, currentTicketPrice);
-            inputTransportData.value = '';
-            
-            if (this.value === 'self') {
-                transportContainer.style.display = 'none';
-                return;
-            }
-            
-            transportContainer.style.display = 'block';
-            transportLoading.style.display = 'block';
-            transportResults.innerHTML = '';
-            
-            if (this.value === 'flight') {
-                // Fetch Flight
-                fetch(`/api/flights/search?passengers=${totalPersonsCount}&origin={{ $originCode }}&destination={{ $destinationCode }}&departure_date={{ $departureDate }}`)
+    function loadTransportOptions() {
+        const selectedRadio = document.querySelector('input[name="transport_type"]:checked');
+        if (!selectedRadio || selectedRadio.value === 'self') {
+            transportContainer.style.display = 'none';
+            return;
+        }
+
+        transportContainer.style.display = 'block';
+        transportLoading.style.display = 'block';
+        transportResults.innerHTML = '';
+        
+        const customerOrigin = document.getElementById('customer_origin_select').value;
+        const flightDestination = '{{ $tourDepartureCode }}';
+        
+        if (selectedRadio.value === 'flight') {
+            // Fetch Flight
+            fetch(`/api/flights/search?passengers=${totalPersonsCount}&origin=${customerOrigin}&destination=${flightDestination}&departure_date={{ $departureDate }}`)
                     .then(res => res.json())
                     .then(data => {
                         transportLoading.style.display = 'none';
@@ -644,7 +911,10 @@
                                 }));
                                 
                                 html += `
-                                <div class="card mb-3 transport-item-card" style="cursor:pointer;" onclick="selectTransportOption(${priceVND}, '${dataStr}')">
+                                <div class="card mb-3 transport-item-card position-relative transition-all" style="cursor:pointer; border-width: 2px;" onclick="selectTransportOption(${priceVND}, '${dataStr}')">
+                                    <div class="selected-icon position-absolute top-0 end-0 mt-2 me-2 text-primary" style="display:none; font-size: 1.5rem;">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    </div>
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
                                             <div class="fw-bold text-primary"><i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}</div>
@@ -672,14 +942,15 @@
                             });
                             transportResults.innerHTML = html;
                         } else {
-                            transportResults.innerHTML = '<div class="alert alert-warning">{{ __("Không tìm thấy chuyến bay mẫu của Duffel Airways phù hợp.") }}</div>';
+                            const errorMsg = data.message ? data.message : '{{ __("Không tìm thấy chuyến bay mẫu phù hợp.") }}';
+                            transportResults.innerHTML = `<div class="alert alert-warning">${errorMsg}</div>`;
                         }
                     })
                     .catch(err => {
                         transportLoading.style.display = 'none';
                         transportResults.innerHTML = '<div class="alert alert-danger">{{ __("Lỗi kết nối khi tìm chuyến bay.") }}</div>';
                     });
-            } else if (this.value === 'bus') {
+            } else if (selectedRadio.value === 'bus') {
                 // Mock Bus Data
                 setTimeout(() => {
                     transportLoading.style.display = 'none';
@@ -698,7 +969,10 @@
                         }));
                         
                         html += `
-                        <div class="card mb-3 transport-item-card" style="cursor:pointer;" onclick="selectTransportOption(${bus.price}, '${dataStr}')">
+                        <div class="card mb-3 transport-item-card position-relative transition-all" style="cursor:pointer; border-width: 2px;" onclick="selectTransportOption(${bus.price}, '${dataStr}')">
+                            <div class="selected-icon position-absolute top-0 end-0 mt-2 me-2 text-primary" style="display:none; font-size: 1.5rem;">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
@@ -714,7 +988,198 @@
                     transportResults.innerHTML = html;
                 }, 800);
             }
+    }
+
+    transportRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateTotalDisplay(0, currentTicketPrice);
+            inputTransportData.value = '';
+            loadTransportOptions();
         });
     });
+
+    document.getElementById('customer_origin_select').addEventListener('change', function() {
+        updateTotalDisplay(0, currentTicketPrice);
+        inputTransportData.value = '';
+        loadTransportOptions();
+    });
+    // WIZARD LOGIC
+    document.querySelectorAll('.btn-next').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Validate current step
+            const currentStep = this.closest('.wizard-panel');
+            const inputs = currentStep.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+            inputs.forEach(input => {
+                if(!input.checkValidity()) {
+                    input.reportValidity();
+                    isValid = false;
+                }
+            });
+            
+            if(isValid) {
+                const nextId = this.dataset.next;
+                
+                // Add validation for Transport selection in Step 2
+                if (currentStep.id === 'step-panel-2') {
+                    const selectedTransport = document.querySelector('input[name="transport_type"]:checked').value;
+                    if ((selectedTransport === 'flight' || selectedTransport === 'bus') && !inputTransportData.value) {
+                        alert('Vui lòng click chọn một chuyến bay/xe khách cụ thể hoặc chọn phương thức Tự Túc trước khi tiếp tục.');
+                        return;
+                    }
+                }
+
+                // Update panels
+                document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById('step-panel-' + nextId).classList.add('active');
+                // Update nav steps
+                document.querySelectorAll('.wizard-step').forEach(s => {
+                    const stepNum = parseInt(s.id.replace('step-nav-', ''));
+                    s.classList.remove('active');
+                    if(stepNum < nextId) s.classList.add('completed');
+                    if(stepNum == nextId) s.classList.add('active');
+                });
+                window.scrollTo(0, 0);
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-prev').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prevId = this.dataset.prev;
+            // Update panels
+            document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('step-panel-' + prevId).classList.add('active');
+            // Update nav steps
+            document.querySelectorAll('.wizard-step').forEach(s => {
+                const stepNum = parseInt(s.id.replace('step-nav-', ''));
+                s.classList.remove('active');
+                if(stepNum >= prevId) s.classList.remove('completed');
+                if(stepNum == prevId) s.classList.add('active');
+            });
+            window.scrollTo(0, 0);
+        });
+    });
+
+    // COUPON LOGIC
+    let currentCouponDiscount = 0;
+    
+    document.getElementById('btn_apply_coupon').addEventListener('click', function() {
+        const code = document.getElementById('coupon_code_input').value.trim();
+        const msg = document.getElementById('coupon_message');
+        const applyBtn = this;
+        
+        if (!code) {
+            msg.style.display = 'block';
+            msg.className = 'small mt-2 text-danger';
+            msg.textContent = 'Vui lòng nhập mã khuyến mãi.';
+            return;
+        }
+        
+        // Calculate subtotal before discount
+        const subtotal = baseTourPrice + currentTransportPrice + currentTicketPrice + currentAddonPrice;
+        
+        applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        applyBtn.disabled = true;
+        
+        fetch('/api/coupons/apply', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                code: code,
+                order_value: subtotal
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            msg.style.display = 'block';
+            if (data.success) {
+                msg.className = 'small mt-2 text-success fw-bold';
+                msg.textContent = `Áp dụng thành công! Giảm ${formatCurrencyDynamic(data.discount_amount)}`;
+                
+                currentCouponDiscount = data.discount_amount;
+                document.getElementById('input_discount_amount').value = currentCouponDiscount;
+                
+                const row = document.getElementById('coupon_fee_row');
+                row.style.setProperty('display', 'flex', 'important');
+                document.getElementById('display_coupon_discount').textContent = '- ' + formatCurrencyDynamic(currentCouponDiscount);
+                
+                updateTotalDisplay();
+            } else {
+                msg.className = 'small mt-2 text-danger';
+                msg.textContent = data.message || 'Mã không hợp lệ hoặc đã hết hạn.';
+                
+                currentCouponDiscount = 0;
+                document.getElementById('input_discount_amount').value = 0;
+                document.getElementById('coupon_fee_row').style.setProperty('display', 'none', 'important');
+                
+                updateTotalDisplay();
+            }
+        })
+        .catch(err => {
+            msg.style.display = 'block';
+            msg.className = 'small mt-2 text-danger';
+            msg.textContent = 'Lỗi kết nối. Vui lòng thử lại sau.';
+        })
+        .finally(() => {
+            applyBtn.innerHTML = 'Áp dụng';
+            applyBtn.disabled = false;
+        });
+    });
+
+    // Override updateTotalDisplay to include discount
+    const originalUpdateTotalDisplay = updateTotalDisplay;
+    updateTotalDisplay = function(transportPrice = currentTransportPrice, ticketPrice = currentTicketPrice) {
+        currentTransportPrice = transportPrice;
+        currentTicketPrice = ticketPrice;
+        const subtotal = baseTourPrice + currentTransportPrice + currentTicketPrice + currentAddonPrice;
+        const finalTotal = Math.max(0, subtotal - currentCouponDiscount);
+        originalUpdateTotalDisplay(transportPrice, ticketPrice); // call original to update DOM text for other items
+        document.getElementById('display_total_price').innerHTML = formatCurrencyDynamic(finalTotal);
+
+        // Deposit calculation
+        const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+        const depositRow = document.getElementById('deposit_amount_row');
+        if (paymentType === 'deposit') {
+            const depositAmount = finalTotal * 0.3;
+            const remainingAmount = finalTotal - depositAmount;
+            document.getElementById('display_deposit_price').innerHTML = formatCurrencyDynamic(depositAmount);
+            document.getElementById('display_remaining_price').innerHTML = formatCurrencyDynamic(remainingAmount);
+            depositRow.style.setProperty('display', 'block', 'important');
+        } else {
+            depositRow.style.setProperty('display', 'none', 'important');
+        }
+    };
+
+    // Listen to payment type change
+    document.querySelectorAll('input[name="payment_type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateTotalDisplay();
+            
+            // Highlight selected payment type card
+            document.querySelectorAll('input[name="payment_type"]').forEach(el => {
+                el.nextElementSibling.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+            });
+            this.nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        });
+    });
+
+    // Listen to payment method change (for UX highlighting)
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('input[name="payment_method"]').forEach(el => {
+                el.nextElementSibling.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
+            });
+            this.nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+        });
+    });
+
+    // Initial highlight
+    document.querySelector('input[name="payment_type"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+    document.querySelector('input[name="payment_method"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
 </script>
 @endsection

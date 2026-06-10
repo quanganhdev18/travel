@@ -10,6 +10,41 @@
 
 @section('title', $tourTitle)
 
+@push('scripts')
+    @vite(['resources/js/app.js'])
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.Echo) {
+                // Listen to all schedules of this tour
+                @foreach($tour->tour_schedules as $schedule)
+                    window.Echo.channel('tour-schedule.{{ $schedule->id }}')
+                        .listen('SeatAvailabilityUpdated', (e) => {
+                            const label = document.querySelector(`label[for="schedule-${e.scheduleId}"]`);
+                            if (label) {
+                                const seatBadge = label.querySelector('.badge.bg-light span');
+                                if (seatBadge) {
+                                    seatBadge.textContent = e.availableSeats;
+                                    seatBadge.className = e.availableSeats < 5 ? 'text-danger fw-bold' : 'text-success fw-bold';
+                                }
+                                
+                                const radio = document.getElementById(`schedule-${e.scheduleId}`);
+                                if (e.availableSeats <= 0 && radio) {
+                                    radio.disabled = true;
+                                    radio.checked = false;
+                                    // Thay label trống bằng Hết chỗ
+                                    const textEnd = label.querySelector('.text-end');
+                                    if(textEnd) {
+                                        textEnd.innerHTML = `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>Hết chỗ</span>`;
+                                    }
+                                }
+                            }
+                        });
+                @endforeach
+            }
+        });
+    </script>
+@endpush
+
 @section('content')
 <style>
     .gallery-main {

@@ -102,6 +102,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/scan-cccd', [OcrController::class, 'scanCccd'])
         ->name('ocr.scan-cccd');
 
+    Route::post('/api/coupons/apply', [TourBookingController::class, 'applyCoupon'])
+        ->name('coupons.apply');
+
     // Đặt Tour
     Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
         ->name('frontend.tours.checkout');
@@ -256,6 +259,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/ongoing-tours/{schedule}/assign-guides', [OngoingTourController::class, 'assignGuides'])
         ->name('admin.ongoing_tours.assign_guides');
+
+    // Holidays
+    Route::resource('holidays', App\Http\Controllers\Admin\HolidayController::class)
+        ->names('admin.holidays');
+
+    // Addons
+    Route::resource('addons', App\Http\Controllers\Admin\AddonController::class)
+        ->names('admin.addons');
 });
 
 /*

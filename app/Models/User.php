@@ -32,10 +32,13 @@ use Illuminate\Notifications\Notifiable;
  * @property UserIdentity|null $user_identity
  * @property Collection|Wishlist[] $wishlists
  */
+use Spatie\Permission\Traits\HasRoles;
+
 class User extends Authenticatable
 {
     use HasFactory;
     use Notifiable;
+    use HasRoles;
 
     protected $table = 'users';
 

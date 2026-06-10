@@ -40,6 +40,9 @@ class HomeController extends Controller
 
         $tours = Tour::with(['destination', 'tour_images', 'departure_location'])
             ->whereNull('deleted_at')
+            ->whereHas('activeSchedules', function ($q) {
+                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+            })
             ->latest()
             ->take(8)
             ->get();
@@ -78,7 +81,11 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        $query = Tour::with(['destination', 'tour_images'])->whereNull('deleted_at');
+        $query = Tour::with(['destination', 'tour_images'])
+            ->whereNull('deleted_at')
+            ->whereHas('activeSchedules', function ($q) {
+                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+            });
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
@@ -108,7 +115,7 @@ class HomeController extends Controller
         if ($request->filled('date')) {
             $date = $request->date;
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', $date);
+                $q->whereDate('departure_date', '>=', max($date, \Carbon\Carbon::today()->toDateString()));
             });
         }
 
@@ -152,7 +159,11 @@ class HomeController extends Controller
         $destinations = Destination::orderBy('name')->get();
         $categories = Category::all();
 
-        $query = Tour::with(['destination', 'departure_location', 'tour_images']);
+        $query = Tour::with(['destination', 'departure_location', 'tour_images'])
+            ->whereNull('deleted_at')
+            ->whereHas('activeSchedules', function ($q) {
+                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+            });
 
         // Keyword: tìm theo tên tour hoặc điểm đến
         if ($request->filled('keyword')) {
@@ -201,7 +212,7 @@ class HomeController extends Controller
         if ($request->filled('date')) {
             $date = $request->date;
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', $date);
+                $q->whereDate('departure_date', '>=', max($date, \Carbon\Carbon::today()->toDateString()));
             });
         }
 

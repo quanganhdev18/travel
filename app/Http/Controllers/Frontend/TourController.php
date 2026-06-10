@@ -13,7 +13,9 @@ class TourController extends Controller
             'destination',
             'departure_location',
             'tour_images',
-            'tour_schedules',
+            'tour_schedules' => function ($q) {
+                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today())->orderBy('departure_date', 'asc');
+            },
             'tour_itineraries.activities',
             'categories',
         ])
@@ -27,6 +29,9 @@ class TourController extends Controller
         $relatedTours = Tour::with(['destination', 'tour_images'])
             ->where('id', '!=', $tour->id)
             ->where('destination_id', $tour->destination_id)
+            ->whereHas('activeSchedules', function ($q) {
+                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+            })
             ->take(4)
             ->get();
 

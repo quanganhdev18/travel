@@ -43,7 +43,13 @@ class Addon extends Model
     public function bookings()
     {
         return $this->belongsToMany(Booking::class, 'booking_addons')
-            ->withPivot('id', 'addon_name', 'price', 'quantity')
+            ->withPivot('id', 'addon_name', 'price', 'quantity', 'usage_date')
+            ->withTimestamps();
+    }
+
+    public function tours()
+    {
+        return $this->belongsToMany(Tour::class, 'tour_addons')
             ->withTimestamps();
     }
 }

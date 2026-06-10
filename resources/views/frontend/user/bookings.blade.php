@@ -131,20 +131,24 @@
 
                                 <div class="mt-4">
                                     @php
-                                        $latestPayment = $booking->payments->sortByDesc('created_at')->first();
-                                        $paymentStatus = $latestPayment ? $latestPayment->payment_status : 'pending';
-                                        $paymentMethod = $latestPayment ? $latestPayment->payment_method : 'cod';
+                                        $paymentStatus = $booking->payment_status ?? 'unpaid';
+                                        $paymentMethod = $booking->payment_method ?? 'transfer';
+                                        $paymentType = $booking->payment_type ?? 'full';
                                     @endphp
 
-                                    @if($paymentStatus === 'success')
+                                    @if($paymentStatus === 'paid')
                                         <div class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
-                                            <i class="bi bi-check-circle-fill me-1"></i> {{ __('Đã thanh toán') }} ({{ strtoupper($paymentMethod) }})
+                                            <i class="bi bi-check-circle-fill me-1"></i> {{ __('Đã thanh toán (100%)') }}
                                         </div>
-                                    @elseif($paymentStatus === 'pending')
+                                    @elseif($paymentStatus === 'deposited')
+                                        <div class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
+                                            <i class="bi bi-pie-chart-fill me-1"></i> {{ __('Đã cọc (30%)') }}
+                                        </div>
+                                    @elseif($paymentStatus === 'unpaid' || $paymentStatus === 'pending')
                                         @if($paymentMethod === 'vnpay')
                                             <div class="d-flex flex-column gap-2">
                                                 <div class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
-                                                    <i class="bi bi-hourglass-split me-1"></i> {{ __('Chờ thanh toán (VNPay)') }}
+                                                    <i class="bi bi-hourglass-split me-1"></i> {{ __('Chưa thanh toán (VNPay)') }}
                                                 </div>
                                                 @if($booking->booking_status !== 'cancelled')
                                                     <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill fw-bold w-100 py-2 mt-1">
@@ -154,13 +158,13 @@
                                             </div>
                                         @else
                                             <div class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
-                                                <i class="bi bi-wallet2 me-1"></i> {{ __('COD / Chuyển khoản') }}
+                                                <i class="bi bi-wallet2 me-1"></i> {{ __('Chờ thanh toán (Tiền mặt/Chuyển khoản)') }}
                                             </div>
                                         @endif
-                                    @else
+                                    @elseif($paymentStatus === 'failed')
                                         <div class="d-flex flex-column gap-2">
                                             <div class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
-                                                <i class="bi bi-x-circle-fill me-1"></i> {{ __('Thanh toán thất bại') }}
+                                                <i class="bi bi-x-circle-fill me-1"></i> {{ __('Thanh toán VNPay lỗi') }}
                                             </div>
                                             @if($booking->booking_status !== 'cancelled')
                                                 <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold w-100 py-2 mt-1">

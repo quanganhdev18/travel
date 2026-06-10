@@ -243,6 +243,8 @@
 
     {{-- Cookie Consent Banner --}}
     <x-cookie-consent />
+
+    @stack('scripts')
 </body>
 
 </html>

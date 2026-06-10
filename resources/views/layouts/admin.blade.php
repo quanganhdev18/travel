@@ -291,6 +291,7 @@
             </li>
         </ul>
 
+        @hasanyrole('Super Admin|Admin|Staff')
         <div class="group-title">Nghiệp vụ kinh doanh</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -299,19 +300,32 @@
                     Quản lý Booking
                 </a>
             </li>
+        @endhasanyrole
 
 
             <li class="nav-heading mt-3 mb-2 text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Quản lý chung</li>
+            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tours*') ? 'active' : '' }}" href="{{ route('admin.tours.index') }}">
                     <i class="bi bi-briefcase"></i> Sản phẩm Tour
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/addons*') ? 'active' : '' }}" href="{{ route('admin.addons.index') }}">
+                    <i class="bi bi-plus-circle"></i> Dịch vụ Addon
+                </a>
+            </li>
+            @endhasanyrole
+            
+            @hasanyrole('Super Admin|Admin|Guide')
+            <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
                     <i class="bi bi-compass"></i> Điều hành Tour
                 </a>
             </li>
+            @endhasanyrole
+
+            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tour-guides*') ? 'active' : '' }}" href="{{ route('admin.tour_guides.index') }}">
                     <i class="bi bi-person-badge"></i> Hướng dẫn viên
@@ -322,13 +336,18 @@
                     <i class="bi bi-ticket-perforated"></i> Vé tham quan
                 </a>
             </li>
+            @endhasanyrole
+
+            @hasanyrole('Super Admin|Admin|Staff')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/invoices*') ? 'active' : '' }}" href="#">
                     <i class="bi bi-receipt"></i> Hóa đơn & Thu chi
                 </a>
             </li>
+            @endhasanyrole
         </ul>
 
+        @hasanyrole('Super Admin|Admin')
         <div class="group-title">Cấu hình hệ thống</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -351,6 +370,11 @@
                     <i class="bi bi-people"></i> Tài khoản & Phân quyền
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/holidays*') ? 'active' : '' }}" href="{{ route('admin.holidays.index') }}">
+                    <i class="bi bi-calendar-event"></i> Quản lý ngày lễ
+                </a>
+            </li>
         </ul>
 
         <div class="group-title">Tiện ích</div>
@@ -366,6 +390,7 @@
                 </a>
             </li>
         </ul>
+        @endhasanyrole
     </div>
 
     <div class="main-content">

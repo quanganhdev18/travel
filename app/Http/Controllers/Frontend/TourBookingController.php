@@ -47,7 +47,8 @@ class TourBookingController extends Controller
             'issue_place' => 'nullable|string|max:255',
             'front_image' => 'nullable|image|max:5120',
             'back_image' => 'nullable|image|max:5120',
-            'payment_method' => 'required|in:cod,vnpay',
+            'payment_type' => 'required|in:full,deposit',
+            'payment_method' => 'required|in:transfer,vnpay',
             'transport_price' => 'nullable|numeric',
             'transport_data' => 'nullable|string',
         ]);
@@ -112,8 +113,17 @@ class TourBookingController extends Controller
                 $identity->save();
             }
 
+            $holidaySurcharge = \App\Models\Holiday::getIncreasePercentage($schedule->departure_date);
+            
+            $basePrice = $schedule->tour->base_price;
             $childPrice = $schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75);
-            $calculatedPrice = ($schedule->tour->base_price * $request->adults) + ($childPrice * $request->children);
+
+            if ($holidaySurcharge > 0) {
+                $basePrice = $basePrice * (1 + $holidaySurcharge / 100);
+                $childPrice = $childPrice * (1 + $holidaySurcharge / 100);
+            }
+
+            $calculatedPrice = ($basePrice * $request->adults) + ($childPrice * $request->children);
 
             $transportPrice = $request->input('transport_price', 0);
 
@@ -135,7 +145,65 @@ class TourBookingController extends Controller
                 }
             }
 
-            $finalTotalPrice = $calculatedPrice + $transportPrice + $ticketPrice;
+            // Tính tiền Addons
+            $addonPriceTotal = 0;
+            $selectedAddons = [];
+            if ($request->filled('addons') && is_array($request->addons)) {
+                foreach ($request->addons as $addonId => $data) {
+                    $qty = isset($data['qty']) ? (int) $data['qty'] : 0;
+                    if ($qty > 0) {
+                        $addon = \App\Models\Addon::find($addonId);
+                        if ($addon) {
+                            $usageDate = $data['usage_date'] ?? $schedule->departure_date;
+                            $addonSurcharge = \App\Models\Holiday::getIncreasePercentage($usageDate);
+                            $price = $addon->price * (1 + $addonSurcharge / 100);
+                            
+                            $addonPriceTotal += $price * $qty;
+                            $selectedAddons[] = [
+                                'addon_id' => $addon->id,
+                                'addon_name' => $addon->name,
+                                'price' => $price,
+                                'quantity' => $qty,
+                                'usage_date' => $usageDate,
+                            ];
+                        }
+                    }
+                }
+            }
+
+            $finalTotalPrice = $calculatedPrice + $transportPrice + $ticketPrice + $addonPriceTotal;
+            $discountAmount = 0;
+            $couponId = null;
+
+            if ($request->filled('coupon_code')) {
+                $coupon = \App\Models\Coupon::where('code', $request->coupon_code)
+                    ->where(function ($query) {
+                        $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+                    })
+                    ->first();
+
+                if ($coupon && $finalTotalPrice >= $coupon->min_order_value) {
+                    if ($coupon->usage_limit === null || $coupon->used_count < $coupon->usage_limit) {
+                        $discount = 0;
+                        if ($coupon->discount_type === 'percent') {
+                            $discount = $finalTotalPrice * ($coupon->discount_value / 100);
+                            if ($coupon->max_discount) {
+                                $discount = min($discount, $coupon->max_discount);
+                            }
+                        } else {
+                            $discount = $coupon->discount_value;
+                        }
+                        $discountAmount = $discount;
+                        $couponId = $coupon->id;
+                        $finalTotalPrice = max(0, $finalTotalPrice - $discountAmount);
+                        
+                        $coupon->increment('used_count');
+                    }
+                }
+            }
 
             $transportData = null;
             if ($request->filled('transport_data')) {
@@ -148,10 +216,16 @@ class TourBookingController extends Controller
             $booking->adults_count = $request->adults;
             $booking->children_count = $request->children;
             $booking->total_price = $finalTotalPrice;
+            $booking->discount_amount = $discountAmount;
+            $booking->coupon_id = $couponId;
             $booking->booking_status = 'pending';
             $booking->transport_type = $request->transport_type;
             $booking->transport_price = $transportPrice;
             $booking->transport_data = $transportData;
+            $booking->payment_type = $request->payment_type ?? 'full';
+            $booking->payment_method = $request->payment_method ?? 'transfer';
+            $booking->payment_status = 'unpaid';
+            $booking->paid_amount = 0;
             $booking->save();
 
             // Lưu TicketBooking
@@ -165,6 +239,18 @@ class TourBookingController extends Controller
                 $tb->visit_date = $schedule->departure_date; // Mặc định dùng ngày khởi hành tour
                 $tb->booking_status = 'pending';
                 $tb->save();
+            }
+
+            // Lưu Addons
+            foreach ($selectedAddons as $item) {
+                \App\Models\BookingAddon::create([
+                    'booking_id' => $booking->id,
+                    'addon_id' => $item['addon_id'],
+                    'addon_name' => $item['addon_name'],
+                    'price' => $item['price'],
+                    'quantity' => $item['quantity'],
+                    'usage_date' => $item['usage_date'],
+                ]);
             }
 
             if (isset($request->passengers['adult'])) {
@@ -195,7 +281,19 @@ class TourBookingController extends Controller
             $schedule->available_seats -= $totalPersons;
             $schedule->save();
 
+            // Release Cache Hold
+            $holdKey = "tour_schedule_{$schedule->id}_holds";
+            $currentHolds = \Illuminate\Support\Facades\Cache::get($holdKey, []);
+            $userId = Auth::id() ?? session()->getId();
+            if (isset($currentHolds[$userId])) {
+                unset($currentHolds[$userId]);
+                \Illuminate\Support\Facades\Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
+            }
+
             DB::commit();
+
+            // Phát sóng event cập nhật chỗ trống
+            broadcast(new \App\Events\SeatAvailabilityUpdated($schedule->id, $schedule->available_seats))->toOthers();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Lỗi đặt tour: '.$e->getMessage());
@@ -314,20 +412,60 @@ class TourBookingController extends Controller
             'children' => 'required|integer|min:0',
         ]);
 
-        $schedule = TourSchedule::with(['tour.tickets.ticket_options'])->findOrFail($request->schedule_id);
+        $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons'])->findOrFail($request->schedule_id);
         $totalPersons = $request->adults + $request->children;
 
+        // Cơ chế giữ chỗ (Seat Hold) qua Cache (15 phút)
+        $holdKey = "tour_schedule_{$schedule->id}_holds";
+        $currentHolds = \Illuminate\Support\Facades\Cache::get($holdKey, []);
+        
+        // Dọn dẹp holds hết hạn
+        $currentHolds = array_filter($currentHolds, function($h) {
+            return $h['expires_at'] > now()->timestamp;
+        });
+
+        // Tính tổng chỗ đang bị giữ bởi những người khác
+        $userId = Auth::id() ?? session()->getId();
+        $otherHolds = array_filter($currentHolds, function($h, $k) use ($userId) {
+            return $k !== $userId;
+        }, ARRAY_FILTER_USE_BOTH);
+        
+        $totalHeldByOthers = array_sum(array_column($otherHolds, 'seats'));
+
+        if ($schedule->available_seats - $totalHeldByOthers < $totalPersons) {
+            return redirect()->back()->with('error', 'Tour đang có người khác giữ chỗ đang thanh toán. Vui lòng thử lại sau ít phút.');
+        }
+
+        // Đăng ký giữ chỗ cho user hiện tại
+        $currentHolds[$userId] = [
+            'seats' => $totalPersons,
+            'expires_at' => now()->addMinutes(15)->timestamp
+        ];
+        \Illuminate\Support\Facades\Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
+
+        // Nếu available_seats thực tế (ko tính hold) không đủ thì cũng báo lỗi
         if ($schedule->available_seats < $totalPersons) {
             return redirect()->back()->with('error', 'Tour không còn đủ chỗ trống cho số lượng hành khách này. Vui lòng chọn ngày khác.');
         }
 
+        $holidaySurcharge = \App\Models\Holiday::getIncreasePercentage($schedule->departure_date);
+        
+        $basePrice = $schedule->tour->base_price;
         $childPrice = $schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75);
-        $totalPrice = ($schedule->tour->base_price * $request->adults) + ($childPrice * $request->children);
+
+        if ($holidaySurcharge > 0) {
+            $basePrice = $basePrice * (1 + $holidaySurcharge / 100);
+            $childPrice = $childPrice * (1 + $holidaySurcharge / 100);
+        }
+
+        $totalPrice = ($basePrice * $request->adults) + ($childPrice * $request->children);
 
         // Lấy thông tin định danh của user hiện tại (nếu có)
         $user = Auth::user();
         $user->load('identity');
         $identity = $user->identity;
+
+        $holidays = \App\Models\Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
 
         return view('frontend.tours.checkout', [
             'schedule' => $schedule,
@@ -337,6 +475,8 @@ class TourBookingController extends Controller
             'totalPrice' => $totalPrice,
             'user' => $user,
             'identity' => $identity, // Có thể null nếu user chưa cập nhật CCCD/Hộ chiếu
+            'holidaySurcharge' => $holidaySurcharge,
+            'holidays' => $holidays,
         ]);
     }
 
@@ -367,7 +507,12 @@ class TourBookingController extends Controller
         $vnp_TxnRef = $booking->id.'_'.time();
         $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $vnp_OrderType = 'billpayment';
-        $vnp_Amount = (int) ($booking->total_price * 100);
+        
+        $actualAmount = $booking->total_price;
+        if ($booking->payment_type === 'deposit') {
+            $actualAmount = $booking->total_price * 0.3;
+        }
+        $vnp_Amount = (int) ($actualAmount * 100);
         $vnp_Locale = 'vi';
         $vnp_IpAddr = $ipAddress;
 
@@ -388,7 +533,7 @@ class TourBookingController extends Controller
 
         Payment::create([
             'booking_id' => $booking->id,
-            'amount' => $booking->total_price,
+            'amount' => $actualAmount,
             'payment_method' => 'vnpay',
             'transaction_code' => $vnp_TxnRef,
             'payment_status' => 'pending',
@@ -464,8 +609,11 @@ class TourBookingController extends Controller
                 }
 
                 if ($booking) {
+                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? 'deposited' : 'paid';
                     $booking->update([
                         'booking_status' => 'confirmed',
+                        'payment_status' => $newPaymentStatus,
+                        'paid_amount' => $payment->amount,
                     ]);
                 }
 
@@ -553,8 +701,11 @@ class TourBookingController extends Controller
                         'payment_status' => 'success',
                         'paid_at' => now(),
                     ]);
+                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? 'deposited' : 'paid';
                     $booking->update([
                         'booking_status' => 'confirmed',
+                        'payment_status' => $newPaymentStatus,
+                        'paid_amount' => $payment->amount,
                     ]);
                 } else {
                     $payment->update([
@@ -578,6 +729,49 @@ class TourBookingController extends Controller
         return response()->json([
             'RspCode' => '97',
             'Message' => 'Invalid signature',
+        ]);
+    }
+    public function applyCoupon(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'order_value' => 'required|numeric'
+        ]);
+
+        $coupon = \App\Models\Coupon::where('code', $request->code)
+            ->where(function ($query) {
+                $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+            })
+            ->first();
+
+        if (!$coupon) {
+            return response()->json(['success' => false, 'message' => 'Mã không tồn tại hoặc đã hết hạn.']);
+        }
+
+        if ($request->order_value < $coupon->min_order_value) {
+            return response()->json(['success' => false, 'message' => 'Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã.']);
+        }
+
+        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+            return response()->json(['success' => false, 'message' => 'Mã khuyến mãi đã hết lượt sử dụng.']);
+        }
+
+        $discountAmount = 0;
+        if ($coupon->discount_type === 'percent') {
+            $discountAmount = $request->order_value * ($coupon->discount_value / 100);
+            if ($coupon->max_discount) {
+                $discountAmount = min($discountAmount, $coupon->max_discount);
+            }
+        } else {
+            $discountAmount = $coupon->discount_value;
+        }
+
+        return response()->json([
+            'success' => true,
+            'discount_amount' => $discountAmount
         ]);
     }
 }
