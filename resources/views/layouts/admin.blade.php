@@ -9,11 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+
     <!-- Chart.js (for dashboard) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -57,7 +57,7 @@
             z-index: 1000;
             box-shadow: 4px 0 10px rgba(0,0,0,0.05);
         }
-        
+
         .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
         .admin-brand {
@@ -77,7 +77,7 @@
         .admin-brand span {
             color: var(--admin-primary);
         }
-        
+
         .admin-brand i {
             font-size: 24px;
             color: var(--admin-primary);
@@ -165,7 +165,7 @@
             box-shadow: var(--shadow-sm);
             margin-bottom: 24px;
         }
-        
+
         .admin-card-header {
             padding: 16px 24px;
             border-bottom: 1px solid var(--admin-border);
@@ -175,7 +175,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .admin-card-title {
             margin: 0;
             font-size: 1.1rem;
@@ -323,6 +323,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="{{ route('admin.coupons.index') }}" class="nav-link">
+                    <i class="bi bi-percent"></i>
+                    <span>Mã giảm giá</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/invoices*') ? 'active' : '' }}" href="#">
                     <i class="bi bi-receipt"></i> Hóa đơn & Thu chi
                 </a>
@@ -371,12 +377,12 @@
     <div class="main-content">
         <div class="topbar">
             <h1 class="page-title">@yield('page-title', 'Bảng Điều Khiển')</h1>
-            
+
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border" title="Xem trang chủ">
                     <i class="bi bi-box-arrow-up-right me-1"></i> Xem Website
                 </a>
-                
+
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
                         <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
@@ -401,7 +407,7 @@
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 bg-success bg-opacity-10 text-success d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle-fill fs-5 me-2"></i> 
+                <i class="bi bi-check-circle-fill fs-5 me-2"></i>
                 <div>{{ session('success') }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -409,7 +415,7 @@
 
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show border-0 bg-danger bg-opacity-10 text-danger d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i> 
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
                 <div>{{ session('error') }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -429,7 +435,7 @@
         <div class="flex-grow-1">
             @yield('content')
         </div>
-        
+
         <!-- Footer -->
         <div class="text-center text-muted small mt-4 pt-4 border-top">
             &copy; {{ date('Y') }} Hệ thống Quản trị Travel Wonder. Bảo lưu mọi quyền.
