@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Coupon;
+use Illuminate\Http\Request;
+
+class CouponController extends Controller
+{
+    public function index()
+    {
+       $coupons = Coupon::orderBy('created_at', 'desc')
+    ->paginate(10);
+
+        return view('admin.coupons.index', compact('coupons'));
+    }
+
+    public function create()
+    {
+        return view('admin.coupons.create');
+    }
+
+    public function store(Request $request)
+    {
+            $request->validate([
+                    'code' => 'required|unique:coupons,code',
+                    'discount_type' => 'required',
+                    'discount_value' => 'required|numeric|min:0',
+                    'valid_from' => 'required|date',
+                    'valid_until' => 'required|date|after_or_equal:valid_from',
+                ]);
+
+        Coupon::create([
+            'code' => strtoupper($request->code),
+            'discount_type' => $request->discount_type,
+            'discount_value' => $request->discount_value,
+            'min_order_value' => $request->min_order_value,
+            'max_discount' => $request->max_discount,
+            'valid_from' => $request->valid_from,
+            'valid_until' => $request->valid_until,
+            'usage_limit' => $request->usage_limit,
+            'used_count' => 0,
+        ]);
+
+        return redirect()
+            ->route('admin.coupons.index')
+            ->with('success', 'Thêm mã giảm giá thành công!');
+    }
+}

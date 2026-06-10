@@ -273,6 +273,15 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
         ->name('guide.schedules.show');
 });
+use App\Http\Controllers\Admin\CouponController;
+
+Route::get('/admin/coupons', [CouponController::class, 'index'])
+    ->name('admin.coupons.index');
+Route::get('/admin/coupons/create', [CouponController::class, 'create'])
+    ->name('admin.coupons.create');
+
+Route::post('/admin/coupons', [CouponController::class, 'store'])
+    ->name('admin.coupons.store');
 
 /*
 |--------------------------------------------------------------------------
