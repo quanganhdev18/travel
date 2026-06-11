@@ -290,9 +290,14 @@ Route::get('/admin/coupons', [CouponController::class, 'index'])
     ->name('admin.coupons.index');
 Route::get('/admin/coupons/create', [CouponController::class, 'create'])
     ->name('admin.coupons.create');
-
 Route::post('/admin/coupons', [CouponController::class, 'store'])
     ->name('admin.coupons.store');
+Route::get('/admin/coupons/{coupon}/edit', [CouponController::class, 'edit'])
+    ->name('admin.coupons.edit');
+Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])
+    ->name('admin.coupons.update');
+Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])
+    ->name('admin.coupons.destroy');
 
 /*
 |--------------------------------------------------------------------------
