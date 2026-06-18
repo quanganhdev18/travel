@@ -24,8 +24,8 @@
                     <i class="bi bi-clock-history text-warning fs-4"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Đang chờ xử lý</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['pending']) }}</div>
+                    <div class="text-muted small fw-500 text-uppercase mb-1">Chờ thanh toán</div>
+                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['pending_payment'] ?? 0) }}</div>
                 </div>
             </div>
         </div>
@@ -105,7 +105,7 @@
     </div>
     <div class="admin-card-body p-0">
         <div class="table-responsive" style="min-height: 400px;">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 text-nowrap">
                 <thead class="bg-light">
                     <tr>
                         <th class="ps-4">Mã Đơn / Ngày</th>
