@@ -399,5 +399,10 @@ class DatabaseSeeder extends Seeder
                 );
             }
         }
+
+        // 7. Seed Roles & Permissions (phải chạy sau khi users đã được tạo)
+        $this->call([
+            RolePermissionSeeder::class,
+        ]);
     }
 }

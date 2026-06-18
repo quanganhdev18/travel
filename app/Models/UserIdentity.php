@@ -40,6 +40,8 @@ class UserIdentity extends Model
         'date_of_birth' => 'datetime',
         'issue_date' => 'datetime',
         'expiry_date' => 'datetime',
+        'front_image_url' => 'encrypted',
+        'back_image_url' => 'encrypted',
     ];
 
     protected $fillable = [
