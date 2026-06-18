@@ -14,7 +14,7 @@ class DashboardController extends Controller
     {
         $totalTours = Tour::count();
         $totalBookings = Booking::count();
-        $totalRevenue = Booking::where('booking_status', 'confirmed')->sum('total_price');
+        $totalRevenue = Booking::where('payment_status', Booking::PAYMENT_PAID_100)->sum('total_price');
         $totalUsers = User::count();
 
         $today = now()->startOfDay();
