@@ -1,59 +1,95 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Hướng dẫn chạy dự án Travel Wonder
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Dự án **Travel Wonder** được xây dựng trên nền tảng Laravel 12, sử dụng Vite để biên dịch tài nguyên frontend (CSS/JS) và Laravel Reverb làm WebSocket server để xử lý các tính năng thời gian thực (Real-time Live Chat).
 
-## About Laravel
+Dưới đây là các bước chi tiết để thiết lập và chạy dự án trên môi trường Local của bạn.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Yêu cầu hệ thống
+- PHP >= 8.2
+- Composer
+- Node.js & npm (phiên bản mới nhất)
+- XAMPP/MySQL Server
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Cài đặt ban đầu
 
-## Learning Laravel
+**1. Clone dự án và cài đặt thư viện PHP**
+Mở terminal tại thư mục gốc của dự án và chạy:
+```bash
+composer install
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**2. Cài đặt các thư viện Frontend**
+```bash
+npm install
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**3. Cấu hình biến môi trường (.env)**
+Copy file `.env.example` thành `.env` (nếu chưa có):
+```bash
+copy .env.example .env
+```
+Kiểm tra và cấu hình các thông số kết nối Database trong `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=travel  # Đổi tên database phù hợp
+DB_USERNAME=root
+DB_PASSWORD=
+```
+Đảm bảo đã cấu hình `BROADCAST_CONNECTION=reverb` trong file `.env`.
 
-## Laravel Sponsors
+**4. Khởi tạo Application Key**
+```bash
+php artisan key:generate
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**5. Chạy Migration và Seeder**
+Để tạo cấu trúc bảng trong CSDL và thêm dữ liệu mẫu (các Role, Users, v.v.):
+```bash
+php artisan migrate:fresh --seed
+```
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Các lệnh cần thiết để chạy dự án (Mở nhiều Terminal)
 
-## Contributing
+Để ứng dụng hoạt động đầy đủ tính năng (đặc biệt là tính năng Live Chat và giao diện), bạn cần mở song song **3 cửa sổ Terminal** và chạy các lệnh sau:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Terminal 1: Chạy Web Server (Laravel)
+```bash
+php artisan serve
+```
+*Truy cập trang web tại: `http://127.0.0.1:8000`*
 
-## Code of Conduct
+### Terminal 2: Chạy Frontend Vite (Biên dịch CSS/JS)
+Vì dự án dùng Vite, bạn cần chạy Vite Server trong quá trình phát triển để code JS/CSS được tự động cập nhật:
+```bash
+npm run dev
+```
+*(Nếu muốn build code để chạy Productive / Không cần dev server thì dùng lệnh `npm run build` thay thế).*
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Terminal 3: Chạy WebSocket Server (Laravel Reverb)
+Tính năng Live Chat thời gian thực (Chatbox User và Chat Admin) yêu cầu Laravel Reverb phải luôn hoạt động.
+```bash
+php artisan reverb:start
+```
+*Reverb sẽ chạy ở cổng 8080 (hoặc cấu hình trong .env) để phát tín hiệu realtime giữa server và client.*
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Tài khoản quản trị mẫu
 
-## License
+Sau khi chạy lệnh `php artisan migrate --seed`, hệ thống có các tài khoản mẫu sau:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Super Admin**: Sử dụng tài khoản có sẵn trong database hoặc seeder của bạn.
+- **Nhân viên CSKH**: `cskh@travel.com` / `password`
+
+Đường dẫn trang quản trị: `http://127.0.0.1:8000/admin/dashboard`
+
+## Cấu trúc tính năng Live Chat
+
+- **Người dùng (Guest/User)**: Hiển thị Chatbox thu gọn ở góc dưới bên phải màn hình ngoài trang chủ. Cho phép gửi tin nhắn, đính kèm file (ví dụ: file mẫu danh sách hành khách `.csv`).
+- **CSKH/Admin**: Truy cập vào menu `Live Chat` ở bảng điều khiển Admin để phản hồi tin nhắn khách hàng. Các tin nhắn sẽ được đồng bộ ngay lập tức (không cần tải lại trang) nhờ cơ chế `ShouldBroadcastNow` và Laravel Reverb.
