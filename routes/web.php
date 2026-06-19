@@ -150,6 +150,11 @@ Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     Route::delete('/tours/{tour}/favorite',
     [FavoriteController::class, 'destroy'])
     ->name('frontend.favorites.destroy');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/tour-da-luu', [FavoriteController::class, 'index'])
+        ->name('frontend.favorites.index');
+});
 });
 
 /*
