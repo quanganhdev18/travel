@@ -123,6 +123,39 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-bookings', [UserController::class, 'myBookings'])
         ->name('user.bookings');
 
+    Route::get('/my-bookings/{id}', [UserController::class, 'bookingDetail'])
+        ->name('user.bookings.detail');
+
+    Route::post('/my-bookings/{id}/cancel', [UserController::class, 'cancelBooking'])
+        ->name('user.bookings.cancel');
+
+    // Hồ sơ cá nhân
+    Route::get('/user/profile', [UserController::class, 'profile'])
+        ->name('user.profile');
+
+    Route::post('/user/profile', [UserController::class, 'updateProfile'])
+        ->name('user.profile.update');
+
+    Route::post('/user/avatar', [UserController::class, 'updateAvatar'])
+        ->name('user.avatar.update');
+
+    Route::post('/user/password', [UserController::class, 'changePassword'])
+        ->name('user.password.change');
+
+    // Đánh giá tour
+    Route::post('/reviews', [UserController::class, 'storeReview'])
+        ->name('user.reviews.store');
+
+    // Danh sách yêu thích
+    Route::get('/my-wishlists', [UserController::class, 'myWishlists'])
+        ->name('user.wishlists');
+
+    Route::post('/wishlists/toggle', [UserController::class, 'toggleWishlist'])
+        ->name('user.wishlists.toggle');
+
+    Route::post('/wishlists/remove', [UserController::class, 'removeWishlist'])
+        ->name('user.wishlists.remove');
+
     // Thanh toán lại bằng VNPay
     Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
         ->name('frontend.bookings.pay_vnpay');
@@ -261,11 +294,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.ongoing_tours.assign_guides');
 
     // Holidays
-    Route::resource('holidays', App\Http\Controllers\Admin\HolidayController::class)
+    Route::resource('holidays', HolidayController::class)
         ->names('admin.holidays');
 
     // Addons
-    Route::resource('addons', App\Http\Controllers\Admin\AddonController::class)
+    Route::resource('addons', AddonController::class)
         ->names('admin.addons');
 });
 
@@ -284,7 +317,9 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
         ->name('guide.schedules.show');
 });
+use App\Http\Controllers\Admin\AddonController;
 use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\HolidayController;
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])
     ->name('admin.coupons.index');
