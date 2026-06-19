@@ -37,6 +37,7 @@ use App\Http\Controllers\Frontend\UserController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Frontend\FavoriteController;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -135,6 +136,21 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
+    Route::middleware('auth')->group(function () {
+
+    // Tour đã lưu (Favorites)
+    Route::get('/tour-da-luu', [FavoriteController::class, 'index'])
+        ->name('frontend.favorites.index');
+
+    Route::post('/tours/{tour}/favorite', [FavoriteController::class, 'toggle'])
+        ->name('frontend.favorites.toggle');
+
+    Route::delete('/tours/{tour}/favorite', [FavoriteController::class, 'destroy'])
+        ->name('frontend.favorites.destroy');
+    Route::delete('/tours/{tour}/favorite',
+    [FavoriteController::class, 'destroy'])
+    ->name('frontend.favorites.destroy');
+});
 
 /*
 |--------------------------------------------------------------------------
