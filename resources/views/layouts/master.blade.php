@@ -69,17 +69,13 @@
                     @else
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center py-1" href="#" id="userDropdownTop" role="button" data-bs-toggle="dropdown">
-                            @if(Auth::user()->avatar)
-                                <img src="{{ asset(Auth::user()->avatar) }}" class="rounded-circle me-1" style="width: 24px; height: 24px; object-fit: cover;">
-                            @else
-                                <i class="bi bi-person-circle me-1 fs-5"></i>
-                            @endif
+                            <i class="bi bi-person-circle me-1 fs-5"></i>
                             <span style="font-weight: 600;">{{ Auth::user()->name }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; margin-top: 5px;">
-                            <li><a class="dropdown-item py-2" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
-                            <li><a class="dropdown-item py-2" href="{{ route('user.bookings') }}"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
-                            <li><a class="dropdown-item py-2" href="{{ route('user.wishlists') }}"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
@@ -143,17 +139,13 @@
                         @else
                         <li class="nav-item dropdown mt-2">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdownMobile" role="button" data-bs-toggle="dropdown">
-                                @if(Auth::user()->avatar)
-                                    <img src="{{ asset(Auth::user()->avatar) }}" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
-                                @else
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;"><i class="bi bi-person-fill"></i></div>
-                                @endif
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;"><i class="bi bi-person-fill"></i></div>
                                 <span class="fw-bold text-dark">{{ Auth::user()->name }}</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
-                                <li><a class="dropdown-item" href="{{ route('user.bookings') }}"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
-                                <li><a class="dropdown-item" href="{{ route('user.wishlists') }}"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
