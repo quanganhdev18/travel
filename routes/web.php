@@ -37,6 +37,7 @@ use App\Http\Controllers\Frontend\UserController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Frontend\FavoriteController;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -135,6 +136,21 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
+    Route::middleware('auth')->group(function () {
+
+    // Tour đã lưu (Favorites)
+    Route::get('/tour-da-luu', [FavoriteController::class, 'index'])
+        ->name('frontend.favorites.index');
+
+    Route::post('/tours/{tour}/favorite', [FavoriteController::class, 'toggle'])
+        ->name('frontend.favorites.toggle');
+
+    Route::delete('/tours/{tour}/favorite', [FavoriteController::class, 'destroy'])
+        ->name('frontend.favorites.destroy');
+    Route::delete('/tours/{tour}/favorite',
+    [FavoriteController::class, 'destroy'])
+    ->name('frontend.favorites.destroy');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -147,6 +163,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.dashboard');
 
     // User Management
+    Route::get('/chat', [\App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
+    
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
@@ -312,3 +330,10 @@ Route::get('/api/check-email', function (Request $request) {
 })->name('api.check-email');
 
 require __DIR__.'/auth.php';
+// CHAT ROUTES
+Route::middleware(['auth'])->prefix('chat')->group(function () {
+    Route::post('/start', [App\Http\Controllers\ChatController::class, 'startConversation'])->name('chat.start');
+    Route::get('/conversations', [App\Http\Controllers\ChatController::class, 'getConversations'])->name('chat.conversations');
+    Route::get('/{id}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/{id}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+});

@@ -96,11 +96,11 @@
 
                     <!-- WIZARD STEP 1 -->
                     <div class="wizard-panel active" id="step-panel-1">
-                        <!-- Section 1: Thông Tin Hành Khách Chính -->
+                        <!-- Section 1: Thông Tin Người Đặt -->
                         <div class="mb-5">
                         <h4 class="form-section-title">
                             <i class="bi bi-person-badge"></i>
-                            {{ __('Thông Tin Liên Hệ') }}
+                            {{ __('Thông Tin Người Đặt') }}
                         </h4>
                         
                         <div class="row g-4">
@@ -108,7 +108,9 @@
                                 <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
                                 <input type="text" name="customer_name" id="customer_name" class="form-control search-form-control"
                                     value="{{ $identity->full_name ?? $user->name }}" required
-                                    placeholder="{{ __('Nhập tên đầy đủ (khớp với CCCD/Hộ chiếu)') }}">
+                                    placeholder="{{ __('Nhập tên đầy đủ (khớp với CCCD/Hộ chiếu)') }}"
+                                    oninput="document.getElementById('hidden_adult_name').value = this.value">
+                                <input type="hidden" name="passengers[adult][0][full_name]" id="hidden_adult_name" value="{{ $identity->full_name ?? $user->name }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-600 text-dark">{{ __('Số Điện Thoại') }} <span class="text-danger">*</span></label>
@@ -120,101 +122,50 @@
                                 <input type="email" name="customer_email" class="form-control search-form-control"
                                     value="{{ $user->email }}" required placeholder="email@example.com">
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Section 2: Danh sách Hành khách -->
-                    <div class="mb-5">
-                        <h4 class="form-section-title">
-                            <i class="bi bi-people"></i>
-                            {{ __('Thông Tin Hành Khách') }}
-                        </h4>
-
-                        @for($i = 0; $i < $adults; $i++)
-                        <div class="card mb-4 border shadow-sm">
-                            <div class="card-header bg-light fw-bold text-primary d-flex justify-content-between align-items-center">
-                                <span>{{ __('Người lớn') }} {{ $i + 1 }}</span>
-                                @if($i == 0) <span class="badge bg-primary">Người đại diện</span> @endif
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="passengers[adult][0][identity_number]" id="identity_number" class="form-control search-form-control" required placeholder="Nhập số CCCD/Passport" value="{{ $identity->identity_number ?? '' }}">
                             </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
-                                        <input type="text" name="passengers[adult][{{$i}}][full_name]" class="form-control" required placeholder="Nhập tên đầy đủ" {{ $i == 0 ? 'id=customer_name' : '' }} value="{{ $i == 0 ? ($identity->full_name ?? $user->name) : '' }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
-                                        <input type="text" name="passengers[adult][{{$i}}][identity_number]" class="form-control" required placeholder="Nhập số CCCD/Passport" {{ $i == 0 ? 'id=identity_number' : '' }} value="{{ $i == 0 ? ($identity->identity_number ?? '') : '' }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                        <input type="date" name="passengers[adult][{{$i}}][date_of_birth]" class="form-control" required {{ $i == 0 ? 'id=date_of_birth' : '' }} value="{{ $i == 0 ? ($identity->date_of_birth ?? '') : '' }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
-                                        <select name="passengers[adult][{{$i}}][gender]" class="form-select" required {{ $i == 0 ? 'id=gender' : '' }}>
-                                            <option value="">{{ __('-- Chọn --') }}</option>
-                                            <option value="male" {{ $i == 0 && ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
-                                            <option value="female" {{ $i == 0 && ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
-                                            <option value="other" {{ $i == 0 && ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
-                                        </select>
-                                    </div>
-                                    
-                                    @if($i == 0)
-                                        <input type="hidden" name="issue_date" id="issue_date" value="{{ $identity->issue_date ?? '2020-01-01' }}">
-                                        <input type="hidden" name="expiry_date" id="expiry_date" value="{{ $identity->expiry_date ?? '2040-01-01' }}">
-                                        <input type="hidden" name="issue_place" id="issue_place" value="{{ $identity->issue_place ?? 'Hà Nội' }}">
-                                        
-                                        <div class="col-12 mt-3 p-3 bg-light rounded border">
-                                            <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
-                                            <div class="row g-2">
-                                                <div class="col-md-5">
-                                                    <input type="file" name="front_image" id="front_image" class="form-control form-control-sm" accept="image/*" placeholder="Mặt trước">
-                                                </div>
-                                                <div class="col-md-5">
-                                                    <input type="file" name="back_image" id="back_image" class="form-control form-control-sm" accept="image/*" placeholder="Mặt sau">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <button type="button" class="btn btn-primary btn-sm w-100 h-100" id="btn-scan-cccd">
-                                                        <i class="bi bi-upc-scan"></i> Quét
-                                                    </button>
-                                                </div>
-                                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
+                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
+                                <select name="passengers[adult][0][gender]" id="gender" class="form-select search-form-control" required>
+                                    <option value="">{{ __('-- Chọn --') }}</option>
+                                    <option value="male" {{ ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
+                                    <option value="female" {{ ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
+                                    <option value="other" {{ ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Hidden identity details -->
+                            <input type="hidden" name="issue_date" id="issue_date" value="{{ $identity->issue_date ?? '2020-01-01' }}">
+                            <input type="hidden" name="expiry_date" id="expiry_date" value="{{ $identity->expiry_date ?? '2040-01-01' }}">
+                            <input type="hidden" name="issue_place" id="issue_place" value="{{ $identity->issue_place ?? 'Hà Nội' }}">
+                            
+                            <!-- CCCD Scan block -->
+                            <div class="col-12 mt-3">
+                                <div class="p-3 bg-light rounded border">
+                                    <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
+                                    <div class="row g-2">
+                                        <div class="col-md-5">
+                                            <input type="file" name="front_image" id="front_image" class="form-control" accept="image/*" placeholder="Mặt trước">
                                         </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        @endfor
-
-                        @for($i = 0; $i < $children; $i++)
-                        <div class="card mb-4 border shadow-sm">
-                            <div class="card-header bg-light fw-bold text-info">
-                                {{ __('Trẻ em') }} {{ $i + 1 }}
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
-                                        <input type="text" name="passengers[child][{{$i}}][full_name]" class="form-control" required placeholder="Nhập tên đầy đủ">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                        <input type="date" name="passengers[child][{{$i}}][date_of_birth]" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
-                                        <select name="passengers[child][{{$i}}][gender]" class="form-select" required>
-                                            <option value="">{{ __('-- Chọn --') }}</option>
-                                            <option value="male">{{ __('Nam') }}</option>
-                                            <option value="female">{{ __('Nữ') }}</option>
-                                            <option value="other">{{ __('Khác') }}</option>
-                                        </select>
+                                        <div class="col-md-5">
+                                            <input type="file" name="back_image" id="back_image" class="form-control" accept="image/*" placeholder="Mặt sau">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-primary w-100 h-100" id="btn-scan-cccd">
+                                                <i class="bi bi-upc-scan"></i> Quét
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        @endfor
                     </div>
                     
                         <div class="d-flex justify-content-end mt-4">
@@ -290,7 +241,7 @@
                         </div>
                     </div>
                     
-                    @if($schedule->tour->tickets && count($schedule->tour->tickets) > 0)
+                    @if($schedule->tour->tickets && $schedule->tour->tickets->isNotEmpty())
                     <!-- Section: Vé Tham Quan -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
@@ -328,7 +279,7 @@
                     </div>
                     @endif
 
-                    @if($schedule->tour->addons && count($schedule->tour->addons) > 0)
+                    @if($schedule->tour->addons && $schedule->tour->addons->isNotEmpty())
                     <!-- Section: Dịch vụ Addon -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
@@ -618,7 +569,10 @@
                     const issuePlaceInput = document.getElementById('issue_place');
                     
                     if(idInput) idInput.value = data.id || '';
-                    if(nameInput) nameInput.value = data.name || '';
+                    if(nameInput) {
+                        nameInput.value = data.name || '';
+                        document.getElementById('hidden_adult_name').value = nameInput.value;
+                    }
                     if(dobInput) dobInput.value = formatDob(data.dob) || '';
                     if(issueDateInput && data.issue_date) issueDateInput.value = formatDob(data.issue_date);
                     if(expiryDateInput && data.expiry_date && data.expiry_date !== 'N/A' && data.expiry_date !== 'KHÔNG THỜI HẠN') {
@@ -652,6 +606,7 @@
         const nameInput = document.getElementById('customer_name');
         if(nameInput && !nameInput.value) {
             nameInput.value = 'Nguyễn Văn A (Mock)';
+            document.getElementById('hidden_adult_name').value = nameInput.value;
         }
 
         document.getElementById('identity_number').value = uniqueId;

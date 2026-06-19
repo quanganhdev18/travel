@@ -49,6 +49,26 @@ class Booking extends Model
         'transport_data' => 'array',
     ];
 
+    public const PAYMENT_PENDING = 'pending';
+
+    public const PAYMENT_PAID_30 = 'paid_30';
+
+    public const PAYMENT_PAID_100 = 'paid_100';
+
+    public const PAYMENT_FAILED = 'failed';
+
+    public const TOUR_UPCOMING = 'upcoming';
+
+    public const TOUR_IN_PROGRESS = 'in_progress';
+
+    public const TOUR_CHECKING_IN = 'checking_in';
+
+    public const TOUR_COMPLETED = 'completed';
+
+    public const TOUR_CANCELLED_CUSTOMER = 'cancelled_by_customer';
+
+    public const TOUR_CANCELLED_ADMIN = 'cancelled_by_admin';
+
     protected $fillable = [
         'user_id',
         'tour_schedule_id',
@@ -57,11 +77,16 @@ class Booking extends Model
         'discount_amount',
         'adults_count',
         'children_count',
-        'booking_status',
+        'payment_status',
+        'tour_status',
+        'current_checkin_step',
         'pnr_code',
         'transport_type',
         'transport_price',
         'transport_data',
+        'payment_method',
+        'payment_type',
+        'paid_amount',
     ];
 
     public function user()

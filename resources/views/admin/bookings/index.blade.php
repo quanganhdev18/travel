@@ -24,8 +24,8 @@
                     <i class="bi bi-clock-history text-warning fs-4"></i>
                 </div>
                 <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Đang chờ xử lý</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['pending']) }}</div>
+                    <div class="text-muted small fw-500 text-uppercase mb-1">Chờ thanh toán</div>
+                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['pending_payment'] ?? 0) }}</div>
                 </div>
             </div>
         </div>
@@ -69,18 +69,27 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <select name="status" class="form-select" onchange="this.form.submit()">
-                    <option value="">-- Tất cả trạng thái --</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ xử lý</option>
-                    <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Đã xác nhận</option>
-                    <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Đã thanh toán</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
-                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đã hủy</option>
-                    <option value="needs_flight" {{ request('status') == 'needs_flight' ? 'selected' : '' }}>Cần xuất vé MB</option>
+                <select name="payment_status" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- TT Thanh Toán --</option>
+                    <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Chờ thanh toán</option>
+                    <option value="paid_30" {{ request('payment_status') == 'paid_30' ? 'selected' : '' }}>Đã thanh toán 30%</option>
+                    <option value="paid_100" {{ request('payment_status') == 'paid_100' ? 'selected' : '' }}>Đã thanh toán 100%</option>
+                    <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Thanh toán thất bại</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-admin btn-admin-primary w-100">Lọc dữ liệu</button>
+                <select name="tour_status" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- TT Tour --</option>
+                    <option value="upcoming" {{ request('tour_status') == 'upcoming' ? 'selected' : '' }}>Sắp khởi hành</option>
+                    <option value="in_progress" {{ request('tour_status') == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
+                    <option value="checking_in" {{ request('tour_status') == 'checking_in' ? 'selected' : '' }}>Đang check in</option>
+                    <option value="completed" {{ request('tour_status') == 'completed' ? 'selected' : '' }}>Hoàn thành</option>
+                    <option value="cancelled_by_customer" {{ request('tour_status') == 'cancelled_by_customer' ? 'selected' : '' }}>Hủy do khách</option>
+                    <option value="cancelled_by_admin" {{ request('tour_status') == 'cancelled_by_admin' ? 'selected' : '' }}>Hủy do admin</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-admin btn-admin-primary w-100">Lọc</button>
             </div>
             <div class="col-md-2">
                 <a href="{{ route('admin.bookings.index') }}" class="btn btn-admin btn-light border w-100">Làm mới</a>
@@ -96,7 +105,7 @@
     </div>
     <div class="admin-card-body p-0">
         <div class="table-responsive" style="min-height: 400px;">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 text-nowrap">
                 <thead class="bg-light">
                     <tr>
                         <th class="ps-4">Mã Đơn / Ngày</th>
@@ -104,7 +113,8 @@
                         <th>Sản Phẩm</th>
                         <th>Di Chuyển</th>
                         <th>Thanh Toán</th>
-                        <th>Trạng Thái</th>
+                        <th>TT Thanh Toán</th>
+                        <th>TT Tour</th>
                         <th class="text-end pe-4">Thao Tác</th>
                     </tr>
                 </thead>
@@ -152,18 +162,38 @@
                         </td>
                         <td>
                             @php
-                            $statusMap = [
-                                'pending' => ['badge-soft-warning', 'Chờ xử lý'],
-                                'confirmed' => ['badge-soft-success', 'Đã xác nhận'],
-                                'paid' => ['badge-soft-primary', 'Đã thanh toán'],
-                                'completed' => ['badge-soft-success', 'Hoàn thành'],
-                                'cancelled' => ['badge-soft-danger', 'Đã hủy']
+                            $paymentStatusMap = [
+                                'pending' => ['badge-soft-warning', 'Chờ thanh toán'],
+                                'paid_30' => ['badge-soft-info', 'Đã cọc 30%'],
+                                'paid_100' => ['badge-soft-success', 'Đã trả 100%'],
+                                'failed' => ['badge-soft-danger', 'Thất bại']
                             ];
-                            $s = $statusMap[$booking->booking_status] ?? ['badge-soft-secondary', 'N/A'];
+                            $ps = $paymentStatusMap[$booking->payment_status] ?? ['badge-soft-secondary', 'N/A'];
                             @endphp
-                            <span class="badge-soft {{ $s[0] }}">
-                                {{ $s[1] }}
+                            <span class="badge-soft {{ $ps[0] }}">
+                                {{ $ps[1] }}
                             </span>
+                        </td>
+                        <td>
+                            @php
+                            $tourStatusMap = [
+                                'upcoming' => ['badge-soft-primary', 'Sắp bắt đầu'],
+                                'in_progress' => ['badge-soft-warning', 'Đang thực hiện'],
+                                'checking_in' => ['badge-soft-info', 'Đang check-in'],
+                                'completed' => ['badge-soft-success', 'Hoàn thành'],
+                                'cancelled_by_customer' => ['badge-soft-danger', 'Hủy (Khách)'],
+                                'cancelled_by_admin' => ['badge-soft-danger', 'Hủy (Admin)']
+                            ];
+                            $ts = $tourStatusMap[$booking->tour_status] ?? ['badge-soft-secondary', 'N/A'];
+                            @endphp
+                            <span class="badge-soft {{ $ts[0] }}">
+                                {{ $ts[1] }}
+                            </span>
+                            @if($booking->tour_status == 'checking_in' && $booking->current_checkin_step)
+                                <div class="small mt-1 text-info">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> Điểm: {{ $booking->current_checkin_step }}
+                                </div>
+                            @endif
                         </td>
                         <td class="text-end pe-4">
                             <div class="dropdown">
@@ -176,20 +206,11 @@
                                             <i class="bi bi-eye me-2 text-primary"></i> Xem chi tiết
                                         </a>
                                     </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><h6 class="dropdown-header text-uppercase" style="font-size: 0.75rem;">Cập nhật trạng thái</h6></li>
-                                    @foreach($statusMap as $key => $val)
                                     <li>
-                                        <form action="{{ route('admin.bookings.update_status', $booking->id) }}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="status" value="{{ $key }}">
-                                            <button type="button" onclick="this.closest('form').submit();" class="dropdown-item py-2 {{ $booking->booking_status == $key ? 'bg-light text-primary fw-bold' : '' }}">
-                                                @if($booking->booking_status == $key) <i class="bi bi-check-lg me-2"></i> @else <span style="margin-left: 24px;"></span> @endif
-                                                {{ $val[1] }}
-                                            </button>
-                                        </form>
+                                        <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#updateStatus{{ $booking->id }}">
+                                            <i class="bi bi-pencil-square me-2 text-warning"></i> Cập nhật trạng thái
+                                        </a>
                                     </li>
-                                    @endforeach
                                 </ul>
                             </div>
                         </td>
@@ -306,6 +327,67 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Cập nhật Trạng thái -->
+<div class="modal fade" id="updateStatus{{ $booking->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom px-4 py-3 bg-light">
+                <h5 class="modal-title fw-bold text-dark">Cập nhật trạng thái #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('admin.bookings.update_status', $booking->id) }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trạng thái thanh toán</label>
+                        <select name="payment_status" class="form-select">
+                            <option value="pending" {{ $booking->payment_status == 'pending' ? 'selected' : '' }}>Chờ thanh toán</option>
+                            <option value="paid_30" {{ $booking->payment_status == 'paid_30' ? 'selected' : '' }}>Đã thanh toán 30% (Cọc)</option>
+                            <option value="paid_100" {{ $booking->payment_status == 'paid_100' ? 'selected' : '' }}>Đã thanh toán 100%</option>
+                            <option value="failed" {{ $booking->payment_status == 'failed' ? 'selected' : '' }}>Thanh toán thất bại / Hủy</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Trạng thái Tour</label>
+                        <select name="tour_status" class="form-select tour-status-select" data-booking-id="{{ $booking->id }}">
+                            <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
+                            <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
+                            <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
+                            <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
+                            <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
+                            <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 checkin-step-container" id="checkinStepContainer{{ $booking->id }}" style="display: {{ $booking->tour_status == 'checking_in' ? 'block' : 'none' }};">
+                        <label class="form-label fw-bold">Điểm check-in hiện tại</label>
+                        <input type="text" name="current_checkin_step" class="form-control" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $booking->current_checkin_step }}">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-admin btn-light border" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-admin btn-admin-primary">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endforeach
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.tour-status-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            let bookingId = this.getAttribute('data-booking-id');
+            let container = document.getElementById('checkinStepContainer' + bookingId);
+            if(this.value === 'checking_in') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
 
 @endsection

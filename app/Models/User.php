@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Favorite;
+
 /**
  * Class User
  *
@@ -99,5 +101,9 @@ class User extends Authenticatable
     public function tour_guide()
     {
         return $this->hasOne(TourGuide::class);
+    }
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
     }
 }

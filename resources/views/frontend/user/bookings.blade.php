@@ -50,17 +50,23 @@
                     </div>
                     <div class="text-end">
                         @php
-                            $statusClass = 'status-pending';
-                            $statusText = $booking->booking_status;
-                            if(strtolower($statusText) == 'confirmed' || strtolower($statusText) == 'đã xác nhận') {
-                                $statusClass = 'status-confirmed';
-                            } elseif (strtolower($statusText) == 'cancelled' || strtolower($statusText) == 'đã hủy') {
-                                $statusClass = 'status-cancelled';
+                            $tourStatusMap = [
+                                'upcoming' => ['status-pending', 'Sắp khởi hành'],
+                                'in_progress' => ['status-pending', 'Đang thực hiện'],
+                                'checking_in' => ['status-pending', 'Đang check-in'],
+                                'completed' => ['status-confirmed', 'Đã hoàn thành'],
+                                'cancelled_by_customer' => ['status-cancelled', 'Đã hủy (Bạn hủy)'],
+                                'cancelled_by_admin' => ['status-cancelled', 'Đã hủy (Admin hủy)'],
+                            ];
+                            $statusClass = $tourStatusMap[$booking->tour_status][0] ?? 'status-pending';
+                            $statusText = $tourStatusMap[$booking->tour_status][1] ?? $booking->tour_status;
+                            if ($booking->tour_status === 'checking_in' && $booking->current_checkin_step) {
+                                $statusText .= ' - ' . $booking->current_checkin_step;
                             }
                         @endphp
                         <span class="status-badge {{ $statusClass }}">
                             <i class="bi bi-circle-fill me-1" style="font-size: 8px; position: relative; top: -1px;"></i> 
-                            {{ __(ucfirst($statusText)) }}
+                            {{ $statusText }}
                         </span>
                     </div>
                 </div>
@@ -131,26 +137,26 @@
 
                                 <div class="mt-4">
                                     @php
-                                        $paymentStatus = $booking->payment_status ?? 'unpaid';
+                                        $paymentStatus = $booking->payment_status ?? 'pending';
                                         $paymentMethod = $booking->payment_method ?? 'transfer';
-                                        $paymentType = $booking->payment_type ?? 'full';
+                                        $isCancelled = in_array($booking->tour_status, [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER]);
                                     @endphp
 
-                                    @if($paymentStatus === 'paid')
+                                    @if($paymentStatus === 'paid_100')
                                         <div class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
                                             <i class="bi bi-check-circle-fill me-1"></i> {{ __('Đã thanh toán (100%)') }}
                                         </div>
-                                    @elseif($paymentStatus === 'deposited')
+                                    @elseif($paymentStatus === 'paid_30')
                                         <div class="badge bg-info-subtle text-info border border-info-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
                                             <i class="bi bi-pie-chart-fill me-1"></i> {{ __('Đã cọc (30%)') }}
                                         </div>
-                                    @elseif($paymentStatus === 'unpaid' || $paymentStatus === 'pending')
+                                    @elseif($paymentStatus === 'pending')
                                         @if($paymentMethod === 'vnpay')
                                             <div class="d-flex flex-column gap-2">
                                                 <div class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
                                                     <i class="bi bi-hourglass-split me-1"></i> {{ __('Chưa thanh toán (VNPay)') }}
                                                 </div>
-                                                @if($booking->booking_status !== 'cancelled')
+                                                @if(!$isCancelled)
                                                     <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-primary btn-sm rounded-pill fw-bold w-100 py-2 mt-1">
                                                         <i class="bi bi-credit-card me-1"></i> {{ __('Thanh toán ngay') }}
                                                     </a>
@@ -164,9 +170,9 @@
                                     @elseif($paymentStatus === 'failed')
                                         <div class="d-flex flex-column gap-2">
                                             <div class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2 fw-semibold w-100 text-center" style="font-size: 0.85rem;">
-                                                <i class="bi bi-x-circle-fill me-1"></i> {{ __('Thanh toán VNPay lỗi') }}
+                                                <i class="bi bi-x-circle-fill me-1"></i> {{ __('Thanh toán VNPay lỗi / Hủy') }}
                                             </div>
-                                            @if($booking->booking_status !== 'cancelled')
+                                            @if(!$isCancelled)
                                                 <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-outline-primary btn-sm rounded-pill fw-bold w-100 py-2 mt-1">
                                                     <i class="bi bi-arrow-clockwise me-1"></i> {{ __('Thử lại VNPay') }}
                                                 </a>
