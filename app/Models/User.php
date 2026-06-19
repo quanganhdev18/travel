@@ -38,8 +38,8 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     use HasFactory;
-    use Notifiable;
     use HasRoles;
+    use Notifiable;
 
     protected $table = 'users';
 
@@ -54,6 +54,8 @@ class User extends Authenticatable
         'phone',
         'role',
         'preferences',
+        'google_id',
+        'google_avatar',
     ];
 
     public function bookings()
