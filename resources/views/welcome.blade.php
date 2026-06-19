@@ -186,7 +186,27 @@
                        class="text-decoration-none d-block text-dark">
 
                         <div class="card-img-wrapper">
-                            <span class="badge-glass">
+
+    @auth
+@php
+    $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+        ->where('tour_id', $tour->id)
+        ->exists();
+@endphp
+
+<form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+      method="POST"
+      class="favorite-form">
+    @csrf
+
+    <button type="submit"
+            class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+        <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+    </button>
+</form>
+@endauth
+
+    <span class="badge-glass">
                                 <i class="bi bi-clock me-1"></i>
                                 {{ $tour->duration_days ?? 0 }}N{{ $tour->duration_nights ?? 0 }}Đ
                             </span>
@@ -318,5 +338,41 @@
         @endforelse
     </div>
 </section>
+<style>
+.card-img-wrapper {
+    position: relative;
+}
 
+.favorite-form {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    margin: 0;
+}
+
+.favorite-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    color: #ff3366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    cursor: pointer;
+}
+
+.favorite-btn i {
+    font-size: 20px;
+}
+
+.favorite-btn:hover {
+    background: #ff3366;
+    color: #fff;
+}
+
+</style>
 @endsection
