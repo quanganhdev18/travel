@@ -152,9 +152,11 @@
                                     <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
                                     <div class="row g-2">
                                         <div class="col-md-5">
+                                            <label for="front_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt trước') }}</label>
                                             <input type="file" name="front_image" id="front_image" class="form-control" accept="image/*" placeholder="Mặt trước">
                                         </div>
                                         <div class="col-md-5">
+                                            <label for="back_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt sau') }}</label>
                                             <input type="file" name="back_image" id="back_image" class="form-control" accept="image/*" placeholder="Mặt sau">
                                         </div>
                                         <div class="col-md-2">

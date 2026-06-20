@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TourImage extends Model
 {
+    use HasLocalImageUrl;
+
     protected $table = 'tour_images';
 
     protected $casts = [
@@ -38,5 +41,10 @@ class TourImage extends Model
     public function tour()
     {
         return $this->belongsTo(Tour::class);
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
     }
 }
