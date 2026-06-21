@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
 class TourActivity extends Model
 {
-    use HasTranslations;
+    use HasLocalImageUrl, HasTranslations;
 
     protected $table = 'tour_activities';
 
@@ -29,5 +30,10 @@ class TourActivity extends Model
     public function tour_itinerary()
     {
         return $this->belongsTo(TourItinerary::class, 'tour_itinerary_id');
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
     }
 }
