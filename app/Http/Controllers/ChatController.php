@@ -71,7 +71,7 @@ class ChatController extends Controller
 
         $message = $conversation->messages()->create([
             'sender_id' => $user->id,
-            'message' => $request->message,
+            'message' => \App\Services\ProfanityFilter::filter($request->message),
             'attachment_path' => $path ? '/storage/' . $path : null,
             'attachment_name' => $originalName,
         ]);
