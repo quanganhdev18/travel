@@ -275,6 +275,35 @@
             background: #dbeafe;
             color: var(--admin-primary) !important;
         }
+
+        /* Pagination */
+        .pagination {
+            gap: 4px;
+            margin-bottom: 0;
+        }
+        .pagination .page-link {
+            border-radius: 8px !important;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            color: var(--admin-primary);
+            border: 1px solid var(--admin-border);
+            background: #fff;
+            transition: all 0.2s;
+            line-height: 1.5;
+        }
+        .pagination .page-link:hover {
+            background: #dbeafe;
+            border-color: var(--admin-primary);
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--admin-primary);
+            border-color: var(--admin-primary);
+            color: #fff;
+        }
+        .pagination .page-item.disabled .page-link {
+            color: #94a3b8;
+            background: #f8fafc;
+        }
     </style>
 </head>
 
