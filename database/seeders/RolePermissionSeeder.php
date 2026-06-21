@@ -40,6 +40,19 @@ class RolePermissionSeeder extends Seeder
         $guide = Role::firstOrCreate(['name' => 'Guide']);
         $guide->givePermissionTo(['view guide schedules']);
 
+        $cskh = Role::firstOrCreate(['name' => 'cskh', 'guard_name' => 'web']);
+        
+        $cskhUser = User::firstOrCreate(
+            ['email' => 'cskh@travel.com'],
+            [
+                'name' => 'Nhân viên CSKH',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'phone' => '0987654321',
+                'role' => 'cskh',
+            ]
+        );
+        $cskhUser->assignRole($cskh);
+
         // Phân quyền cho một số user có sẵn dựa vào role cũ (chuỗi)
         $users = User::all();
         foreach ($users as $user) {

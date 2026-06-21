@@ -150,7 +150,7 @@
                             <div class="col-12 mt-3">
                                 <div class="p-3 bg-light rounded border">
                                     <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
-                                    <div class="row g-2">
+                                    <div class="row g-2 align-items-end">
                                         <div class="col-md-5">
                                             <label for="front_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt trước') }}</label>
                                             <input type="file" name="front_image" id="front_image" class="form-control" accept="image/*" placeholder="Mặt trước">
@@ -160,7 +160,7 @@
                                             <input type="file" name="back_image" id="back_image" class="form-control" accept="image/*" placeholder="Mặt sau">
                                         </div>
                                         <div class="col-md-2">
-                                            <button type="button" class="btn btn-primary w-100 h-100" id="btn-scan-cccd">
+                                            <button type="button" class="btn btn-primary w-100" id="btn-scan-cccd" style="height: 38px;">
                                                 <i class="bi bi-upc-scan"></i> Quét
                                             </button>
                                         </div>
