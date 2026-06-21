@@ -7,7 +7,9 @@ use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Ticket;
 use App\Models\Tour;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
 {
@@ -28,12 +30,12 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
-        $destinations = Destination::whereIn('id', function ($query) {
-            $query->select('destination_id')
-                ->from('tours')
-                ->whereNull('deleted_at');
-        })
-            ->take(4)
+        $destinations = Destination::withCount('tours')
+            ->whereIn('id', function ($query) {
+                $query->select('destination_id')
+                    ->from('tours')
+                    ->whereNull('deleted_at');
+            })
             ->get();
 
         $categories = Category::all();
@@ -41,7 +43,7 @@ class HomeController extends Controller
         $tours = Tour::with(['destination', 'tour_images', 'departure_location'])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+                $q->whereDate('departure_date', '>=', Carbon::today());
             })
             ->latest()
             ->take(8)
@@ -65,7 +67,7 @@ class HomeController extends Controller
         ));
     }
 
-    public function tours(\Illuminate\Http\Request $request)
+    public function tours(Request $request)
     {
         $banners = Banner::where('is_active', 1)
             ->where(function ($q) {
@@ -84,22 +86,22 @@ class HomeController extends Controller
         $query = Tour::with(['destination', 'tour_images'])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+                $q->whereDate('departure_date', '>=', Carbon::today());
             });
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
             $query->where(function ($q) use ($keyword) {
-                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%'])
+                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
                     ->orWhereHas('destination', function ($q2) use ($keyword) {
-                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%']);
+                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%']);
                     });
             });
         }
 
         if ($request->filled('transport')) {
             $transport = $request->transport;
-            if (\Illuminate\Support\Facades\Schema::hasColumn('tours', 'transport_type')) {
+            if (Schema::hasColumn('tours', 'transport_type')) {
                 $query->where('transport_type', $transport);
             }
         }
@@ -115,12 +117,12 @@ class HomeController extends Controller
         if ($request->filled('date')) {
             $date = $request->date;
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, \Carbon\Carbon::today()->toDateString()));
+                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
             });
         }
 
         if ($request->filled('stars')) {
-            if (\Illuminate\Support\Facades\Schema::hasColumn('tours', 'hotel_stars')) {
+            if (Schema::hasColumn('tours', 'hotel_stars')) {
                 $query->where('hotel_stars', $request->stars);
             }
         }
@@ -153,7 +155,7 @@ class HomeController extends Controller
         return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations'));
     }
 
-    public function searchTours(\Illuminate\Http\Request $request)
+    public function searchTours(Request $request)
     {
         $banners = Banner::where('is_active', true)->where('position', 'top')->get();
         $destinations = Destination::orderBy('name')->get();
@@ -162,16 +164,16 @@ class HomeController extends Controller
         $query = Tour::with(['destination', 'departure_location', 'tour_images'])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', \Carbon\Carbon::today());
+                $q->whereDate('departure_date', '>=', Carbon::today());
             });
 
         // Keyword: tìm theo tên tour hoặc điểm đến
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
             $query->where(function ($q) use ($keyword) {
-                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%'])
+                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
                     ->orWhereHas('destination', function ($q2) use ($keyword) {
-                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%']);
+                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%']);
                     });
             });
         }
@@ -179,7 +181,7 @@ class HomeController extends Controller
         // Phương tiện: xe hoặc bay (lọc theo ai_tags hoặc title nếu chưa có cột riêng)
         if ($request->filled('transport')) {
             $transport = $request->transport;
-            if (\Illuminate\Support\Facades\Schema::hasColumn('tours', 'transport_type')) {
+            if (Schema::hasColumn('tours', 'transport_type')) {
                 $query->where('transport_type', $transport);
             } else {
                 // Fallback: tìm theo từ khóa trong title/ai_tags
@@ -212,13 +214,13 @@ class HomeController extends Controller
         if ($request->filled('date')) {
             $date = $request->date;
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, \Carbon\Carbon::today()->toDateString()));
+                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
             });
         }
 
         // Xếp hạng sao khách sạn
         if ($request->filled('stars')) {
-            if (\Illuminate\Support\Facades\Schema::hasColumn('tours', 'hotel_stars')) {
+            if (Schema::hasColumn('tours', 'hotel_stars')) {
                 $query->where('hotel_stars', $request->stars);
             }
         }
@@ -248,7 +250,7 @@ class HomeController extends Controller
         return view('frontend.tours.search', compact('tours', 'destinations', 'categories', 'banners'));
     }
 
-    public function searchDestinations(\Illuminate\Http\Request $request)
+    public function searchDestinations(Request $request)
     {
         $keyword = mb_strtolower($request->get('q', ''), 'UTF-8');
 
@@ -256,7 +258,7 @@ class HomeController extends Controller
             return response()->json([]);
         }
 
-        $destinations = Destination::whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%' . $keyword . '%'])
+        $destinations = Destination::whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
             ->orderBy('name')
             ->limit(10)
             ->get(['id', 'name']);
