@@ -682,7 +682,7 @@
                     {{-- Avatar --}}
                     <div class="avatar-container mb-1">
                         <div class="avatar-ring">
-                            <div class="avatar-inner" id="mainAvatarWrapper">
+                            <div class="avatar-inner" id="mainAvatarWrapper" data-user-avatar>
                                 @if($user->avatar)
                                     <img src="{{ $user->avatar }}" alt="Ảnh đại diện" id="mainAvatarImg">
                                 @else
@@ -992,6 +992,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === overlay) closeModal();
     });
 
+    function updateUserAvatars(imageSrc) {
+        document.querySelectorAll('[data-user-avatar]').forEach(function (el) {
+            el.innerHTML = '<img src="' + imageSrc + '" alt="Ảnh đại diện" class="rounded-circle w-100 h-100" style="object-fit:cover;width:100%;height:100%;">';
+        });
+    }
+
     // File input change
     fileInput.addEventListener('change', function () {
         if (this.files && this.files[0]) {
@@ -1005,6 +1011,7 @@ document.addEventListener('DOMContentLoaded', function () {
             reader.onload = function(e) {
                 const previewWrap = document.getElementById('previewWrap');
                 previewWrap.innerHTML = '<img src="' + e.target.result + '" alt="Preview" style="width:100%;height:100%;object-fit:cover;">';
+                updateUserAvatars(e.target.result);
             };
             reader.readAsDataURL(file);
             uploadBtn.disabled = false;

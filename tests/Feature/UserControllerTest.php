@@ -101,6 +101,7 @@ test('user can view their wishlists', function () {
         'duration_days' => 3,
         'duration_nights' => 2,
         'base_price' => 1000000,
+        'description' => 'Test tour description',
     ]);
 
     Wishlist::create([
@@ -129,6 +130,7 @@ test('user can toggle a tour in their wishlist', function () {
         'duration_days' => 3,
         'duration_nights' => 2,
         'base_price' => 1000000,
+        'description' => 'Test tour description',
     ]);
 
     // First toggle: Adds to wishlist
@@ -171,6 +173,7 @@ test('user can remove a tour from wishlist', function () {
         'duration_days' => 3,
         'duration_nights' => 2,
         'base_price' => 1000000,
+        'description' => 'Test tour description',
     ]);
 
     Wishlist::create([
@@ -189,4 +192,32 @@ test('user can remove a tour from wishlist', function () {
         'user_id' => $user->id,
         'tour_id' => $tour->id,
     ]);
+});
+
+test('avatar is displayed in navigation when user has avatar', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'avatar' => '/storage/avatars/test-avatar.jpg',
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get('/');
+
+    $response->assertOk();
+    $response->assertSee('/storage/avatars/test-avatar.jpg');
+});
+
+test('avatar placeholder is displayed in navigation when user does not have avatar', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'avatar' => null,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get('/');
+
+    $response->assertOk();
+    $response->assertSee('bi-person-circle');
 });
