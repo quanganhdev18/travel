@@ -473,6 +473,18 @@ class TourBookingController extends Controller
 
         $holidays = Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
 
+        // Lấy danh sách mã giảm giá còn hiệu lực
+        $coupons = Coupon::where(function ($query) {
+            $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+        })
+            ->where(function ($query) {
+                $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->get();
+
         return view('frontend.tours.checkout', [
             'schedule' => $schedule,
             'adults' => $request->adults,
@@ -483,6 +495,7 @@ class TourBookingController extends Controller
             'identity' => $identity, // Có thể null nếu user chưa cập nhật CCCD/Hộ chiếu
             'holidaySurcharge' => $holidaySurcharge,
             'holidays' => $holidays,
+            'coupons' => $coupons,
         ]);
     }
 

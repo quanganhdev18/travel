@@ -110,28 +110,59 @@
                         <label class="form-label text-muted fw-bold small text-uppercase">Tour: {{ $schedule->tour->title ?? 'N/A' }}</label>
                         <p class="mb-0">Khởi hành: <strong>{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}</strong></p>
                     </div>
-                    
+
                     <hr>
-                    
-                    <label class="form-label fw-500 mb-3">Chọn Hướng dẫn viên (Có thể chọn nhiều):</label>
-                    
-                    @php
-                        $assignedGuideIds = $schedule->schedule_guides->pluck('guide_id')->toArray();
-                    @endphp
-                    
-                    <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
-                        @forelse($tourGuides as $guide)
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="guide_ids[]" value="{{ $guide->id }}" id="guide_{{ $schedule->id }}_{{ $guide->id }}"
-                                {{ in_array($guide->id, $assignedGuideIds) ? 'checked' : '' }}>
-                            <label class="form-check-label d-flex align-items-center" for="guide_{{ $schedule->id }}_{{ $guide->id }}">
-                                <span>{{ $guide->name }}</span>
-                                <small class="text-muted ms-2">({{ $guide->phone }})</small>
-                            </label>
+
+                    <div x-data="guideSelector({{ json_encode($schedule->schedule_guides->pluck('guide_id')->toArray()) }}, {{ json_encode($schedule->busy_guide_ids) }})">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <label class="form-label fw-500 mb-0">Chọn Hướng dẫn viên:</label>
+                            <span class="badge rounded-pill"
+                                :class="selectedCount === 2 ? 'bg-danger' : 'bg-primary'">
+                                <span x-text="selectedCount"></span>/2
+                            </span>
                         </div>
-                        @empty
-                        <div class="text-muted small">Chưa có hướng dẫn viên nào trong hệ thống. Vui lòng thêm mới.</div>
-                        @endforelse
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Mỗi lịch trình chỉ được phân công tối đa <strong>2 hướng dẫn viên</strong>.
+                        </p>
+
+                        <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                            @forelse($tourGuides as $guide)
+                            <div class="form-check p-0">
+                                <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
+                                    :class="{
+                                        'border-primary bg-primary bg-opacity-10': selected.includes('{{ $guide->id }}'),
+                                        'opacity-50 pe-none': busyGuides.includes('{{ $guide->id }}') || (!selected.includes('{{ $guide->id }}') && selectedCount >= 2),
+                                        'guide-hover': selected.includes('{{ $guide->id }}') || (!busyGuides.includes('{{ $guide->id }}') && selectedCount < 2)
+                                    }"
+                                    for="guide_{{ $schedule->id }}_{{ $guide->id }}"
+                                    style="cursor: pointer;">
+                                    <input class="form-check-input m-0 flex-shrink-0"
+                                        type="checkbox"
+                                        name="guide_ids[]"
+                                        value="{{ $guide->id }}"
+                                        id="guide_{{ $schedule->id }}_{{ $guide->id }}"
+                                        x-model="selected"
+                                        :disabled="busyGuides.includes('{{ $guide->id }}') || (!selected.includes('{{ $guide->id }}') && selectedCount >= 2)"
+                                        @change="onCheck">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-500 d-flex align-items-center gap-2">
+                                            <span>{{ $guide->name }}</span>
+                                            <template x-if="busyGuides.includes('{{ $guide->id }}')">
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-2 py-0.5" style="font-size: 10px; font-weight: 500;">Bận trùng lịch</span>
+                                            </template>
+                                        </div>
+                                        <small class="text-muted">{{ $guide->phone }}</small>
+                                    </div>
+                                    <i class="bi bi-check-circle-fill text-primary ms-auto"
+                                        x-show="selected.includes('{{ $guide->id }}')" style="display:none!important"
+                                        x-transition></i>
+                                </label>
+                            </div>
+                            @empty
+                            <div class="text-muted small">Chưa có hướng dẫn viên nào trong hệ thống. Vui lòng thêm mới.</div>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -143,5 +174,33 @@
     </div>
 </div>
 @endforeach
+
+@push('scripts')
+<script>
+function guideSelector(initialSelected, busyGuides) {
+    return {
+        selected: Array.isArray(initialSelected) ? initialSelected.map(id => id.toString()) : [],
+        busyGuides: Array.isArray(busyGuides) ? busyGuides.map(id => id.toString()) : [],
+        get selectedCount() {
+            return this.selected.length;
+        },
+        onCheck() {
+            // Alpine x-model handles add/remove automatically
+        }
+    };
+}
+</script>
+<style>
+.guide-option-label {
+    transition: all 0.18s ease;
+    user-select: none;
+}
+.guide-option-label:not(.opacity-50):hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    border-color: var(--bs-primary) !important;
+}
+</style>
+@endpush
+
 
 @endsection

@@ -24,6 +24,11 @@ class ScheduleGuide extends Model
 
     public $timestamps = false;
 
+    protected $fillable = [
+        'tour_schedule_id',
+        'guide_id',
+    ];
+
     protected $casts = [
         'tour_schedule_id' => 'int',
         'guide_id' => 'int',
