@@ -76,10 +76,14 @@
                 </tbody>
             </table>
         </div>
+        <div class="p-3 border-top d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Hiển thị {{ $destinations->firstItem() }} – {{ $destinations->lastItem() }} / {{ $destinations->total() }} điểm đến
+            </small>
+            <div>
+                {{ $destinations->links() }}
+            </div>
+        </div>
     </div>
-</div>
-
-<div class="mt-4 d-flex justify-content-center">
-    {{ $destinations->links() }}
 </div>
 @endsection

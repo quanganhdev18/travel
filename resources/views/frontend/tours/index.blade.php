@@ -10,10 +10,10 @@
         @php
             $firstBanner = $banners->first();
             $bgImage = 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070'; // fallback
-            
+
             if ($firstBanner && $firstBanner->image_url) {
-                $bgImage = Str::startsWith($firstBanner->image_url, ['http://', 'https://']) 
-                           ? $firstBanner->image_url 
+                $bgImage = Str::startsWith($firstBanner->image_url, ['http://', 'https://'])
+                           ? $firstBanner->image_url
                            : asset($firstBanner->image_url);
             }
         @endphp
@@ -128,6 +128,26 @@
                     <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                         <div class="combo-card">
                             <div class="combo-card-img-wrapper">
+
+    @auth
+    @php
+        $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+            ->where('tour_id', $tour->id)
+            ->exists();
+    @endphp
+
+    <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+          method="POST"
+          class="favorite-form"
+          onclick="event.stopPropagation();">
+        @csrf
+
+        <button type="submit"
+                class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+            <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+        </button>
+    </form>
+    @endauth
                                 <span class="combo-badge">
                                     <span class="badge-icon">25%</span> Hot Deal
                                 </span>
@@ -196,7 +216,7 @@
                 </div>
                 @endforelse
             </div>
-            
+
         </div>
     </div>
 </section>
@@ -209,8 +229,8 @@
         <div class="col-md-4">
             <a href="{{ $ad->target_url ?? '#' }}" class="d-block overflow-hidden rounded-4 shadow-sm" style="height: 200px;">
                 @php
-                    $adImgSrc = Str::startsWith($ad->image_url, ['http://', 'https://']) 
-                              ? $ad->image_url 
+                    $adImgSrc = Str::startsWith($ad->image_url, ['http://', 'https://'])
+                              ? $ad->image_url
                               : asset($ad->image_url);
                 @endphp
                 <img src="{{ $adImgSrc }}" alt="{{ $ad->title }}" class="w-100 h-100 object-fit-cover hover-scale" style="transition: transform 0.4s ease;">
@@ -240,5 +260,49 @@
         </p>
     </div>
 </section>
+<style>
+.combo-card-img-wrapper {
+    position: relative;
+}
 
+.favorite-form {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 9999;
+    margin: 0;
+}
+
+.favorite-btn {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn i {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.08);
+}
+
+.favorite-btn.active {
+    color: #ff3366;
+}
+
+.favorite-btn.active i {
+    color: #ff3366;
+}
+</style>
 @endsection

@@ -81,10 +81,12 @@
                 </div>
             </div>
             
-            <div class="card shadow-sm h-100 d-flex justify-content-center align-items-center bg-light" x-show="!currentConv">
-                <div class="text-center text-muted">
-                    <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
-                    <p class="mt-3">Chọn một đoạn chat để bắt đầu</p>
+            <div x-show="!currentConv" class="h-100">
+                <div class="card shadow-sm h-100 d-flex justify-content-center align-items-center bg-light">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+                        <p class="mt-3">Chọn một đoạn chat để bắt đầu</p>
+                    </div>
                 </div>
             </div>
         </div>

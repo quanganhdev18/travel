@@ -28,9 +28,13 @@ class TourGuideController extends Controller
         $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
-            'phone' => 'required|max:20',
-            'email' => 'nullable|email|max:255',
+            'phone' => 'required|digits:10|unique:tour_guides,phone',
+            'email' => 'nullable|email|max:255|unique:tour_guides,email',
             'bio' => 'nullable|string',
+        ], [
+            'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
+            'phone.unique' => 'Số điện thoại này đã tồn tại, vui lòng nhập số khác.',
+            'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
 
         TourGuide::create($request->all());
@@ -54,9 +58,13 @@ class TourGuideController extends Controller
         $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
-            'phone' => 'required|max:20',
-            'email' => 'nullable|email|max:255',
+            'phone' => 'required|digits:10|unique:tour_guides,phone,'.$tourGuide->id,
+            'email' => 'nullable|email|max:255|unique:tour_guides,email,'.$tourGuide->id,
             'bio' => 'nullable|string',
+        ], [
+            'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
+            'phone.unique' => 'Số điện thoại này đã tồn tại, vui lòng nhập số khác.',
+            'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
 
         $tourGuide->update($request->all());

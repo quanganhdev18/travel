@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Favorite;
 
 /**
  * Class User
@@ -37,8 +38,8 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     use HasFactory;
-    use Notifiable;
     use HasRoles;
+    use Notifiable;
 
     protected $table = 'users';
 
@@ -53,6 +54,8 @@ class User extends Authenticatable
         'phone',
         'role',
         'preferences',
+        'google_id',
+        'google_avatar',
     ];
 
     public function bookings()
@@ -98,5 +101,9 @@ class User extends Authenticatable
     public function tour_guide()
     {
         return $this->hasOne(TourGuide::class);
+    }
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
     }
 }
