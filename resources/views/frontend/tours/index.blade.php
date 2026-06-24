@@ -187,7 +187,7 @@
                                         <div class="combo-price-label">{{ __('Giá từ:') }}</div>
                                         <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
                                     </div>
-                                    <button class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</button>
+                                    <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                 </div>
                             </div>
                         </div>

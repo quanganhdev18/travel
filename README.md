@@ -88,7 +88,7 @@ Sau khi chạy lệnh `php artisan migrate --seed`, hệ thống có các tài k
 - **Nhân viên CSKH**: `cskh@travel.com` / `password`
 
 Đường dẫn trang quản trị: `http://127.0.0.1:8000/admin/dashboard`
-
+     
 ## Cấu trúc tính năng Live Chat
 
 - **Người dùng (Guest/User)**: Hiển thị Chatbox thu gọn ở góc dưới bên phải màn hình ngoài trang chủ. Cho phép gửi tin nhắn, đính kèm file (ví dụ: file mẫu danh sách hành khách `.csv`).

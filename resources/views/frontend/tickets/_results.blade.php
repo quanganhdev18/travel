@@ -64,7 +64,7 @@
                             @endphp
                             <div class="combo-price-val">{{ format_currency($minPrice) }}</div>
                         </div>
-                        <button class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Chọn vé') }}</button>
+                        <span class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Chọn vé') }}</span>
                     </div>
                 </div>
             </div>
