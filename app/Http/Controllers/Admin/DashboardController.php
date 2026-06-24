@@ -12,6 +12,10 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        if (auth()->user()->hasAnyRole(['Staff', 'cskh'])) {
+            return redirect()->route('admin.chat.index');
+        }
+
         $totalTours = Tour::count();
         $totalBookings = Booking::count();
         $totalRevenue = Booking::where('payment_status', Booking::PAYMENT_PAID_100)->sum('total_price');

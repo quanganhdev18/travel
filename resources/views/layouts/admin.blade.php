@@ -317,11 +317,13 @@
 
         <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
+            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-grid-1x2"></i> Tổng quan
                 </a>
             </li>
+            @endhasanyrole
             @hasanyrole('Super Admin|Admin|Staff|cskh')
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
@@ -331,7 +333,7 @@
             @endhasanyrole
         </ul>
 
-        @hasanyrole('Super Admin|Admin|Staff')
+        @hasanyrole('Super Admin|Admin')
         <div class="group-title">Nghiệp vụ kinh doanh</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -340,11 +342,10 @@
                     Quản lý Booking
                 </a>
             </li>
-        @endhasanyrole
+        </ul>
 
-
-            <li class="nav-heading mt-3 mb-2 text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Quản lý chung</li>
-            @hasanyrole('Super Admin|Admin')
+        <div class="group-title">Quản lý chung</div>
+        <ul class="nav flex-column mb-3">
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tours*') ? 'active' : '' }}" href="{{ route('admin.tours.index') }}">
                     <i class="bi bi-briefcase"></i> Sản phẩm Tour
@@ -355,17 +356,11 @@
                     <i class="bi bi-plus-circle"></i> Dịch vụ Addon
                 </a>
             </li>
-            @endhasanyrole
-            
-            @hasanyrole('Super Admin|Admin|Guide')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
                     <i class="bi bi-compass"></i> Điều hành Tour
                 </a>
             </li>
-            @endhasanyrole
-
-            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tour-guides*') ? 'active' : '' }}" href="{{ route('admin.tour_guides.index') }}">
                     <i class="bi bi-person-badge"></i> Hướng dẫn viên
@@ -376,9 +371,6 @@
                     <i class="bi bi-ticket-perforated"></i> Vé tham quan
                 </a>
             </li>
-            @endhasanyrole
-
-            @hasanyrole('Super Admin|Admin|Staff')
             <li class="nav-item">
                 <a href="{{ route('admin.coupons.index') }}" class="nav-link">
                     <i class="bi bi-percent"></i>
@@ -390,10 +382,8 @@
                     <i class="bi bi-receipt"></i> Hóa đơn & Thu chi
                 </a>
             </li>
-            @endhasanyrole
         </ul>
 
-        @hasanyrole('Super Admin|Admin')
         <div class="group-title">Cấu hình hệ thống</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -437,6 +427,17 @@
             </li>
         </ul>
         @endhasanyrole
+
+        @role('Guide')
+        <div class="group-title">Quản lý chung</div>
+        <ul class="nav flex-column mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
+                    <i class="bi bi-compass"></i> Điều hành Tour
+                </a>
+            </li>
+        </ul>
+        @endrole
     </div>
 
     <div class="main-content">
@@ -508,6 +509,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/pjax-navigation.js') }}"></script>
     @yield('scripts')
     @stack('scripts')
 </body>

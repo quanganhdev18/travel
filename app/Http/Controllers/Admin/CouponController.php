@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Coupon;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,9 @@ class CouponController extends Controller
 
     public function create()
     {
-        return view('admin.coupons.create');
+        $categories = Category::all();
+
+        return view('admin.coupons.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -28,9 +31,11 @@ class CouponController extends Controller
             'discount_value' => 'required|numeric|min:0',
             'valid_from' => 'required|date',
             'valid_until' => 'required|date|after_or_equal:valid_from',
+            'category_id' => 'nullable|exists:categories,id',
         ]);
 
         Coupon::create([
+            'category_id' => $request->category_id,
             'code' => strtoupper($request->code),
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,
@@ -49,7 +54,9 @@ class CouponController extends Controller
 
     public function edit(Coupon $coupon)
     {
-        return view('admin.coupons.edit', compact('coupon'));
+        $categories = Category::all();
+
+        return view('admin.coupons.edit', compact('coupon', 'categories'));
     }
 
     public function update(Request $request, Coupon $coupon)
@@ -60,9 +67,11 @@ class CouponController extends Controller
             'discount_value' => 'required|numeric|min:0',
             'valid_from' => 'required|date',
             'valid_until' => 'required|date|after_or_equal:valid_from',
+            'category_id' => 'nullable|exists:categories,id',
         ]);
 
         $coupon->update([
+            'category_id' => $request->category_id,
             'code' => strtoupper($request->code),
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,

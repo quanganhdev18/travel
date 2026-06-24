@@ -182,12 +182,17 @@ class TourBookingController extends Controller
             $couponId = null;
 
             if ($request->filled('coupon_code')) {
+                $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
                 $coupon = Coupon::where('code', $request->coupon_code)
                     ->where(function ($query) {
                         $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
                     })
                     ->where(function ($query) {
                         $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+                    })
+                    ->where(function ($query) use ($tourCategoryIds) {
+                        $query->whereNull('category_id')
+                            ->orWhereIn('category_id', $tourCategoryIds);
                     })
                     ->first();
 
@@ -473,6 +478,8 @@ class TourBookingController extends Controller
 
         $holidays = Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
 
+        $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+
         // Lấy danh sách mã giảm giá còn hiệu lực
         $coupons = Coupon::where(function ($query) {
             $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
@@ -482,6 +489,10 @@ class TourBookingController extends Controller
             })
             ->where(function ($query) {
                 $query->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->where(function ($query) use ($tourCategoryIds) {
+                $query->whereNull('category_id')
+                    ->orWhereIn('category_id', $tourCategoryIds);
             })
             ->get();
 
@@ -754,19 +765,32 @@ class TourBookingController extends Controller
         $request->validate([
             'code' => 'required|string',
             'order_value' => 'required|numeric',
+            'schedule_id' => 'nullable|exists:tour_schedules,id',
         ]);
 
-        $coupon = Coupon::where('code', $request->code)
+        $couponQuery = Coupon::where('code', $request->code)
             ->where(function ($query) {
                 $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
             })
             ->where(function ($query) {
                 $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
-            })
-            ->first();
+            });
+
+        if ($request->filled('schedule_id')) {
+            $schedule = TourSchedule::with('tour.categories')->find($request->schedule_id);
+            if ($schedule && $schedule->tour) {
+                $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+                $couponQuery->where(function ($query) use ($tourCategoryIds) {
+                    $query->whereNull('category_id')
+                        ->orWhereIn('category_id', $tourCategoryIds);
+                });
+            }
+        }
+
+        $coupon = $couponQuery->first();
 
         if (! $coupon) {
-            return response()->json(['success' => false, 'message' => 'Mã không tồn tại hoặc đã hết hạn.']);
+            return response()->json(['success' => false, 'message' => 'Mã không tồn tại, đã hết hạn hoặc không áp dụng cho tour này.']);
         }
 
         if ($request->order_value < $coupon->min_order_value) {
