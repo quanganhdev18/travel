@@ -658,10 +658,10 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Combo Card */
 .combo-card {
-    background: #eef2f6; /* Light grayish blue border area */
+    background: #eef2f6;
     border-radius: 16px;
     border: 1px solid #e2e8f0;
-    overflow: hidden;
+    overflow: visible; /* Không cắt nút bấm */
     transition: var(--transition-normal);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     height: 100%;
@@ -677,9 +677,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .combo-card-img-wrapper {
     position: relative;
-    height: 260px; /* Taller image to match screenshot */
-    overflow: hidden;
+    height: 260px;
+    overflow: hidden; /* Chỉ ẩn ảnh, không ẩn nút */
     background-color: #ddd;
+    border-radius: 16px 16px 0 0; /* Bo góc trên cho ảnh */
 }
 
 .combo-card-img-wrapper img {
@@ -733,15 +734,15 @@ h1, h2, h3, h4, h5, h6 {
 
 .combo-card-body {
     background: white;
-    margin: -40px 10px 10px 10px; /* Overlap image */
+    margin: -36px 10px 10px 10px; /* Overlap image */
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
     flex: 1;
     position: relative;
     z-index: 3;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .combo-title {
@@ -787,48 +788,78 @@ h1, h2, h3, h4, h5, h6 {
     color: #718096;
 }
 
+/* Combo Location Row */
+.combo-location {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.82rem;
+    color: #718096;
+    margin-bottom: 10px;
+    margin-top: 4px;
+}
+
+.combo-location i {
+    font-size: 0.88rem;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.combo-location span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .combo-footer {
     margin-top: auto;
+    padding-top: 10px;
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #f0f4f8;
 }
 
 .combo-footer > div {
-    max-width: 65%;
-    padding-right: 5px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .combo-price-label {
-    font-size: 0.7rem;
-    color: #4a5568;
-    margin-bottom: 0;
+    font-size: 0.68rem;
+    color: #718096;
+    margin-bottom: 1px;
+    white-space: nowrap;
 }
 
 .combo-price-val {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 700;
-    color: #0d6efd;
+    color: #F5A623;
+    white-space: nowrap;
     letter-spacing: 0;
 }
 
 .btn-combo-detail {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    background-color: #ffc107;
-    color: #000;
-    font-weight: 500;
+    background-color: var(--primary-color);
+    color: #fff;
+    font-weight: 600;
     border: none;
     border-radius: 30px 0 12px 0;
-    padding: 8px 14px;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-    z-index: 10;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
 }
 
 .btn-combo-detail:hover {
-    background-color: #ffb300;
+    background-color: #005bb5;
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(0, 91, 181, 0.45);
 }
 
 /* Full Width Banner */

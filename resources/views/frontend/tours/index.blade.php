@@ -178,26 +178,9 @@
                                     <i class="bi bi-star-fill text-warning"></i>
                                     @endfor
                                 </div>
-                                <div class="combo-specs">
-                                    <div class="combo-specs-row justify-content-between mb-1">
-                                        <div class="combo-specs-item">
-                                            <i class="bi bi-geo-alt" style="font-size: 0.9rem;"></i>
-                                            <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
-                                        </div>
-                                        <div class="combo-specs-item">
-                                            @if($tour->transport_type === 'xe')
-                                            <i class="bi bi-car-front" style="font-size: 0.9rem;"></i>
-                                            <span style="font-size: 0.85rem;">{{ __('Xe') }}</span>
-                                            @else
-                                            <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
-                                            <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="combo-specs-item">
-                                        <i class="bi bi-building" style="font-size: 0.9rem;"></i>
-                                        <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương') }} {{ $stars }}*</span>
-                                    </div>
+                                <div class="combo-location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span>{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
                                 </div>
                                 <div class="combo-footer">
                                     <div>
@@ -249,7 +232,7 @@
 <!-- Full Width Banner -->
 <section class="full-width-banner position-relative reveal-up mt-0">
     <div class="banner-bg">
-        <img src="{{ asset('uploads/halong.jpg') }}" alt="Halong Bay">
+        <img src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1920&auto=format&fit=crop" alt="Halong Bay">
     </div>
     <div class="banner-overlay"></div>
     <div class="container position-relative z-index-1 banner-content text-center text-white">

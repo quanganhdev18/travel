@@ -412,69 +412,59 @@
             @endphp
 
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="premium-card h-100 overflow-hidden">
-                    <a href="{{ route('frontend.tours.show', $tourSlug) }}"
-                       class="text-decoration-none d-block text-dark">
-
-                        <div class="card-img-wrapper">
-
-    @auth
-@php
-    $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-        ->where('tour_id', $tour->id)
-        ->exists();
-@endphp
-
-<form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-      method="POST"
-      class="favorite-form">
-    @csrf
-
-    <button type="submit"
-            class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-        <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-    </button>
-</form>
-@endauth
-
-    <span class="badge-glass">
-                                <i class="bi bi-clock me-1"></i>
-                                {{ $tour->duration_days ?? 0 }}N{{ $tour->duration_nights ?? 0 }}Đ
+                <a href="{{ route('frontend.tours.show', $tourSlug) }}" class="text-decoration-none h-100 d-block">
+                    <div class="combo-card">
+                        <div class="combo-card-img-wrapper">
+                            <span class="combo-badge">
+                                <span class="badge-icon">25%</span> Hot Deal
                             </span>
 
+                            @auth
+                            @php
+                                $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+                                    ->where('tour_id', $tour->id)
+                                    ->exists();
+                            @endphp
+                            <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+                                  method="POST"
+                                  class="favorite-form"
+                                  onclick="event.stopPropagation();">
+                                @csrf
+                                <button type="submit"
+                                        class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                </button>
+                            </form>
+                            @endauth
+
                             <img src="{{ $tourImage }}"
-                                 class="card-img-top"
                                  alt="{{ $tourTitle }}"
                                  onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
                         </div>
-
-                        <div class="card-body" style="display:block !important; height:auto !important; padding:20px !important;">
-                            <h3 class="card-title"
-                                style="display:block !important; visibility:visible !important; opacity:1 !important; color:#111827 !important; font-size:18px !important; font-weight:700 !important; line-height:1.4 !important; margin-bottom:12px !important; min-height:50px !important;">
-                                {{ $tourTitle }}
-                            </h3>
-
-                            <div class="location-text">
-                                <i class="bi bi-geo-alt text-danger"></i>
-                                {{ $destinationName }}
+                        <div class="combo-card-body">
+                            <h3 class="combo-title">{{ $tourTitle }}</h3>
+                            <div class="combo-stars">
+                                @php
+                                    $stars = $tour->hotel_stars ?? 4;
+                                @endphp
+                                @for($i = 1; $i <= $stars; $i++)
+                                <i class="bi bi-star-fill text-warning"></i>
+                                @endfor
                             </div>
-
-                            <div class="price-wrap">
-                                <span class="text-muted small">{{ __('Chỉ từ') }}</span>
-                                <div class="price-val">
-                                    {{ format_currency($tour->base_price ?? 0) }}
+                            <div class="combo-location">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>{{ $destinationName }}</span>
+                            </div>
+                            <div class="combo-footer">
+                                <div>
+                                    <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                    <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
                                 </div>
+                                <button class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</button>
                             </div>
                         </div>
-                    </a>
-
-                    <div class="px-3 pb-3">
-                        <a href="{{ route('frontend.tours.show', $tourSlug) }}"
-                           class="btn btn-primary w-100">
-                            {{ __('Xem chi tiết') }}
-                        </a>
                     </div>
-                </div>
+                </a>
             </div>
         @empty
             <div class="col-12">

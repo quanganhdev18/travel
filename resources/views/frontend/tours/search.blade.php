@@ -263,7 +263,7 @@
                     <!-- Grid of Tours -->
                     <div class="row g-4">
                         @forelse($tours as $tour)
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                             <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                                 <div class="combo-card h-100">
                                     <div class="combo-card-img-wrapper" style="height: 240px;">
@@ -297,33 +297,16 @@
                                             <i class="bi bi-star-fill text-warning"></i>
                                             @endfor
                                         </div>
-                                        <div class="combo-specs">
-                                            <div class="combo-specs-row justify-content-between mb-1">
-                                                <div class="combo-specs-item">
-                                                    <i class="bi bi-geo-alt" style="font-size: 0.9rem;"></i>
-                                                    <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
-                                                </div>
-                                                <div class="combo-specs-item">
-                                                    @if($tour->transport_type === 'xe')
-                                                    <i class="bi bi-car-front" style="font-size: 0.9rem;"></i>
-                                                    <span style="font-size: 0.85rem;">{{ __('Xe') }}</span>
-                                                    @else
-                                                    <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
-                                                    <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="combo-specs-item">
-                                                <i class="bi bi-building" style="font-size: 0.9rem;"></i>
-                                                <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương') }} {{ $stars }}*</span>
-                                            </div>
+                                        <div class="combo-location">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
                                         </div>
-                                        <div class="combo-footer mt-auto pt-3">
+                                        <div class="combo-footer">
                                             <div>
                                                 <div class="combo-price-label">{{ __('Giá từ:') }}</div>
                                                 <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
                                             </div>
-                                            <span class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</span>
+                                            <button class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</button>
                                         </div>
                                     </div>
                                 </div>

@@ -53,30 +53,21 @@
                 <div class="combo-card-body">
                     <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
                     <div class="combo-stars" style="font-size: 0.9rem;">
-                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        @php $stars = $tour->hotel_stars ?? 4; @endphp
+                        @for($i=1; $i<=$stars; $i++)
+                        <i class="bi bi-star-fill text-warning"></i>
+                        @endfor
                     </div>
-                    <div class="combo-specs">
-                        <div class="combo-specs-row justify-content-between mb-1">
-                            <div class="combo-specs-item">
-                                <i class="bi bi-geo-alt" style="font-size: 0.9rem;"></i>
-                                <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
-                            </div>
-                            <div class="combo-specs-item">
-                                <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
-                                <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
-                            </div>
-                        </div>
-                        <div class="combo-specs-item">
-                            <i class="bi bi-building" style="font-size: 0.9rem;"></i>
-                            <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương 4*') }}</span>
-                        </div>
+                    <div class="combo-location">
+                        <i class="bi bi-geo-alt"></i>
+                        <span>{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
                     </div>
-                    <div class="combo-footer mt-auto pt-3">
+                    <div class="combo-footer">
                         <div>
                             <div class="combo-price-label">{{ __('Giá từ:') }}</div>
                             <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
                         </div>
-                        <button class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</button>
+                        <button class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</button>
                     </div>
                 </div>
             </div>
