@@ -67,7 +67,7 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Ngày bắt đầu</label>
-                    <input type="date" name="valid_from" class="form-control" value="{{ old('valid_from') }}">
+                    <input type="date" name="valid_from" id="valid_from" class="form-control" value="{{ old('valid_from') }}" min="{{ date('Y-m-d') }}">
                     @error('valid_from')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
@@ -75,10 +75,11 @@
 
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Ngày kết thúc</label>
-                    <input type="date" name="valid_until" class="form-control" value="{{ old('valid_until') }}">
+                    <input type="date" name="valid_until" id="valid_until" class="form-control" value="{{ old('valid_until') }}">
                     @error('valid_until')
                         <small class="text-danger">{{ $message }}</small>
                     @enderror
+                    <small class="text-muted">Hạn dùng tối đa 1 năm kể từ ngày bắt đầu.</small>
                 </div>
             </div>
 
@@ -104,3 +105,37 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const validFrom = document.getElementById('valid_from');
+        const validUntil = document.getElementById('valid_until');
+
+        function updateValidUntilRange() {
+            if (!validFrom.value) return;
+            const fromDate = new Date(validFrom.value);
+            // min: ngày tiếp theo sau ngày bắt đầu
+            const minDate = new Date(fromDate);
+            minDate.setDate(minDate.getDate() + 1);
+            // max: đúng 1 năm từ ngày bắt đầu
+            const maxDate = new Date(fromDate);
+            maxDate.setFullYear(maxDate.getFullYear() + 1);
+
+            validUntil.min = minDate.toISOString().split('T')[0];
+            validUntil.max = maxDate.toISOString().split('T')[0];
+
+            // Reset nếu giá trị hiện tại nằm ngoài range
+            if (validUntil.value && (validUntil.value <= validFrom.value || validUntil.value > validUntil.max)) {
+                validUntil.value = '';
+            }
+        }
+
+        if (validFrom && validUntil) {
+            validFrom.addEventListener('change', updateValidUntilRange);
+            // Trigger on load nếu đã có giá trị (old input)
+            if (validFrom.value) updateValidUntilRange();
+        }
+    })();
+</script>
+@endpush

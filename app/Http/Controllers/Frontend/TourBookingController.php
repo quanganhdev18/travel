@@ -538,10 +538,22 @@ class TourBookingController extends Controller
         $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $vnp_OrderType = 'billpayment';
 
-        $actualAmount = $booking->total_price;
-        if ($booking->payment_type === 'deposit') {
+        // Xác định số tiền cần thanh toán:
+        // - Đặt cọc lần đầu (deposit, chưa thanh toán): 30% tổng
+        // - Thanh toán phần còn lại (đã cọc 30%): 70% tổng
+        // - Thanh toán đầy đủ (full): 100% tổng
+        if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
+            // Đã cọc rồi, giờ thanh toán phần còn lại 70%
+            $actualAmount = $booking->total_price * 0.7;
+            $vnp_OrderInfo = 'Thanh toan phan con lai tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
+        } elseif ($booking->payment_type === 'deposit') {
+            // Cọc lần đầu 30%
             $actualAmount = $booking->total_price * 0.3;
+        } else {
+            // Thanh toán 100%
+            $actualAmount = $booking->total_price;
         }
+
         $vnp_Amount = (int) ($actualAmount * 100);
         $vnp_Locale = 'vi';
         $vnp_IpAddr = $ipAddress;
@@ -639,10 +651,21 @@ class TourBookingController extends Controller
                 }
 
                 if ($booking) {
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
+                    $newPaidAmount = $booking->paid_amount + ($payment ? $payment->amount : 0);
+
+                    // Xác định trạng thái thanh toán mới:
+                    // - deposit + chưa cọc → paid_30 (Đã thanh toán 30% cọc)
+                    // - deposit + đã cọc 30% → paid_100 (Đã thanh toán 70% còn lại)
+                    // - full → paid_100 (Đã thanh toán 100%)
+                    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_30;
+                    } else {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_100;
+                    }
+
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
-                        'paid_amount' => $payment->amount,
+                        'paid_amount' => $newPaidAmount,
                     ]);
                 }
 
@@ -730,10 +753,19 @@ class TourBookingController extends Controller
                         'payment_status' => 'success',
                         'paid_at' => now(),
                     ]);
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
+
+                    $newPaidAmount = $booking->paid_amount + $payment->amount;
+
+                    // Xác định trạng thái thanh toán mới
+                    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_30;
+                    } else {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_100;
+                    }
+
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
-                        'paid_amount' => $payment->amount,
+                        'paid_amount' => $newPaidAmount,
                     ]);
                 } else {
                     $payment->update([

@@ -91,7 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     executeScripts(oldMainContent);
                 }
 
-                // 6. Re-bind click event listeners to new elements
+                // 6. Re-initialize Alpine.js components in new content
+                if (typeof Alpine !== 'undefined' && oldMainContent) {
+                    Alpine.initTree(oldMainContent);
+                }
+
+                // 7. Re-bind click event listeners to new elements
                 setupPjax();
                 hideProgressBar();
             })

@@ -137,7 +137,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}">
+                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}" max="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>

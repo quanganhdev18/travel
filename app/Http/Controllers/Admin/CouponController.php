@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Coupon;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CouponController extends Controller
@@ -25,13 +26,25 @@ class CouponController extends Controller
 
     public function store(Request $request)
     {
+        $validFrom = $request->input('valid_from');
+        $maxValidUntil = $validFrom ? Carbon::parse($validFrom)->addYear()->format('Y-m-d') : null;
+
         $request->validate([
             'code' => 'required|unique:coupons,code',
             'discount_type' => 'required',
             'discount_value' => 'required|numeric|min:0',
-            'valid_from' => 'required|date',
-            'valid_until' => 'required|date|after_or_equal:valid_from',
+            'valid_from' => 'required|date|after_or_equal:today',
+            'valid_until' => [
+                'required',
+                'date',
+                'after:valid_from',
+                $maxValidUntil ? 'before_or_equal:'.$maxValidUntil : null,
+            ],
             'category_id' => 'nullable|exists:categories,id',
+        ], [
+            'valid_from.after_or_equal' => 'Ngày bắt đầu không được nhỏ hơn thời gian hiện tại.',
+            'valid_until.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu.',
+            'valid_until.before_or_equal' => 'Hạn dùng mã giảm giá không được quá 1 năm kể từ ngày bắt đầu.',
         ]);
 
         Coupon::create([
@@ -61,13 +74,25 @@ class CouponController extends Controller
 
     public function update(Request $request, Coupon $coupon)
     {
+        $validFrom = $request->input('valid_from');
+        $maxValidUntil = $validFrom ? Carbon::parse($validFrom)->addYear()->format('Y-m-d') : null;
+
         $request->validate([
             'code' => 'required|unique:coupons,code,'.$coupon->id,
             'discount_type' => 'required',
             'discount_value' => 'required|numeric|min:0',
-            'valid_from' => 'required|date',
-            'valid_until' => 'required|date|after_or_equal:valid_from',
+            'valid_from' => 'required|date|after_or_equal:today',
+            'valid_until' => [
+                'required',
+                'date',
+                'after:valid_from',
+                $maxValidUntil ? 'before_or_equal:'.$maxValidUntil : null,
+            ],
             'category_id' => 'nullable|exists:categories,id',
+        ], [
+            'valid_from.after_or_equal' => 'Ngày bắt đầu không được nhỏ hơn thời gian hiện tại.',
+            'valid_until.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu.',
+            'valid_until.before_or_equal' => 'Hạn dùng mã giảm giá không được quá 1 năm kể từ ngày bắt đầu.',
         ]);
 
         $coupon->update([
