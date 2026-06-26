@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $title
  * @property string $image_url
  * @property string|null $target_url
+ * @property int|null $coupon_id
  * @property string|null $position
  * @property int|null $sort_order
  * @property bool|null $is_active
@@ -23,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $end_date
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Coupon|null $coupon
  */
 class Banner extends Model
 {
@@ -33,16 +35,23 @@ class Banner extends Model
         'is_active' => 'bool',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'coupon_id' => 'int',
     ];
 
     protected $fillable = [
         'title',
         'image_url',
         'target_url',
+        'coupon_id',
         'position',
         'sort_order',
         'is_active',
         'start_date',
         'end_date',
     ];
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
+    }
 }

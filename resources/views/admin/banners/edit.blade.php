@@ -51,7 +51,8 @@
                         </div>
                         
                         <div id="urlInput" class="d-none">
-                            <input type="url" name="image_url" class="form-control" value="{{ old('image_url', $banner->image_url) }}" placeholder="https://example.com/image.jpg">
+                            <input type="url" name="image_url" class="form-control" value="" placeholder="https://example.com/image.jpg">
+                            <small class="text-muted mt-1 d-block">Nhập URL ảnh mới. Để trống nếu không muốn đổi.</small>
                         </div>
                     </div>
 
@@ -61,6 +62,27 @@
                             <input type="url" name="target_url" class="form-control" value="{{ old('target_url', $banner->target_url) }}" placeholder="Khi click vào banner sẽ chuyển đến link này">
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label fw-500">Mã giảm giá (Tùy chọn)</label>
+                            <select name="coupon_id" class="form-select">
+                                <option value="">-- Không chọn mã giảm giá --</option>
+                                @foreach($coupons as $coupon)
+                                    <option value="{{ $coupon->id }}" {{ old('coupon_id', $banner->coupon_id) == $coupon->id ? 'selected' : '' }}>
+                                        {{ $coupon->code }} - 
+                                        @if($coupon->discount_type === 'percentage')
+                                            {{ $coupon->discount_value }}%
+                                        @else
+                                            {{ number_format($coupon->discount_value) }}đ
+                                        @endif
+                                        (HSD: {{ $coupon->valid_until->format('d/m/Y') }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Mã giảm giá sẽ hiển thị trên banner</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
                             <label class="form-label fw-500">Vị trí hiển thị <span class="text-danger">*</span></label>
                             <select name="position" class="form-select" required>
                                 <option value="hero" {{ old('position', $banner->position) == 'hero' ? 'selected' : '' }}>Banner bìa (Hero)</option>
