@@ -11,6 +11,7 @@ class HolidayController extends Controller
     public function index()
     {
         $holidays = Holiday::orderBy('start_date', 'desc')->paginate(10);
+
         return view('admin.holidays.index', compact('holidays'));
     }
 
@@ -23,9 +24,12 @@ class HolidayController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
+            'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
             'price_increase_percentage' => 'required|numeric|min:0|max:100',
+        ], [
+            'start_date.after_or_equal' => 'Ngày bắt đầu ngày lễ phải là ngày trong tương lai.',
+            'end_date.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.',
         ]);
 
         Holiday::create($request->all());
@@ -42,9 +46,12 @@ class HolidayController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
+            'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
             'price_increase_percentage' => 'required|numeric|min:0|max:100',
+        ], [
+            'start_date.after_or_equal' => 'Ngày bắt đầu ngày lễ phải là ngày trong tương lai.',
+            'end_date.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.',
         ]);
 
         $holiday->update($request->all());
@@ -55,6 +62,7 @@ class HolidayController extends Controller
     public function destroy(Holiday $holiday)
     {
         $holiday->delete();
+
         return redirect()->route('admin.holidays.index')->with('success', 'Đã xóa ngày lễ thành công.');
     }
 }

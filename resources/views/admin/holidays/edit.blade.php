@@ -22,11 +22,11 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Ngày bắt đầu <span class="text-danger">*</span></label>
-                            <input type="date" name="start_date" class="form-control" value="{{ \Carbon\Carbon::parse($holiday->start_date)->format('Y-m-d') }}" required>
+                            <input type="date" name="start_date" id="holiday_start_date" class="form-control" value="{{ \Carbon\Carbon::parse($holiday->start_date)->format('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Ngày kết thúc <span class="text-danger">*</span></label>
-                            <input type="date" name="end_date" class="form-control" value="{{ \Carbon\Carbon::parse($holiday->end_date)->format('Y-m-d') }}" required>
+                            <input type="date" name="end_date" id="holiday_end_date" class="form-control" value="{{ \Carbon\Carbon::parse($holiday->end_date)->format('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
                         </div>
                     </div>
 
@@ -45,3 +45,24 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const startDate = document.getElementById('holiday_start_date');
+        const endDate = document.getElementById('holiday_end_date');
+        if (startDate && endDate) {
+            startDate.addEventListener('change', function () {
+                endDate.min = this.value || '{{ date("Y-m-d") }}';
+                if (endDate.value && endDate.value < this.value) {
+                    endDate.value = '';
+                }
+            });
+            // Init: set end_date min based on current start_date
+            if (startDate.value) {
+                endDate.min = startDate.value;
+            }
+        }
+    })();
+</script>
+@endpush

@@ -52,7 +52,7 @@ if(isset($passenger) && $passenger->full_name) {
                         <!-- Thêm \Carbon\Carbon::parse() để đảm bảo xuất ra đúng chuẩn YYYY-MM-DD cho thẻ input date -->
                         <input type="date" name="born_on" class="form-control search-form-control"
                             value="{{ isset($passenger->date_of_birth) ? \Carbon\Carbon::parse($passenger->date_of_birth)->format('Y-m-d') : '' }}"
-                            required>
+                            required max="{{ date('Y-m-d') }}">
                     </div>
                     <div class="col-md-4 mt-4">
                         <label class="form-label fw-600 text-dark">Giới Tính</label>
