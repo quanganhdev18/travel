@@ -7,14 +7,14 @@
 <form method="GET" action="{{ route('admin.dashboard') }}" id="filterForm" class="mb-4">
     <div class="d-flex flex-wrap align-items-center gap-3 bg-white p-3 rounded-3 shadow-sm border-0">
         <span class="fw-bold text-muted"><i class="bi bi-funnel me-1"></i>Lọc theo:</span>
-        <div class="btn-group" role="group">
-            <button type="submit" name="range" value="today" class="btn btn-sm {{ $range == 'today' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">Hôm nay</button>
-            <button type="submit" name="range" value="7days" class="btn btn-sm {{ $range == '7days' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">7 ngày qua</button>
-            <button type="submit" name="range" value="this_month" class="btn btn-sm {{ $range == 'this_month' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">Tháng này</button>
-            <button type="submit" name="range" value="last_month" class="btn btn-sm {{ $range == 'last_month' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">Tháng trước</button>
-            <button type="submit" name="range" value="this_quarter" class="btn btn-sm {{ $range == 'this_quarter' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">Quý này</button>
-            <button type="submit" name="range" value="this_year" class="btn btn-sm {{ $range == 'this_year' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">Năm nay</button>
-            <button type="button" id="btnCustom" class="btn btn-sm {{ $range == 'custom' ? 'btn-primary fw-bold' : 'btn-outline-primary' }}">Tuỳ chọn</button>
+        <div class="d-inline-flex bg-light p-1 rounded-pill" role="group" style="border: 1px solid #e2e8f0;">
+            <button type="submit" name="range" value="today" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'today' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Hôm nay</button>
+            <button type="submit" name="range" value="7days" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == '7days' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">7 ngày qua</button>
+            <button type="submit" name="range" value="this_month" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'this_month' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Tháng này</button>
+            <button type="submit" name="range" value="last_month" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'last_month' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Tháng trước</button>
+            <button type="submit" name="range" value="this_quarter" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'this_quarter' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Quý này</button>
+            <button type="submit" name="range" value="this_year" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'this_year' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Năm nay</button>
+            <button type="button" id="btnCustom" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'custom' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Tuỳ chọn</button>
         </div>
 
         <div id="customDateGroup" class="d-flex align-items-start gap-2 {{ $range == 'custom' ? '' : 'd-none' }}">
@@ -31,7 +31,7 @@
                     <div class="text-danger position-absolute text-nowrap" style="font-size: 0.75rem; top: 100%;">{{ $customErrors['to'][0] }}</div>
                 @endif
             </div>
-            <button type="submit" name="range" value="custom" class="btn btn-sm btn-primary">Áp dụng</button>
+            <button type="submit" name="range" value="custom" class="btn btn-sm btn-primary rounded-pill px-3">Áp dụng</button>
         </div>
     </div>
 </form>
@@ -213,14 +213,14 @@
             btnCustom.addEventListener('click', function() {
                 customDateGroup.classList.toggle('d-none');
                 
-                // Visual update for button group
+                // Visual update for segmented control
                 const btns = this.parentElement.querySelectorAll('button');
                 btns.forEach(b => {
-                    b.classList.remove('btn-primary', 'fw-bold');
-                    b.classList.add('btn-outline-primary');
+                    b.classList.remove('bg-white', 'shadow-sm', 'text-primary', 'fw-bold');
+                    b.classList.add('text-muted', 'bg-transparent');
                 });
-                this.classList.remove('btn-outline-primary');
-                this.classList.add('btn-primary', 'fw-bold');
+                this.classList.remove('text-muted', 'bg-transparent');
+                this.classList.add('bg-white', 'shadow-sm', 'text-primary', 'fw-bold');
             });
         }
         const ctx = document.getElementById('bookingChart').getContext('2d');
