@@ -19,14 +19,14 @@
 
         <div id="customDateGroup" class="d-flex align-items-start gap-2 {{ $range == 'custom' ? '' : 'd-none' }}">
             <div class="position-relative">
-                <input type="date" name="from" class="form-control form-control-sm {{ isset($customErrors['from']) ? 'is-invalid border-danger' : '' }}" value="{{ request('from', $startDate->format('Y-m-d')) }}">
+                <input type="date" name="from" max="{{ now()->format('Y-m-d') }}" class="form-control form-control-sm {{ isset($customErrors['from']) ? 'is-invalid border-danger' : '' }}" value="{{ request('from', $startDate->format('Y-m-d')) }}">
                 @if(isset($customErrors['from']))
                     <div class="text-danger position-absolute text-nowrap" style="font-size: 0.75rem; top: 100%;">{{ $customErrors['from'][0] }}</div>
                 @endif
             </div>
             <span class="text-muted mt-1">-</span>
             <div class="position-relative">
-                <input type="date" name="to" class="form-control form-control-sm {{ isset($customErrors['to']) ? 'is-invalid border-danger' : '' }}" value="{{ request('to', $endDate->format('Y-m-d')) }}">
+                <input type="date" name="to" max="{{ now()->format('Y-m-d') }}" class="form-control form-control-sm {{ isset($customErrors['to']) ? 'is-invalid border-danger' : '' }}" value="{{ request('to', $endDate->format('Y-m-d')) }}">
                 @if(isset($customErrors['to']))
                     <div class="text-danger position-absolute text-nowrap" style="font-size: 0.75rem; top: 100%;">{{ $customErrors['to'][0] }}</div>
                 @endif
