@@ -28,9 +28,6 @@
         <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
             <div class="combo-card h-100">
                 <div class="combo-card-img-wrapper" style="height: 240px;">
-                    <span class="combo-badge">
-                        <span class="badge-icon">{{ __('Hot') }}</span> {{ __('Deal') }}
-                    </span>
                     @php
                     $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
                     $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';

@@ -148,9 +148,7 @@
         </button>
     </form>
     @endauth
-                                <span class="combo-badge">
-                                    <span class="badge-icon">25%</span> Hot Deal
-                                </span>
+
                                 @php
                                 $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
                                 $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';

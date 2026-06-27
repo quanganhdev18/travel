@@ -24,9 +24,7 @@
                     <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                         <div class="combo-card">
                             <div class="combo-card-img-wrapper">
-                                <span class="combo-badge">
-                                    <span class="badge-icon">25%</span> Hot Deal
-                                </span>
+
                                 <img src="{{ $imageUrl }}"
                                      alt="{{ $tour->title }}"
                                      onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">

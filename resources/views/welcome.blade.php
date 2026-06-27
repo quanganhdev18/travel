@@ -415,9 +415,7 @@
                 <a href="{{ route('frontend.tours.show', $tourSlug) }}" class="text-decoration-none h-100 d-block">
                     <div class="combo-card">
                         <div class="combo-card-img-wrapper">
-                            <span class="combo-badge">
-                                <span class="badge-icon">25%</span> Hot Deal
-                            </span>
+
 
                             @auth
                             @php
