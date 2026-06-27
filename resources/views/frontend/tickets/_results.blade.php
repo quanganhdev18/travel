@@ -28,9 +28,7 @@
         <a href="#" class="text-decoration-none h-100 d-block">
             <div class="combo-card h-100">
                 <div class="combo-card-img-wrapper" style="height: 240px;">
-                    <span class="combo-badge bg-warning text-dark">
-                        <i class="bi bi-star-fill me-1"></i> {{ __('Hot') }}
-                    </span>
+
                     @php
                     $fallbackImage = 'https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';
                     $destName = mb_strtolower($ticket->destination->name ?? '', 'UTF-8');
@@ -64,7 +62,7 @@
                             @endphp
                             <div class="combo-price-val">{{ format_currency($minPrice) }}</div>
                         </div>
-                        <button class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Chọn vé') }}</button>
+                        <span class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Chọn vé') }}</span>
                     </div>
                 </div>
             </div>

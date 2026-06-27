@@ -33,7 +33,7 @@ if (! function_exists('format_currency')) {
                 return '¥'.number_format($convertedAmount, 2);
             case 'VND':
             default:
-                return number_format($convertedAmount, 0, ',', '.').' VNĐ';
+                return number_format($convertedAmount, 0, ',', '.').'đ';
         }
     }
 }

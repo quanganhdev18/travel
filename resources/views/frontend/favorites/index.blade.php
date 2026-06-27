@@ -25,33 +25,32 @@
                         <img src="{{ $imageUrl }}"
                              class="card-img-top"
                              style="height: 180px; object-fit: cover;"
-                             alt="{{ $tour->title }}">
+                             alt="{{ $tour->title }}"
+                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
 
                         <div class="card-body">
-                            <h5 class="card-title">{{ $tour->title }}</h5>
+                            <h5 class="card-title fw-bold" style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ $tour->title }}</h5>
 
-                            <p class="text-muted mb-1">
+                            <p class="text-muted mb-2">
                                 {{ $tour->destination->name ?? 'Đang cập nhật' }}
                             </p>
 
-                            <p class="fw-bold text-danger">
+                            <p class="fw-bold text-danger mb-3" style="font-size: 1.05rem;">
                                 {{ number_format($tour->base_price, 0, ',', '.') }}đ
                             </p>
 
                             <a href="{{ route('frontend.tours.show', $tour->slug) }}"
-                               class="btn btn-primary w-100">
+                               class="btn btn-primary w-100 mb-2">
                                 Xem chi tiết
                             </a>
                             <form action="{{ route('frontend.favorites.destroy', $tour->id) }}"
-                                method="POST"
-                                class="mt-2">
+                                method="POST">
                                 @csrf
                                 @method('DELETE')
 
                                 <button type="submit"
                                         class="btn btn-danger w-100">
-                                    <i class="bi bi-trash"></i>
-                                    Xóa khỏi danh sách
+                                    <i class="bi bi-trash"></i> Xóa khỏi danh sách
                                 </button>
                             </form>
                         </div>
