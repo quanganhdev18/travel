@@ -67,7 +67,7 @@ class HomeController extends Controller
         ));
     }
 
-    public function tours(Request $request)
+    public function tours(\App\Http\Requests\TourFilterRequest $request)
     {
         $banners = Banner::where('is_active', 1)
             ->where(function ($q) {
@@ -83,12 +83,58 @@ class HomeController extends Controller
             ->take(3)
             ->get();
 
+        $allDestinations = Destination::orderBy('name')->get();
+
+        $filterErrors = session('filter_errors', []);
+
+        $departureDate = (!isset($filterErrors['departure_date']) && $request->filled('departure_date')) 
+            ? $request->departure_date 
+            : Carbon::today()->toDateString();
+
         $query = Tour::with(['destination', 'tour_images'])
             ->whereNull('deleted_at')
-            ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today());
-            });
+            ->withMin(['tour_schedules as next_departure' => function ($q) use ($departureDate) {
+                $q->where('departure_date', '>=', $departureDate)
+                  ->where('available_seats', '>', 0)
+                  ->where('status', 'available');
+            }], 'departure_date')
+            ->withMin(['tour_schedules as seats_left' => function ($q) use ($departureDate) {
+                $q->where('departure_date', '>=', $departureDate)
+                  ->where('available_seats', '>', 0)
+                  ->where('status', 'available');
+            }], 'available_seats')
+            ->withAvg('reviews as avg_rating', 'rating')
+            ->withCount('reviews as review_count');
 
+        // Bắt buộc có lịch khởi hành phù hợp
+        $query->whereHas('tour_schedules', function ($q) use ($departureDate) {
+            $q->where('departure_date', '>=', $departureDate)
+              ->where('available_seats', '>', 0)
+              ->where('status', 'available');
+        });
+
+        // Lọc Điểm đến
+        if (!isset($filterErrors['destination_id']) && $request->filled('destination_id')) {
+            $query->where('destination_id', $request->destination_id);
+        }
+
+        // Lọc Xếp hạng sao
+        if (!isset($filterErrors['hotel_stars']) && $request->filled('hotel_stars')) {
+            $query->where('hotel_stars', '>=', $request->hotel_stars);
+        }
+
+        // Lọc Ngân sách
+        if (!isset($filterErrors['budget']) && $request->filled('budget')) {
+            match ($request->budget) {
+                'under_5m' => $query->where('base_price', '<', 5000000),
+                '5m_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
+                '10m_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
+                'over_20m' => $query->where('base_price', '>', 20000000),
+                default => null,
+            };
+        }
+
+        // Vẫn giữ lại lọc keyword
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
             $query->where(function ($q) use ($keyword) {
@@ -99,60 +145,21 @@ class HomeController extends Controller
             });
         }
 
-        if ($request->filled('transport')) {
-            $transport = $request->transport;
-            if (Schema::hasColumn('tours', 'transport_type')) {
-                $query->where('transport_type', $transport);
-            }
-        }
-
-        if ($request->filled('departure_id')) {
-            $query->where('departure_location_id', $request->departure_id);
-        }
-
-        if ($request->filled('destination_id')) {
-            $query->where('destination_id', $request->destination_id);
-        }
-
-        if ($request->filled('date')) {
-            $date = $request->date;
-            $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
-            });
-        }
-
-        if ($request->filled('stars')) {
-            if (Schema::hasColumn('tours', 'hotel_stars')) {
-                $query->where('hotel_stars', $request->stars);
-            }
-        }
-
-        if ($request->filled('budget')) {
-            match ($request->budget) {
-                'under_5m' => $query->where('base_price', '<', 5000000),
-                '5m_to_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
-                '10m_to_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
-                'over_20m' => $query->where('base_price', '>', 20000000),
-                default => null,
-            };
-        }
-
         if ($request->filled('sort')) {
             if ($request->sort === 'price_asc') {
                 $query->orderBy('base_price', 'asc');
             } elseif ($request->sort === 'price_desc') {
                 $query->orderBy('base_price', 'desc');
             } else {
-                $query->latest();
+                $query->orderBy('next_departure', 'asc');
             }
         } else {
-            $query->latest();
+            $query->orderBy('next_departure', 'asc');
         }
 
-        $tours = $query->get();
-        $allDestinations = Destination::orderBy('name')->get();
+        $tours = $query->paginate(9);
 
-        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations'));
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'filterErrors'));
     }
 
     public function searchTours(Request $request)
