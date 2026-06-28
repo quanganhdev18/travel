@@ -70,7 +70,11 @@
                     @else
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center py-1" href="#" id="userDropdownTop" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1 fs-5"></i>
+                            @if(Auth::user()->avatar)
+                                <img src="{{ asset(Auth::user()->avatar) }}" alt="avatar" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover;">
+                            @else
+                                <i class="bi bi-person-circle me-1 fs-5"></i>
+                            @endif
                             <span style="font-weight: 600;">{{ Auth::user()->name }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; margin-top: 5px;">
@@ -147,7 +151,11 @@
                         @else
                         <li class="nav-item dropdown mt-2">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdownMobile" role="button" data-bs-toggle="dropdown">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;"><i class="bi bi-person-fill"></i></div>
+                                @if(Auth::user()->avatar)
+                                    <img src="{{ asset(Auth::user()->avatar) }}" alt="avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                @else
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;"><i class="bi bi-person-fill"></i></div>
+                                @endif
                                 <span class="fw-bold text-dark">{{ Auth::user()->name }}</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
@@ -251,7 +259,7 @@
 
     {{-- Cookie Consent Banner --}}
     <x-cookie-consent />
-    
+
     <x-chatbox />
 
     @stack('scripts')

@@ -651,6 +651,7 @@
                                     <i class="bi bi-check-circle-fill"></i>
                                     {{ __('Đã thanh toán 100%') }}
                                 </div>
+                            </div>
 
                             @elseif($paymentStatus === 'paid_30')
                                 <div class="ps-badge ps-paid30">
