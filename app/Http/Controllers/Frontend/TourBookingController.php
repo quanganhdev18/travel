@@ -182,12 +182,17 @@ class TourBookingController extends Controller
             $couponId = null;
 
             if ($request->filled('coupon_code')) {
+                $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
                 $coupon = Coupon::where('code', $request->coupon_code)
                     ->where(function ($query) {
                         $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
                     })
                     ->where(function ($query) {
                         $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+                    })
+                    ->where(function ($query) use ($tourCategoryIds) {
+                        $query->whereNull('category_id')
+                            ->orWhereIn('category_id', $tourCategoryIds);
                     })
                     ->first();
 
@@ -473,6 +478,8 @@ class TourBookingController extends Controller
 
         $holidays = Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
 
+        $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+
         // Lấy danh sách mã giảm giá còn hiệu lực
         $coupons = Coupon::where(function ($query) {
             $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
@@ -482,6 +489,10 @@ class TourBookingController extends Controller
             })
             ->where(function ($query) {
                 $query->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->where(function ($query) use ($tourCategoryIds) {
+                $query->whereNull('category_id')
+                    ->orWhereIn('category_id', $tourCategoryIds);
             })
             ->get();
 
@@ -527,10 +538,22 @@ class TourBookingController extends Controller
         $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $vnp_OrderType = 'billpayment';
 
-        $actualAmount = $booking->total_price;
-        if ($booking->payment_type === 'deposit') {
+        // Xác định số tiền cần thanh toán:
+        // - Đặt cọc lần đầu (deposit, chưa thanh toán): 30% tổng
+        // - Thanh toán phần còn lại (đã cọc 30%): 70% tổng
+        // - Thanh toán đầy đủ (full): 100% tổng
+        if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
+            // Đã cọc rồi, giờ thanh toán phần còn lại 70%
+            $actualAmount = $booking->total_price * 0.7;
+            $vnp_OrderInfo = 'Thanh toan phan con lai tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
+        } elseif ($booking->payment_type === 'deposit') {
+            // Cọc lần đầu 30%
             $actualAmount = $booking->total_price * 0.3;
+        } else {
+            // Thanh toán 100%
+            $actualAmount = $booking->total_price;
         }
+
         $vnp_Amount = (int) ($actualAmount * 100);
         $vnp_Locale = 'vi';
         $vnp_IpAddr = $ipAddress;
@@ -628,10 +651,21 @@ class TourBookingController extends Controller
                 }
 
                 if ($booking) {
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
+                    $newPaidAmount = $booking->paid_amount + ($payment ? $payment->amount : 0);
+
+                    // Xác định trạng thái thanh toán mới:
+                    // - deposit + chưa cọc → paid_30 (Đã thanh toán 30% cọc)
+                    // - deposit + đã cọc 30% → paid_100 (Đã thanh toán 70% còn lại)
+                    // - full → paid_100 (Đã thanh toán 100%)
+                    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_30;
+                    } else {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_100;
+                    }
+
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
-                        'paid_amount' => $payment->amount,
+                        'paid_amount' => $newPaidAmount,
                     ]);
                 }
 
@@ -719,10 +753,19 @@ class TourBookingController extends Controller
                         'payment_status' => 'success',
                         'paid_at' => now(),
                     ]);
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
+
+                    $newPaidAmount = $booking->paid_amount + $payment->amount;
+
+                    // Xác định trạng thái thanh toán mới
+                    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_30;
+                    } else {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_100;
+                    }
+
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
-                        'paid_amount' => $payment->amount,
+                        'paid_amount' => $newPaidAmount,
                     ]);
                 } else {
                     $payment->update([
@@ -754,19 +797,32 @@ class TourBookingController extends Controller
         $request->validate([
             'code' => 'required|string',
             'order_value' => 'required|numeric',
+            'schedule_id' => 'nullable|exists:tour_schedules,id',
         ]);
 
-        $coupon = Coupon::where('code', $request->code)
+        $couponQuery = Coupon::where('code', $request->code)
             ->where(function ($query) {
                 $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
             })
             ->where(function ($query) {
                 $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
-            })
-            ->first();
+            });
+
+        if ($request->filled('schedule_id')) {
+            $schedule = TourSchedule::with('tour.categories')->find($request->schedule_id);
+            if ($schedule && $schedule->tour) {
+                $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+                $couponQuery->where(function ($query) use ($tourCategoryIds) {
+                    $query->whereNull('category_id')
+                        ->orWhereIn('category_id', $tourCategoryIds);
+                });
+            }
+        }
+
+        $coupon = $couponQuery->first();
 
         if (! $coupon) {
-            return response()->json(['success' => false, 'message' => 'Mã không tồn tại hoặc đã hết hạn.']);
+            return response()->json(['success' => false, 'message' => 'Mã không tồn tại, đã hết hạn hoặc không áp dụng cho tour này.']);
         }
 
         if ($request->order_value < $coupon->min_order_value) {
