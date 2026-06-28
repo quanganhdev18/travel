@@ -3,18 +3,12 @@
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Quản lý mã giảm giá</h2>
+        <h2 class="mb-0">Thùng rác mã giảm giá</h2>
 
-    <div>
-        <a href="{{ route('admin.coupons.trash') }}" class="btn btn-secondary me-2">
-            <i class="bi bi-trash"></i> Thùng rác
-        </a>
-
-        <a href="{{ route('admin.coupons.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Thêm mã giảm giá
+        <a href="{{ route('admin.coupons.index') }}" class="btn btn-primary">
+            Quay lại
         </a>
     </div>
-</div>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -31,10 +25,7 @@
                         <th>Mã giảm giá</th>
                         <th>Loại</th>
                         <th>Giá trị</th>
-                        <th>Ngày bắt đầu</th>
-                        <th>Ngày kết thúc</th>
-                        <th>Đã dùng</th>
-                        <th>Trạng thái</th>
+                        <th>Ngày xóa</th>
                         <th class="text-center">Thao tác</th>
                     </tr>
                 </thead>
@@ -57,49 +48,36 @@
                             </td>
 
                             <td>
-                                {{ $coupon->valid_from ? $coupon->valid_from->format('d/m/Y') : '' }}
-                            </td>
-
-                            <td>
-                                {{ $coupon->valid_until ? $coupon->valid_until->format('d/m/Y') : '' }}
-                            </td>
-
-                            <td>
-                                {{ $coupon->used_count ?? 0 }}
-                                @if($coupon->usage_limit)
-                                    / {{ $coupon->usage_limit }}
-                                @endif
-                            </td>
-
-                            <td>
-                                @if($coupon->valid_until && $coupon->valid_until->isPast())
-                                    <span class="badge bg-danger">Hết hạn</span>
-                                @else
-                                    <span class="badge bg-success">Hoạt động</span>
-                                @endif
+                                {{ $coupon->deleted_at ? $coupon->deleted_at->format('d/m/Y H:i') : '' }}
                             </td>
 
                             <td class="text-center">
-                                <a href="{{ route('admin.coupons.edit', $coupon) }}"
-                                   class="btn btn-sm btn-outline-primary me-1">
-                                    <i class="bi bi-pencil"></i> Sửa
-                                </a>
+                                <form action="{{ route('admin.coupons.restore', $coupon->id) }}"
+                                      method="POST"
+                                      class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Khôi phục
+                                    </button>
+                                </form>
 
-                                <form action="{{ route('admin.coupons.destroy', $coupon) }}"
-                                      method="POST" class="d-inline"
-                                      onsubmit="return confirm('Bạn có chắc muốn xóa mã {{ $coupon->code }}?')">
+                                <form action="{{ route('admin.coupons.forceDelete', $coupon->id) }}"
+                                      method="POST"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Xóa vĩnh viễn mã {{ $coupon->code }}?')">
                                     @csrf
                                     @method('DELETE')
+
                                     <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i> Xóa
+                                        <i class="bi bi-trash"></i> Xóa vĩnh viễn
                                     </button>
                                 </form>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted">
-                                Chưa có mã giảm giá nào
+                            <td colspan="5" class="text-center text-muted">
+                                Thùng rác trống
                             </td>
                         </tr>
                     @endforelse

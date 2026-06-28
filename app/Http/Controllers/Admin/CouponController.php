@@ -55,7 +55,7 @@ class CouponController extends Controller
     public function update(Request $request, Coupon $coupon)
     {
         $request->validate([
-            'code' => 'required|unique:coupons,code,'.$coupon->id,
+            'code' => 'required|unique:coupons,code,' . $coupon->id,
             'discount_type' => 'required',
             'discount_value' => 'required|numeric|min:0',
             'valid_from' => 'required|date',
@@ -84,6 +84,37 @@ class CouponController extends Controller
 
         return redirect()
             ->route('admin.coupons.index')
-            ->with('success', 'Xóa mã giảm giá thành công!');
+            ->with('success', 'Đã chuyển mã giảm giá vào thùng rác.');
+    }
+
+    public function trash()
+    {
+        $coupons = Coupon::onlyTrashed()
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.coupons.trash', compact('coupons'));
+    }
+
+    public function restore($id)
+    {
+        Coupon::onlyTrashed()
+            ->findOrFail($id)
+            ->restore();
+
+        return redirect()
+            ->route('admin.coupons.trash')
+            ->with('success', 'Khôi phục mã giảm giá thành công.');
+    }
+
+    public function forceDelete($id)
+    {
+        Coupon::onlyTrashed()
+            ->findOrFail($id)
+            ->forceDelete();
+
+        return redirect()
+            ->route('admin.coupons.trash')
+            ->with('success', 'Đã xóa vĩnh viễn mã giảm giá.');
     }
 }
