@@ -7,6 +7,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class TourCategory
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TourCategory extends Model
 {
+    use SoftDeletes;
     protected $table = 'tour_categories';
 
     public $incrementing = false;

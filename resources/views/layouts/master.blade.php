@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="{{ asset('css/premium-theme.css') }}">
     @vite(['resources/js/app.js'])
 </head>
-
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-premium fixed-top {{ request()->is('/') ? '' : 'navbar-solid' }} flex-column p-0">

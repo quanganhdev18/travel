@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Destination
@@ -26,6 +27,8 @@ use Spatie\Translatable\HasTranslations;
  */
 class Destination extends Model
 {
+
+    use SoftDeletes;
     use HasLocalImageUrl, HasTranslations;
 
     protected $table = 'destinations';
