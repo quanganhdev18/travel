@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -298,7 +298,7 @@
                 </a>
             </li>
         </ul>
-    </div>�n mãi & Coupon
+    </div>�n mãi & Coupon
                 </a>
             </li>
         </ul>
@@ -315,9 +315,13 @@
                 
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
+                        @if(Auth::user() && Auth::user()->avatar)
+                            <img src="{{ asset(Auth::user()->avatar) }}" alt="avatar" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;">
+                        @else
+                            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        @endif
                         <span class="fw-500 d-none d-md-inline">{{ Auth::user()->name ?? 'Quản trị viên' }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="min-width: 200px;">
@@ -373,6 +377,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/pjax-navigation.js') }}"></script>
     @yield('scripts')
 </body>
 

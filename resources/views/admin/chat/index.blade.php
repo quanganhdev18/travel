@@ -95,101 +95,109 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('chatAdmin', () => ({
-            conversations: [],
-            messages: [],
-            currentConv: null,
-            newMessage: '',
-            sending: false,
-            adminId: {{ auth()->id() }},
-            
-            init() {
-                this.loadConversations();
-                setInterval(() => {
-                    if(!this.currentConv) {
-                        this.loadConversations(); // Polling fallback for list
-                    }
-                }, 10000);
-            },
-
-            loadConversations() {
-                fetch('/chat/conversations')
-                    .then(r => r.json())
-                    .then(data => {
-                        this.conversations = data;
-                    });
-            },
-
-            selectConversation(conv) {
-                this.currentConv = conv;
-                this.loadMessages(conv.id);
-                this.listenToConversation(conv.id);
-            },
-
-            loadMessages(id) {
-                fetch('/chat/' + id + '/messages')
-                    .then(r => r.json())
-                    .then(data => {
-                        this.messages = data;
-                        this.scrollToBottom();
-                    });
-            },
-
-            sendMessage() {
-                if (!this.newMessage.trim() || !this.currentConv) return;
+    function initChatAdmin() {
+        if (typeof Alpine !== 'undefined' && !Alpine.data('chatAdmin')) {
+            Alpine.data('chatAdmin', () => ({
+                conversations: [],
+                messages: [],
+                currentConv: null,
+                newMessage: '',
+                sending: false,
+                adminId: {{ auth()->id() }},
                 
-                this.sending = true;
-                const formData = new FormData();
-                formData.append('message', this.newMessage);
-                
-                fetch('/chat/' + this.currentConv.id + '/send', {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: formData
-                })
-                .then(r => r.json())
-                .then(msg => {
-                    this.messages.push(msg);
-                    this.newMessage = '';
-                    this.scrollToBottom();
-                    this.loadConversations(); // refresh list to update latest msg preview
-                })
-                .finally(() => {
-                    this.sending = false;
-                });
-            },
+                init() {
+                    this.loadConversations();
+                    setInterval(() => {
+                        if(!this.currentConv) {
+                            this.loadConversations(); // Polling fallback for list
+                        }
+                    }, 10000);
+                },
 
-            listenToConversation(id) {
-                if(window.Echo) {
-                    // Leave old channels
-                    window.Echo.leaveAllChannels();
-                    
-                    window.Echo.private('conversation.' + id)
-                        .listen('MessageSent', (e) => {
-                            if(e.message.sender_id != this.adminId) {
-                                this.messages.push(e.message);
-                                this.scrollToBottom();
-                                this.loadConversations();
-                            }
+                loadConversations() {
+                    fetch('/chat/conversations')
+                        .then(r => r.json())
+                        .then(data => {
+                            this.conversations = data;
                         });
+                },
+
+                selectConversation(conv) {
+                    this.currentConv = conv;
+                    this.loadMessages(conv.id);
+                    this.listenToConversation(conv.id);
+                },
+
+                loadMessages(id) {
+                    fetch('/chat/' + id + '/messages')
+                        .then(r => r.json())
+                        .then(data => {
+                            this.messages = data;
+                            this.scrollToBottom();
+                        });
+                },
+
+                sendMessage() {
+                    if (!this.newMessage.trim() || !this.currentConv) return;
+                    
+                    this.sending = true;
+                    const formData = new FormData();
+                    formData.append('message', this.newMessage);
+                    
+                    fetch('/chat/' + this.currentConv.id + '/send', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                        body: formData
+                    })
+                    .then(r => r.json())
+                    .then(msg => {
+                        this.messages.push(msg);
+                        this.newMessage = '';
+                        this.scrollToBottom();
+                        this.loadConversations(); // refresh list to update latest msg preview
+                    })
+                    .finally(() => {
+                        this.sending = false;
+                    });
+                },
+
+                listenToConversation(id) {
+                    if(window.Echo) {
+                        // Leave old channels
+                        window.Echo.leaveAllChannels();
+                        
+                        window.Echo.private('conversation.' + id)
+                            .listen('MessageSent', (e) => {
+                                if(e.message.sender_id != this.adminId) {
+                                    this.messages.push(e.message);
+                                    this.scrollToBottom();
+                                    this.loadConversations();
+                                }
+                            });
+                    }
+                },
+
+                scrollToBottom() {
+                    setTimeout(() => {
+                        const box = document.getElementById('admin-chat-messages');
+                        if(box) box.scrollTop = box.scrollHeight;
+                    }, 100);
+                },
+
+                formatTime(dateString) {
+                    if(!dateString) return '';
+                    const date = new Date(dateString);
+                    return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + date.toLocaleDateString();
                 }
-            },
+            }));
+        }
+    }
 
-            scrollToBottom() {
-                setTimeout(() => {
-                    const box = document.getElementById('admin-chat-messages');
-                    if(box) box.scrollTop = box.scrollHeight;
-                }, 100);
-            },
-
-            formatTime(dateString) {
-                if(!dateString) return '';
-                const date = new Date(dateString);
-                return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + date.toLocaleDateString();
-            }
-        }));
-    });
+    if (typeof Alpine !== 'undefined') {
+        initChatAdmin();
+    } else {
+        document.addEventListener('alpine:init', initChatAdmin);
+    }
 </script>
 @endpush
 @endsection

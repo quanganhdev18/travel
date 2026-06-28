@@ -72,7 +72,7 @@
                 <select name="payment_status" class="form-select" onchange="this.form.submit()">
                     <option value="">-- TT Thanh Toán --</option>
                     <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Chờ thanh toán</option>
-                    <option value="paid_30" {{ request('payment_status') == 'paid_30' ? 'selected' : '' }}>Đã thanh toán 30%</option>
+                    <option value="paid_30" {{ request('payment_status') == 'paid_30' ? 'selected' : '' }}>Đã thanh toán 30% (Cọc)</option>
                     <option value="paid_100" {{ request('payment_status') == 'paid_100' ? 'selected' : '' }}>Đã thanh toán 100%</option>
                     <option value="failed" {{ request('payment_status') == 'failed' ? 'selected' : '' }}>Thanh toán thất bại</option>
                 </select>
@@ -164,8 +164,8 @@
                             @php
                             $paymentStatusMap = [
                                 'pending' => ['badge-soft-warning', 'Chờ thanh toán'],
-                                'paid_30' => ['badge-soft-info', 'Đã cọc 30%'],
-                                'paid_100' => ['badge-soft-success', 'Đã trả 100%'],
+                                'paid_30' => ['badge-soft-info', 'Đã thanh toán 30% (Cọc)'],
+                                'paid_100' => ['badge-soft-success', 'Đã thanh toán 100%'],
                                 'failed' => ['badge-soft-danger', 'Thất bại']
                             ];
                             $ps = $paymentStatusMap[$booking->payment_status] ?? ['badge-soft-secondary', 'N/A'];

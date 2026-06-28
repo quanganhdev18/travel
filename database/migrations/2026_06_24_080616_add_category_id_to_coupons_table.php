@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        Schema::dropIfExists('coupons');
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        Schema::create('coupons', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('coupons', function (Blueprint $table) {
+            $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete()->after('id');
         });
     }
 
@@ -26,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('coupons');
+        Schema::table('coupons', function (Blueprint $table) {
+            $table->dropForeign(['category_id']);
+            $table->dropColumn('category_id');
+        });
     }
 };

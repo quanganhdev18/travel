@@ -12,12 +12,23 @@
             @foreach($favorites as $favorite)
                 @php
                     $tour = $favorite->tour;
+
                     $primaryImage = $tour->tour_images->where('is_primary', 1)->first()
                         ?? $tour->tour_images->first();
 
-                    $imageUrl = $primaryImage
-                        ? asset($primaryImage->image_url)
-                        : 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                    $tourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+
+                    if ($primaryImage && !empty($primaryImage->image_url)) {
+                        if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
+                            $tourImage = $primaryImage->image_url;
+                        } else {
+                            $tourImage = asset(ltrim($primaryImage->image_url, '/'));
+                        }
+                    }
+
+                    $tourTitle = $tour->title ?? 'Chưa có tên tour';
+                    $tourSlug = $tour->slug ?? $tour->id;
+                    $destinationName = $tour->destination->name ?? 'Việt Nam';
                 @endphp
 
                 <div class="col-12 col-md-6 col-lg-3">
@@ -69,5 +80,41 @@
         </div>
     @endif
 </div>
+
+<style>
+.card-img-wrapper {
+    position: relative;
+}
+
+.favorite-form {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 9999;
+    margin: 0;
+}
+
+.favorite-btn {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    cursor: pointer;
+}
+
+.favorite-btn i {
+    font-size: 22px;
+}
+
+.favorite-btn.active {
+    color: #ff3366;
+}
+</style>
 
 @endsection

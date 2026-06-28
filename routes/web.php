@@ -14,14 +14,17 @@ Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.t
 Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 
-use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\AddonController;
 // Frontend Controllers
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\DestinationController;
-use App\Http\Controllers\Admin\OngoingTourController;
 // Admin Controllers
+use App\Http\Controllers\Admin\DestinationController;
+use App\Http\Controllers\Admin\HolidayController;
+use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
@@ -120,9 +123,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/flights/book', [FlightController::class, 'book'])
         ->name('frontend.flights.book');
 
-    // Vé đã đặt của user
-    Route::get('/my-bookings', [UserController::class, 'myBookings'])
-        ->name('user.bookings');
+    // Tài khoản user
+    Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
+    Route::post('/user/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
+    Route::post('/user/avatar', [UserController::class, 'updateAvatar'])->name('user.avatar.update');
+    Route::post('/user/password', [UserController::class, 'changePassword'])->name('user.password.change');
+
+    Route::get('/my-bookings', [UserController::class, 'myBookings'])->name('user.bookings');
+    Route::get('/my-bookings/{id}', [UserController::class, 'bookingDetail'])->name('user.bookings.detail');
+    Route::post('/my-bookings/{id}/cancel', [UserController::class, 'cancelBooking'])->name('user.bookings.cancel');
+
+    Route::post('/reviews', [UserController::class, 'storeReview'])->name('user.reviews.store');
+
+    Route::get('/my-wishlists', [UserController::class, 'myWishlists'])->name('user.wishlists');
+    Route::post('/wishlists/toggle', [UserController::class, 'toggleWishlist'])->name('user.wishlists.toggle');
+    Route::post('/wishlists/remove', [UserController::class, 'removeWishlist'])->name('user.wishlists.remove');
 
     // Thanh toán lại bằng VNPay
     Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
@@ -152,6 +167,7 @@ Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.favorites.destroy');
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | Admin
@@ -164,7 +180,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // User Management
     Route::get('/chat', [\App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
-    
+
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
@@ -279,11 +295,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.ongoing_tours.assign_guides');
 
     // Holidays
-    Route::resource('holidays', App\Http\Controllers\Admin\HolidayController::class)
+    Route::resource('holidays', HolidayController::class)
         ->names('admin.holidays');
 
     // Addons
-    Route::resource('addons', App\Http\Controllers\Admin\AddonController::class)
+    Route::resource('addons', AddonController::class)
         ->names('admin.addons');
 });
 
@@ -302,7 +318,6 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
         ->name('guide.schedules.show');
 });
-use App\Http\Controllers\Admin\CouponController;
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])
     ->name('admin.coupons.index');

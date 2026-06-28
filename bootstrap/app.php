@@ -26,8 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectUsersTo(function (Request $request) {
             if (auth()->check()) {
-                if (auth()->user()->hasAnyRole(['Super Admin', 'Admin', 'Staff'])) {
+                if (auth()->user()->hasAnyRole(['Super Admin', 'Admin'])) {
                     return route('admin.dashboard');
+                }
+                if (auth()->user()->hasAnyRole(['Staff', 'cskh'])) {
+                    return route('admin.chat.index');
                 }
                 if (auth()->user()->hasRole('Guide')) {
                     return route('guide.dashboard');
