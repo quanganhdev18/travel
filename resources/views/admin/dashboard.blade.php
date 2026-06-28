@@ -3,6 +3,39 @@
 @section('page-title', 'Bảng Điều Khiển')
 
 @section('content')
+<!-- BỘ LỌC THỜI GIAN -->
+<form method="GET" action="{{ route('admin.dashboard') }}" id="filterForm" class="mb-4">
+    <div class="d-flex flex-wrap align-items-center gap-3 bg-white p-3 rounded-3 shadow-sm border-0">
+        <span class="fw-bold text-muted"><i class="bi bi-funnel me-1"></i>Lọc theo:</span>
+        <div class="d-inline-flex bg-light p-1 rounded-pill" role="group" style="border: 1px solid #e2e8f0;">
+            <button type="submit" name="range" value="today" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'today' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Hôm nay</button>
+            <button type="submit" name="range" value="7days" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == '7days' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">7 ngày qua</button>
+            <button type="submit" name="range" value="this_month" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'this_month' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Tháng này</button>
+            <button type="submit" name="range" value="last_month" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'last_month' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Tháng trước</button>
+            <button type="submit" name="range" value="this_quarter" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'this_quarter' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Quý này</button>
+            <button type="submit" name="range" value="this_year" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'this_year' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Năm nay</button>
+            <button type="button" id="btnCustom" class="btn btn-sm rounded-pill px-3 py-1 border-0 {{ $range == 'custom' ? 'bg-white shadow-sm text-primary fw-bold' : 'text-muted bg-transparent' }}">Tuỳ chọn</button>
+        </div>
+
+        <div id="customDateGroup" class="d-flex align-items-start gap-2 {{ $range == 'custom' ? '' : 'd-none' }}">
+            <div class="position-relative">
+                <input type="date" name="from" max="{{ now()->format('Y-m-d') }}" class="form-control form-control-sm {{ isset($customErrors['from']) ? 'is-invalid border-danger' : '' }}" value="{{ request('from', $startDate->format('Y-m-d')) }}">
+                @if(isset($customErrors['from']))
+                    <div class="text-danger position-absolute text-nowrap" style="font-size: 0.75rem; top: 100%;">{{ $customErrors['from'][0] }}</div>
+                @endif
+            </div>
+            <span class="text-muted mt-1">-</span>
+            <div class="position-relative">
+                <input type="date" name="to" max="{{ now()->format('Y-m-d') }}" class="form-control form-control-sm {{ isset($customErrors['to']) ? 'is-invalid border-danger' : '' }}" value="{{ request('to', $endDate->format('Y-m-d')) }}">
+                @if(isset($customErrors['to']))
+                    <div class="text-danger position-absolute text-nowrap" style="font-size: 0.75rem; top: 100%;">{{ $customErrors['to'][0] }}</div>
+                @endif
+            </div>
+            <button type="submit" name="range" value="custom" class="btn btn-sm btn-primary rounded-pill px-3">Áp dụng</button>
+        </div>
+    </div>
+</form>
+
 <div class="row g-4 mb-4">
     <!-- Thẻ Doanh Thu -->
     <div class="col-xl-3 col-md-6">
@@ -163,20 +196,45 @@
 </div>
 @endsection
 
+@php
+    $upcoming = $bookingStatusData['upcoming'] ?? 0;
+    $ongoing = $bookingStatusData['in_progress'] ?? 0;
+    $completed = $bookingStatusData['completed'] ?? 0;
+    $cancelled = ($bookingStatusData['cancelled_by_customer'] ?? 0) + ($bookingStatusData['cancelled_by_admin'] ?? 0);
+@endphp
+
 @section('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Toggle Custom Date Picker
+        const btnCustom = document.getElementById('btnCustom');
+        const customDateGroup = document.getElementById('customDateGroup');
+        if (btnCustom) {
+            btnCustom.addEventListener('click', function() {
+                customDateGroup.classList.toggle('d-none');
+                
+                // Visual update for segmented control
+                const btns = this.parentElement.querySelectorAll('button');
+                btns.forEach(b => {
+                    b.classList.remove('bg-white', 'shadow-sm', 'text-primary', 'fw-bold');
+                    b.classList.add('text-muted', 'bg-transparent');
+                });
+                this.classList.remove('text-muted', 'bg-transparent');
+                this.classList.add('bg-white', 'shadow-sm', 'text-primary', 'fw-bold');
+            });
+        }
         const ctx = document.getElementById('bookingChart').getContext('2d');
         const bookingChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Đã xác nhận', 'Chờ xử lý', 'Đã hủy'],
+                labels: ['Sắp tới', 'Đang diễn ra', 'Đã hoàn thành', 'Đã hủy'],
                 datasets: [{
-                    data: [65, 25, 10], // Sample data
+                    data: [{{ $upcoming }}, {{ $ongoing }}, {{ $completed }}, {{ $cancelled }}],
                     backgroundColor: [
-                        '#10b981',
-                        '#f59e0b',
-                        '#ef4444'
+                        '#10b981', // xanh lá
+                        '#3b82f6', // xanh dương
+                        '#f97316', // cam
+                        '#ef4444'  // đỏ
                     ],
                     borderWidth: 0,
                     hoverOffset: 4
