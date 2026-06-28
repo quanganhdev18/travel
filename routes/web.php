@@ -167,6 +167,7 @@ Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.favorites.destroy');
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | Admin
@@ -179,7 +180,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // User Management
     Route::get('/chat', [\App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
-    
+
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
