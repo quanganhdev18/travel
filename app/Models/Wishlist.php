@@ -26,6 +26,12 @@ class Wishlist extends Model
 
     public $timestamps = false;
 
+    protected $fillable = [
+        'user_id',
+        'tour_id',
+        'created_at',
+    ];
+
     protected $casts = [
         'user_id' => 'int',
         'tour_id' => 'int',
