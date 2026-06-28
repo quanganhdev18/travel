@@ -11,8 +11,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\Favorite;
-
 /**
  * Class User
  *
@@ -52,6 +50,7 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'avatar',
         'role',
         'preferences',
         'google_id',
