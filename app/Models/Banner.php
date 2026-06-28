@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,6 +27,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Banner extends Model
 {
+    use HasLocalImageUrl;
+
     protected $table = 'banners';
 
     protected $casts = [
@@ -45,4 +48,9 @@ class Banner extends Model
         'start_date',
         'end_date',
     ];
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
+    }
 }

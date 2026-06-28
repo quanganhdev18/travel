@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TicketImage extends Model
 {
+    use HasLocalImageUrl;
+
     protected $table = 'ticket_images';
 
     protected $casts = [
@@ -38,5 +41,10 @@ class TicketImage extends Model
     public function ticket()
     {
         return $this->belongsTo(Ticket::class);
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
     }
 }

@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Addon extends Model
 {
+    use HasLocalImageUrl;
+
     protected $table = 'addons';
 
     protected $casts = [
@@ -51,5 +54,10 @@ class Addon extends Model
     {
         return $this->belongsToMany(Tour::class, 'tour_addons')
             ->withTimestamps();
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
     }
 }

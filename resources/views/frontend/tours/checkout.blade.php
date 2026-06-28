@@ -44,6 +44,14 @@
     .wizard-panel { display: none; }
     .wizard-panel.active { display: block; animation: fadeIn 0.4s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .coupon-card {
+        transition: all 0.2s ease-in-out;
+    }
+    .coupon-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-color: var(--primary-color) !important;
+    }
 </style>
 
 <div class="container py-5">
@@ -96,11 +104,11 @@
 
                     <!-- WIZARD STEP 1 -->
                     <div class="wizard-panel active" id="step-panel-1">
-                        <!-- Section 1: Thông Tin Hành Khách Chính -->
+                        <!-- Section 1: Thông Tin Người Đặt -->
                         <div class="mb-5">
                         <h4 class="form-section-title">
                             <i class="bi bi-person-badge"></i>
-                            {{ __('Thông Tin Liên Hệ') }}
+                            {{ __('Thông Tin Người Đặt') }}
                         </h4>
                         
                         <div class="row g-4">
@@ -108,7 +116,9 @@
                                 <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
                                 <input type="text" name="customer_name" id="customer_name" class="form-control search-form-control"
                                     value="{{ $identity->full_name ?? $user->name }}" required
-                                    placeholder="{{ __('Nhập tên đầy đủ (khớp với CCCD/Hộ chiếu)') }}">
+                                    placeholder="{{ __('Nhập tên đầy đủ (khớp với CCCD/Hộ chiếu)') }}"
+                                    oninput="document.getElementById('hidden_adult_name').value = this.value">
+                                <input type="hidden" name="passengers[adult][0][full_name]" id="hidden_adult_name" value="{{ $identity->full_name ?? $user->name }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-600 text-dark">{{ __('Số Điện Thoại') }} <span class="text-danger">*</span></label>
@@ -120,101 +130,52 @@
                                 <input type="email" name="customer_email" class="form-control search-form-control"
                                     value="{{ $user->email }}" required placeholder="email@example.com">
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Section 2: Danh sách Hành khách -->
-                    <div class="mb-5">
-                        <h4 class="form-section-title">
-                            <i class="bi bi-people"></i>
-                            {{ __('Thông Tin Hành Khách') }}
-                        </h4>
-
-                        @for($i = 0; $i < $adults; $i++)
-                        <div class="card mb-4 border shadow-sm">
-                            <div class="card-header bg-light fw-bold text-primary d-flex justify-content-between align-items-center">
-                                <span>{{ __('Người lớn') }} {{ $i + 1 }}</span>
-                                @if($i == 0) <span class="badge bg-primary">Người đại diện</span> @endif
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="passengers[adult][0][identity_number]" id="identity_number" class="form-control search-form-control" required placeholder="Nhập số CCCD/Passport" value="{{ $identity->identity_number ?? '' }}">
                             </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
-                                        <input type="text" name="passengers[adult][{{$i}}][full_name]" class="form-control" required placeholder="Nhập tên đầy đủ" {{ $i == 0 ? 'id=customer_name' : '' }} value="{{ $i == 0 ? ($identity->full_name ?? $user->name) : '' }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
-                                        <input type="text" name="passengers[adult][{{$i}}][identity_number]" class="form-control" required placeholder="Nhập số CCCD/Passport" {{ $i == 0 ? 'id=identity_number' : '' }} value="{{ $i == 0 ? ($identity->identity_number ?? '') : '' }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                        <input type="date" name="passengers[adult][{{$i}}][date_of_birth]" class="form-control" required {{ $i == 0 ? 'id=date_of_birth' : '' }} value="{{ $i == 0 ? ($identity->date_of_birth ?? '') : '' }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
-                                        <select name="passengers[adult][{{$i}}][gender]" class="form-select" required {{ $i == 0 ? 'id=gender' : '' }}>
-                                            <option value="">{{ __('-- Chọn --') }}</option>
-                                            <option value="male" {{ $i == 0 && ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
-                                            <option value="female" {{ $i == 0 && ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
-                                            <option value="other" {{ $i == 0 && ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
-                                        </select>
-                                    </div>
-                                    
-                                    @if($i == 0)
-                                        <input type="hidden" name="issue_date" id="issue_date" value="{{ $identity->issue_date ?? '2020-01-01' }}">
-                                        <input type="hidden" name="expiry_date" id="expiry_date" value="{{ $identity->expiry_date ?? '2040-01-01' }}">
-                                        <input type="hidden" name="issue_place" id="issue_place" value="{{ $identity->issue_place ?? 'Hà Nội' }}">
-                                        
-                                        <div class="col-12 mt-3 p-3 bg-light rounded border">
-                                            <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
-                                            <div class="row g-2">
-                                                <div class="col-md-5">
-                                                    <input type="file" name="front_image" id="front_image" class="form-control form-control-sm" accept="image/*" placeholder="Mặt trước">
-                                                </div>
-                                                <div class="col-md-5">
-                                                    <input type="file" name="back_image" id="back_image" class="form-control form-control-sm" accept="image/*" placeholder="Mặt sau">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <button type="button" class="btn btn-primary btn-sm w-100 h-100" id="btn-scan-cccd">
-                                                        <i class="bi bi-upc-scan"></i> Quét
-                                                    </button>
-                                                </div>
-                                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
+                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
+                                <select name="passengers[adult][0][gender]" id="gender" class="form-select search-form-control" required>
+                                    <option value="">{{ __('-- Chọn --') }}</option>
+                                    <option value="male" {{ ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
+                                    <option value="female" {{ ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
+                                    <option value="other" {{ ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Hidden identity details -->
+                            <input type="hidden" name="issue_date" id="issue_date" value="{{ $identity->issue_date ?? '2020-01-01' }}">
+                            <input type="hidden" name="expiry_date" id="expiry_date" value="{{ $identity->expiry_date ?? '2040-01-01' }}">
+                            <input type="hidden" name="issue_place" id="issue_place" value="{{ $identity->issue_place ?? 'Hà Nội' }}">
+                            
+                            <!-- CCCD Scan block -->
+                            <div class="col-12 mt-3">
+                                <div class="p-3 bg-light rounded border">
+                                    <label class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-5">
+                                            <label for="front_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt trước') }}</label>
+                                            <input type="file" name="front_image" id="front_image" class="form-control" accept="image/*" placeholder="Mặt trước">
                                         </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        @endfor
-
-                        @for($i = 0; $i < $children; $i++)
-                        <div class="card mb-4 border shadow-sm">
-                            <div class="card-header bg-light fw-bold text-info">
-                                {{ __('Trẻ em') }} {{ $i + 1 }}
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Họ và Tên') }} <span class="text-danger">*</span></label>
-                                        <input type="text" name="passengers[child][{{$i}}][full_name]" class="form-control" required placeholder="Nhập tên đầy đủ">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                        <input type="date" name="passengers[child][{{$i}}][date_of_birth]" class="form-control" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
-                                        <select name="passengers[child][{{$i}}][gender]" class="form-select" required>
-                                            <option value="">{{ __('-- Chọn --') }}</option>
-                                            <option value="male">{{ __('Nam') }}</option>
-                                            <option value="female">{{ __('Nữ') }}</option>
-                                            <option value="other">{{ __('Khác') }}</option>
-                                        </select>
+                                        <div class="col-md-5">
+                                            <label for="back_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt sau') }}</label>
+                                            <input type="file" name="back_image" id="back_image" class="form-control" accept="image/*" placeholder="Mặt sau">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-primary w-100" id="btn-scan-cccd" style="height: 38px;">
+                                                <i class="bi bi-upc-scan"></i> Quét
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        @endfor
                     </div>
                     
                         <div class="d-flex justify-content-end mt-4">
@@ -290,7 +251,7 @@
                         </div>
                     </div>
                     
-                    @if($schedule->tour->tickets && count($schedule->tour->tickets) > 0)
+                    @if($schedule->tour->tickets && $schedule->tour->tickets->isNotEmpty())
                     <!-- Section: Vé Tham Quan -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
@@ -328,7 +289,7 @@
                     </div>
                     @endif
 
-                    @if($schedule->tour->addons && count($schedule->tour->addons) > 0)
+                    @if($schedule->tour->addons && $schedule->tour->addons->isNotEmpty())
                     <!-- Section: Dịch vụ Addon -->
                     <div class="mb-5">
                         <h4 class="form-section-title">
@@ -471,11 +432,22 @@
                                 {{ __('Mã Khuyến Mãi') }}
                             </h4>
                             <div class="card border-0 bg-light p-4 rounded-4">
-                                <div class="input-group mb-2">
-                                    <input type="text" class="form-control form-control-lg border-primary" id="coupon_code_input" name="coupon_code" placeholder="{{ __('Nhập mã giảm giá') }}">
-                                    <button class="btn btn-primary px-4" type="button" id="btn_apply_coupon">{{ __('Áp dụng') }}</button>
+                                <div class="d-flex align-items-center justify-content-between bg-white p-3 rounded-3 border">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                            <i class="bi bi-ticket-perforated-fill fs-5"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark" id="selected_coupon_display_code">Chưa chọn mã giảm giá</div>
+                                            <div class="small text-muted" id="selected_coupon_display_desc">Chọn mã để nhận ưu đãi cho chuyến đi</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary px-3 fw-600 btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#couponSelectModal" id="btn_open_coupon_modal">
+                                        {{ __('Chọn mã giảm giá') }}
+                                    </button>
                                 </div>
                                 <div id="coupon_message" class="small mt-2" style="display: none;"></div>
+                                <input type="hidden" name="coupon_code" id="coupon_code_input" value="">
                                 <input type="hidden" name="discount_amount" id="input_discount_amount" value="0">
                             </div>
                         </div>
@@ -571,6 +543,37 @@
     </div>
 </div>
 
+<!-- Modal Chọn Mã Giảm Giá -->
+<div class="modal fade" id="couponSelectModal" tabindex="-1" aria-labelledby="couponSelectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom px-4 py-3 bg-light">
+                <h5 class="modal-title fw-600" id="couponSelectModalLabel"><i class="bi bi-tags-fill text-primary me-2"></i>Chọn Mã Giảm Giá</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="background-color: #f8fafc;">
+                <!-- Nhập mã giảm giá thủ công -->
+                <div class="bg-white p-3 rounded-3 border mb-3">
+                    <label class="form-label fw-600 small text-dark mb-2">Nhập mã giảm giá khác</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control border-primary text-uppercase" id="manual_coupon_input" placeholder="Nhập mã giảm giá...">
+                        <button class="btn btn-primary" type="button" id="btn_apply_manual_coupon">Áp dụng</button>
+                    </div>
+                    <div id="manual_coupon_error" class="text-danger small mt-1" style="display: none;"></div>
+                </div>
+
+                <label class="form-label fw-bold text-secondary small mb-2"><i class="bi bi-gift-fill text-warning me-1"></i>Mã giảm giá dành cho bạn</label>
+                <div class="d-flex flex-column gap-3" id="coupons_list_container" style="max-height: 380px; overflow-y: auto; padding: 2px;">
+                    <!-- Sẽ được điền bằng JS -->
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.getElementById('btn-scan-cccd').addEventListener('click', function() {
         const frontImage = document.getElementById('front_image').files[0];
@@ -618,7 +621,10 @@
                     const issuePlaceInput = document.getElementById('issue_place');
                     
                     if(idInput) idInput.value = data.id || '';
-                    if(nameInput) nameInput.value = data.name || '';
+                    if(nameInput) {
+                        nameInput.value = data.name || '';
+                        document.getElementById('hidden_adult_name').value = nameInput.value;
+                    }
                     if(dobInput) dobInput.value = formatDob(data.dob) || '';
                     if(issueDateInput && data.issue_date) issueDateInput.value = formatDob(data.issue_date);
                     if(expiryDateInput && data.expiry_date && data.expiry_date !== 'N/A' && data.expiry_date !== 'KHÔNG THỜI HẠN') {
@@ -652,6 +658,7 @@
         const nameInput = document.getElementById('customer_name');
         if(nameInput && !nameInput.value) {
             nameInput.value = 'Nguyễn Văn A (Mock)';
+            document.getElementById('hidden_adult_name').value = nameInput.value;
         }
 
         document.getElementById('identity_number').value = uniqueId;
@@ -1028,11 +1035,8 @@
                         return;
                     }
                 }
-
-                // Update panels
                 document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
                 document.getElementById('step-panel-' + nextId).classList.add('active');
-                // Update nav steps
                 document.querySelectorAll('.wizard-step').forEach(s => {
                     const stepNum = parseInt(s.id.replace('step-nav-', ''));
                     s.classList.remove('active');
@@ -1047,10 +1051,8 @@
     document.querySelectorAll('.btn-prev').forEach(btn => {
         btn.addEventListener('click', function() {
             const prevId = this.dataset.prev;
-            // Update panels
             document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('step-panel-' + prevId).classList.add('active');
-            // Update nav steps
             document.querySelectorAll('.wizard-step').forEach(s => {
                 const stepNum = parseInt(s.id.replace('step-nav-', ''));
                 s.classList.remove('active');
@@ -1060,76 +1062,220 @@
             window.scrollTo(0, 0);
         });
     });
-
-    // COUPON LOGIC
     let currentCouponDiscount = 0;
-    
-    document.getElementById('btn_apply_coupon').addEventListener('click', function() {
-        const code = document.getElementById('coupon_code_input').value.trim();
-        const msg = document.getElementById('coupon_message');
-        const applyBtn = this;
+    const availableCoupons = @json($coupons);
+
+    function getSubtotal() {
+        return baseTourPrice + currentTransportPrice + currentTicketPrice + currentAddonPrice;
+    }
+
+    function renderCouponsList() {
+        const subtotal = getSubtotal();
+        const container = document.getElementById('coupons_list_container');
+        if (!container) return;
+
+        // Phân loại mã đủ điều kiện và không đủ điều kiện
+        const eligibleCoupons = [];
+        const ineligibleCoupons = [];
+
+        availableCoupons.forEach(coupon => {
+            const minOrder = parseFloat(coupon.min_order_value || 0);
+            if (subtotal >= minOrder) {
+                eligibleCoupons.push(coupon);
+            } else {
+                ineligibleCoupons.push(coupon);
+            }
+        });
+
+        let html = '';
+        eligibleCoupons.forEach(coupon => { html += renderCouponCardHtml(coupon, true, subtotal); });
+        ineligibleCoupons.forEach(coupon => { html += renderCouponCardHtml(coupon, false, subtotal); });
+
+        if (availableCoupons.length === 0) {
+            html = '<div class="text-center py-4 text-muted small"><i class="bi bi-inbox fs-2 mb-2 d-block text-light"></i>Không có mã giảm giá nào khả dụng.</div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function renderCouponCardHtml(coupon, isEligible, subtotal) {
+        let discountStr = coupon.discount_type === 'percent' ? `Giảm ${coupon.discount_value}%` : `Giảm ${formatCurrencyDynamic(coupon.discount_value)}`;
+        if (coupon.discount_type === 'percent' && coupon.max_discount) {
+            discountStr += ` (Tối đa ${formatCurrencyDynamic(coupon.max_discount)})`;
+        }
+        const minOrderVal = parseFloat(coupon.min_order_value || 0);
+        const minOrderStr = minOrderVal > 0 ? `Đơn tối thiểu: ${formatCurrencyDynamic(minOrderVal)}` : 'Đơn tối thiểu: 0 đ';
+        const currentSelectedCode = document.getElementById('coupon_code_input').value;
+        const isSelected = currentSelectedCode === coupon.code;
         
-        if (!code) {
-            msg.style.display = 'block';
-            msg.className = 'small mt-2 text-danger';
-            msg.textContent = 'Vui lòng nhập mã khuyến mãi.';
-            return;
+        let buttonHtml = '';
+        if (isEligible) {
+            buttonHtml = `<button type="button" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill">${isSelected ? 'Đã chọn' : 'Áp dụng'}</button>`;
+        } else {
+            const diffAmount = minOrderVal - subtotal;
+            buttonHtml = `
+                <div class="text-end">
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle px-2 py-1 mb-1" style="font-size: 10px; font-weight: 500;">Không đủ điều kiện</span>
+                    <div class="text-muted" style="font-size: 10px;">Mua thêm ${formatCurrencyDynamic(diffAmount)}</div>
+                </div>
+            `;
         }
         
-        // Calculate subtotal before discount
-        const subtotal = baseTourPrice + currentTransportPrice + currentTicketPrice + currentAddonPrice;
+        const cardClass = isEligible ? (isSelected ? 'border-primary bg-primary bg-opacity-5' : 'bg-white border-light-subtle') : 'bg-light opacity-50';
+        const clickAttr = isEligible ? `onclick="applyCouponCode('${coupon.code}')"` : '';
         
-        applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-        applyBtn.disabled = true;
+        return `
+            <div class="card border shadow-sm rounded-3 transition-all ${cardClass}" style="${isEligible ? 'cursor: pointer;' : 'cursor: not-allowed;'} padding: 12px;" ${clickAttr}>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="flex-shrink-0 rounded-3 d-flex align-items-center justify-content-center ${isEligible ? 'bg-primary bg-opacity-10 text-primary' : 'bg-secondary bg-opacity-10 text-secondary'}" style="width: 44px; height: 44px;"><i class="bi bi-gift-fill fs-5"></i></div>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <div class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;">${coupon.code}</div>
+                        <div class="fw-bold text-danger text-truncate" style="font-size: 0.85rem; margin-top: 1px;">${discountStr}</div>
+                        <div class="text-muted text-truncate" style="font-size: 0.75rem; margin-top: 2px;">${minOrderStr}</div>
+                    </div>
+                    <div class="flex-shrink-0">${buttonHtml}</div>
+                </div>
+            </div>`;
+    }
+
+    window.applyCouponCode = function(code) {
+        const input = document.getElementById('coupon_code_input');
+        const displayCode = document.getElementById('selected_coupon_display_code');
+        const displayDesc = document.getElementById('selected_coupon_display_desc');
+        const msg = document.getElementById('coupon_message');
+        
+        input.value = code;
+        const subtotal = getSubtotal();
         
         fetch('/api/coupons/apply', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                code: code,
-                order_value: subtotal
-            })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value, 'Accept': 'application/json' },
+            body: JSON.stringify({ code: code, order_value: subtotal })
         })
         .then(response => response.json())
         .then(data => {
-            msg.style.display = 'block';
             if (data.success) {
-                msg.className = 'small mt-2 text-success fw-bold';
+                msg.style.display = 'block'; 
+                msg.className = 'small mt-2 text-success fw-bold'; 
                 msg.textContent = `Áp dụng thành công! Giảm ${formatCurrencyDynamic(data.discount_amount)}`;
+                
+                displayCode.textContent = code; 
+                displayCode.className = 'fw-bold text-primary';
+                
+                let descStr = '';
+                const matchedCoupon = availableCoupons.find(c => c.code === code);
+                if (matchedCoupon) {
+                    if (matchedCoupon.discount_type === 'percent') {
+                        descStr = `Giảm ${matchedCoupon.discount_value}% (Tối đa ${formatCurrencyDynamic(data.discount_amount)})`;
+                    } else {
+                        descStr = `Giảm ${formatCurrencyDynamic(data.discount_amount)}`;
+                    }
+                } else {
+                    descStr = `Giảm ${formatCurrencyDynamic(data.discount_amount)}`;
+                }
+                displayDesc.textContent = descStr;
                 
                 currentCouponDiscount = data.discount_amount;
                 document.getElementById('input_discount_amount').value = currentCouponDiscount;
-                
-                const row = document.getElementById('coupon_fee_row');
-                row.style.setProperty('display', 'flex', 'important');
+                document.getElementById('coupon_fee_row').style.setProperty('display', 'flex', 'important');
                 document.getElementById('display_coupon_discount').textContent = '- ' + formatCurrencyDynamic(currentCouponDiscount);
                 
                 updateTotalDisplay();
+                
+                const modalEl = document.getElementById('couponSelectModal');
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.hide();
             } else {
-                msg.className = 'small mt-2 text-danger';
-                msg.textContent = data.message || 'Mã không hợp lệ hoặc đã hết hạn.';
-                
-                currentCouponDiscount = 0;
-                document.getElementById('input_discount_amount').value = 0;
-                document.getElementById('coupon_fee_row').style.setProperty('display', 'none', 'important');
-                
-                updateTotalDisplay();
+                msg.style.display = 'block'; 
+                msg.className = 'small mt-2 text-danger'; 
+                msg.textContent = data.message;
+                resetCouponSelection();
             }
         })
         .catch(err => {
-            msg.style.display = 'block';
-            msg.className = 'small mt-2 text-danger';
-            msg.textContent = 'Lỗi kết nối. Vui lòng thử lại sau.';
-        })
-        .finally(() => {
-            applyBtn.innerHTML = 'Áp dụng';
-            applyBtn.disabled = false;
+            msg.style.display = 'block'; 
+            msg.className = 'small mt-2 text-danger'; 
+            msg.textContent = 'Lỗi kết nối. Vui lòng thử lại.';
+            resetCouponSelection();
         });
-    });
+    };
+
+    window.resetCouponSelection = function() {
+        document.getElementById('coupon_code_input').value = '';
+        document.getElementById('selected_coupon_display_code').textContent = 'Chưa chọn mã giảm giá';
+        document.getElementById('selected_coupon_display_code').className = 'fw-bold text-dark';
+        document.getElementById('selected_coupon_display_desc').textContent = 'Chọn mã để nhận ưu đãi cho chuyến đi';
+        
+        currentCouponDiscount = 0;
+        document.getElementById('input_discount_amount').value = 0;
+        document.getElementById('coupon_fee_row').style.setProperty('display', 'none', 'important');
+        
+        const msg = document.getElementById('coupon_message');
+        msg.style.display = 'none';
+        msg.textContent = '';
+        
+        updateTotalDisplay();
+    };
+
+    // Sự kiện mở modal -> render danh sách
+    const modalSelectEl = document.getElementById('couponSelectModal');
+    if (modalSelectEl) {
+        modalSelectEl.addEventListener('show.bs.modal', function () {
+            renderCouponsList();
+            document.getElementById('manual_coupon_input').value = '';
+            document.getElementById('manual_coupon_error').style.display = 'none';
+        });
+    }
+
+    // Nhập mã giảm giá thủ công trong modal
+    const btnApplyManual = document.getElementById('btn_apply_manual_coupon');
+    if (btnApplyManual) {
+        btnApplyManual.addEventListener('click', function() {
+            const code = document.getElementById('manual_coupon_input').value.trim().toUpperCase();
+            const errorEl = document.getElementById('manual_coupon_error');
+            if (!code) {
+                errorEl.style.display = 'block';
+                errorEl.textContent = 'Vui lòng nhập mã giảm giá.';
+                return;
+            }
+            errorEl.style.display = 'none';
+            
+            const matched = availableCoupons.find(c => c.code.toUpperCase() === code);
+            if (matched) {
+                const subtotal = getSubtotal();
+                const minOrder = parseFloat(matched.min_order_value || 0);
+                if (subtotal >= minOrder) {
+                    applyCouponCode(matched.code);
+                } else {
+                    errorEl.style.display = 'block';
+                    errorEl.textContent = `Không đủ điều kiện sử dụng mã. Cần tối thiểu ${formatCurrencyDynamic(minOrder)}`;
+                }
+            } else {
+                const subtotal = getSubtotal();
+                fetch('/api/coupons/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ code: code, order_value: subtotal })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        applyCouponCode(code);
+                    } else {
+                        errorEl.style.display = 'block';
+                        errorEl.textContent = data.message || 'Mã không hợp lệ hoặc đã hết hạn.';
+                    }
+                })
+                .catch(err => {
+                    errorEl.style.display = 'block';
+                    errorEl.textContent = 'Lỗi kết nối. Vui lòng thử lại sau.';
+                });
+            }
+        });
+    }
 
     // Override updateTotalDisplay to include discount
     const originalUpdateTotalDisplay = updateTotalDisplay;
@@ -1137,11 +1283,25 @@
         currentTransportPrice = transportPrice;
         currentTicketPrice = ticketPrice;
         const subtotal = baseTourPrice + currentTransportPrice + currentTicketPrice + currentAddonPrice;
-        const finalTotal = Math.max(0, subtotal - currentCouponDiscount);
-        originalUpdateTotalDisplay(transportPrice, ticketPrice); // call original to update DOM text for other items
-        document.getElementById('display_total_price').innerHTML = formatCurrencyDynamic(finalTotal);
+        
+        // Kiểm tra nếu mã giảm giá đã chọn không còn đủ điều kiện do thay đổi giá trị đơn hàng
+        const currentSelectedCode = document.getElementById('coupon_code_input').value;
+        if (currentSelectedCode) {
+            const matchedCoupon = availableCoupons.find(c => c.code === currentSelectedCode);
+            if (matchedCoupon) {
+                const minOrder = parseFloat(matchedCoupon.min_order_value || 0);
+                if (subtotal < minOrder) {
+                    alert(`Đã huỷ mã giảm giá ${currentSelectedCode} do đơn hàng không còn đủ giá trị tối thiểu (${formatCurrencyDynamic(minOrder)}).`);
+                    resetCouponSelection();
+                    return;
+                }
+            }
+        }
 
-        // Deposit calculation
+        const finalTotal = Math.max(0, subtotal - currentCouponDiscount);
+        originalUpdateTotalDisplay(transportPrice, ticketPrice);
+        document.getElementById('display_total_price').innerHTML = formatCurrencyDynamic(finalTotal);
+        
         const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
         const depositRow = document.getElementById('deposit_amount_row');
         if (paymentType === 'deposit') {
@@ -1159,8 +1319,6 @@
     document.querySelectorAll('input[name="payment_type"]').forEach(radio => {
         radio.addEventListener('change', function() {
             updateTotalDisplay();
-            
-            // Highlight selected payment type card
             document.querySelectorAll('input[name="payment_type"]').forEach(el => {
                 el.nextElementSibling.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
             });
@@ -1168,7 +1326,7 @@
         });
     });
 
-    // Listen to payment method change (for UX highlighting)
+    // Listen to payment method change
     document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
         radio.addEventListener('change', function() {
             document.querySelectorAll('input[name="payment_method"]').forEach(el => {
@@ -1178,7 +1336,6 @@
         });
     });
 
-    // Initial highlight
     document.querySelector('input[name="payment_type"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
     document.querySelector('input[name="payment_method"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
 </script>

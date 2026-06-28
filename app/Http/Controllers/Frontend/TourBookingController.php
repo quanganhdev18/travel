@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Events\SeatAvailabilityUpdated;
 use App\Http\Controllers\Controller;
 use App\Mail\FlightTicketMail;
 use App\Mail\TourBookingMail;
+use App\Models\Addon;
 use App\Models\Booking;
+use App\Models\BookingAddon;
 use App\Models\BookingPassenger;
+use App\Models\Coupon;
+use App\Models\Holiday;
 use App\Models\Payment;
 use App\Models\TicketBooking;
 use App\Models\TicketOption;
@@ -16,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -113,8 +119,8 @@ class TourBookingController extends Controller
                 $identity->save();
             }
 
-            $holidaySurcharge = \App\Models\Holiday::getIncreasePercentage($schedule->departure_date);
-            
+            $holidaySurcharge = Holiday::getIncreasePercentage($schedule->departure_date);
+
             $basePrice = $schedule->tour->base_price;
             $childPrice = $schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75);
 
@@ -152,12 +158,12 @@ class TourBookingController extends Controller
                 foreach ($request->addons as $addonId => $data) {
                     $qty = isset($data['qty']) ? (int) $data['qty'] : 0;
                     if ($qty > 0) {
-                        $addon = \App\Models\Addon::find($addonId);
+                        $addon = Addon::find($addonId);
                         if ($addon) {
                             $usageDate = $data['usage_date'] ?? $schedule->departure_date;
-                            $addonSurcharge = \App\Models\Holiday::getIncreasePercentage($usageDate);
+                            $addonSurcharge = Holiday::getIncreasePercentage($usageDate);
                             $price = $addon->price * (1 + $addonSurcharge / 100);
-                            
+
                             $addonPriceTotal += $price * $qty;
                             $selectedAddons[] = [
                                 'addon_id' => $addon->id,
@@ -176,7 +182,7 @@ class TourBookingController extends Controller
             $couponId = null;
 
             if ($request->filled('coupon_code')) {
-                $coupon = \App\Models\Coupon::where('code', $request->coupon_code)
+                $coupon = Coupon::where('code', $request->coupon_code)
                     ->where(function ($query) {
                         $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
                     })
@@ -199,7 +205,7 @@ class TourBookingController extends Controller
                         $discountAmount = $discount;
                         $couponId = $coupon->id;
                         $finalTotalPrice = max(0, $finalTotalPrice - $discountAmount);
-                        
+
                         $coupon->increment('used_count');
                     }
                 }
@@ -218,13 +224,13 @@ class TourBookingController extends Controller
             $booking->total_price = $finalTotalPrice;
             $booking->discount_amount = $discountAmount;
             $booking->coupon_id = $couponId;
-            $booking->booking_status = 'pending';
+            $booking->payment_status = Booking::PAYMENT_PENDING;
+            $booking->tour_status = Booking::TOUR_UPCOMING;
             $booking->transport_type = $request->transport_type;
             $booking->transport_price = $transportPrice;
             $booking->transport_data = $transportData;
             $booking->payment_type = $request->payment_type ?? 'full';
             $booking->payment_method = $request->payment_method ?? 'transfer';
-            $booking->payment_status = 'unpaid';
             $booking->paid_amount = 0;
             $booking->save();
 
@@ -243,7 +249,7 @@ class TourBookingController extends Controller
 
             // Lưu Addons
             foreach ($selectedAddons as $item) {
-                \App\Models\BookingAddon::create([
+                BookingAddon::create([
                     'booking_id' => $booking->id,
                     'addon_id' => $item['addon_id'],
                     'addon_name' => $item['addon_name'],
@@ -283,17 +289,17 @@ class TourBookingController extends Controller
 
             // Release Cache Hold
             $holdKey = "tour_schedule_{$schedule->id}_holds";
-            $currentHolds = \Illuminate\Support\Facades\Cache::get($holdKey, []);
+            $currentHolds = Cache::get($holdKey, []);
             $userId = Auth::id() ?? session()->getId();
             if (isset($currentHolds[$userId])) {
                 unset($currentHolds[$userId]);
-                \Illuminate\Support\Facades\Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
+                Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
             }
 
             DB::commit();
 
             // Phát sóng event cập nhật chỗ trống
-            broadcast(new \App\Events\SeatAvailabilityUpdated($schedule->id, $schedule->available_seats))->toOthers();
+            broadcast(new SeatAvailabilityUpdated($schedule->id, $schedule->available_seats))->toOthers();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Lỗi đặt tour: '.$e->getMessage());
@@ -417,19 +423,19 @@ class TourBookingController extends Controller
 
         // Cơ chế giữ chỗ (Seat Hold) qua Cache (15 phút)
         $holdKey = "tour_schedule_{$schedule->id}_holds";
-        $currentHolds = \Illuminate\Support\Facades\Cache::get($holdKey, []);
-        
+        $currentHolds = Cache::get($holdKey, []);
+
         // Dọn dẹp holds hết hạn
-        $currentHolds = array_filter($currentHolds, function($h) {
+        $currentHolds = array_filter($currentHolds, function ($h) {
             return $h['expires_at'] > now()->timestamp;
         });
 
         // Tính tổng chỗ đang bị giữ bởi những người khác
         $userId = Auth::id() ?? session()->getId();
-        $otherHolds = array_filter($currentHolds, function($h, $k) use ($userId) {
+        $otherHolds = array_filter($currentHolds, function ($h, $k) use ($userId) {
             return $k !== $userId;
         }, ARRAY_FILTER_USE_BOTH);
-        
+
         $totalHeldByOthers = array_sum(array_column($otherHolds, 'seats'));
 
         if ($schedule->available_seats - $totalHeldByOthers < $totalPersons) {
@@ -439,17 +445,17 @@ class TourBookingController extends Controller
         // Đăng ký giữ chỗ cho user hiện tại
         $currentHolds[$userId] = [
             'seats' => $totalPersons,
-            'expires_at' => now()->addMinutes(15)->timestamp
+            'expires_at' => now()->addMinutes(15)->timestamp,
         ];
-        \Illuminate\Support\Facades\Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
+        Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
 
         // Nếu available_seats thực tế (ko tính hold) không đủ thì cũng báo lỗi
         if ($schedule->available_seats < $totalPersons) {
             return redirect()->back()->with('error', 'Tour không còn đủ chỗ trống cho số lượng hành khách này. Vui lòng chọn ngày khác.');
         }
 
-        $holidaySurcharge = \App\Models\Holiday::getIncreasePercentage($schedule->departure_date);
-        
+        $holidaySurcharge = Holiday::getIncreasePercentage($schedule->departure_date);
+
         $basePrice = $schedule->tour->base_price;
         $childPrice = $schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75);
 
@@ -465,7 +471,19 @@ class TourBookingController extends Controller
         $user->load('identity');
         $identity = $user->identity;
 
-        $holidays = \App\Models\Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
+        $holidays = Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
+
+        // Lấy danh sách mã giảm giá còn hiệu lực
+        $coupons = Coupon::where(function ($query) {
+            $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+        })
+            ->where(function ($query) {
+                $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->get();
 
         return view('frontend.tours.checkout', [
             'schedule' => $schedule,
@@ -477,6 +495,7 @@ class TourBookingController extends Controller
             'identity' => $identity, // Có thể null nếu user chưa cập nhật CCCD/Hộ chiếu
             'holidaySurcharge' => $holidaySurcharge,
             'holidays' => $holidays,
+            'coupons' => $coupons,
         ]);
     }
 
@@ -488,7 +507,7 @@ class TourBookingController extends Controller
             abort(403);
         }
 
-        if ($booking->booking_status === 'cancelled' || $booking->booking_status === 'completed') {
+        if (in_array($booking->tour_status, [Booking::TOUR_COMPLETED, Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])) {
             return redirect()->route('user.bookings')->with('error', 'Đơn hàng không thể thanh toán.');
         }
 
@@ -507,7 +526,7 @@ class TourBookingController extends Controller
         $vnp_TxnRef = $booking->id.'_'.time();
         $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $vnp_OrderType = 'billpayment';
-        
+
         $actualAmount = $booking->total_price;
         if ($booking->payment_type === 'deposit') {
             $actualAmount = $booking->total_price * 0.3;
@@ -609,9 +628,8 @@ class TourBookingController extends Controller
                 }
 
                 if ($booking) {
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? 'deposited' : 'paid';
+                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
                     $booking->update([
-                        'booking_status' => 'confirmed',
                         'payment_status' => $newPaymentStatus,
                         'paid_amount' => $payment->amount,
                     ]);
@@ -701,9 +719,8 @@ class TourBookingController extends Controller
                         'payment_status' => 'success',
                         'paid_at' => now(),
                     ]);
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? 'deposited' : 'paid';
+                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
                     $booking->update([
-                        'booking_status' => 'confirmed',
                         'payment_status' => $newPaymentStatus,
                         'paid_amount' => $payment->amount,
                     ]);
@@ -731,14 +748,15 @@ class TourBookingController extends Controller
             'Message' => 'Invalid signature',
         ]);
     }
+
     public function applyCoupon(Request $request)
     {
         $request->validate([
             'code' => 'required|string',
-            'order_value' => 'required|numeric'
+            'order_value' => 'required|numeric',
         ]);
 
-        $coupon = \App\Models\Coupon::where('code', $request->code)
+        $coupon = Coupon::where('code', $request->code)
             ->where(function ($query) {
                 $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
             })
@@ -747,7 +765,7 @@ class TourBookingController extends Controller
             })
             ->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json(['success' => false, 'message' => 'Mã không tồn tại hoặc đã hết hạn.']);
         }
 
@@ -771,7 +789,7 @@ class TourBookingController extends Controller
 
         return response()->json([
             'success' => true,
-            'discount_amount' => $discountAmount
+            'discount_amount' => $discountAmount,
         ]);
     }
 }

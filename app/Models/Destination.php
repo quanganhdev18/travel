@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Destination extends Model
 {
-    use HasTranslations;
+    use HasLocalImageUrl, HasTranslations;
 
     protected $table = 'destinations';
 
@@ -48,5 +49,10 @@ class Destination extends Model
     public function tours()
     {
         return $this->hasMany(Tour::class);
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
     }
 }

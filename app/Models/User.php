@@ -53,6 +53,8 @@ class User extends Authenticatable
         'avatar',
         'role',
         'preferences',
+        'google_id',
+        'google_avatar',
     ];
 
     public function bookings()
@@ -98,5 +100,9 @@ class User extends Authenticatable
     public function tour_guide()
     {
         return $this->hasOne(TourGuide::class);
+    }
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
     }
 }

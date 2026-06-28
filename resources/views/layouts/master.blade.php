@@ -12,6 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('css/premium-theme.css') }}">
+    @vite(['resources/js/app.js'])
 </head>
 
 <body>
@@ -56,9 +57,9 @@
                             <i class="bi bi-question-circle me-1"></i> {{ __('Hỗ trợ') }}
                         </a>
                     </li>
-                    
+
                     <div class="vr mx-1 bg-secondary" style="width: 1px; opacity: 0.3; height: 16px; align-self: center;"></div>
-                    
+
                     @guest
                     <li class="nav-item">
                         <a class="nav-link py-1" href="{{ route('login') }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a>
@@ -108,6 +109,13 @@
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ url('/') }}">{{ __('Trang chủ') }}</a></li>
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.destinations.index') }}">{{ __('Điểm đến') }}</a></li>
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tours.index') }}">{{ __('Tour trọn gói') }}</a></li>
+                        @auth
+                        <li class="nav-item">
+                            <a class="nav-link fs-6" href="{{ route('frontend.favorites.index') }}">
+                                Tour đã lưu
+                            </a>
+                        </li>
+                        @endauth
                         <li class="nav-item"><a class="nav-link fs-6" href="#">{{ __('Vé tham quan') }}</a></li>
                         <li class="nav-item"><a class="nav-link text-danger fs-6" href="#"><i class="bi bi-tags-fill me-1"></i>{{ __('Khuyến mãi') }}</a></li>
                     </ul>
@@ -136,7 +144,7 @@
                             </ul>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-question-circle me-2"></i> {{ __('Hỗ trợ') }}</a></li>
-                        
+
                         @guest
                         <li class="nav-item mt-2"><a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login') }}">{{ __('Đăng nhập') }}</a></li>
                         <li class="nav-item"><a class="btn-register-premium text-decoration-none d-block text-center" href="{{ route('register') }}">{{ __('Đăng ký') }}</a></li>
@@ -251,6 +259,8 @@
 
     {{-- Cookie Consent Banner --}}
     <x-cookie-consent />
+    
+    <x-chatbox />
 
     @stack('scripts')
 </body>
