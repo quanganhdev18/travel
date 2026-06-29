@@ -287,26 +287,228 @@
 <!-- Ad Banners (Horizontal) -->
 @if(isset($adBanners) && $adBanners->count() > 0)
 <section class="container mb-5 reveal-up">
-    <div class="row g-4">
-        @foreach($adBanners as $ad)
-        <div class="col-md-4">
-            <a href="{{ $ad->target_url ?? '#' }}" class="d-block overflow-hidden rounded-4 shadow-sm" style="height: 200px;">
-                @php
-                    $adImgSrc = Str::startsWith($ad->image_url, ['http://', 'https://'])
+    <div class="position-relative">
+        <!-- Navigation Buttons -->
+        @if($adBanners->count() > 2)
+        <button class="banner-nav-btn banner-nav-prev" type="button" onclick="scrollBanners('prev')">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="banner-nav-btn banner-nav-next" type="button" onclick="scrollBanners('next')">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+        @endif
+
+        <!-- Banners Container -->
+        <div class="banner-scroll-container" id="bannerScrollContainer">
+            <div class="banner-scroll-wrapper">
+                @foreach($adBanners as $ad)
+                    @php
+                        $adImgSrc = Str::startsWith($ad->image_url, ['http://', 'https://'])
                               ? $ad->image_url
                               : asset($ad->image_url);
-                @endphp
-                <img src="{{ $adImgSrc }}" alt="{{ $ad->title }}" class="w-100 h-100 object-fit-cover hover-scale" style="transition: transform 0.4s ease;">
-            </a>
+                    @endphp
+
+                    <div class="banner-scroll-item">
+                        <a href="{{ $ad->target_url ?? '#' }}"
+                            class="d-block overflow-hidden rounded-4 shadow-sm position-relative banner-card"
+                            style="height: 200px;">
+                            <img src="{{ $adImgSrc }}"
+                                alt="{{ $ad->title }}"
+                                class="w-100 h-100 object-fit-cover hover-scale"
+                                style="transition: transform 0.4s ease;">
+                            
+                            @if($ad->coupon && $ad->coupon->valid_until >= now())
+                                <div class="position-absolute top-0 start-0 m-3">
+                                    <div class="coupon-badge bg-danger text-white px-3 py-2 rounded-3 shadow-lg">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-ticket-perforated-fill"></i>
+                                            <div>
+                                                <div class="fw-bold" style="font-size: 0.75rem;">MÃ: {{ $ad->coupon->code }}</div>
+                                                <div style="font-size: 0.7rem;">
+                                                    @if($ad->coupon->discount_type === 'percentage')
+                                                        Giảm {{ $ad->coupon->discount_value }}%
+                                                    @else
+                                                        Giảm {{ format_currency($ad->coupon->discount_value) }}
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </a>
+                    </div>
+                @endforeach
+            </div>
         </div>
-        @endforeach
     </div>
 </section>
+
 <style>
+    .banner-scroll-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .banner-scroll-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .banner-scroll-wrapper {
+        display: flex;
+        gap: 1.5rem;
+        padding: 0.5rem 0;
+    }
+
+    .banner-scroll-item {
+        flex: 0 0 calc(50% - 0.75rem);
+        min-width: 300px;
+    }
+
+    @media (min-width: 768px) {
+        .banner-scroll-item {
+            flex: 0 0 calc(33.333% - 1rem);
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .banner-scroll-item {
+            flex: 0 0 calc(25% - 1.125rem);
+        }
+    }
+
+    .banner-card {
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .banner-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+    }
+
     .hover-scale:hover {
         transform: scale(1.05);
     }
+    
+    .coupon-badge {
+        backdrop-filter: blur(10px);
+        animation: pulse-subtle 2s ease-in-out infinite;
+        z-index: 2;
+    }
+    
+    @keyframes pulse-subtle {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    /* Navigation Buttons */
+    .banner-nav-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: #333;
+        font-size: 1.25rem;
+    }
+
+    .banner-nav-btn:hover {
+        background: var(--primary-color, #007CE8);
+        color: white;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+
+    .banner-nav-prev {
+        left: -20px;
+    }
+
+    .banner-nav-next {
+        right: -20px;
+    }
+
+    @media (max-width: 768px) {
+        .banner-nav-btn {
+            width: 38px;
+            height: 38px;
+            font-size: 1rem;
+        }
+
+        .banner-nav-prev {
+            left: -10px;
+        }
+
+        .banner-nav-next {
+            right: -10px;
+        }
+
+        .banner-scroll-item {
+            flex: 0 0 calc(80% - 0.75rem);
+            min-width: 280px;
+        }
+    }
 </style>
+
+<script>
+function scrollBanners(direction) {
+    const container = document.getElementById('bannerScrollContainer');
+    const items = container.querySelectorAll('.banner-scroll-item');
+    
+    if (items.length === 0) return;
+    
+    // Lấy chiều rộng của 1 banner item + gap
+    const itemWidth = items[0].offsetWidth;
+    const gap = 24; // 1.5rem = 24px
+    const scrollAmount = itemWidth + gap;
+    
+    if (direction === 'prev') {
+        container.scrollLeft -= scrollAmount;
+    } else {
+        container.scrollLeft += scrollAmount;
+    }
+}
+
+// Auto-scroll on swipe for mobile
+let startX = 0;
+const container = document.getElementById('bannerScrollContainer');
+
+if (container) {
+    container.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].pageX;
+    });
+
+    container.addEventListener('touchend', (e) => {
+        const endX = e.changedTouches[0].pageX;
+        const diff = startX - endX;
+        
+        if (Math.abs(diff) > 50) {
+            if (diff > 0) {
+                scrollBanners('next');
+            } else {
+                scrollBanners('prev');
+            }
+        }
+    });
+}
+</script>
 @endif
 
 <!-- Full Width Banner -->
