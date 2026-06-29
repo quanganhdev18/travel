@@ -38,7 +38,7 @@ beforeEach(function () {
 });
 
 test('guest cannot access checkout', function () {
-    $response = $this->post(route('frontend.tours.checkout', [
+    $response = $this->get(route('frontend.tours.checkout', [
         'schedule_id' => $this->schedule->id,
         'adults' => 2,
         'children' => 0,
@@ -50,7 +50,7 @@ test('guest cannot access checkout', function () {
 test('authenticated user can access checkout with valid parameters', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->post(route('frontend.tours.checkout', [
+    $response = $this->actingAs($user)->get(route('frontend.tours.checkout', [
         'schedule_id' => $this->schedule->id,
         'adults' => 2,
         'children' => 0,
@@ -73,12 +73,25 @@ test('booking stores successfully for flight transport', function () {
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
         'transport_type' => 'flight',
-        'identity_number' => '036123456789',
-        'date_of_birth' => '1996-05-18',
-        'gender' => 'male',
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
         'issue_place' => 'Cục Cảnh sát',
+        'passengers' => [
+            'adult' => [
+                [
+                    'full_name' => 'Nguyễn Văn A',
+                    'identity_number' => '036123456789',
+                    'date_of_birth' => '1996-05-18',
+                    'gender' => 'male',
+                ],
+                [
+                    'full_name' => 'Nguyễn Thị B',
+                    'identity_number' => '036123456790',
+                    'date_of_birth' => '1998-05-18',
+                    'gender' => 'female',
+                ],
+            ],
+        ],
         'payment_method' => 'cod',
     ]);
 
@@ -89,14 +102,8 @@ test('booking stores successfully for flight transport', function () {
     ]);
 
     $booking = Booking::where('user_id', $user->id)->first();
-    $response->assertRedirect(route('frontend.flights.search', [
-        'origin' => 'HAN', // default because destination isn't mapped
-        'destination' => 'DAD', // mapped 'Đà Nẵng' => 'DAD'
-        'departure_date' => Carbon::parse($this->schedule->departure_date)->format('Y-m-d'),
-        'passengers' => 2,
-        'cabin_class' => 'economy',
-        'tour_booking_id' => $booking->id,
-    ]));
+    $response->assertRedirect(route('home'));
+    $response->assertSessionHas('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
 });
 
 test('booking stores successfully for bus transport', function () {
@@ -111,12 +118,25 @@ test('booking stores successfully for bus transport', function () {
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
         'transport_type' => 'bus',
-        'identity_number' => '036123456789',
-        'date_of_birth' => '1996-05-18',
-        'gender' => 'male',
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
         'issue_place' => 'Cục Cảnh sát',
+        'passengers' => [
+            'adult' => [
+                [
+                    'full_name' => 'Nguyễn Văn A',
+                    'identity_number' => '036123456789',
+                    'date_of_birth' => '1996-05-18',
+                    'gender' => 'male',
+                ],
+                [
+                    'full_name' => 'Nguyễn Thị B',
+                    'identity_number' => '036123456790',
+                    'date_of_birth' => '1998-05-18',
+                    'gender' => 'female',
+                ],
+            ],
+        ],
         'payment_method' => 'cod',
     ]);
 
@@ -127,7 +147,7 @@ test('booking stores successfully for bus transport', function () {
     ]);
 
     $response->assertRedirect(route('home'));
-    $response->assertSessionHas('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận lịch trình di chuyển bằng xe.');
+    $response->assertSessionHas('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
 });
 
 test('booking stores successfully for self transport', function () {
@@ -142,12 +162,25 @@ test('booking stores successfully for self transport', function () {
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
         'transport_type' => 'self',
-        'identity_number' => '036123456789',
-        'date_of_birth' => '1996-05-18',
-        'gender' => 'male',
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
         'issue_place' => 'Cục Cảnh sát',
+        'passengers' => [
+            'adult' => [
+                [
+                    'full_name' => 'Nguyễn Văn A',
+                    'identity_number' => '036123456789',
+                    'date_of_birth' => '1996-05-18',
+                    'gender' => 'male',
+                ],
+                [
+                    'full_name' => 'Nguyễn Thị B',
+                    'identity_number' => '036123456790',
+                    'date_of_birth' => '1998-05-18',
+                    'gender' => 'female',
+                ],
+            ],
+        ],
         'payment_method' => 'cod',
     ]);
 
@@ -158,7 +191,7 @@ test('booking stores successfully for self transport', function () {
     ]);
 
     $response->assertRedirect(route('home'));
-    $response->assertSessionHas('success', 'đặt tour thành công. chúng tôi sẽ liên hệ sớm để xác nhận lịch trình tự túc.');
+    $response->assertSessionHas('success', 'Đặt tour thành công. Bạn tự túc phương tiện di chuyển.');
 });
 
 test('booking redirects to vnpay when vnpay payment is chosen', function () {
@@ -173,12 +206,25 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
         'transport_type' => 'self',
-        'identity_number' => '036123456789',
-        'date_of_birth' => '1996-05-18',
-        'gender' => 'male',
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
         'issue_place' => 'Cục Cảnh sát',
+        'passengers' => [
+            'adult' => [
+                [
+                    'full_name' => 'Nguyễn Văn A',
+                    'identity_number' => '036123456789',
+                    'date_of_birth' => '1996-05-18',
+                    'gender' => 'male',
+                ],
+                [
+                    'full_name' => 'Nguyễn Thị B',
+                    'identity_number' => '036123456790',
+                    'date_of_birth' => '1998-05-18',
+                    'gender' => 'female',
+                ],
+            ],
+        ],
         'payment_method' => 'vnpay',
     ]);
 
@@ -196,7 +242,7 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
     $response->assertRedirect();
     $targetUrl = $response->headers->get('Location');
     expect($targetUrl)->toContain('https://sandbox.vnpayment.vn/paymentv2/vpcpay.html');
-    expect($targetUrl)->toContain('vnp_TmnCode=32Z7UQKT');
+    expect($targetUrl)->toContain('vnp_TmnCode='.config('vnpay.tmn_code'));
 });
 
 test('vnpay return handles successful payment correctly', function () {
@@ -242,7 +288,7 @@ test('vnpay return handles successful payment correctly', function () {
             $i = 1;
         }
     }
-    $secureHash = hash_hmac('sha512', $hashData, 'I2TIA05T0LLQAHM0I2BT73VVIX88TKJA');
+    $secureHash = hash_hmac('sha512', $hashData, config('vnpay.hash_secret'));
     $params['vnp_SecureHash'] = $secureHash;
 
     $response = $this->actingAs($user)->get(route('frontend.tours.vnpay_return', $params));
@@ -304,7 +350,7 @@ test('vnpay ipn updates payment status correctly', function () {
             $i = 1;
         }
     }
-    $secureHash = hash_hmac('sha512', $hashData, 'I2TIA05T0LLQAHM0I2BT73VVIX88TKJA');
+    $secureHash = hash_hmac('sha512', $hashData, config('vnpay.hash_secret'));
     $params['vnp_SecureHash'] = $secureHash;
 
     $response = $this->get(route('frontend.tours.vnpay_ipn', $params));

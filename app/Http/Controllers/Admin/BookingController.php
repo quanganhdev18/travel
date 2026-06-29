@@ -25,14 +25,18 @@ class BookingController extends Controller
             });
         }
 
-        if ($request->filled('status')) {
-            if ($request->status === 'needs_flight') {
-                $query->where('transport_type', 'flight')
-                    ->whereNull('pnr_code')
-                    ->whereIn('booking_status', ['confirmed', 'paid']);
-            } else {
-                $query->where('booking_status', $request->status);
-            }
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->filled('tour_status')) {
+            $query->where('tour_status', $request->tour_status);
+        }
+
+        if ($request->filled('status') && $request->status === 'needs_flight') {
+            $query->where('transport_type', 'flight')
+                ->whereNull('pnr_code')
+                ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
         }
 
         $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -40,12 +44,12 @@ class BookingController extends Controller
         // Thống kê nhanh cho Dashboard
         $stats = [
             'total' => Booking::count(),
-            'pending' => Booking::where('booking_status', 'pending')->count(),
-            'confirmed' => Booking::where('booking_status', 'confirmed')->count(),
-            'revenue' => Booking::where('booking_status', 'paid')->sum('total_price'),
+            'pending_payment' => Booking::where('payment_status', Booking::PAYMENT_PENDING)->count(),
+            'upcoming_tours' => Booking::where('tour_status', Booking::TOUR_UPCOMING)->count(),
+            'revenue' => Booking::where('payment_status', Booking::PAYMENT_PAID_100)->sum('total_price'),
             'flight_ticket_needed' => Booking::where('transport_type', 'flight')
                 ->whereNull('pnr_code')
-                ->whereIn('booking_status', ['confirmed', 'paid']) // Chỉ đếm những đơn đã xác nhận/thanh toán
+                ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
                 ->count(),
         ];
 
@@ -55,26 +59,39 @@ class BookingController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,paid,cancelled,completed',
+            'payment_status' => 'required|in:pending,paid_30,paid_100,failed',
+            'tour_status' => 'required|in:upcoming,in_progress,checking_in,completed,cancelled_by_customer,cancelled_by_admin',
+            'current_checkin_step' => 'nullable|string|max:255',
         ]);
 
         $booking = Booking::with('tour_schedule')->findOrFail($id);
 
-        if ($request->status === 'cancelled' && $booking->booking_status !== 'cancelled') {
+        $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
+        $willBeCancelled = in_array($request->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
+
+        if ($willBeCancelled && ! $isCurrentlyCancelled) {
             $totalPersons = $booking->adults_count + $booking->children_count;
             if ($booking->tour_schedule) {
                 $booking->tour_schedule->increment('available_seats', $totalPersons);
             }
         }
 
-        if ($request->status !== 'cancelled' && $booking->booking_status === 'cancelled') {
+        if (! $willBeCancelled && $isCurrentlyCancelled) {
             $totalPersons = $booking->adults_count + $booking->children_count;
             if ($booking->tour_schedule) {
                 $booking->tour_schedule->decrement('available_seats', $totalPersons);
             }
         }
 
-        $booking->booking_status = $request->status;
+        $booking->payment_status = $request->payment_status;
+        $booking->tour_status = $request->tour_status;
+
+        if ($request->tour_status === Booking::TOUR_CHECKING_IN) {
+            $booking->current_checkin_step = $request->current_checkin_step;
+        } else {
+            $booking->current_checkin_step = null;
+        }
+
         $booking->save();
 
         return back()->with('success', 'Cập nhật trạng thái đơn hàng thành công.');

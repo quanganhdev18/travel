@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Addon extends Model
 {
+    use HasLocalImageUrl;
+
     protected $table = 'addons';
 
     protected $casts = [
@@ -43,7 +46,18 @@ class Addon extends Model
     public function bookings()
     {
         return $this->belongsToMany(Booking::class, 'booking_addons')
-            ->withPivot('id', 'addon_name', 'price', 'quantity')
+            ->withPivot('id', 'addon_name', 'price', 'quantity', 'usage_date')
             ->withTimestamps();
+    }
+
+    public function tours()
+    {
+        return $this->belongsToMany(Tour::class, 'tour_addons')
+            ->withTimestamps();
+    }
+
+    public function getImageUrlAttribute(?string $value): ?string
+    {
+        return $this->resolveImageUrl($value);
     }
 }

@@ -32,6 +32,14 @@ class AuthenticatedSessionController extends Controller
             return redirect()->intended('/admin/dashboard');
         }
 
+        if (Auth::user()->role === 'staff' || Auth::user()->role === 'cskh') {
+            return redirect()->intended(route('admin.chat.index', absolute: false));
+        }
+
+        if (Auth::user()->role === 'guide') {
+            return redirect()->intended(route('guide.dashboard', absolute: false));
+        }
+
         return redirect()->intended('/');
     }
 

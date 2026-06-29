@@ -40,6 +40,7 @@ class BookingAddon extends Model
         'addon_name',
         'price',
         'quantity',
+        'usage_date',
     ];
 
     public function booking()

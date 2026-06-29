@@ -4,29 +4,37 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TourGuide;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TourGuideController extends Controller
 {
     public function index()
     {
-        $tourGuides = TourGuide::withCount('schedule_guides')->latest()->paginate(10);
+        $tourGuides = TourGuide::with('user')->withCount('schedule_guides')->latest()->paginate(10);
 
         return view('admin.tour_guides.index', compact('tourGuides'));
     }
 
     public function create()
     {
-        return view('admin.tour_guides.create');
+        $users = User::where('role', 'guide')->doesntHave('tour_guide')->get();
+
+        return view('admin.tour_guides.create', compact('users'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
-            'phone' => 'required|max:20',
-            'email' => 'nullable|email|max:255',
+            'phone' => 'required|digits:10|unique:tour_guides,phone',
+            'email' => 'nullable|email|max:255|unique:tour_guides,email',
             'bio' => 'nullable|string',
+        ], [
+            'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
+            'phone.unique' => 'Số điện thoại này đã tồn tại, vui lòng nhập số khác.',
+            'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
 
         TourGuide::create($request->all());
@@ -36,16 +44,27 @@ class TourGuideController extends Controller
 
     public function edit(TourGuide $tourGuide)
     {
-        return view('admin.tour_guides.edit', compact('tourGuide'));
+        $users = User::where('role', 'guide')
+            ->where(function ($query) use ($tourGuide) {
+                $query->doesntHave('tour_guide')
+                    ->orWhere('id', $tourGuide->user_id);
+            })->get();
+
+        return view('admin.tour_guides.edit', compact('tourGuide', 'users'));
     }
 
     public function update(Request $request, TourGuide $tourGuide)
     {
         $request->validate([
+            'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
-            'phone' => 'required|max:20',
-            'email' => 'nullable|email|max:255',
+            'phone' => 'required|digits:10|unique:tour_guides,phone,'.$tourGuide->id,
+            'email' => 'nullable|email|max:255|unique:tour_guides,email,'.$tourGuide->id,
             'bio' => 'nullable|string',
+        ], [
+            'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
+            'phone.unique' => 'Số điện thoại này đã tồn tại, vui lòng nhập số khác.',
+            'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
 
         $tourGuide->update($request->all());

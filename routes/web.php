@@ -12,28 +12,35 @@ Route::get('/debug-schema', function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
 Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
+Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 
-use App\Http\Controllers\Admin\BannerController;
+use App\Http\Controllers\Admin\AddonController;
 // Frontend Controllers
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\DestinationController;
-use App\Http\Controllers\Admin\OngoingTourController;
 // Admin Controllers
+use App\Http\Controllers\Admin\DestinationController;
+use App\Http\Controllers\Admin\HolidayController;
+use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
 use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\AppSettingsController;
+use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
+use App\Http\Controllers\Guide\ScheduleController;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Frontend\FavoriteController;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -50,6 +57,12 @@ Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
 
 Route::get('/currency/{currency}', [AppSettingsController::class, 'switchCurrency'])
     ->name('currency.switch');
+
+Route::post('/cookie-consent/accept', [CookieConsentController::class, 'accept'])
+    ->name('cookie.consent.accept');
+
+Route::post('/cookie-consent/decline', [CookieConsentController::class, 'decline'])
+    ->name('cookie.consent.decline');
 
 // VNPay Callbacks
 Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
@@ -93,6 +106,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/scan-cccd', [OcrController::class, 'scanCccd'])
         ->name('ocr.scan-cccd');
 
+    Route::post('/api/coupons/apply', [TourBookingController::class, 'applyCoupon'])
+        ->name('coupons.apply');
+
     // Đặt Tour
     Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
         ->name('frontend.tours.checkout');
@@ -107,9 +123,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/flights/book', [FlightController::class, 'book'])
         ->name('frontend.flights.book');
 
-    // Vé đã đặt của user
-    Route::get('/my-bookings', [UserController::class, 'myBookings'])
-        ->name('user.bookings');
+    // Tài khoản user
+    Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
+    Route::post('/user/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');
+    Route::post('/user/avatar', [UserController::class, 'updateAvatar'])->name('user.avatar.update');
+    Route::post('/user/password', [UserController::class, 'changePassword'])->name('user.password.change');
+
+    Route::get('/my-bookings', [UserController::class, 'myBookings'])->name('user.bookings');
+    Route::get('/my-bookings/{id}', [UserController::class, 'bookingDetail'])->name('user.bookings.detail');
+    Route::post('/my-bookings/{id}/cancel', [UserController::class, 'cancelBooking'])->name('user.bookings.cancel');
+
+    Route::post('/reviews', [UserController::class, 'storeReview'])->name('user.reviews.store');
+
+    Route::get('/my-wishlists', [UserController::class, 'myWishlists'])->name('user.wishlists');
+    Route::post('/wishlists/toggle', [UserController::class, 'toggleWishlist'])->name('user.wishlists.toggle');
+    Route::post('/wishlists/remove', [UserController::class, 'removeWishlist'])->name('user.wishlists.remove');
 
     // Thanh toán lại bằng VNPay
     Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
@@ -123,6 +151,22 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
+    Route::middleware('auth')->group(function () {
+
+    // Tour đã lưu (Favorites)
+    Route::get('/tour-da-luu', [FavoriteController::class, 'index'])
+        ->name('frontend.favorites.index');
+
+    Route::post('/tours/{tour}/favorite', [FavoriteController::class, 'toggle'])
+        ->name('frontend.favorites.toggle');
+
+    Route::delete('/tours/{tour}/favorite', [FavoriteController::class, 'destroy'])
+        ->name('frontend.favorites.destroy');
+    Route::delete('/tours/{tour}/favorite',
+    [FavoriteController::class, 'destroy'])
+    ->name('frontend.favorites.destroy');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -135,6 +179,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.dashboard');
 
     // User Management
+    Route::get('/chat', [\App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
+
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
@@ -143,6 +189,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
         ->name('admin.bookings.index');
+
+    // Quản lý tài khoản (Users)
+    Route::resource('users', App\Http\Controllers\Admin\UserController::class)
+        ->except(['show'])
+        ->names('admin.users');
 
     Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus'])
         ->name('admin.bookings.update_status');
@@ -242,8 +293,55 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/ongoing-tours/{schedule}/assign-guides', [OngoingTourController::class, 'assignGuides'])
         ->name('admin.ongoing_tours.assign_guides');
+
+    // Holidays
+    Route::resource('holidays', HolidayController::class)
+        ->names('admin.holidays');
+
+    // Addons
+    Route::resource('addons', AddonController::class)
+        ->names('admin.addons');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Guide Interface
+|--------------------------------------------------------------------------
+*/
+Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Guide\DashboardController::class, 'index'])
+        ->name('guide.dashboard');
+
+    Route::get('/schedules', [ScheduleController::class, 'index'])
+        ->name('guide.schedules.index');
+
+    Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
+        ->name('guide.schedules.show');
+});
+
+Route::get('/admin/coupons', [CouponController::class, 'index'])
+    ->name('admin.coupons.index');
+Route::get('/admin/coupons/create', [CouponController::class, 'create'])
+    ->name('admin.coupons.create');
+Route::post('/admin/coupons', [CouponController::class, 'store'])
+    ->name('admin.coupons.store');
+Route::get('/admin/coupons/{coupon}/edit', [CouponController::class, 'edit'])
+    ->name('admin.coupons.edit');
+Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])
+    ->name('admin.coupons.update');
+Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])
+    ->name('admin.coupons.destroy');
+
+
+Route::get('/coupons/trash', [CouponController::class, 'trash'])
+    ->name('admin.coupons.trash');
+
+Route::post('/coupons/{id}/restore', [CouponController::class, 'restore'])
+    ->name('admin.coupons.restore');
+
+Route::delete('/coupons/{id}/force-delete', [CouponController::class, 'forceDelete'])
+    ->name('admin.coupons.forceDelete');
+    Route::resource('coupons', CouponController::class);
 /*
 |--------------------------------------------------------------------------
 | Auth Routes
@@ -257,3 +355,11 @@ Route::get('/api/check-email', function (Request $request) {
 })->name('api.check-email');
 
 require __DIR__.'/auth.php';
+// CHAT ROUTES
+Route::middleware(['auth'])->prefix('chat')->group(function () {
+    Route::post('/start', [App\Http\Controllers\ChatController::class, 'startConversation'])->name('chat.start');
+    Route::get('/conversations', [App\Http\Controllers\ChatController::class, 'getConversations'])->name('chat.conversations');
+    Route::get('/{id}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/{id}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+});
+

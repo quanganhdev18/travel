@@ -6,8 +6,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Banner
@@ -28,6 +30,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Banner extends Model
 {
+    use SoftDeletes;
+
+    use HasLocalImageUrl;
+
     protected $table = 'banners';
 
     protected $casts = [

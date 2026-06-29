@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Coupon
@@ -30,9 +31,12 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Coupon extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'coupons';
 
     protected $casts = [
+        'category_id' => 'int',
         'discount_value' => 'float',
         'min_order_value' => 'float',
         'max_discount' => 'float',
@@ -43,6 +47,7 @@ class Coupon extends Model
     ];
 
     protected $fillable = [
+        'category_id',
         'code',
         'discount_type',
         'discount_value',
@@ -53,6 +58,11 @@ class Coupon extends Model
         'usage_limit',
         'used_count',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function bookings()
     {

@@ -27,6 +27,7 @@ class TourGuide extends Model
     protected $table = 'tour_guides';
 
     protected $fillable = [
+        'user_id',
         'name',
         'phone',
         'email',
@@ -36,5 +37,10 @@ class TourGuide extends Model
     public function schedule_guides()
     {
         return $this->hasMany(ScheduleGuide::class, 'guide_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

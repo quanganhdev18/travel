@@ -30,12 +30,12 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $destinations = Destination::whereIn('id', function ($query) {
-            $query->select('destination_id')
-                ->from('tours')
-                ->whereNull('deleted_at');
-        })
-            ->take(4)
+        $destinations = Destination::withCount('tours')
+            ->whereIn('id', function ($query) {
+                $query->select('destination_id')
+                    ->from('tours')
+                    ->whereNull('deleted_at');
+            })
             ->get();
 
         $categories = Category::all();
@@ -54,13 +54,16 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
+        $allDestinations = Destination::all();
+
         return view('welcome', compact(
             'banners',
             'adBanners',
             'destinations',
             'categories',
             'tours',
-            'tickets'
+            'tickets',
+            'allDestinations'
         ));
     }
 

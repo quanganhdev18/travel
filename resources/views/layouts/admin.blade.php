@@ -9,13 +9,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
+
     <!-- Chart.js (for dashboard) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Alpine.js & Vite for Echo -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @vite(['resources/js/app.js'])
 
     <style>
         :root {
@@ -57,7 +61,7 @@
             z-index: 1000;
             box-shadow: 4px 0 10px rgba(0,0,0,0.05);
         }
-        
+
         .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
         .admin-brand {
@@ -77,7 +81,7 @@
         .admin-brand span {
             color: var(--admin-primary);
         }
-        
+
         .admin-brand i {
             font-size: 24px;
             color: var(--admin-primary);
@@ -165,7 +169,7 @@
             box-shadow: var(--shadow-sm);
             margin-bottom: 24px;
         }
-        
+
         .admin-card-header {
             padding: 16px 24px;
             border-bottom: 1px solid var(--admin-border);
@@ -175,7 +179,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .admin-card-title {
             margin: 0;
             font-size: 1.1rem;
@@ -271,6 +275,35 @@
             background: #dbeafe;
             color: var(--admin-primary) !important;
         }
+
+        /* Pagination */
+        .pagination {
+            gap: 4px;
+            margin-bottom: 0;
+        }
+        .pagination .page-link {
+            border-radius: 8px !important;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            color: var(--admin-primary);
+            border: 1px solid var(--admin-border);
+            background: #fff;
+            transition: all 0.2s;
+            line-height: 1.5;
+        }
+        .pagination .page-link:hover {
+            background: #dbeafe;
+            border-color: var(--admin-primary);
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--admin-primary);
+            border-color: var(--admin-primary);
+            color: #fff;
+        }
+        .pagination .page-item.disabled .page-link {
+            color: #94a3b8;
+            background: #f8fafc;
+        }
     </style>
 </head>
 
@@ -284,23 +317,43 @@
 
         <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
+            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-grid-1x2"></i> Tổng quan
                 </a>
             </li>
+            @endhasanyrole
+            @hasanyrole('Super Admin|Admin|Staff|cskh')
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
+                    <i class="bi bi-chat-dots"></i> Live Chat
+                </a>
+            </li>
+            @endhasanyrole
         </ul>
 
+        @hasanyrole('Super Admin|Admin')
         <div class="group-title">Nghiệp vụ kinh doanh</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/bookings*') ? 'active' : '' }}" href="{{ route('admin.bookings.index') }}">
-                    <i class="bi bi-cart-check"></i> Đơn đặt chỗ
+                <a class="nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}" href="{{ route('admin.bookings.index') }}">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Quản lý Booking
                 </a>
             </li>
+        </ul>
+
+        <div class="group-title">Quản lý chung</div>
+        <ul class="nav flex-column mb-3">
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tours*') ? 'active' : '' }}" href="{{ route('admin.tours.index') }}">
                     <i class="bi bi-briefcase"></i> Sản phẩm Tour
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/addons*') ? 'active' : '' }}" href="{{ route('admin.addons.index') }}">
+                    <i class="bi bi-plus-circle"></i> Dịch vụ Addon
                 </a>
             </li>
             <li class="nav-item">
@@ -316,6 +369,12 @@
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tickets*') ? 'active' : '' }}" href="#">
                     <i class="bi bi-ticket-perforated"></i> Vé tham quan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('admin.coupons.index') }}" class="nav-link">
+                    <i class="bi bi-percent"></i>
+                    <span>Mã giảm giá</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -347,6 +406,11 @@
                     <i class="bi bi-people"></i> Tài khoản & Phân quyền
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/holidays*') ? 'active' : '' }}" href="{{ route('admin.holidays.index') }}">
+                    <i class="bi bi-calendar-event"></i> Quản lý ngày lễ
+                </a>
+            </li>
         </ul>
 
         <div class="group-title">Tiện ích</div>
@@ -362,22 +426,38 @@
                 </a>
             </li>
         </ul>
+        @endhasanyrole
+
+        @role('Guide')
+        <div class="group-title">Quản lý chung</div>
+        <ul class="nav flex-column mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
+                    <i class="bi bi-compass"></i> Điều hành Tour
+                </a>
+            </li>
+        </ul>
+        @endrole
     </div>
 
     <div class="main-content">
         <div class="topbar">
             <h1 class="page-title">@yield('page-title', 'Bảng Điều Khiển')</h1>
-            
+
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border" title="Xem trang chủ">
                     <i class="bi bi-box-arrow-up-right me-1"></i> Xem Website
                 </a>
-                
+
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
-                        <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
+                        @if(Auth::user() && Auth::user()->avatar)
+                            <img src="{{ asset(Auth::user()->avatar) }}" alt="avatar" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;">
+                        @else
+                            <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        @endif
                         <span class="fw-500 d-none d-md-inline">{{ Auth::user()->name ?? 'Quản trị viên' }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="min-width: 200px;">
@@ -397,7 +477,7 @@
 
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 bg-success bg-opacity-10 text-success d-flex align-items-center" role="alert">
-                <i class="bi bi-check-circle-fill fs-5 me-2"></i> 
+                <i class="bi bi-check-circle-fill fs-5 me-2"></i>
                 <div>{{ session('success') }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -405,7 +485,7 @@
 
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show border-0 bg-danger bg-opacity-10 text-danger d-flex align-items-center" role="alert">
-                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i> 
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
                 <div>{{ session('error') }}</div>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -425,7 +505,7 @@
         <div class="flex-grow-1">
             @yield('content')
         </div>
-        
+
         <!-- Footer -->
         <div class="text-center text-muted small mt-4 pt-4 border-top">
             &copy; {{ date('Y') }} Hệ thống Quản trị Travel Wonder. Bảo lưu mọi quyền.
@@ -433,7 +513,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/pjax-navigation.js') }}"></script>
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

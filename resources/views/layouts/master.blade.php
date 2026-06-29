@@ -12,8 +12,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('css/premium-theme.css') }}">
+    @vite(['resources/js/app.js'])
 </head>
-
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-premium fixed-top {{ request()->is('/') ? '' : 'navbar-solid' }} flex-column p-0">
@@ -56,9 +56,9 @@
                             <i class="bi bi-question-circle me-1"></i> {{ __('Hỗ trợ') }}
                         </a>
                     </li>
-                    
+
                     <div class="vr mx-1 bg-secondary" style="width: 1px; opacity: 0.3; height: 16px; align-self: center;"></div>
-                    
+
                     @guest
                     <li class="nav-item">
                         <a class="nav-link py-1" href="{{ route('login') }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a>
@@ -69,13 +69,17 @@
                     @else
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center py-1" href="#" id="userDropdownTop" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1 fs-5"></i>
+                            @if(Auth::user()->avatar)
+                                <img src="{{ asset(Auth::user()->avatar) }}" alt="avatar" class="rounded-circle me-2" style="width: 28px; height: 28px; object-fit: cover;">
+                            @else
+                                <i class="bi bi-person-circle me-1 fs-5"></i>
+                            @endif
                             <span style="font-weight: 600;">{{ Auth::user()->name }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; margin-top: 5px;">
-                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
-                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
-                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('user.bookings') }}"><i class="bi bi-calendar-check me-2"></i> {{ __('Tour của tôi') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('frontend.favorites.index') }}"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
@@ -104,6 +108,13 @@
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ url('/') }}">{{ __('Trang chủ') }}</a></li>
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.destinations.index') }}">{{ __('Điểm đến') }}</a></li>
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tours.index') }}">{{ __('Tour trọn gói') }}</a></li>
+                        @auth
+                        <li class="nav-item">
+                            <a class="nav-link fs-6" href="{{ route('frontend.favorites.index') }}">
+                                Tour đã lưu
+                            </a>
+                        </li>
+                        @endauth
                         <li class="nav-item"><a class="nav-link fs-6" href="#">{{ __('Vé tham quan') }}</a></li>
                         <li class="nav-item"><a class="nav-link text-danger fs-6" href="#"><i class="bi bi-tags-fill me-1"></i>{{ __('Khuyến mãi') }}</a></li>
                     </ul>
@@ -132,20 +143,24 @@
                             </ul>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-question-circle me-2"></i> {{ __('Hỗ trợ') }}</a></li>
-                        
+
                         @guest
                         <li class="nav-item mt-2"><a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login') }}">{{ __('Đăng nhập') }}</a></li>
                         <li class="nav-item"><a class="btn-register-premium text-decoration-none d-block text-center" href="{{ route('register') }}">{{ __('Đăng ký') }}</a></li>
                         @else
                         <li class="nav-item dropdown mt-2">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdownMobile" role="button" data-bs-toggle="dropdown">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;"><i class="bi bi-person-fill"></i></div>
+                                @if(Auth::user()->avatar)
+                                    <img src="{{ asset(Auth::user()->avatar) }}" alt="avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                @else
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;"><i class="bi bi-person-fill"></i></div>
+                                @endif
                                 <span class="fw-bold text-dark">{{ Auth::user()->name }}</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.bookings') }}"><i class="bi bi-calendar-check me-2"></i> {{ __('Tour của tôi') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('frontend.favorites.index') }}"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
@@ -240,6 +255,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('js/animations.js') }}"></script>
+
+    {{-- Cookie Consent Banner --}}
+    <x-cookie-consent />
+
+    <x-chatbox />
+
+    @stack('scripts')
 </body>
 
 </html>

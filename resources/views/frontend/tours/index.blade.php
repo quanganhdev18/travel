@@ -10,10 +10,10 @@
         @php
             $firstBanner = $banners->first();
             $bgImage = 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=2070'; // fallback
-            
+
             if ($firstBanner && $firstBanner->image_url) {
-                $bgImage = Str::startsWith($firstBanner->image_url, ['http://', 'https://']) 
-                           ? $firstBanner->image_url 
+                $bgImage = Str::startsWith($firstBanner->image_url, ['http://', 'https://'])
+                           ? $firstBanner->image_url
                            : asset($firstBanner->image_url);
             }
         @endphp
@@ -29,33 +29,125 @@
 <!-- Search Widget -->
 <div class="container search-widget-wrapper">
     <div class="glass-panel search-glass px-4 py-3">
-        <form action="#" method="GET" class="row g-3 align-items-end">
-            <div class="col-md-4">
+        <form action="{{ route('frontend.tours.index') }}" method="GET" class="row g-3 align-items-end">
+            <div class="col-md-3">
                 <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-geo-alt"></i></span>
-                    <input type="text" class="form-control search-form-control border-start-0 ps-0"
-                        placeholder="{{ __('Bạn muốn đi đâu?') }}">
-                </div>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành') }}</label>
-                <input type="date" class="form-control search-form-control">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label text-muted small fw-bold">{{ __('Mức giá') }}</label>
-                <select class="form-select search-form-control">
-                    <option value="">{{ __('Tất cả mức giá') }}</option>
-                    <option value="1">{{ __('Dưới 5 triệu') }}</option>
-                    <option value="2">{{ __('Từ 5 - 10 triệu') }}</option>
-                    <option value="3">{{ __('Trên 10 triệu') }}</option>
+                <select name="destination_id" class="form-select search-form-control {{ isset($filterErrors['destination_id']) ? 'is-invalid' : '' }}">
+                    <option value="">{{ __('Tất cả điểm đến') }}</option>
+                    @foreach($allDestinations as $dest)
+                        <option value="{{ $dest->id }}" {{ request('destination_id') == $dest->id ? 'selected' : '' }}>{{ $dest->name }}</option>
+                    @endforeach
                 </select>
+                @if(isset($filterErrors['destination_id']))
+                    <div class="text-danger small mt-1 position-absolute">{{ $filterErrors['destination_id'][0] }}</div>
+                @endif
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-search-primary w-100"><i
-                        class="bi bi-search me-2"></i>{{ __('Tìm kiếm') }}</button>
+            
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành từ') }}</label>
+                <input type="date" name="departure_date" class="form-control search-form-control {{ isset($filterErrors['departure_date']) ? 'is-invalid' : '' }}"
+                    value="{{ request('departure_date') }}" min="{{ date('Y-m-d') }}">
+                @if(isset($filterErrors['departure_date']))
+                    <div class="text-danger small mt-1 position-absolute">{{ $filterErrors['departure_date'][0] }}</div>
+                @endif
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">{{ __('Ngân sách') }}</label>
+                <select name="budget" class="form-select search-form-control {{ isset($filterErrors['budget']) ? 'is-invalid' : '' }}">
+                    <option value="all">{{ __('Tất cả mức giá') }}</option>
+                    <option value="under_5m" {{ request('budget') == 'under_5m' ? 'selected' : '' }}>{{ __('Dưới 5 triệu') }}</option>
+                    <option value="5m_10m" {{ request('budget') == '5m_10m' ? 'selected' : '' }}>{{ __('5 - 10 triệu') }}</option>
+                    <option value="10m_20m" {{ request('budget') == '10m_20m' ? 'selected' : '' }}>{{ __('10 - 20 triệu') }}</option>
+                    <option value="over_20m" {{ request('budget') == 'over_20m' ? 'selected' : '' }}>{{ __('Trên 20 triệu') }}</option>
+                </select>
+                @if(isset($filterErrors['budget']))
+                    <div class="text-danger small mt-1 position-absolute">{{ $filterErrors['budget'][0] }}</div>
+                @endif
+            </div>
+
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-search-primary w-100">
+                    <i class="bi bi-search me-2"></i>{{ __('Tìm kiếm') }}
+                </button>
+            </div>
+            
+            <div class="col-12 mt-4">
+                <label class="form-label text-muted small fw-bold me-3">{{ __('Xếp hạng khách sạn:') }}</label>
+                <div class="d-inline-flex gap-4 flex-wrap align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="hotel_stars" id="star_all" value="" {{ !request('hotel_stars') ? 'checked' : '' }}>
+                        <label class="form-check-label text-muted" for="star_all">Tất cả</label>
+                    </div>
+                    @foreach([5, 4, 3, 2, 1] as $star)
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="hotel_stars" id="star_{{ $star }}" value="{{ $star }}" {{ request('hotel_stars') == $star ? 'checked' : '' }}>
+                        <label class="form-check-label text-muted" for="star_{{ $star }}">{{ $star }} Sao</label>
+                    </div>
+                    @endforeach
+                </div>
+                @if(isset($filterErrors['hotel_stars']))
+                    <div class="text-danger small mt-1">{{ $filterErrors['hotel_stars'][0] }}</div>
+                @endif
             </div>
         </form>
+
+        @if(request()->hasAny(['destination_id', 'departure_date', 'budget', 'hotel_stars', 'keyword']))
+        <div class="d-flex align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
+            <small class="text-muted me-2">
+                <i class="bi bi-funnel me-1"></i>
+                {{ __('Tìm thấy') }} <strong class="text-primary">{{ $tours->total() }}</strong> {{ __('tour phù hợp') }}
+            </small>
+            
+            @if(request('destination_id') && !isset($filterErrors['destination_id']))
+                @php $dest = $allDestinations->firstWhere('id', request('destination_id')); @endphp
+                @if($dest)
+                <a href="{{ request()->fullUrlWithQuery(['destination_id' => null]) }}" class="badge bg-primary bg-opacity-10 text-primary text-decoration-none p-2 rounded-pill hover-opacity">
+                    <i class="bi bi-geo-alt me-1"></i>{{ $dest->name }} <i class="bi bi-x"></i>
+                </a>
+                @endif
+            @endif
+
+            @if(request('departure_date') && !isset($filterErrors['departure_date']))
+                <a href="{{ request()->fullUrlWithQuery(['departure_date' => null]) }}" class="badge bg-info bg-opacity-10 text-info text-decoration-none p-2 rounded-pill hover-opacity">
+                    <i class="bi bi-calendar me-1"></i>Từ {{ \Carbon\Carbon::parse(request('departure_date'))->format('d/m/Y') }} <i class="bi bi-x"></i>
+                </a>
+            @endif
+
+            @if(request('hotel_stars') && !isset($filterErrors['hotel_stars']))
+                <a href="{{ request()->fullUrlWithQuery(['hotel_stars' => null]) }}" class="badge bg-warning bg-opacity-10 text-warning text-decoration-none p-2 rounded-pill hover-opacity">
+                    <i class="bi bi-star-fill me-1"></i>Từ {{ request('hotel_stars') }} sao <i class="bi bi-x"></i>
+                </a>
+            @endif
+
+            @if(request('budget') && request('budget') !== 'all' && !isset($filterErrors['budget']))
+                @php
+                    $budgetLabels = [
+                        'under_5m' => 'Dưới 5 triệu',
+                        '5m_10m' => '5 - 10 triệu',
+                        '10m_20m' => '10 - 20 triệu',
+                        'over_20m' => 'Trên 20 triệu',
+                    ];
+                @endphp
+                <a href="{{ request()->fullUrlWithQuery(['budget' => null]) }}" class="badge bg-success bg-opacity-10 text-success text-decoration-none p-2 rounded-pill hover-opacity">
+                    <i class="bi bi-currency-dollar me-1"></i>{{ $budgetLabels[request('budget')] ?? '' }} <i class="bi bi-x"></i>
+                </a>
+            @endif
+            
+            @if(request('keyword'))
+                <a href="{{ request()->fullUrlWithQuery(['keyword' => null]) }}" class="badge bg-secondary bg-opacity-10 text-secondary text-decoration-none p-2 rounded-pill hover-opacity">
+                    <i class="bi bi-search me-1"></i>{{ request('keyword') }} <i class="bi bi-x"></i>
+                </a>
+            @endif
+
+            <a href="{{ route('frontend.tours.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill ms-auto">
+                {{ __('Xóa bộ lọc') }}
+            </a>
+        </div>
+        <style>
+            .hover-opacity:hover { opacity: 0.8; }
+        </style>
+        @endif
     </div>
 </div>
 
@@ -93,9 +185,27 @@
                     <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                         <div class="combo-card">
                             <div class="combo-card-img-wrapper">
-                                <span class="combo-badge">
-                                    <span class="badge-icon">25%</span> Hot Deal
-                                </span>
+
+    @auth
+    @php
+        $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+            ->where('tour_id', $tour->id)
+            ->exists();
+    @endphp
+
+    <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+          method="POST"
+          class="favorite-form"
+          onclick="event.stopPropagation();">
+        @csrf
+
+        <button type="submit"
+                class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+            <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+        </button>
+    </form>
+    @endauth
+
                                 @php
                                 $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
                                 $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
@@ -116,44 +226,60 @@
                                     alt="{{ $tour->title }}">
                             </div>
                             <div class="combo-card-body">
-                                <h3 class="combo-title">{{ $tour->title }}</h3>
-                                <div class="combo-stars">
-                                    <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                                </div>
-                                <div class="combo-specs">
-                                    <div class="combo-specs-row justify-content-between">
-                                        <div class="combo-specs-item">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span class="text-truncate" style="max-width: 140px;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
-                                        </div>
-                                        <div class="combo-specs-item">
-                                            <i class="bi bi-car-front"></i>
-                                            <span>{{ __('Xe') }}</span>
-                                        </div>
+                                <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="combo-stars" style="font-size: 0.9rem;">
+                                        @php $stars = $tour->hotel_stars ?? 0; @endphp
+                                        @for($i=1; $i<=5; $i++)
+                                            <i class="bi bi-star-fill {{ $i <= $stars ? 'text-warning' : 'text-muted opacity-25' }}"></i>
+                                        @endfor
                                     </div>
-                                    <div class="combo-specs-item mt-1">
-                                        <i class="bi bi-building"></i>
-                                        <span>{{ __('Khách sạn tương đương 4*') }}</span>
-                                    </div>
+                                    @if(isset($tour->avg_rating) && $tour->review_count > 0)
+                                        <span class="badge bg-success" style="font-size: 0.75rem;">{{ $tour->avg_rating }} <i class="bi bi-star-fill"></i></span>
+                                        <small class="text-muted" style="font-size: 0.75rem;">({{ $tour->review_count }} đánh giá)</small>
+                                    @endif
                                 </div>
-                                <div class="combo-footer">
+                                <div class="combo-location d-flex align-items-center gap-3">
+                                    <div class="text-truncate">
+                                        <i class="bi bi-geo-alt text-danger"></i>
+                                        <span class="text-muted">{{ $tour->destination->name ?? 'Không xác định' }}</span>
+                                    </div>
+                                    @if(isset($tour->seats_left))
+                                    <div class="text-nowrap" style="font-size: 0.85rem;">
+                                        <i class="bi bi-person-check text-success"></i>
+                                        <span class="text-success fw-bold">{{ $tour->seats_left }}</span> <span class="text-muted">chỗ</span>
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="combo-footer mt-3 border-top pt-3">
                                     <div>
                                         <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                        <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
+                                        <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ<span class="text-muted fw-normal" style="font-size: 0.8rem;">/người lớn</span></div>
                                     </div>
-                                    <button class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</button>
+                                    <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                 </div>
                             </div>
                         </div>
                     </a>
                 </div>
                 @empty
-                <div class="col-12">
-                    <p class="text-muted text-center">{{ __('Đang cập nhật tour combo.') }}</p>
+                <div class="col-12 text-center py-5">
+                    <div class="mb-3 text-muted">
+                        <i class="bi bi-search" style="font-size: 3rem;"></i>
+                    </div>
+                    <h5 class="text-muted">{{ __('Không tìm thấy tour phù hợp với bộ lọc của bạn') }}</h5>
+                    <p class="text-muted">{{ __('Gợi ý: Thử bỏ bớt điều kiện lọc để xem thêm tour.') }}</p>
+                    <a href="{{ route('frontend.tours.index') }}" class="btn btn-primary rounded-pill mt-2">
+                        <i class="bi bi-arrow-repeat me-1"></i>{{ __('Xem tất cả tour') }}
+                    </a>
                 </div>
                 @endforelse
             </div>
             
+            <div class="d-flex justify-content-center mt-5">
+                {{ $tours->appends(request()->query())->links() }}
+            </div>
+
         </div>
     </div>
 </section>
@@ -388,7 +514,7 @@ if (container) {
 <!-- Full Width Banner -->
 <section class="full-width-banner position-relative reveal-up mt-0">
     <div class="banner-bg">
-        <img src="{{ asset('uploads/halong.jpg') }}" alt="Halong Bay">
+        <img src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1920&auto=format&fit=crop" alt="Halong Bay">
     </div>
     <div class="banner-overlay"></div>
     <div class="container position-relative z-index-1 banner-content text-center text-white">
@@ -399,5 +525,49 @@ if (container) {
         </p>
     </div>
 </section>
+<style>
+.combo-card-img-wrapper {
+    position: relative;
+}
 
+.favorite-form {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 9999;
+    margin: 0;
+}
+
+.favorite-btn {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn i {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.08);
+}
+
+.favorite-btn.active {
+    color: #ff3366;
+}
+
+.favorite-btn.active i {
+    color: #ff3366;
+}
+</style>
 @endsection
