@@ -356,5 +356,6 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/conversations', [ChatController::class, 'getConversations'])->name('chat.conversations');
     Route::get('/{id}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/{id}/messages/{messageId}/mark-important', [ChatController::class, 'markImportant'])->name('chat.mark_important');
 });
 

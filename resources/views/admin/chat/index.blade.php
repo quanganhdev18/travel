@@ -49,17 +49,30 @@
                     <div class="chat-messages flex-grow-1" id="admin-chat-messages" style="overflow-y: auto; margin-bottom: 20px;">
                         <template x-for="msg in messages" :key="msg.id">
                             <div class="mb-3 d-flex" :class="msg.sender_id == adminId ? 'justify-content-end' : ''">
-                                <div style="max-width: 75%;">
+                                <div style="max-width: 75%; position: relative;">
                                     <div class="p-3 rounded-3 shadow-sm" 
                                          :class="msg.sender_id == adminId ? 'bg-primary text-white' : 'bg-white border'">
+                                        <!-- Nút đánh dấu quan trọng -->
+                                        <div class="position-absolute" style="top: -10px; right: -10px; cursor: pointer; background: white; border-radius: 50%; padding: 2px 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" @click="toggleImportant(msg)">
+                                            <i class="bi" :class="msg.is_important ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
+                                        </div>
+                                        
                                         <div x-text="msg.message" x-show="msg.message"></div>
                                         <template x-if="msg.attachment_path">
                                             <div class="mt-2">
-                                                <a :href="msg.attachment_path" target="_blank" 
-                                                   class="btn btn-sm"
-                                                   :class="msg.sender_id == adminId ? 'btn-light text-primary' : 'btn-outline-primary'">
-                                                    <i class="bi bi-file-earmark-excel"></i> <span x-text="msg.attachment_name"></span>
-                                                </a>
+                                                <!-- Nếu là ảnh thì hiển thị ảnh, nếu không thì hiển thị nút download -->
+                                                <template x-if="msg.attachment_path && msg.attachment_path.match(/\.(jpeg|jpg|gif|png)$/i) != null">
+                                                    <a :href="msg.attachment_path" target="_blank">
+                                                        <img :src="msg.attachment_path" class="img-fluid rounded" style="max-height: 200px;">
+                                                    </a>
+                                                </template>
+                                                <template x-if="msg.attachment_path && msg.attachment_path.match(/\.(jpeg|jpg|gif|png)$/i) == null">
+                                                    <a :href="msg.attachment_path" target="_blank" 
+                                                       class="btn btn-sm"
+                                                       :class="msg.sender_id == adminId ? 'btn-light text-primary' : 'btn-outline-primary'">
+                                                        <i class="bi bi-file-earmark-arrow-down"></i> <span x-text="msg.attachment_name"></span>
+                                                    </a>
+                                                </template>
                                             </div>
                                         </template>
                                     </div>
@@ -72,10 +85,17 @@
                     <!-- Input Form -->
                     <form @submit.prevent="sendMessage" class="mt-auto bg-white p-3 border rounded">
                         <div class="d-flex align-items-center gap-2">
+                            <input type="file" x-ref="attachment" class="d-none" accept=".xlsx,.xls,.csv,.doc,.docx,.png,.jpg,.jpeg" @change="updateFileName">
+                            <button type="button" class="btn btn-light border" @click="$refs.attachment.click()" title="Đính kèm file">
+                                <i class="bi bi-paperclip text-secondary"></i>
+                            </button>
                             <input type="text" x-model="newMessage" class="form-control" placeholder="Nhập câu trả lời..." autocomplete="off">
                             <button type="submit" class="btn btn-primary px-4" :disabled="sending">
                                 <i class="bi bi-send"></i> Gửi
                             </button>
+                        </div>
+                        <div x-show="fileName" class="small text-muted mt-2">
+                            <i class="bi bi-file-earmark"></i> Đang chọn: <span x-text="fileName"></span>
                         </div>
                     </form>
                 </div>
@@ -102,6 +122,7 @@
                 messages: [],
                 currentConv: null,
                 newMessage: '',
+                fileName: '',
                 sending: false,
                 adminId: {{ auth()->id() }},
                 
@@ -137,12 +158,32 @@
                         });
                 },
 
+                updateFileName() {
+                    const file = this.$refs.attachment.files[0];
+                    this.fileName = file ? file.name : '';
+                },
+
+                toggleImportant(msg) {
+                    const oldState = msg.is_important;
+                    msg.is_important = !msg.is_important;
+                    fetch('/chat/' + this.currentConv.id + '/messages/' + msg.id + '/mark-important', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    }).then(r => r.json()).then(data => {
+                        msg.is_important = data.is_important;
+                    }).catch(e => {
+                        msg.is_important = oldState; // revert on error
+                    });
+                },
+
                 sendMessage() {
-                    if (!this.newMessage.trim() || !this.currentConv) return;
+                    const file = this.$refs.attachment ? this.$refs.attachment.files[0] : null;
+                    if (!this.newMessage.trim() && !file) return;
                     
                     this.sending = true;
                     const formData = new FormData();
-                    formData.append('message', this.newMessage);
+                    if(this.newMessage.trim()) formData.append('message', this.newMessage.trim());
+                    if(file) formData.append('attachment', file);
                     
                     fetch('/chat/' + this.currentConv.id + '/send', {
                         method: 'POST',
@@ -153,6 +194,8 @@
                     .then(msg => {
                         this.messages.push(msg);
                         this.newMessage = '';
+                        this.fileName = '';
+                        if(this.$refs.attachment) this.$refs.attachment.value = '';
                         this.scrollToBottom();
                         this.loadConversations(); // refresh list to update latest msg preview
                     })

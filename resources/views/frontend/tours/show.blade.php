@@ -303,6 +303,26 @@
                     <i class="bi bi-clock fs-5 me-2 text-warning"></i>
                     {{ $tour->duration_days ?? 0 }} {{ __('ngày') }} {{ $tour->duration_nights ?? 0 }} {{ __('đêm') }}
                 </span>
+
+                @if($tour->departure_time)
+                <span class="d-flex align-items-center">
+                    <i class="bi bi-alarm fs-5 me-2 text-info"></i>
+                    {{ __('Giờ khởi hành:') }}
+                    <strong class="ms-1 text-dark">
+                        {{ \Carbon\Carbon::parse($tour->departure_time)->format('H:i') }}
+                    </strong>
+                </span>
+                @endif
+
+                @if($tour->meeting_point)
+                <span class="d-flex align-items-center">
+                    <i class="bi bi-geo fs-5 me-2 text-primary"></i>
+                    {{ __('Điểm tập kết:') }}
+                    <strong class="ms-1 text-dark">
+                        {{ $tour->meeting_point }}
+                    </strong>
+                </span>
+                @endif
             </div>
 
         <div class="row g-4">

@@ -95,4 +95,22 @@ class ChatController extends Controller
 
         return response()->json($conversation);
     }
+
+    public function markImportant(Request $request, $id, $messageId)
+    {
+        $conversation = Conversation::findOrFail($id);
+        $user = Auth::user();
+        
+        if (!$user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $message = $conversation->messages()->findOrFail($messageId);
+        $message->is_important = !$message->is_important;
+        $message->save();
+
+        // Optionally, broadcast an event here if real-time UI update is needed, 
+        // but simple response is enough if UI updates optimistically.
+        return response()->json(['success' => true, 'is_important' => $message->is_important]);
+    }
 }

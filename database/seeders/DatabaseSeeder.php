@@ -268,6 +268,8 @@ class DatabaseSeeder extends Seeder
                     'duration_days' => $tData['duration_days'],
                     'duration_nights' => $tData['duration_nights'],
                     'base_price' => $tData['base_price'],
+                    'departure_time' => sprintf('%02d:00:00', rand(6, 10)),
+                    'meeting_point' => 'Sân bay / Bến xe trung tâm',
                 ]
             );
 
