@@ -77,9 +77,9 @@
                             <span style="font-weight: 600;">{{ Auth::user()->name }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; margin-top: 5px;">
-                            <li><a class="dropdown-item py-2" href="{{ route('profile.edit') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
-                            <li><a class="dropdown-item py-2" href="{{ route('user.bookings') }}"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
-                            <li><a class="dropdown-item py-2" href="#"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('user.bookings') }}"><i class="bi bi-calendar-check me-2"></i> {{ __('Tour của tôi') }}</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('user.profile') }}?tab=wishlists"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
@@ -110,7 +110,7 @@
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tours.index') }}">{{ __('Tour trọn gói') }}</a></li>
                         @auth
                         <li class="nav-item">
-                            <a class="nav-link fs-6" href="{{ route('frontend.favorites.index') }}">
+                            <a class="nav-link fs-6" href="{{ route('user.profile') }}?tab=wishlists">
                                 Tour đã lưu
                             </a>
                         </li>
@@ -158,9 +158,9 @@
                                 <span class="fw-bold text-dark">{{ Auth::user()->name }}</span>
                             </a>
                             <ul class="dropdown-menu shadow-sm border-0">
-                                <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
-                                <li><a class="dropdown-item" href="{{ route('user.bookings') }}"><i class="bi bi-bag-check me-2"></i> {{ __('Đặt chỗ của tôi') }}</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.profile') }}"><i class="bi bi-person me-2"></i> {{ __('Hồ sơ của tôi') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.bookings') }}"><i class="bi bi-calendar-check me-2"></i> {{ __('Tour của tôi') }}</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.profile') }}?tab=wishlists"><i class="bi bi-heart me-2"></i> {{ __('Danh sách đã lưu') }}</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">

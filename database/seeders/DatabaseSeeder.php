@@ -92,7 +92,7 @@ class DatabaseSeeder extends Seeder
             [
                 'title' => 'Giảm giá 30% khi đặt sớm',
                 'image_url' => 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=600',
-                'target_url' => '/tours/search?budget=under_5m',
+                'target_url' => '/tour-tron-goi?budget=under_5m',
                 'position' => 'home_ads',
                 'sort_order' => 1,
             ],

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Models\Coupon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -18,7 +19,11 @@ class BannerController extends Controller
 
     public function create()
     {
-        return view('admin.banners.create');
+        $coupons = Coupon::where('valid_until', '>=', now())
+            ->orderBy('code')
+            ->get();
+
+        return view('admin.banners.create', compact('coupons'));
     }
 
     public function store(Request $request)
@@ -28,6 +33,7 @@ class BannerController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'image_url' => 'nullable|string',
             'target_url' => 'nullable|string',
+            'coupon_id' => 'nullable|exists:coupons,id',
             'position' => 'nullable|string|in:hero,home_ads',
             'sort_order' => 'nullable|integer',
             'is_active' => 'boolean',
@@ -42,9 +48,25 @@ class BannerController extends Controller
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = time().'_'.$image->getClientOriginalName();
-            $image->move(public_path('uploads/banners'), $imageName);
-            $data['image_url'] = 'uploads/banners/'.$imageName;
+            $imageName = time().'_'.str_replace(' ', '_', $image->getClientOriginalName());
+
+            // Sử dụng copy thay vì move để tránh lỗi quyền Windows
+            $uploadPath = public_path('uploads'.DIRECTORY_SEPARATOR.'banners');
+
+            // Tạo thư mục nếu chưa tồn tại
+            if (! is_dir($uploadPath)) {
+                @mkdir($uploadPath, 0777, true);
+            }
+
+            $destinationPath = $uploadPath.DIRECTORY_SEPARATOR.$imageName;
+
+            // Dùng copy thay vì move
+            if (copy($image->getRealPath(), $destinationPath)) {
+                @chmod($destinationPath, 0666);
+                $data['image_url'] = 'uploads/banners/'.$imageName;
+            } else {
+                return back()->with('error', 'Không thể upload ảnh. Vui lòng thử dùng URL hoặc liên hệ admin.')->withInput();
+            }
         } elseif (! $request->filled('image_url')) {
             return back()->with('error', 'Vui lòng tải ảnh lên hoặc nhập URL ảnh')->withInput();
         }
@@ -56,7 +78,11 @@ class BannerController extends Controller
 
     public function edit(Banner $banner)
     {
-        return view('admin.banners.edit', compact('banner'));
+        $coupons = Coupon::where('valid_until', '>=', now())
+            ->orderBy('code')
+            ->get();
+
+        return view('admin.banners.edit', compact('banner', 'coupons'));
     }
 
     public function update(Request $request, Banner $banner)
@@ -66,6 +92,7 @@ class BannerController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'image_url' => 'nullable|string',
             'target_url' => 'nullable|string',
+            'coupon_id' => 'nullable|exists:coupons,id',
             'position' => 'nullable|string|in:hero,home_ads',
             'sort_order' => 'nullable|integer',
             'is_active' => 'boolean',
@@ -75,16 +102,42 @@ class BannerController extends Controller
         $data['is_active'] = $request->has('is_active') ? 1 : 0;
 
         if ($request->hasFile('image')) {
-            // Delete old image if it's a local file
-            if ($banner->image_url && file_exists(public_path($banner->image_url))) {
-                unlink(public_path($banner->image_url));
+            // Delete old image if it's a local file (không phải URL)
+            if ($banner->image_url &&
+                ! str_starts_with($banner->image_url, 'http') &&
+                file_exists(public_path($banner->image_url))) {
+                @unlink(public_path($banner->image_url));
             }
 
             $image = $request->file('image');
-            $imageName = time().'_'.$image->getClientOriginalName();
-            $image->move(public_path('uploads/banners'), $imageName);
-            $data['image_url'] = 'uploads/banners/'.$imageName;
+            $imageName = time().'_'.str_replace(' ', '_', $image->getClientOriginalName());
+
+            // Sử dụng copy thay vì move
+            $uploadPath = public_path('uploads'.DIRECTORY_SEPARATOR.'banners');
+
+            if (! is_dir($uploadPath)) {
+                @mkdir($uploadPath, 0777, true);
+            }
+
+            $destinationPath = $uploadPath.DIRECTORY_SEPARATOR.$imageName;
+
+            if (copy($image->getRealPath(), $destinationPath)) {
+                @chmod($destinationPath, 0666);
+                $data['image_url'] = 'uploads/banners/'.$imageName;
+            } else {
+                return back()->with('error', 'Không thể upload ảnh. Vui lòng thử dùng URL.')->withInput();
+            }
+        } elseif ($request->filled('image_url')) {
+            // Nếu người dùng nhập URL mới, cập nhật image_url
+            // Xóa ảnh cũ nếu là file local
+            if ($banner->image_url &&
+                ! str_starts_with($banner->image_url, 'http') &&
+                file_exists(public_path($banner->image_url))) {
+                @unlink(public_path($banner->image_url));
+            }
+            $data['image_url'] = $request->image_url;
         }
+        // Nếu không upload file mới và không nhập URL mới, giữ nguyên image_url cũ
 
         $banner->update($data);
 
