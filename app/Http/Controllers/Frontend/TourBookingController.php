@@ -237,6 +237,11 @@ class TourBookingController extends Controller
             $booking->payment_type = $request->payment_type ?? 'full';
             $booking->payment_method = $request->payment_method ?? 'transfer';
             $booking->paid_amount = 0;
+
+            $booking->payment_step = $request->payment_method === 'vnpay'
+                ? 'vnpay_created'
+                : 'transfer_waiting';
+
             $booking->save();
 
             // Lưu TicketBooking
@@ -512,100 +517,114 @@ class TourBookingController extends Controller
 
     public function payWithVNPay(int $id, Request $request): RedirectResponse
     {
-        $booking = Booking::findOrFail($id);
+    $booking = Booking::findOrFail($id);
 
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        if (in_array($booking->tour_status, [Booking::TOUR_COMPLETED, Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])) {
-            return redirect()->route('user.bookings')->with('error', 'Đơn hàng không thể thanh toán.');
-        }
-
-        $vnpayUrl = $this->generateVnpayUrl($booking, $request->ip());
-
-        return redirect()->away($vnpayUrl);
+    if ($booking->user_id !== Auth::id()) {
+        abort(403);
     }
 
-    private function generateVnpayUrl(Booking $booking, string $ipAddress): string
-    {
-        $vnp_TmnCode = config('vnpay.tmn_code');
-        $vnp_HashSecret = config('vnpay.hash_secret');
-        $vnp_Url = config('vnpay.url');
-        $vnp_Returnurl = route('frontend.tours.vnpay_return');
-
-        $vnp_TxnRef = $booking->id.'_'.time();
-        $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
-        $vnp_OrderType = 'billpayment';
-
-        // Xác định số tiền cần thanh toán:
-        // - Đặt cọc lần đầu (deposit, chưa thanh toán): 30% tổng
-        // - Thanh toán phần còn lại (đã cọc 30%): 70% tổng
-        // - Thanh toán đầy đủ (full): 100% tổng
-        if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
-            // Đã cọc rồi, giờ thanh toán phần còn lại 70%
-            $actualAmount = $booking->total_price * 0.7;
-            $vnp_OrderInfo = 'Thanh toan phan con lai tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
-        } elseif ($booking->payment_type === 'deposit') {
-            // Cọc lần đầu 30%
-            $actualAmount = $booking->total_price * 0.3;
-        } else {
-            // Thanh toán 100%
-            $actualAmount = $booking->total_price;
-        }
-
-        $vnp_Amount = (int) ($actualAmount * 100);
-        $vnp_Locale = 'vi';
-        $vnp_IpAddr = $ipAddress;
-
-        $inputData = [
-            'vnp_Version' => '2.1.0',
-            'vnp_TmnCode' => $vnp_TmnCode,
-            'vnp_Amount' => $vnp_Amount,
-            'vnp_Command' => 'pay',
-            'vnp_CreateDate' => date('YmdHis'),
-            'vnp_CurrCode' => 'VND',
-            'vnp_IpAddr' => $vnp_IpAddr,
-            'vnp_Locale' => $vnp_Locale,
-            'vnp_OrderInfo' => $vnp_OrderInfo,
-            'vnp_OrderType' => $vnp_OrderType,
-            'vnp_ReturnUrl' => $vnp_Returnurl,
-            'vnp_TxnRef' => $vnp_TxnRef,
-        ];
-
-        Payment::create([
-            'booking_id' => $booking->id,
-            'amount' => $actualAmount,
-            'payment_method' => 'vnpay',
-            'transaction_code' => $vnp_TxnRef,
-            'payment_status' => 'pending',
-        ]);
-
-        ksort($inputData);
-        $query = '';
-        $i = 0;
-        $hashdata = '';
-        foreach ($inputData as $key => $value) {
-            if ($i == 1) {
-                $hashdata .= '&'.urlencode($key).'='.urlencode($value);
-                $query .= '&'.urlencode($key).'='.urlencode($value);
-            } else {
-                $hashdata .= urlencode($key).'='.urlencode($value);
-                $query .= urlencode($key).'='.urlencode($value);
-                $i = 1;
-            }
-        }
-
-        $vnp_Url = $vnp_Url.'?'.$query;
-        if (isset($vnp_HashSecret)) {
-            $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-            $vnp_Url .= '&vnp_SecureHash='.$vnpSecureHash;
-        }
-
-        Log::debug('VNPay Redirect URL: '.$vnp_Url);
-
-        return $vnp_Url;
+    if (in_array($booking->tour_status, [
+        Booking::TOUR_COMPLETED,
+        Booking::TOUR_CANCELLED_ADMIN,
+        Booking::TOUR_CANCELLED_CUSTOMER
+    ])) {
+        return redirect()->route('user.bookings')
+            ->with('error', 'Đơn hàng không thể thanh toán.');
     }
+
+    if ($booking->payment_status === Booking::PAYMENT_PAID_100) {
+        return redirect()->route('user.bookings')
+            ->with('success', 'Đơn hàng này đã thanh toán đủ.');
+    }
+
+    $booking->update([
+        'payment_method' => 'vnpay',
+        'payment_step' => 'continue_payment',
+    ]);
+
+    $vnpayUrl = $this->generateVnpayUrl($booking, $request->ip());
+
+    return redirect()->away($vnpayUrl);
+}
+
+   private function generateVnpayUrl(Booking $booking, string $ipAddress): string
+{
+    $vnp_TmnCode = config('vnpay.tmn_code');
+    $vnp_HashSecret = config('vnpay.hash_secret');
+    $vnp_Url = config('vnpay.url');
+    $vnp_Returnurl = route('frontend.tours.vnpay_return');
+
+    $vnp_TxnRef = $booking->id . '_' . time();
+
+    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
+        $actualAmount = $booking->total_price * 0.7;
+        $vnp_OrderInfo = 'Thanh toan phan con lai booking ' . $booking->id;
+    } elseif ($booking->payment_type === 'deposit') {
+        $actualAmount = $booking->total_price * 0.3;
+        $vnp_OrderInfo = 'Thanh toan dat coc booking ' . $booking->id;
+    } else {
+        $actualAmount = $booking->total_price;
+        $vnp_OrderInfo = 'Thanh toan booking ' . $booking->id;
+    }
+
+    $actualAmount = (int) round($actualAmount);
+
+    if ($actualAmount <= 0) {
+        throw new \Exception('So tien thanh toan khong hop le.');
+    }
+
+    $inputData = [
+        'vnp_Version' => '2.1.0',
+        'vnp_TmnCode' => $vnp_TmnCode,
+        'vnp_Amount' => $actualAmount * 100,
+        'vnp_Command' => 'pay',
+        'vnp_CreateDate' => date('YmdHis'),
+        'vnp_CurrCode' => 'VND',
+        'vnp_IpAddr' => $ipAddress,
+        'vnp_Locale' => 'vn',
+        'vnp_OrderInfo' => $vnp_OrderInfo,
+        'vnp_OrderType' => 'billpayment',
+        'vnp_ReturnUrl' => $vnp_Returnurl,
+        'vnp_TxnRef' => $vnp_TxnRef,
+    ];
+
+    $booking->update([
+        'payment_status' => Booking::PAYMENT_PENDING,
+        'payment_method' => 'vnpay',
+        'payment_step' => 'vnpay_redirect',
+    ]);
+
+    Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => $actualAmount,
+        'payment_method' => 'vnpay',
+        'transaction_code' => $vnp_TxnRef,
+        'payment_status' => 'pending',
+    ]);
+
+    ksort($inputData);
+
+    $query = '';
+    $hashData = '';
+
+    foreach ($inputData as $key => $value) {
+        $hashData .= urlencode($key) . '=' . urlencode($value) . '&';
+        $query .= urlencode($key) . '=' . urlencode($value) . '&';
+    }
+
+    $hashData = rtrim($hashData, '&');
+    $query = rtrim($query, '&');
+
+   $vnpSecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+
+$paymentUrl = $vnp_Url . '?' . $query . '&vnp_SecureHash=' . $vnpSecureHash;
+
+// echo $paymentUrl;
+// die;
+
+return $paymentUrl;
+}
+
 
     public function vnpayReturn(Request $request): RedirectResponse
     {
@@ -666,6 +685,7 @@ class TourBookingController extends Controller
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
                         'paid_amount' => $newPaidAmount,
+                        'payment_step' => 'completed',
                     ]);
                 }
 
@@ -677,19 +697,26 @@ class TourBookingController extends Controller
 
                 return redirect()->route('user.bookings')->with('success', 'Thanh toán đặt tour qua VNPay thành công!');
             } else {
-                if ($payment) {
-                    $payment->update([
-                        'payment_status' => 'failed',
-                    ]);
-                }
+               if ($payment) {
+    $payment->update([
+        'payment_status' => 'failed',
+    ]);
+}
 
-                return redirect()->route('user.bookings')->with('error', 'Thanh toán không thành công. Mã lỗi: '.$request->vnp_ResponseCode);
+if ($booking) {
+    $booking->update([
+        'payment_status' => Booking::PAYMENT_FAILED,
+        'payment_step' => 'vnpay_failed',
+    ]);
+}
+
+return redirect()->route('user.bookings')
+    ->with('error', 'Thanh toán không thành công. Mã lỗi: '.$request->vnp_ResponseCode);
             }
+        } else {
+            return redirect()->route('user.bookings')->with('error', 'Chữ ký không hợp lệ. Thanh toán VNPay thất bại.');
         }
-
-        return redirect()->route('user.bookings')->with('error', 'Chữ ký thanh toán không hợp lệ.');
     }
-
     public function vnpayIpn(Request $request): JsonResponse
     {
         $vnp_SecureHash = $request->vnp_SecureHash;
