@@ -75,11 +75,7 @@
 
         </form>
 
-<<<<<<< HEAD
-        @if(request()->hasAny(['destination_id', 'departure_date', 'budget', 'keyword']))
-=======
-        @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'hotel_stars', 'keyword']))
->>>>>>> main
+        @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'keyword']))
         <div class="d-flex align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
             <small class="text-muted me-2">
                 <i class="bi bi-funnel me-1"></i>
@@ -144,14 +140,11 @@
         <div class="container position-relative z-index-1">
             <div class="text-center mb-5">
                 <h2 class="hot-deal-title d-flex align-items-center justify-content-center gap-3">
-                    {{-- <span class="hot-deal-badge-icon"></span> --}}
+                 
                     Hot deal
-                    {{-- <span class="hot-deal-badge-icon">25%</span> --}}
+                   
                 </h2>
-                {{-- <p class="hot-deal-subtitle mx-auto mt-3">
-                    {{ __('Với sự hợp tác giảm giá ưu đãi cùng hệ thống đối tác lớn, chúng tôi tự tin mang đến cho quý khách') }}<br>
-                    {{ __('combo vé máy bay và khách sạn với giá tốt nhất!') }}
-                </p> --}}
+               
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 px-3">
