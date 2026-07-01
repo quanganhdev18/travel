@@ -237,7 +237,7 @@
             <div class="row g-4 mb-4">
                 @foreach($destinations->take(2) as $dest)
                     <div class="col-md-6">
-                        <a href="{{ route('frontend.tours.search', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
+                        <a href="{{ route('frontend.tours.index', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
                             <div class="dest-showcase-card dest-featured-card">
                                 <img src="{{ $dest->image_url ?: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=800' }}"
                                      alt="{{ $dest->name }}"
@@ -272,7 +272,7 @@
             <div class="row g-4">
                 @foreach($destinations->skip(2) as $dest)
                     <div class="col-md-6 col-lg-3">
-                        <a href="{{ route('frontend.tours.search', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
+                        <a href="{{ route('frontend.tours.index', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
                             <div class="dest-showcase-card">
                                 <img src="{{ $dest->image_url ?: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=800' }}"
                                      alt="{{ $dest->name }}"

@@ -49,7 +49,7 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        $tickets = Ticket::with('destination')
+        $tickets = Ticket::with(['destination', 'ticket_options'])
             ->latest()
             ->take(4)
             ->get();
@@ -105,19 +105,32 @@ class HomeController extends Controller
             $transport = $request->transport;
             if (Schema::hasColumn('tours', 'transport_type')) {
                 $query->where('transport_type', $transport);
+            } else {
+                if ($transport === 'xe') {
+                    $query->where(function ($q) {
+                        $q->whereRaw("LOWER(CAST(title AS CHAR)) LIKE '%xe%'")
+                            ->orWhereRaw("LOWER(CAST(ai_tags AS CHAR)) LIKE '%xe%'");
+                    });
+                } elseif ($transport === 'bay') {
+                    $query->where(function ($q) {
+                        $q->whereRaw("LOWER(CAST(title AS CHAR)) LIKE '%bay%'")
+                            ->orWhereRaw("LOWER(CAST(ai_tags AS CHAR)) LIKE '%bay%'")
+                            ->orWhereRaw("LOWER(CAST(title AS CHAR)) LIKE '%máy bay%'");
+                    });
+                }
             }
         }
 
         if ($request->filled('departure_id')) {
             $query->where('departure_location_id', $request->departure_id);
         }
-        
+
         if ($request->filled('destination_id')) {
             $query->where('destination_id', $request->destination_id);
         }
 
-        if ($request->filled('date')) {
-            $date = $request->date;
+        $date = $request->input('date') ?? $request->input('departure_date');
+        if ($date) {
             $query->whereHas('activeSchedules', function ($q) use ($date) {
                 $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
             });
@@ -132,8 +145,8 @@ class HomeController extends Controller
         if ($request->filled('budget')) {
             match ($request->budget) {
                 'under_5m' => $query->where('base_price', '<', 5000000),
-                '5m_to_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
-                '10m_to_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
+                '5m_10m', '5m_to_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
+                '10m_20m', '10m_to_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
                 'over_20m' => $query->where('base_price', '>', 20000000),
                 default => null,
             };

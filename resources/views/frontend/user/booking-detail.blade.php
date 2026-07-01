@@ -110,10 +110,15 @@
                     <div class="info-row">
                         <span class="text-muted small"><i class="bi bi-car-front me-2"></i>Phương tiện</span>
                         <span class="fw-bold">
-                            @if(!empty($booking->pnr_code))
-                                <i class="bi bi-airplane text-danger me-1"></i>Máy bay &nbsp;<strong class="text-danger">{{ $booking->pnr_code }}</strong>
+                            @if($booking->transport_type === 'flight')
+                                <i class="bi bi-airplane-fill text-danger me-1"></i>Máy bay
+                                @if(!empty($booking->pnr_code))
+                                    &nbsp;<strong class="text-danger">({{ $booking->pnr_code }})</strong>
+                                @endif
+                            @elseif($booking->transport_type === 'bus')
+                                <i class="bi bi-bus-front-fill text-info me-1"></i>Xe ô tô
                             @else
-                                Di chuyển tự túc
+                                <i class="bi bi-car-front-fill text-muted me-1"></i>Di chuyển tự túc
                             @endif
                         </span>
                     </div>

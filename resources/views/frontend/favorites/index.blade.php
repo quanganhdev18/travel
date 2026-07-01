@@ -33,7 +33,7 @@
 
                 <div class="col-12 col-md-6 col-lg-3">
                     <div class="card h-100 shadow-sm border-0">
-                        <img src="{{ $imageUrl }}"
+                        <img src="{{ $tourImage }}"
                              class="card-img-top"
                              style="height: 180px; object-fit: cover;"
                              alt="{{ $tour->title }}"

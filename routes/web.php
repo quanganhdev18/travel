@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/debug-schema', function () {
@@ -11,7 +12,9 @@ Route::get('/debug-schema', function () {
 });
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
-Route::get('/tours/search', [HomeController::class, 'searchTours'])->name('frontend.tours.search');
+Route::get('/tours/search', function (Request $request) {
+    return redirect()->route('frontend.tours.index', $request->query());
+})->name('frontend.tours.search');
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 
 use App\Http\Controllers\Admin\AddonController;
@@ -30,7 +33,9 @@ use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
 use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\AppSettingsController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
+use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
 use App\Http\Controllers\Frontend\TicketController;
@@ -39,8 +44,6 @@ use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Models\User;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Frontend\FavoriteController;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -129,13 +132,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/user/avatar', [UserController::class, 'updateAvatar'])->name('user.avatar.update');
     Route::post('/user/password', [UserController::class, 'changePassword'])->name('user.password.change');
 
-    Route::get('/my-bookings', [UserController::class, 'myBookings'])->name('user.bookings');
+    Route::get('/my-bookings', fn () => redirect()->route('user.profile', ['tab' => 'bookings']))->name('user.bookings');
     Route::get('/my-bookings/{id}', [UserController::class, 'bookingDetail'])->name('user.bookings.detail');
     Route::post('/my-bookings/{id}/cancel', [UserController::class, 'cancelBooking'])->name('user.bookings.cancel');
 
     Route::post('/reviews', [UserController::class, 'storeReview'])->name('user.reviews.store');
 
-    Route::get('/my-wishlists', [UserController::class, 'myWishlists'])->name('user.wishlists');
+    Route::get('/my-wishlists', fn () => redirect()->route('user.profile', ['tab' => 'wishlists']))->name('user.wishlists');
     Route::post('/wishlists/toggle', [UserController::class, 'toggleWishlist'])->name('user.wishlists.toggle');
     Route::post('/wishlists/remove', [UserController::class, 'removeWishlist'])->name('user.wishlists.remove');
 
@@ -151,22 +154,14 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
-    Route::middleware('auth')->group(function () {
-
-    // Tour đã lưu (Favorites)
-    Route::get('/tour-da-luu', [FavoriteController::class, 'index'])
-        ->name('frontend.favorites.index');
+Route::middleware('auth')->group(function () {
 
     Route::post('/tours/{tour}/favorite', [FavoriteController::class, 'toggle'])
         ->name('frontend.favorites.toggle');
 
     Route::delete('/tours/{tour}/favorite', [FavoriteController::class, 'destroy'])
         ->name('frontend.favorites.destroy');
-    Route::delete('/tours/{tour}/favorite',
-    [FavoriteController::class, 'destroy'])
-    ->name('frontend.favorites.destroy');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -179,7 +174,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.dashboard');
 
     // User Management
-    Route::get('/chat', [\App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
+    Route::get('/chat', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
 
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->names('admin.users');
@@ -332,7 +327,6 @@ Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])
 Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])
     ->name('admin.coupons.destroy');
 
-
 Route::get('/coupons/trash', [CouponController::class, 'trash'])
     ->name('admin.coupons.trash');
 
@@ -341,7 +335,7 @@ Route::post('/coupons/{id}/restore', [CouponController::class, 'restore'])
 
 Route::delete('/coupons/{id}/force-delete', [CouponController::class, 'forceDelete'])
     ->name('admin.coupons.forceDelete');
-    Route::resource('coupons', CouponController::class);
+Route::resource('coupons', CouponController::class);
 /*
 |--------------------------------------------------------------------------
 | Auth Routes
@@ -357,9 +351,8 @@ Route::get('/api/check-email', function (Request $request) {
 require __DIR__.'/auth.php';
 // CHAT ROUTES
 Route::middleware(['auth'])->prefix('chat')->group(function () {
-    Route::post('/start', [App\Http\Controllers\ChatController::class, 'startConversation'])->name('chat.start');
-    Route::get('/conversations', [App\Http\Controllers\ChatController::class, 'getConversations'])->name('chat.conversations');
-    Route::get('/{id}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
-    Route::post('/{id}/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/start', [ChatController::class, 'startConversation'])->name('chat.start');
+    Route::get('/conversations', [ChatController::class, 'getConversations'])->name('chat.conversations');
+    Route::get('/{id}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
 });
-
