@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Destination;
+use App\Models\Favorite;
 use App\Models\Tour;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -104,7 +105,7 @@ test('user can view their wishlists', function () {
         'description' => 'Test tour description',
     ]);
 
-    Wishlist::create([
+    Favorite::create([
         'user_id' => $user->id,
         'tour_id' => $tour->id,
     ]);
@@ -112,6 +113,34 @@ test('user can view their wishlists', function () {
     $response = $this
         ->actingAs($user)
         ->get('/my-wishlists');
+
+    $response->assertRedirect(route('user.profile', ['tab' => 'wishlists']));
+});
+
+test('user can view their wishlists on the profile page tab', function () {
+    $user = User::factory()->create();
+    $dest = Destination::create([
+        'name' => 'Test Destination',
+        'description' => 'Test desc',
+    ]);
+    $tour = Tour::create([
+        'destination_id' => $dest->id,
+        'title' => 'Test Tour Name',
+        'slug' => 'test-tour-name-profile',
+        'duration_days' => 3,
+        'duration_nights' => 2,
+        'base_price' => 1000000,
+        'description' => 'Test tour description',
+    ]);
+
+    Favorite::create([
+        'user_id' => $user->id,
+        'tour_id' => $tour->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('user.profile', ['tab' => 'wishlists']));
 
     $response->assertOk();
     $response->assertSee('Test Tour Name');
@@ -141,7 +170,7 @@ test('user can toggle a tour in their wishlist', function () {
         ]);
 
     $response->assertRedirect();
-    $this->assertDatabaseHas('wishlists', [
+    $this->assertDatabaseHas('favorites', [
         'user_id' => $user->id,
         'tour_id' => $tour->id,
     ]);
@@ -154,7 +183,7 @@ test('user can toggle a tour in their wishlist', function () {
         ]);
 
     $response->assertRedirect();
-    $this->assertDatabaseMissing('wishlists', [
+    $this->assertDatabaseMissing('favorites', [
         'user_id' => $user->id,
         'tour_id' => $tour->id,
     ]);
@@ -176,7 +205,7 @@ test('user can remove a tour from wishlist', function () {
         'description' => 'Test tour description',
     ]);
 
-    Wishlist::create([
+    Favorite::create([
         'user_id' => $user->id,
         'tour_id' => $tour->id,
     ]);
@@ -188,7 +217,7 @@ test('user can remove a tour from wishlist', function () {
         ]);
 
     $response->assertRedirect();
-    $this->assertDatabaseMissing('wishlists', [
+    $this->assertDatabaseMissing('favorites', [
         'user_id' => $user->id,
         'tour_id' => $tour->id,
     ]);

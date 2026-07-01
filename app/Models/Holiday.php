@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Holiday extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'holidays';
 
     protected $casts = [
@@ -24,7 +27,7 @@ class Holiday extends Model
 
     /**
      * Check if a given date falls in any holiday.
-     * 
+     *
      * @param string|Carbon $date
      * @return bool
      */
@@ -38,7 +41,7 @@ class Holiday extends Model
 
     /**
      * Get the max price increase percentage for a given date.
-     * 
+     *
      * @param string|Carbon $date
      * @return float
      */
@@ -48,7 +51,7 @@ class Holiday extends Model
         $maxIncrease = self::where('start_date', '<=', $dateStr)
             ->where('end_date', '>=', $dateStr)
             ->max('price_increase_percentage');
-            
+
         return $maxIncrease ?? 0;
     }
 }

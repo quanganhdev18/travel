@@ -678,7 +678,7 @@
                                 @if(!$isCancelled && $paymentMethod === 'vnpay')
                                 <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="bk-btn bk-btn-primary w-100 justify-content-center mt-2">
                                     <i class="bi bi-credit-card-fill"></i>
-                                    {{ $paymentType === 'deposit' ? __('Đặt cọc 30%') : __('Thanh toán ngay') }}
+                                    {{ __('Quay lại thanh toán') }}
                                     <span style="opacity:0.8;font-size:0.78rem;">
                                         ({!! format_currency($paymentType === 'deposit' ? $depositAmt : $booking->total_price) !!})
                                     </span>
@@ -698,7 +698,7 @@
                                 @if(!$isCancelled)
                                 <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="bk-btn bk-btn-outline w-100 justify-content-center mt-2">
                                     <i class="bi bi-arrow-clockwise"></i>
-                                    {{ __('Thử lại thanh toán') }}
+                                    {{ __('Quay lại thanh toán') }}
                                 </a>
                                 @endif
                             @endif

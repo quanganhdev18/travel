@@ -1026,3 +1026,48 @@ h1, h2, h3, h4, h5, h6 {
 .search-results-count span {
     color: #0d6efd;
 }
+
+/* Favorite Button Global Styles */
+.favorite-form {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    margin: 0;
+}
+
+.favorite-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    color: #ff3366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.favorite-btn i {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.favorite-btn:hover {
+    background: #ff3366;
+    color: #fff;
+}
+.favorite-btn.active {
+    background: #fff;
+    color: #ff3366;
+}
+.favorite-btn.active:hover {
+    background: #ff3366;
+    color: #fff;
+}
+

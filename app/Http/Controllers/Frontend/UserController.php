@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Favorite;
 use App\Models\Review;
-use App\Models\Wishlist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -52,7 +52,39 @@ class UserController extends Controller
         $user = Auth::user();
         $user->load(['bookings', 'wishlists', 'reviews', 'identity']);
 
-        return view('frontend.user.profile', compact('user'));
+        // Load bookings with full relations for the bookings tab
+        $bookings = Booking::with([
+            'tour_schedule.tour.tour_images',
+            'tour_schedule.tour.primaryImage',
+            'tour_schedule.tour.destination',
+            'booking_passengers',
+            'addons',
+            'coupon',
+            'payments',
+        ])
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $activeBookings = $bookings->whereIn('tour_status', [
+            Booking::TOUR_UPCOMING,
+            Booking::TOUR_IN_PROGRESS,
+            Booking::TOUR_CHECKING_IN,
+        ]);
+
+        $pastBookings = $bookings->whereIn('tour_status', [
+            Booking::TOUR_COMPLETED,
+            Booking::TOUR_CANCELLED_ADMIN,
+            Booking::TOUR_CANCELLED_CUSTOMER,
+        ]);
+
+        // Load favorites (saved tours) with tour relations for the saved tours tab
+        $wishlists = Favorite::with(['tour.destination', 'tour.tour_images'])
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->get();
+
+        return view('frontend.user.profile', compact('user', 'bookings', 'activeBookings', 'pastBookings', 'wishlists'));
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -183,16 +215,15 @@ class UserController extends Controller
         $userId = Auth::id();
         $tourId = (int) $request->tour_id;
 
-        $wishlist = Wishlist::where('user_id', $userId)->where('tour_id', $tourId)->first();
+        $favorite = Favorite::where('user_id', $userId)->where('tour_id', $tourId)->first();
 
-        if ($wishlist) {
-            Wishlist::where('user_id', $userId)->where('tour_id', $tourId)->delete();
+        if ($favorite) {
+            Favorite::where('user_id', $userId)->where('tour_id', $tourId)->delete();
             $added = false;
         } else {
-            Wishlist::create([
+            Favorite::create([
                 'user_id' => $userId,
                 'tour_id' => $tourId,
-                'created_at' => now(),
             ]);
             $added = true;
         }
@@ -217,7 +248,7 @@ class UserController extends Controller
             'tour_id' => 'required|exists:tours,id',
         ]);
 
-        Wishlist::where('user_id', Auth::id())
+        Favorite::where('user_id', Auth::id())
             ->where('tour_id', $request->tour_id)
             ->delete();
 
