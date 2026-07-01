@@ -79,6 +79,7 @@ class Booking extends Model
         'children_count',
         'payment_status',
         'tour_status',
+        'booking_status',
         'current_checkin_step',
         'pnr_code',
         'transport_type',
