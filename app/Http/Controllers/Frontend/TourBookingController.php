@@ -182,12 +182,17 @@ class TourBookingController extends Controller
             $couponId = null;
 
             if ($request->filled('coupon_code')) {
+                $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
                 $coupon = Coupon::where('code', $request->coupon_code)
                     ->where(function ($query) {
                         $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
                     })
                     ->where(function ($query) {
                         $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+                    })
+                    ->where(function ($query) use ($tourCategoryIds) {
+                        $query->whereNull('category_id')
+                            ->orWhereIn('category_id', $tourCategoryIds);
                     })
                     ->first();
 
@@ -232,6 +237,11 @@ class TourBookingController extends Controller
             $booking->payment_type = $request->payment_type ?? 'full';
             $booking->payment_method = $request->payment_method ?? 'transfer';
             $booking->paid_amount = 0;
+
+            $booking->payment_step = $request->payment_method === 'vnpay'
+                ? 'vnpay_created'
+                : 'transfer_waiting';
+
             $booking->save();
 
             // Lưu TicketBooking
@@ -473,6 +483,8 @@ class TourBookingController extends Controller
 
         $holidays = Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
 
+        $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+
         // Lấy danh sách mã giảm giá còn hiệu lực
         $coupons = Coupon::where(function ($query) {
             $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
@@ -482,6 +494,10 @@ class TourBookingController extends Controller
             })
             ->where(function ($query) {
                 $query->whereNull('usage_limit')->orWhereColumn('used_count', '<', 'usage_limit');
+            })
+            ->where(function ($query) use ($tourCategoryIds) {
+                $query->whereNull('category_id')
+                    ->orWhereIn('category_id', $tourCategoryIds);
             })
             ->get();
 
@@ -501,88 +517,114 @@ class TourBookingController extends Controller
 
     public function payWithVNPay(int $id, Request $request): RedirectResponse
     {
-        $booking = Booking::findOrFail($id);
+    $booking = Booking::findOrFail($id);
 
-        if ($booking->user_id !== Auth::id()) {
-            abort(403);
-        }
-
-        if (in_array($booking->tour_status, [Booking::TOUR_COMPLETED, Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])) {
-            return redirect()->route('user.bookings')->with('error', 'Đơn hàng không thể thanh toán.');
-        }
-
-        $vnpayUrl = $this->generateVnpayUrl($booking, $request->ip());
-
-        return redirect()->away($vnpayUrl);
+    if ($booking->user_id !== Auth::id()) {
+        abort(403);
     }
 
-    private function generateVnpayUrl(Booking $booking, string $ipAddress): string
-    {
-        $vnp_TmnCode = config('vnpay.tmn_code');
-        $vnp_HashSecret = config('vnpay.hash_secret');
-        $vnp_Url = config('vnpay.url');
-        $vnp_Returnurl = route('frontend.tours.vnpay_return');
+    if (in_array($booking->tour_status, [
+        Booking::TOUR_COMPLETED,
+        Booking::TOUR_CANCELLED_ADMIN,
+        Booking::TOUR_CANCELLED_CUSTOMER
+    ])) {
+        return redirect()->route('user.bookings')
+            ->with('error', 'Đơn hàng không thể thanh toán.');
+    }
 
-        $vnp_TxnRef = $booking->id.'_'.time();
-        $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
-        $vnp_OrderType = 'billpayment';
+    if ($booking->payment_status === Booking::PAYMENT_PAID_100) {
+        return redirect()->route('user.bookings')
+            ->with('success', 'Đơn hàng này đã thanh toán đủ.');
+    }
 
+    $booking->update([
+        'payment_method' => 'vnpay',
+        'payment_step' => 'continue_payment',
+    ]);
+
+    $vnpayUrl = $this->generateVnpayUrl($booking, $request->ip());
+
+    return redirect()->away($vnpayUrl);
+}
+
+   private function generateVnpayUrl(Booking $booking, string $ipAddress): string
+{
+    $vnp_TmnCode = config('vnpay.tmn_code');
+    $vnp_HashSecret = config('vnpay.hash_secret');
+    $vnp_Url = config('vnpay.url');
+    $vnp_Returnurl = route('frontend.tours.vnpay_return');
+
+    $vnp_TxnRef = $booking->id . '_' . time();
+
+    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
+        $actualAmount = $booking->total_price * 0.7;
+        $vnp_OrderInfo = 'Thanh toan phan con lai booking ' . $booking->id;
+    } elseif ($booking->payment_type === 'deposit') {
+        $actualAmount = $booking->total_price * 0.3;
+        $vnp_OrderInfo = 'Thanh toan dat coc booking ' . $booking->id;
+    } else {
         $actualAmount = $booking->total_price;
-        if ($booking->payment_type === 'deposit') {
-            $actualAmount = $booking->total_price * 0.3;
-        }
-        $vnp_Amount = (int) ($actualAmount * 100);
-        $vnp_Locale = 'vi';
-        $vnp_IpAddr = $ipAddress;
-
-        $inputData = [
-            'vnp_Version' => '2.1.0',
-            'vnp_TmnCode' => $vnp_TmnCode,
-            'vnp_Amount' => $vnp_Amount,
-            'vnp_Command' => 'pay',
-            'vnp_CreateDate' => date('YmdHis'),
-            'vnp_CurrCode' => 'VND',
-            'vnp_IpAddr' => $vnp_IpAddr,
-            'vnp_Locale' => $vnp_Locale,
-            'vnp_OrderInfo' => $vnp_OrderInfo,
-            'vnp_OrderType' => $vnp_OrderType,
-            'vnp_ReturnUrl' => $vnp_Returnurl,
-            'vnp_TxnRef' => $vnp_TxnRef,
-        ];
-
-        Payment::create([
-            'booking_id' => $booking->id,
-            'amount' => $actualAmount,
-            'payment_method' => 'vnpay',
-            'transaction_code' => $vnp_TxnRef,
-            'payment_status' => 'pending',
-        ]);
-
-        ksort($inputData);
-        $query = '';
-        $i = 0;
-        $hashdata = '';
-        foreach ($inputData as $key => $value) {
-            if ($i == 1) {
-                $hashdata .= '&'.urlencode($key).'='.urlencode($value);
-                $query .= '&'.urlencode($key).'='.urlencode($value);
-            } else {
-                $hashdata .= urlencode($key).'='.urlencode($value);
-                $query .= urlencode($key).'='.urlencode($value);
-                $i = 1;
-            }
-        }
-
-        $vnp_Url = $vnp_Url.'?'.$query;
-        if (isset($vnp_HashSecret)) {
-            $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-            $vnp_Url .= '&vnp_SecureHash='.$vnpSecureHash;
-        }
-
-        Log::debug('VNPay Redirect URL: '.$vnp_Url);
-
-        return $vnp_Url;
+        $vnp_OrderInfo = 'Thanh toan booking ' . $booking->id;
     }
+
+    $actualAmount = (int) round($actualAmount);
+
+    if ($actualAmount <= 0) {
+        throw new \Exception('So tien thanh toan khong hop le.');
+    }
+
+    $inputData = [
+        'vnp_Version' => '2.1.0',
+        'vnp_TmnCode' => $vnp_TmnCode,
+        'vnp_Amount' => $actualAmount * 100,
+        'vnp_Command' => 'pay',
+        'vnp_CreateDate' => date('YmdHis'),
+        'vnp_CurrCode' => 'VND',
+        'vnp_IpAddr' => $ipAddress,
+        'vnp_Locale' => 'vn',
+        'vnp_OrderInfo' => $vnp_OrderInfo,
+        'vnp_OrderType' => 'billpayment',
+        'vnp_ReturnUrl' => $vnp_Returnurl,
+        'vnp_TxnRef' => $vnp_TxnRef,
+    ];
+
+    $booking->update([
+        'payment_status' => Booking::PAYMENT_PENDING,
+        'payment_method' => 'vnpay',
+        'payment_step' => 'vnpay_redirect',
+    ]);
+
+    Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => $actualAmount,
+        'payment_method' => 'vnpay',
+        'transaction_code' => $vnp_TxnRef,
+        'payment_status' => 'pending',
+    ]);
+
+    ksort($inputData);
+
+    $query = '';
+    $hashData = '';
+
+    foreach ($inputData as $key => $value) {
+        $hashData .= urlencode($key) . '=' . urlencode($value) . '&';
+        $query .= urlencode($key) . '=' . urlencode($value) . '&';
+    }
+
+    $hashData = rtrim($hashData, '&');
+    $query = rtrim($query, '&');
+
+   $vnpSecureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+
+$paymentUrl = $vnp_Url . '?' . $query . '&vnp_SecureHash=' . $vnpSecureHash;
+
+// echo $paymentUrl;
+// die;
+
+return $paymentUrl;
+}
+
 
     public function vnpayReturn(Request $request): RedirectResponse
     {
@@ -628,10 +670,22 @@ class TourBookingController extends Controller
                 }
 
                 if ($booking) {
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
+                    $newPaidAmount = $booking->paid_amount + ($payment ? $payment->amount : 0);
+
+                    // Xác định trạng thái thanh toán mới:
+                    // - deposit + chưa cọc → paid_30 (Đã thanh toán 30% cọc)
+                    // - deposit + đã cọc 30% → paid_100 (Đã thanh toán 70% còn lại)
+                    // - full → paid_100 (Đã thanh toán 100%)
+                    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_30;
+                    } else {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_100;
+                    }
+
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
-                        'paid_amount' => $payment->amount,
+                        'paid_amount' => $newPaidAmount,
+                        'payment_step' => 'completed',
                     ]);
                 }
 
@@ -643,19 +697,26 @@ class TourBookingController extends Controller
 
                 return redirect()->route('user.bookings')->with('success', 'Thanh toán đặt tour qua VNPay thành công!');
             } else {
-                if ($payment) {
-                    $payment->update([
-                        'payment_status' => 'failed',
-                    ]);
-                }
+               if ($payment) {
+    $payment->update([
+        'payment_status' => 'failed',
+    ]);
+}
 
-                return redirect()->route('user.bookings')->with('error', 'Thanh toán không thành công. Mã lỗi: '.$request->vnp_ResponseCode);
+if ($booking) {
+    $booking->update([
+        'payment_status' => Booking::PAYMENT_FAILED,
+        'payment_step' => 'vnpay_failed',
+    ]);
+}
+
+return redirect()->route('user.bookings')
+    ->with('error', 'Thanh toán không thành công. Mã lỗi: '.$request->vnp_ResponseCode);
             }
+        } else {
+            return redirect()->route('user.bookings')->with('error', 'Chữ ký không hợp lệ. Thanh toán VNPay thất bại.');
         }
-
-        return redirect()->route('user.bookings')->with('error', 'Chữ ký thanh toán không hợp lệ.');
     }
-
     public function vnpayIpn(Request $request): JsonResponse
     {
         $vnp_SecureHash = $request->vnp_SecureHash;
@@ -719,10 +780,19 @@ class TourBookingController extends Controller
                         'payment_status' => 'success',
                         'paid_at' => now(),
                     ]);
-                    $newPaymentStatus = ($booking->payment_type === 'deposit') ? Booking::PAYMENT_PAID_30 : Booking::PAYMENT_PAID_100;
+
+                    $newPaidAmount = $booking->paid_amount + $payment->amount;
+
+                    // Xác định trạng thái thanh toán mới
+                    if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_30;
+                    } else {
+                        $newPaymentStatus = Booking::PAYMENT_PAID_100;
+                    }
+
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
-                        'paid_amount' => $payment->amount,
+                        'paid_amount' => $newPaidAmount,
                     ]);
                 } else {
                     $payment->update([
@@ -754,19 +824,32 @@ class TourBookingController extends Controller
         $request->validate([
             'code' => 'required|string',
             'order_value' => 'required|numeric',
+            'schedule_id' => 'nullable|exists:tour_schedules,id',
         ]);
 
-        $coupon = Coupon::where('code', $request->code)
+        $couponQuery = Coupon::where('code', $request->code)
             ->where(function ($query) {
                 $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
             })
             ->where(function ($query) {
                 $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
-            })
-            ->first();
+            });
+
+        if ($request->filled('schedule_id')) {
+            $schedule = TourSchedule::with('tour.categories')->find($request->schedule_id);
+            if ($schedule && $schedule->tour) {
+                $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+                $couponQuery->where(function ($query) use ($tourCategoryIds) {
+                    $query->whereNull('category_id')
+                        ->orWhereIn('category_id', $tourCategoryIds);
+                });
+            }
+        }
+
+        $coupon = $couponQuery->first();
 
         if (! $coupon) {
-            return response()->json(['success' => false, 'message' => 'Mã không tồn tại hoặc đã hết hạn.']);
+            return response()->json(['success' => false, 'message' => 'Mã không tồn tại, đã hết hạn hoặc không áp dụng cho tour này.']);
         }
 
         if ($request->order_value < $coupon->min_order_value) {

@@ -137,7 +137,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}">
+                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}" max="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
@@ -1145,11 +1145,12 @@
         
         input.value = code;
         const subtotal = getSubtotal();
+        const scheduleId = document.querySelector('input[name="schedule_id"]').value;
         
         fetch('/api/coupons/apply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value, 'Accept': 'application/json' },
-            body: JSON.stringify({ code: code, order_value: subtotal })
+            body: JSON.stringify({ code: code, order_value: subtotal, schedule_id: scheduleId })
         })
         .then(response => response.json())
         .then(data => {
@@ -1251,6 +1252,7 @@
                 }
             } else {
                 const subtotal = getSubtotal();
+                const scheduleId = document.querySelector('input[name="schedule_id"]').value;
                 fetch('/api/coupons/apply', {
                     method: 'POST',
                     headers: {
@@ -1258,7 +1260,7 @@
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ code: code, order_value: subtotal })
+                    body: JSON.stringify({ code: code, order_value: subtotal, schedule_id: scheduleId })
                 })
                 .then(response => response.json())
                 .then(data => {

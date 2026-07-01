@@ -32,58 +32,38 @@
                 @endphp
 
                 <div class="col-12 col-md-6 col-lg-3">
-                    <div class="premium-card h-100 overflow-hidden">
-                        <a href="{{ route('frontend.tours.show', $tourSlug) }}"
-                           class="text-decoration-none d-block text-dark">
+                    <div class="card h-100 shadow-sm border-0">
+                        <img src="{{ $imageUrl }}"
+                             class="card-img-top"
+                             style="height: 180px; object-fit: cover;"
+                             alt="{{ $tour->title }}"
+                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
 
-                            <div class="card-img-wrapper">
-                                <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-                                      method="POST"
-                                      class="favorite-form"
-                                      onclick="event.stopPropagation();">
-                                    @csrf
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold" style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ $tour->title }}</h5>
 
-                                    <button type="submit" class="favorite-btn active">
-                                        <i class="bi bi-heart-fill"></i>
-                                    </button>
-                                </form>
+                            <p class="text-muted mb-2">
+                                {{ $tour->destination->name ?? 'Đang cập nhật' }}
+                            </p>
 
-                                <span class="badge-glass">
-                                    <i class="bi bi-clock me-1"></i>
-                                    {{ $tour->duration_days ?? 0 }}N{{ $tour->duration_nights ?? 0 }}Đ
-                                </span>
+                            <p class="fw-bold text-danger mb-3" style="font-size: 1.05rem;">
+                                {{ number_format($tour->base_price, 0, ',', '.') }}đ
+                            </p>
 
-                                <img src="{{ $tourImage }}"
-                                     class="card-img-top"
-                                     alt="{{ $tourTitle }}"
-                                     onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
-                            </div>
-
-                            <div class="card-body" style="display:block !important; height:auto !important; padding:20px !important;">
-                                <h3 class="card-title"
-                                    style="display:block !important; color:#111827 !important; font-size:18px !important; font-weight:700 !important; line-height:1.4 !important; margin-bottom:12px !important; min-height:50px !important;">
-                                    {{ $tourTitle }}
-                                </h3>
-
-                                <div class="location-text">
-                                    <i class="bi bi-geo-alt text-danger"></i>
-                                    {{ $destinationName }}
-                                </div>
-
-                                <div class="price-wrap">
-                                    <span class="text-muted small">Chỉ từ</span>
-                                    <div class="price-val">
-                                        {{ format_currency($tour->base_price ?? 0) }}
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-
-                        <div class="px-3 pb-3">
-                            <a href="{{ route('frontend.tours.show', $tourSlug) }}"
-                               class="btn btn-primary w-100">
+                            <a href="{{ route('frontend.tours.show', $tour->slug) }}"
+                               class="btn btn-primary w-100 mb-2">
                                 Xem chi tiết
                             </a>
+                            <form action="{{ route('frontend.favorites.destroy', $tour->id) }}"
+                                method="POST">
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                        class="btn btn-danger w-100">
+                                    <i class="bi bi-trash"></i> Xóa khỏi danh sách
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

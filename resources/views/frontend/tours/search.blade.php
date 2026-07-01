@@ -95,9 +95,9 @@
 <!-- Left Sidebar Filters -->
                 <div class="col-lg-3">
                     <div class="sidebar-filter">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="fw-bold fs-5"><i class="bi bi-sliders me-2"></i>{{ __('Tìm kiếm nâng cao') }}</div>
-                            <a href="{{ route('frontend.tours.search') }}" class="text-decoration-none text-muted small">{{ __('Đặt lại') }}</a>
+                        <div class="d-flex justify-content-between align-items-center mb-4 gap-2">
+                            <div class="fw-bold text-nowrap" style="font-size: 0.95rem;"><i class="bi bi-sliders me-2"></i>{{ __('Tìm kiếm nâng cao') }}</div>
+                            <a href="{{ route('frontend.tours.search') }}" class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-1 text-nowrap px-2 py-1" style="font-size: 0.75rem; border-color: #dee2e6;"><i class="bi bi-arrow-counterclockwise"></i> {{ __('Đặt lại') }}</a>
                         </div>
 
                         {{-- Active filter summary --}}
@@ -138,38 +138,12 @@
                         </div>
                         @endif
 
-                        <!-- Phương tiện -->
-                        <div class="mb-4">
-                            <div class="filter-section-title">{{ __('Phương tiện') }}</div>
-                            <div class="filter-btn-group">
-                                <input type="radio" class="btn-check" name="transport" id="transport_all" value="" {{ !request('transport') ? 'checked' : '' }}>
-                                <label class="filter-btn" for="transport_all">{{ __('Tất cả') }}</label>
 
-                                <input type="radio" class="btn-check" name="transport" id="transport1" value="xe" {{ request('transport') == 'xe' ? 'checked' : '' }}>
-                                <label class="filter-btn" for="transport1"><i class="bi bi-car-front me-1"></i>{{ __('Xe') }}</label>
-
-                                <input type="radio" class="btn-check" name="transport" id="transport2" value="bay" {{ request('transport') == 'bay' ? 'checked' : '' }}>
-                                <label class="filter-btn" for="transport2"><i class="bi bi-airplane me-1"></i>{{ __('Chuyến bay') }}</label>
-                            </div>
-                        </div>
-
-                        <!-- Điểm khởi hành -->
-                        <div class="mb-4">
-                            <div class="filter-section-title">{{ __('Điểm khởi hành') }}</div>
-                            <select class="form-select" name="departure_id">
-                                <option value="">{{ __('Tất cả') }}</option>
-                                @foreach($destinations as $destination)
-                                    <option value="{{ $destination->id }}" {{ request('departure_id') == $destination->id ? 'selected' : '' }}>
-                                        {{ $destination->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
 
                         <!-- Điểm đến -->
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Điểm đến') }}</div>
-                            <select class="form-select" name="destination_id">
+                            <select class="form-select" name="destination_id" id="destination-select">
                                 <option value="">{{ __('Tất cả') }}</option>
                                 @foreach($destinations as $destination)
                                     <option value="{{ $destination->id }}" {{ request('destination_id') == $destination->id ? 'selected' : '' }}>
@@ -263,13 +237,11 @@
                     <!-- Grid of Tours -->
                     <div class="row g-4">
                         @forelse($tours as $tour)
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                             <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                                 <div class="combo-card h-100">
                                     <div class="combo-card-img-wrapper" style="height: 240px;">
-                                        <span class="combo-badge">
-                                            <span class="badge-icon">Hot</span> Deal
-                                        </span>
+
                                         @php
                                         $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
                                         $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
@@ -297,33 +269,16 @@
                                             <i class="bi bi-star-fill text-warning"></i>
                                             @endfor
                                         </div>
-                                        <div class="combo-specs">
-                                            <div class="combo-specs-row justify-content-between mb-1">
-                                                <div class="combo-specs-item">
-                                                    <i class="bi bi-geo-alt" style="font-size: 0.9rem;"></i>
-                                                    <span class="text-truncate" style="max-width: 140px; font-size: 0.85rem;">{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
-                                                </div>
-                                                <div class="combo-specs-item">
-                                                    @if($tour->transport_type === 'xe')
-                                                    <i class="bi bi-car-front" style="font-size: 0.9rem;"></i>
-                                                    <span style="font-size: 0.85rem;">{{ __('Xe') }}</span>
-                                                    @else
-                                                    <i class="bi bi-airplane" style="font-size: 0.9rem;"></i>
-                                                    <span style="font-size: 0.85rem;">{{ __('Máy bay') }}</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            <div class="combo-specs-item">
-                                                <i class="bi bi-building" style="font-size: 0.9rem;"></i>
-                                                <span style="font-size: 0.85rem;">{{ __('Khách sạn tương đương') }} {{ $stars }}*</span>
-                                            </div>
+                                        <div class="combo-location">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
                                         </div>
-                                        <div class="combo-footer mt-auto pt-3">
+                                        <div class="combo-footer">
                                             <div>
                                                 <div class="combo-price-label">{{ __('Giá từ:') }}</div>
                                                 <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
                                             </div>
-                                            <span class="btn btn-combo-detail" style="padding: 6px 12px; font-size: 0.85rem;">{{ __('Xem chi tiết') }}</span>
+                                            <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -349,8 +304,38 @@
 @endsection
 
 @section('scripts')
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<style>
+    .ts-control {
+        border-radius: 8px;
+        padding: 8px 12px;
+        border-color: #dee2e6;
+    }
+    .ts-dropdown {
+        border-radius: 8px;
+    }
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('destination-select')) {
+            new TomSelect('#destination-select', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                placeholder: "{{ __('Chọn điểm đến...') }}",
+                onChange: function(value) {
+                    const form = document.getElementById('searchForm');
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
+                }
+            });
+        }
         const form = document.getElementById('searchForm');
         const container = document.getElementById('results-container');
 

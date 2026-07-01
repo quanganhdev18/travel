@@ -36,6 +36,7 @@ class Coupon extends Model
     protected $table = 'coupons';
 
     protected $casts = [
+        'category_id' => 'int',
         'discount_value' => 'float',
         'min_order_value' => 'float',
         'max_discount' => 'float',
@@ -46,6 +47,7 @@ class Coupon extends Model
     ];
 
     protected $fillable = [
+        'category_id',
         'code',
         'discount_type',
         'discount_value',
@@ -56,6 +58,11 @@ class Coupon extends Model
         'usage_limit',
         'used_count',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function bookings()
     {
