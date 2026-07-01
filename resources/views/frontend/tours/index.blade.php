@@ -46,7 +46,7 @@
             <div class="col-md-3">
                 <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành từ') }}</label>
                 <input type="date" name="departure_date" class="form-control search-form-control {{ isset($filterErrors['departure_date']) ? 'is-invalid' : '' }}"
-                    value="{{ request('departure_date') }}" min="{{ date('Y-m-d') }}">
+                    value="{{ request('departure_date') ?? request('date') }}" min="{{ date('Y-m-d') }}">
                 @if(isset($filterErrors['departure_date']))
                     <div class="text-danger small mt-1 position-absolute">{{ $filterErrors['departure_date'][0] }}</div>
                 @endif
@@ -92,7 +92,7 @@
             </div>
         </form>
 
-        @if(request()->hasAny(['destination_id', 'departure_date', 'budget', 'hotel_stars', 'keyword']))
+        @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'hotel_stars', 'keyword']))
         <div class="d-flex align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
             <small class="text-muted me-2">
                 <i class="bi bi-funnel me-1"></i>
@@ -108,9 +108,12 @@
                 @endif
             @endif
 
-            @if(request('departure_date') && !isset($filterErrors['departure_date']))
-                <a href="{{ request()->fullUrlWithQuery(['departure_date' => null]) }}" class="badge bg-info bg-opacity-10 text-info text-decoration-none p-2 rounded-pill hover-opacity">
-                    <i class="bi bi-calendar me-1"></i>Từ {{ \Carbon\Carbon::parse(request('departure_date'))->format('d/m/Y') }} <i class="bi bi-x"></i>
+            @if((request('departure_date') || request('date')) && !isset($filterErrors['departure_date']))
+                @php
+                    $selectedDate = request('departure_date') ?? request('date');
+                @endphp
+                <a href="{{ request()->fullUrlWithQuery(['departure_date' => null, 'date' => null]) }}" class="badge bg-info bg-opacity-10 text-info text-decoration-none p-2 rounded-pill hover-opacity">
+                    <i class="bi bi-calendar me-1"></i>Từ {{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }} <i class="bi bi-x"></i>
                 </a>
             @endif
 
@@ -174,9 +177,6 @@
                     <button class="filter-chip">{{ __('Máy bay + Khách sạn') }}</button>
                     <button class="filter-chip">{{ __('Xe + Khách sạn') }}</button>
                 </div>
-                <a href="{{ route('frontend.tours.search') }}" class="btn-xem-them text-decoration-none">
-                    {{ __('Xem thêm') }} <i class="bi bi-arrow-right-circle-fill"></i>
-                </a>
             </div>
 
             <div class="row g-4 px-3">
@@ -185,76 +185,57 @@
                     <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                         <div class="combo-card">
                             <div class="combo-card-img-wrapper">
-
-    @auth
-    @php
-        $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-            ->where('tour_id', $tour->id)
-            ->exists();
-    @endphp
-
-    <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-          method="POST"
-          class="favorite-form"
-          onclick="event.stopPropagation();">
-        @csrf
-
-        <button type="submit"
-                class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-            <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-        </button>
-    </form>
-    @endauth
+                                @auth
+                                @php
+                                    $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+                                        ->where('tour_id', $tour->id)
+                                        ->exists();
+                                @endphp
+                                <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+                                      method="POST"
+                                      class="favorite-form"
+                                      onclick="event.stopPropagation();">
+                                    @csrf
+                                    <button type="submit"
+                                            class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+                                        <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                    </button>
+                                </form>
+                                @endauth
 
                                 @php
-                                $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
-                                $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
-                                $destName = mb_strtolower($tour->destination->name ?? '', 'UTF-8');
-                                if (str_contains($destName, 'nha trang') || str_contains($destName, 'phú quốc') || str_contains($destName, 'quy nhơn') || str_contains($destName, 'vũng tàu') || str_contains($destName, 'biển')) {
-                                    $fallbackImage = 'https://images.unsplash.com/photo-1596395819057-cbcf88eb0dfb?q=80&w=800'; // beach
-                                } elseif (str_contains($destName, 'hà nội') || str_contains($destName, 'sapa') || str_contains($destName, 'đà lạt') || str_contains($destName, 'mộc châu')) {
-                                    $fallbackImage = 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=800'; // mountain/culture
-                                } elseif (str_contains($destName, 'hạ long') || str_contains($destName, 'vịnh')) {
-                                    $fallbackImage = 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800'; // halong bay
-                                } elseif (str_contains($destName, 'đà nẵng') || str_contains($destName, 'hội an') || str_contains($destName, 'huế')) {
-                                    $fallbackImage = 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800'; // hoi an/danang
-                                } elseif (str_contains($destName, 'hồ chí minh') || str_contains($destName, 'sài gòn')) {
-                                    $fallbackImage = 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800'; // HCM
-                                }
+                                    $primaryImage = $tour->tour_images->where('is_primary', 1)->first()
+                                                 ?? $tour->tour_images->first();
+                                    $tourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                    if ($primaryImage && !empty($primaryImage->image_url)) {
+                                        if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
+                                            $tourImage = $primaryImage->image_url;
+                                        } else {
+                                            $tourImage = asset(ltrim($primaryImage->image_url, '/'));
+                                        }
+                                    }
+                                    $destinationName = optional($tour->destination)->name ?: 'Việt Nam';
+                                    $stars = $tour->hotel_stars ?? 4;
                                 @endphp
-                                <img src="{{ $primaryImage ? asset($primaryImage->image_url) : $fallbackImage }}"
-                                    alt="{{ $tour->title }}">
+                                <img src="{{ $tourImage }}"
+                                     alt="{{ $tour->title }}"
+                                     onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
                             </div>
                             <div class="combo-card-body">
-                                <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <div class="combo-stars" style="font-size: 0.9rem;">
-                                        @php $stars = $tour->hotel_stars ?? 0; @endphp
-                                        @for($i=1; $i<=5; $i++)
-                                            <i class="bi bi-star-fill {{ $i <= $stars ? 'text-warning' : 'text-muted opacity-25' }}"></i>
-                                        @endfor
-                                    </div>
-                                    @if(isset($tour->avg_rating) && $tour->review_count > 0)
-                                        <span class="badge bg-success" style="font-size: 0.75rem;">{{ $tour->avg_rating }} <i class="bi bi-star-fill"></i></span>
-                                        <small class="text-muted" style="font-size: 0.75rem;">({{ $tour->review_count }} đánh giá)</small>
-                                    @endif
+                                <h3 class="combo-title">{{ $tour->title }}</h3>
+                                <div class="combo-stars">
+                                    @for($i = 1; $i <= $stars; $i++)
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    @endfor
                                 </div>
-                                <div class="combo-location d-flex align-items-center gap-3">
-                                    <div class="text-truncate">
-                                        <i class="bi bi-geo-alt text-danger"></i>
-                                        <span class="text-muted">{{ $tour->destination->name ?? 'Không xác định' }}</span>
-                                    </div>
-                                    @if(isset($tour->seats_left))
-                                    <div class="text-nowrap" style="font-size: 0.85rem;">
-                                        <i class="bi bi-person-check text-success"></i>
-                                        <span class="text-success fw-bold">{{ $tour->seats_left }}</span> <span class="text-muted">chỗ</span>
-                                    </div>
-                                    @endif
+                                <div class="combo-location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span>{{ $destinationName }}</span>
                                 </div>
-                                <div class="combo-footer mt-3 border-top pt-3">
+                                <div class="combo-footer">
                                     <div>
                                         <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                        <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ<span class="text-muted fw-normal" style="font-size: 0.8rem;">/người lớn</span></div>
+                                        <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
                                     </div>
                                     <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                 </div>
@@ -277,254 +258,16 @@
             </div>
             
             <div class="d-flex justify-content-center mt-5">
-                {{ $tours->appends(request()->query())->links() }}
+                {{ $tours->appends(request()->query())->links('pagination::bootstrap-5') }}
             </div>
 
         </div>
     </div>
 </section>
 
-<!-- Ad Banners (Horizontal) -->
-@if(isset($adBanners) && $adBanners->count() > 0)
-<section class="container mb-5 reveal-up">
-    <div class="position-relative">
-        <!-- Navigation Buttons -->
-        @if($adBanners->count() > 2)
-        <button class="banner-nav-btn banner-nav-prev" type="button" onclick="scrollBanners('prev')">
-            <i class="bi bi-chevron-left"></i>
-        </button>
-        <button class="banner-nav-btn banner-nav-next" type="button" onclick="scrollBanners('next')">
-            <i class="bi bi-chevron-right"></i>
-        </button>
-        @endif
 
-        <!-- Banners Container -->
-        <div class="banner-scroll-container" id="bannerScrollContainer">
-            <div class="banner-scroll-wrapper">
-                @foreach($adBanners as $ad)
-                    @php
-                        $adImgSrc = Str::startsWith($ad->image_url, ['http://', 'https://'])
-                              ? $ad->image_url
-                              : asset($ad->image_url);
-                    @endphp
 
-                    <div class="banner-scroll-item">
-                        <a href="{{ $ad->target_url ?? '#' }}"
-                            class="d-block overflow-hidden rounded-4 shadow-sm position-relative banner-card"
-                            style="height: 200px;">
-                            <img src="{{ $adImgSrc }}"
-                                alt="{{ $ad->title }}"
-                                class="w-100 h-100 object-fit-cover hover-scale"
-                                style="transition: transform 0.4s ease;">
-                            
-                            @if($ad->coupon && $ad->coupon->valid_until >= now())
-                                <div class="position-absolute top-0 start-0 m-3">
-                                    <div class="coupon-badge bg-danger text-white px-3 py-2 rounded-3 shadow-lg">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="bi bi-ticket-perforated-fill"></i>
-                                            <div>
-                                                <div class="fw-bold" style="font-size: 0.75rem;">MÃ: {{ $ad->coupon->code }}</div>
-                                                <div style="font-size: 0.7rem;">
-                                                    @if($ad->coupon->discount_type === 'percentage')
-                                                        Giảm {{ $ad->coupon->discount_value }}%
-                                                    @else
-                                                        Giảm {{ format_currency($ad->coupon->discount_value) }}
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
-</section>
 
-<style>
-    .banner-scroll-container {
-        overflow-x: auto;
-        overflow-y: hidden;
-        scroll-behavior: smooth;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .banner-scroll-container::-webkit-scrollbar {
-        display: none;
-    }
-
-    .banner-scroll-wrapper {
-        display: flex;
-        gap: 1.5rem;
-        padding: 0.5rem 0;
-    }
-
-    .banner-scroll-item {
-        flex: 0 0 calc(50% - 0.75rem);
-        min-width: 300px;
-    }
-
-    @media (min-width: 768px) {
-        .banner-scroll-item {
-            flex: 0 0 calc(33.333% - 1rem);
-        }
-    }
-
-    @media (min-width: 1200px) {
-        .banner-scroll-item {
-            flex: 0 0 calc(25% - 1.125rem);
-        }
-    }
-
-    .banner-card {
-        display: block;
-        transition: all 0.3s ease;
-    }
-
-    .banner-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
-    }
-
-    .hover-scale:hover {
-        transform: scale(1.05);
-    }
-    
-    .coupon-badge {
-        backdrop-filter: blur(10px);
-        animation: pulse-subtle 2s ease-in-out infinite;
-        z-index: 2;
-    }
-    
-    @keyframes pulse-subtle {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-    }
-
-    /* Navigation Buttons */
-    .banner-nav-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 10;
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: white;
-        border: none;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: #333;
-        font-size: 1.25rem;
-    }
-
-    .banner-nav-btn:hover {
-        background: var(--primary-color, #007CE8);
-        color: white;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
-
-    .banner-nav-prev {
-        left: -20px;
-    }
-
-    .banner-nav-next {
-        right: -20px;
-    }
-
-    @media (max-width: 768px) {
-        .banner-nav-btn {
-            width: 38px;
-            height: 38px;
-            font-size: 1rem;
-        }
-
-        .banner-nav-prev {
-            left: -10px;
-        }
-
-        .banner-nav-next {
-            right: -10px;
-        }
-
-        .banner-scroll-item {
-            flex: 0 0 calc(80% - 0.75rem);
-            min-width: 280px;
-        }
-    }
-</style>
-
-<script>
-function scrollBanners(direction) {
-    const container = document.getElementById('bannerScrollContainer');
-    const items = container.querySelectorAll('.banner-scroll-item');
-    
-    if (items.length === 0) return;
-    
-    // Lấy chiều rộng của 1 banner item + gap
-    const itemWidth = items[0].offsetWidth;
-    const gap = 24; // 1.5rem = 24px
-    const scrollAmount = itemWidth + gap;
-    
-    if (direction === 'prev') {
-        container.scrollLeft -= scrollAmount;
-    } else {
-        container.scrollLeft += scrollAmount;
-    }
-}
-
-// Auto-scroll on swipe for mobile
-let startX = 0;
-const container = document.getElementById('bannerScrollContainer');
-
-if (container) {
-    container.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].pageX;
-    });
-
-    container.addEventListener('touchend', (e) => {
-        const endX = e.changedTouches[0].pageX;
-        const diff = startX - endX;
-        
-        if (Math.abs(diff) > 50) {
-            if (diff > 0) {
-                scrollBanners('next');
-            } else {
-                scrollBanners('prev');
-            }
-        }
-    });
-}
-</script>
-@endif
-
-<!-- Full Width Banner -->
-<section class="full-width-banner position-relative reveal-up mt-0">
-    <div class="banner-bg">
-        <img src="https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=1920&auto=format&fit=crop" alt="Halong Bay">
-    </div>
-    <div class="banner-overlay"></div>
-    <div class="container position-relative z-index-1 banner-content text-center text-white">
-        <h2 class="banner-title mb-3 fw-bold text-white">{{ __('KỲ QUAN TRÙNG ĐIỆP, TRỌN VẸN CẢM XÚC') }}</h2>
-        <p class="banner-subtitle mx-auto text-white">
-            {{ __('Cùng Travel Wonder lênh đênh giữa vịnh di sản, đón hoàng hôn trên du thuyền và hòa') }}<br>
-            {{ __('mình vào kiệt tác thiên nhiên thế giới') }}
-        </p>
-    </div>
-</section>
 <style>
 .combo-card-img-wrapper {
     position: relative;

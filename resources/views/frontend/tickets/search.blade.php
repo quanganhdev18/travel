@@ -32,7 +32,7 @@
         <ul class="nav nav-tabs search-tabs" id="searchTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tour-tab" data-bs-toggle="tab" data-bs-target="#tour"
-                    type="button" role="tab" onclick="window.location.href='{{ route('frontend.tours.search') }}'"><i class="bi bi-briefcase-fill me-2"></i>{{ __('Tour Du Lịch') }}</button>
+                    type="button" role="tab" onclick="window.location.href='{{ route('frontend.tours.index') }}'"><i class="bi bi-briefcase-fill me-2"></i>{{ __('Tour Du Lịch') }}</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="ticket-tab" data-bs-toggle="tab" data-bs-target="#ticket" type="button"
