@@ -22,8 +22,8 @@ class TourFilterRequest extends FormRequest
                 'after_or_equal:today',
                 'before:' . now()->addYears(2)->format('Y-m-d'),
             ],
-            'hotel_stars' => ['nullable', 'integer', 'in:1,2,3,4,5'],
-            'budget'      => ['nullable', 'in:all,under_5m,5m_10m,10m_20m,over_20m'],
+            'category_id'    => ['nullable'],
+            'budget'         => ['nullable', 'in:all,under_5m,5m_10m,10m_20m,over_20m'],
         ];
     }
 
@@ -34,7 +34,7 @@ class TourFilterRequest extends FormRequest
             'departure_date.date_format'    => 'Ngày không hợp lệ, vui lòng chọn lại.',
             'departure_date.after_or_equal' => 'Vui lòng chọn ngày từ hôm nay trở đi.',
             'departure_date.before'         => 'Ngày đi không được quá 2 năm trong tương lai.',
-            'hotel_stars.in'                => 'Xếp hạng sao không hợp lệ.',
+
             'budget.in'                     => 'Mức ngân sách không hợp lệ.',
         ];
     }
