@@ -84,6 +84,7 @@ class HomeController extends Controller
             ->get();
 
         $allDestinations = Destination::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
         $filterErrors = session('filter_errors', []);
 
@@ -118,9 +119,11 @@ class HomeController extends Controller
             $query->where('destination_id', $request->destination_id);
         }
 
-        // Lọc Xếp hạng sao
-        if (!isset($filterErrors['hotel_stars']) && $request->filled('hotel_stars')) {
-            $query->where('hotel_stars', '>=', $request->hotel_stars);
+        // Lọc Danh mục
+        if ($request->filled('category_id') && $request->category_id !== 'all') {
+            $query->whereHas('categories', function ($q) use ($request) {
+                $q->where('categories.id', $request->category_id);
+            });
         }
 
         // Lọc Ngân sách
@@ -159,7 +162,7 @@ class HomeController extends Controller
 
         $tours = $query->paginate(9);
 
-        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'filterErrors'));
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'filterErrors', 'categories'));
     }
 
     public function searchTours(Request $request)
@@ -225,12 +228,7 @@ class HomeController extends Controller
             });
         }
 
-        // Xếp hạng sao khách sạn
-        if ($request->filled('stars')) {
-            if (Schema::hasColumn('tours', 'hotel_stars')) {
-                $query->where('hotel_stars', $request->stars);
-            }
-        }
+
 
         // Ngân sách
         if ($request->filled('budget')) {
