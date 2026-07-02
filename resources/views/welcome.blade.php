@@ -49,7 +49,7 @@
 
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
             <div class="tab-pane fade show active" id="tour" role="tabpanel">
-                <form action="{{ route('frontend.tours.search') }}" method="GET" class="row g-3 align-items-end">
+                <form action="{{ route('frontend.tours.index') }}" method="GET" class="row g-3 align-items-end">
                     <div class="col-md-6">
                         <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
                         <div class="input-group autocomplete-wrapper">
@@ -216,7 +216,7 @@
             <div class="dest-slider-track" id="destTrack">
                 @foreach($destinations as $dest)
                     <div class="dest-slider-item">
-                        <a href="{{ route('frontend.tours.search', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
+                        <a href="{{ route('frontend.tours.index', ['destination_id' => $dest->id]) }}" class="text-decoration-none">
                             <div class="dest-card-premium">
                                 <img src="{{ $dest->image_url ?? 'https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=600' }}"
                                     alt="{{ $dest->name ?? 'Điểm đến' }}"
@@ -376,7 +376,7 @@
             <p class="section-subheading mb-0">{{ __('Trải nghiệm dịch vụ 5 sao với giá ưu đãi.') }}</p>
         </div>
 
-        <a href="{{ route('frontend.tours.search') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
+        <a href="{{ route('frontend.tours.index') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
             style="color:var(--primary-color); border-color:var(--primary-color);">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
@@ -741,10 +741,17 @@ if (container) {
                             {{ $ticket->destination->name ?? 'Điểm vui chơi' }}
                         </div>
 
+                        @php
+                            $minPrice = $ticket->ticket_options->min('price') ?? 0;
+                        @endphp
                         <div class="price-wrap">
                             <span class="text-muted small">{{ __('Từ') }}</span>
                             <div class="price-val" style="font-size: 1.1rem;">
-                                {{ __('Tra cứu giá') }}
+                                @if($minPrice > 0)
+                                    {{ number_format($minPrice, 0, ',', '.') }}đ
+                                @else
+                                    {{ __('Liên hệ') }}
+                                @endif
                             </div>
                         </div>
                     </div>

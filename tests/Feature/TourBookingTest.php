@@ -92,7 +92,8 @@ test('booking stores successfully for flight transport', function () {
                 ],
             ],
         ],
-        'payment_method' => 'cod',
+        'payment_type' => 'full',
+        'payment_method' => 'transfer',
     ]);
 
     $this->assertDatabaseHas('bookings', [
@@ -137,7 +138,8 @@ test('booking stores successfully for bus transport', function () {
                 ],
             ],
         ],
-        'payment_method' => 'cod',
+        'payment_type' => 'full',
+        'payment_method' => 'transfer',
     ]);
 
     $this->assertDatabaseHas('bookings', [
@@ -181,7 +183,8 @@ test('booking stores successfully for self transport', function () {
                 ],
             ],
         ],
-        'payment_method' => 'cod',
+        'payment_type' => 'full',
+        'payment_method' => 'transfer',
     ]);
 
     $this->assertDatabaseHas('bookings', [
@@ -225,6 +228,7 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
                 ],
             ],
         ],
+        'payment_type' => 'full',
         'payment_method' => 'vnpay',
     ]);
 

@@ -30,8 +30,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Banner extends Model
 {
-    use SoftDeletes;
-
     use HasLocalImageUrl;
 
     protected $table = 'banners';

@@ -108,7 +108,6 @@
                                 'departure_id'   => request('departure_id'),
                                 'destination_id' => request('destination_id'),
                                 'date'           => request('date'),
-                                'stars'          => request('stars'),
                                 'budget'         => request('budget'),
                             ]);
                         @endphp
@@ -122,11 +121,6 @@
                             @if(request('transport'))
                                 <span class="badge bg-info bg-opacity-10 text-info fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
                                     <i class="bi bi-{{ request('transport') === 'bay' ? 'airplane' : 'car-front' }} me-1"></i>{{ request('transport') === 'bay' ? 'Chuyến bay' : 'Xe' }}
-                                </span>
-                            @endif
-                            @if(request('stars'))
-                                <span class="badge bg-warning bg-opacity-10 text-warning fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
-                                    <i class="bi bi-star-fill me-1"></i>{{ request('stars') }} sao
                                 </span>
                             @endif
                             @if(request('budget'))
@@ -159,38 +153,8 @@
                             <input type="date" class="form-control" name="date"
                                 value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                         </div>
-
-                        <!-- Xếp hạng sao -->
-                        <div class="mb-4">
-                            <div class="filter-section-title d-flex justify-content-between align-items-center">
-                                <span>{{ __('Xếp hạng sao') }}</span>
-                                @if(request('stars'))
-                                    <a href="{{ request()->fullUrlWithQuery(['stars' => '']) }}" class="text-muted small text-decoration-none">
-                                        <i class="bi bi-x-circle"></i>
-                                    </a>
-                                @endif
-                            </div>
-                            <div class="filter-checkbox-list mt-2">
-                                @for($i = 5; $i >= 1; $i--)
-                                <label class="filter-checkbox d-flex align-items-center gap-2 py-1 cursor-pointer {{ request('stars') == $i ? 'text-warning fw-bold' : '' }}">
-                                    <input type="radio" name="stars" value="{{ $i }}"
-                                        class="form-check-input mt-0" style="width:16px;height:16px;"
-                                        {{ request('stars') == $i ? 'checked' : '' }}>
-                                    <div class="stars d-flex gap-1" style="color:#f59e0b; font-size:0.9rem;">
-                                        @for($j = 1; $j <= $i; $j++)
-                                        <i class="bi bi-star-fill"></i>
-                                        @endfor
-                                        @for($k = $i+1; $k <= 5; $k++)
-                                        <i class="bi bi-star text-muted" style="opacity:0.3;"></i>
-                                        @endfor
-                                    </div>
-                                    <span class="text-muted small">{{ $i }} sao</span>
-                                </label>
-                                @endfor
-                            </div>
-                        </div>
-
-                        <!-- Ngân sách -->
+  
+                       <!-- Ngân sách -->
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Ngân sách') }}</div>
                             <div class="filter-btn-grid">
@@ -249,40 +213,39 @@
                                         @endif -->
                                       
                                         @php
-                                        $primaryImage = $tour->tour_images->where('is_primary', 1)->first() ?? $tour->tour_images->first();
-                                        $fallbackImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
-                                        $destName = mb_strtolower($tour->destination->name ?? '', 'UTF-8');
-                                        if (str_contains($destName, 'nha trang') || str_contains($destName, 'phú quốc') || str_contains($destName, 'quy nhơn') || str_contains($destName, 'vũng tàu') || str_contains($destName, 'biển')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1596395819057-cbcf88eb0dfb?q=80&w=800';
-                                        } elseif (str_contains($destName, 'hà nội') || str_contains($destName, 'sapa') || str_contains($destName, 'đà lạt') || str_contains($destName, 'mộc châu')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=800';
-                                        } elseif (str_contains($destName, 'hạ long') || str_contains($destName, 'vịnh')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800';
-                                        } elseif (str_contains($destName, 'đà nẵng') || str_contains($destName, 'hội an') || str_contains($destName, 'huế')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800';
-                                        } elseif (str_contains($destName, 'hồ chí minh') || str_contains($destName, 'sài gòn')) {
-                                            $fallbackImage = 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800';
-                                        }
+                                            $primaryImage = $tour->tour_images->where('is_primary', 1)->first()
+                                                         ?? $tour->tour_images->first();
+                                            $tourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                            if ($primaryImage && !empty($primaryImage->image_url)) {
+                                                if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
+                                                    $tourImage = $primaryImage->image_url;
+                                                } else {
+                                                    $tourImage = asset(ltrim($primaryImage->image_url, '/'));
+                                                }
+                                            }
+                                            $destinationName = optional($tour->destination)->name ?: 'Việt Nam';
+                                            $stars = $tour->hotel_stars ?? 4;
                                         @endphp
-                                        <img src="{{ $primaryImage ? asset($primaryImage->image_url) : $fallbackImage }}"
-                                            alt="{{ $tour->title }}" class="w-100 h-100 object-fit-cover">
+                                        <img src="{{ $tourImage }}"
+                                             alt="{{ $tour->title }}"
+                                             class="w-100 h-100 object-fit-cover"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
                                     </div>
                                     <div class="combo-card-body">
-                                        <h3 class="combo-title" style="font-size: 1.05rem;">{{ $tour->title }}</h3>
-                                        <div class="combo-stars" style="font-size: 0.9rem;">
-                                            @php $stars = $tour->hotel_stars ?? 4; @endphp
-                                            @for($i=1; $i<=$stars; $i++)
-                                            <i class="bi bi-star-fill text-warning"></i>
+                                        <h3 class="combo-title">{{ $tour->title }}</h3>
+                                        <div class="combo-stars">
+                                            @for($i = 1; $i <= $stars; $i++)
+                                                <i class="bi bi-star-fill text-warning"></i>
                                             @endfor
                                         </div>
                                         <div class="combo-location">
                                             <i class="bi bi-geo-alt"></i>
-                                            <span>{{ $tour->destination->name ?? 'TP. Hồ Chí Minh' }}</span>
+                                            <span>{{ $destinationName }}</span>
                                         </div>
                                         <div class="combo-footer">
                                             <div>
                                                 <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                <div class="combo-price-val">{{ number_format($tour->base_price, 0, ',', '.') }}đ</div>
+                                                <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
                                             </div>
                                             <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                         </div>

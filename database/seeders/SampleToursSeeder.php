@@ -104,6 +104,8 @@ class SampleToursSeeder extends Seeder
                     'base_price' => $sample['price'],
                     'transport_type' => $sample['transport'],
                     'hotel_stars' => $sample['stars'],
+                    'departure_time' => sprintf('%02d:00:00', rand(5, 20)),
+                    'meeting_point' => ($sample['transport'] === 'bay') ? 'Sân bay nội địa' : 'Bến xe trung tâm',
                 ]
             );
 
