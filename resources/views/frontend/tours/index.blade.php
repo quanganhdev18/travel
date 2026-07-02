@@ -72,27 +72,10 @@
                 </button>
             </div>
             
-            <div class="col-12 mt-4">
-                <label class="form-label text-muted small fw-bold me-3">{{ __('Xếp hạng khách sạn:') }}</label>
-                <div class="d-inline-flex gap-4 flex-wrap align-items-center">
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="hotel_stars" id="star_all" value="" {{ !request('hotel_stars') ? 'checked' : '' }}>
-                        <label class="form-check-label text-muted" for="star_all">Tất cả</label>
-                    </div>
-                    @foreach([5, 4, 3, 2, 1] as $star)
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="hotel_stars" id="star_{{ $star }}" value="{{ $star }}" {{ request('hotel_stars') == $star ? 'checked' : '' }}>
-                        <label class="form-check-label text-muted" for="star_{{ $star }}">{{ $star }} Sao</label>
-                    </div>
-                    @endforeach
-                </div>
-                @if(isset($filterErrors['hotel_stars']))
-                    <div class="text-danger small mt-1">{{ $filterErrors['hotel_stars'][0] }}</div>
-                @endif
-            </div>
+
         </form>
 
-        @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'hotel_stars', 'keyword']))
+        @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'keyword']))
         <div class="d-flex align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
             <small class="text-muted me-2">
                 <i class="bi bi-funnel me-1"></i>
@@ -117,11 +100,7 @@
                 </a>
             @endif
 
-            @if(request('hotel_stars') && !isset($filterErrors['hotel_stars']))
-                <a href="{{ request()->fullUrlWithQuery(['hotel_stars' => null]) }}" class="badge bg-warning bg-opacity-10 text-warning text-decoration-none p-2 rounded-pill hover-opacity">
-                    <i class="bi bi-star-fill me-1"></i>Từ {{ request('hotel_stars') }} sao <i class="bi bi-x"></i>
-                </a>
-            @endif
+
 
             @if(request('budget') && request('budget') !== 'all' && !isset($filterErrors['budget']))
                 @php
@@ -161,21 +140,25 @@
         <div class="container position-relative z-index-1">
             <div class="text-center mb-5">
                 <h2 class="hot-deal-title d-flex align-items-center justify-content-center gap-3">
-                    <span class="hot-deal-badge-icon">25%</span>
+                 
                     Hot deal
-                    <span class="hot-deal-badge-icon">25%</span>
+                   
                 </h2>
-                <p class="hot-deal-subtitle mx-auto mt-3">
-                    {{ __('Với sự hợp tác giảm giá ưu đãi cùng hệ thống đối tác lớn, chúng tôi tự tin mang đến cho quý khách') }}<br>
-                    {{ __('combo vé máy bay và khách sạn với giá tốt nhất!') }}
-                </p>
+               
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 px-3">
                 <div class="d-flex gap-2 flex-wrap">
-                    <button class="filter-chip active">{{ __('Tất cả') }}</button>
-                    <button class="filter-chip">{{ __('Máy bay + Khách sạn') }}</button>
-                    <button class="filter-chip">{{ __('Xe + Khách sạn') }}</button>
+                    <a href="{{ route('frontend.tours.index', array_merge(request()->except('category_id', 'page'), [])) }}"
+                       class="filter-chip text-decoration-none {{ !request('category_id') || request('category_id') === 'all' ? 'active' : '' }}">
+                        {{ __('Tất cả') }}
+                    </a>
+                    @foreach($categories as $cat)
+                    <a href="{{ route('frontend.tours.index', array_merge(request()->except('category_id', 'page'), ['category_id' => $cat->id])) }}"
+                       class="filter-chip text-decoration-none {{ request('category_id') == $cat->id ? 'active' : '' }}">
+                        {{ $cat->name }}
+                    </a>
+                    @endforeach
                 </div>
             </div>
 

@@ -84,6 +84,7 @@ class HomeController extends Controller
             ->get();
 
         $allDestinations = Destination::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
         $query = Tour::with(['destination', 'tour_images'])
             ->whereNull('deleted_at')
@@ -129,6 +130,12 @@ class HomeController extends Controller
             $query->where('destination_id', $request->destination_id);
         }
 
+        if ($request->filled('category_id') && $request->category_id !== 'all') {
+            $query->whereHas('categories', function ($q) use ($request) {
+                $q->where('categories.id', $request->category_id);
+            });
+        }
+
         $date = $request->input('date') ?? $request->input('departure_date');
         if ($date) {
             $query->whereHas('activeSchedules', function ($q) use ($date) {
@@ -166,7 +173,7 @@ class HomeController extends Controller
 
         $tours = $query->paginate(12)->withQueryString();
 
-        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations'));
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'categories'));
     }
 
     public function searchTours(Request $request)
@@ -226,11 +233,6 @@ class HomeController extends Controller
             });
         }
 
-        if ($request->filled('stars')) {
-            if (Schema::hasColumn('tours', 'hotel_stars')) {
-                $query->where('hotel_stars', $request->stars);
-            }
-        }
 
         if ($request->filled('budget')) {
             match ($request->budget) {

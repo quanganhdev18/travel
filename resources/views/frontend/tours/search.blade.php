@@ -108,7 +108,6 @@
                                 'departure_id'   => request('departure_id'),
                                 'destination_id' => request('destination_id'),
                                 'date'           => request('date'),
-                                'stars'          => request('stars'),
                                 'budget'         => request('budget'),
                             ]);
                         @endphp
@@ -122,11 +121,6 @@
                             @if(request('transport'))
                                 <span class="badge bg-info bg-opacity-10 text-info fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
                                     <i class="bi bi-{{ request('transport') === 'bay' ? 'airplane' : 'car-front' }} me-1"></i>{{ request('transport') === 'bay' ? 'Chuyến bay' : 'Xe' }}
-                                </span>
-                            @endif
-                            @if(request('stars'))
-                                <span class="badge bg-warning bg-opacity-10 text-warning fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
-                                    <i class="bi bi-star-fill me-1"></i>{{ request('stars') }} sao
                                 </span>
                             @endif
                             @if(request('budget'))
@@ -159,38 +153,8 @@
                             <input type="date" class="form-control" name="date"
                                 value="{{ request('date') }}" min="{{ date('Y-m-d') }}">
                         </div>
-
-                        <!-- Xếp hạng sao -->
-                        <div class="mb-4">
-                            <div class="filter-section-title d-flex justify-content-between align-items-center">
-                                <span>{{ __('Xếp hạng sao') }}</span>
-                                @if(request('stars'))
-                                    <a href="{{ request()->fullUrlWithQuery(['stars' => '']) }}" class="text-muted small text-decoration-none">
-                                        <i class="bi bi-x-circle"></i>
-                                    </a>
-                                @endif
-                            </div>
-                            <div class="filter-checkbox-list mt-2">
-                                @for($i = 5; $i >= 1; $i--)
-                                <label class="filter-checkbox d-flex align-items-center gap-2 py-1 cursor-pointer {{ request('stars') == $i ? 'text-warning fw-bold' : '' }}">
-                                    <input type="radio" name="stars" value="{{ $i }}"
-                                        class="form-check-input mt-0" style="width:16px;height:16px;"
-                                        {{ request('stars') == $i ? 'checked' : '' }}>
-                                    <div class="stars d-flex gap-1" style="color:#f59e0b; font-size:0.9rem;">
-                                        @for($j = 1; $j <= $i; $j++)
-                                        <i class="bi bi-star-fill"></i>
-                                        @endfor
-                                        @for($k = $i+1; $k <= 5; $k++)
-                                        <i class="bi bi-star text-muted" style="opacity:0.3;"></i>
-                                        @endfor
-                                    </div>
-                                    <span class="text-muted small">{{ $i }} sao</span>
-                                </label>
-                                @endfor
-                            </div>
-                        </div>
-
-                        <!-- Ngân sách -->
+  
+                       <!-- Ngân sách -->
                         <div class="mb-4">
                             <div class="filter-section-title">{{ __('Ngân sách') }}</div>
                             <div class="filter-btn-grid">
