@@ -145,9 +145,90 @@
             <hr class="my-4">
             <div class="text-end">
                 <button type="reset" class="btn btn-light me-2">Nhập lại</button>
-                <button type="submit" class="btn btn-primary">Lưu và Tiếp tục thêm lịch trình</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="btn-text">Cập nhật Tour</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- Toast notification -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span id="toastMessage"></span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const spinner = submitBtn.querySelector('.spinner-border');
+    const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Disable button và hiển thị spinner
+        submitBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'Đang lưu...';
+
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hiển thị toast thông báo
+                document.getElementById('toastMessage').textContent = data.message;
+                successToast.show();
+
+                // Cập nhật ảnh preview nếu có
+                if (data.image_updated && data.tour.primary_image) {
+                    const imgPreview = document.querySelector('.bg-light img');
+                    if (imgPreview) {
+                        imgPreview.src = data.tour.primary_image;
+                    }
+                }
+
+                // Reset input file
+                const fileInput = document.querySelector('input[name="primary_image"]');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi cập nhật tour!');
+        })
+        .finally(() => {
+            // Enable button và ẩn spinner
+            submitBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = 'Cập nhật Tour';
+        });
+    });
+});
+</script>
+@endpush

@@ -82,6 +82,20 @@ class TourController extends Controller
             $tour->categories()->sync($request->categories);
         }
 
+        // Kiểm tra nếu là AJAX request
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạo tour thành công!',
+                'tour' => [
+                    'id' => $tour->id,
+                    'title' => $tour->title,
+                    'slug' => $tour->slug,
+                ],
+                'redirect_url' => route('admin.tours.schedules', $tour->id),
+            ]);
+        }
+
         // Trong TourController@store, sửa dòng return thành:
         return redirect()->route('admin.tours.schedules', $tour->id)->with('success', 'Đã tạo tour, vui lòng thêm lịch trình!');
     }
@@ -191,6 +205,7 @@ class TourController extends Controller
         $tour->duration_days = $request->duration_days;
         $tour->duration_nights = $request->duration_nights;
 
+        $imageUpdated = false;
         // Nếu có cập nhật ảnh đại diện
         if ($request->hasFile('primary_image')) {
             $path = $request->file('primary_image')->store('tours', 'public');
@@ -200,12 +215,30 @@ class TourController extends Controller
                 'image_url' => '/storage/'.$path,
                 'is_primary' => 1,
             ]);
+            $imageUpdated = true;
         }
 
         $tour->save();
 
         if ($request->has('categories')) {
             $tour->categories()->sync($request->categories);
+        }
+
+        // Kiểm tra nếu là AJAX request
+        if ($request->expectsJson() || $request->ajax()) {
+            $primaryImage = $tour->tour_images()->where('is_primary', 1)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật tour thành công!',
+                'tour' => [
+                    'id' => $tour->id,
+                    'title' => $tour->title,
+                    'slug' => $tour->slug,
+                    'primary_image' => $primaryImage ? $primaryImage->image_url : null,
+                ],
+                'image_updated' => $imageUpdated,
+            ]);
         }
 
         return redirect()->route('admin.tours.index')->with('success', 'Cập nhật tour thành công!');
