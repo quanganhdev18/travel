@@ -116,7 +116,6 @@
                         </li>
                         @endauth
                         <li class="nav-item"><a class="nav-link fs-6" href="#">{{ __('Vé tham quan') }}</a></li>
-                        <li class="nav-item"><a class="nav-link text-danger fs-6" href="#"><i class="bi bi-tags-fill me-1"></i>{{ __('Khuyến mãi') }}</a></li>
                     </ul>
 
                     <!-- Mobile Only Top Utilities -->

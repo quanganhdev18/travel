@@ -420,11 +420,6 @@
                     <i class="bi bi-star"></i> Đánh giá khách hàng
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-megaphone"></i> Khuyến mãi & Coupon
-                </a>
-            </li>
         </ul>
         @endhasanyrole
 
