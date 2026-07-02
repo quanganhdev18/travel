@@ -416,6 +416,11 @@
                     <div class="combo-card">
                         <div class="combo-card-img-wrapper">
 
+                            @if($tour->duration_days && $tour->duration_nights)
+                            <div class="tour-duration-badge">
+                                {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
+                            </div>
+                            @endif
 
                             @auth
                             @php
@@ -762,6 +767,22 @@ if (container) {
 <style>
 .card-img-wrapper {
     position: relative;
+}
+
+.tour-duration-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .favorite-form {
