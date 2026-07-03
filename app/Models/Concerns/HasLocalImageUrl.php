@@ -59,7 +59,7 @@ trait HasLocalImageUrl
             $subdir = trim(dirname($scriptName), '/.');
 
             return $subdir !== ''
-                ? $host . '/' . $subdir
+                ? $host.'/'.$subdir
                 : $host;
         } catch (\Throwable) {
             // CLI / queue context — no HTTP request available.

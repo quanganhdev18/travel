@@ -327,7 +327,6 @@ Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])
 Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])
     ->name('admin.coupons.destroy');
 
-
 Route::get('/coupons/trash', [CouponController::class, 'trash'])
     ->name('admin.coupons.trash');
 
@@ -336,7 +335,7 @@ Route::post('/coupons/{id}/restore', [CouponController::class, 'restore'])
 
 Route::delete('/coupons/{id}/force-delete', [CouponController::class, 'forceDelete'])
     ->name('admin.coupons.forceDelete');
-    Route::resource('coupons', CouponController::class);
+Route::resource('coupons', CouponController::class);
 /*
 |--------------------------------------------------------------------------
 | Auth Routes
@@ -358,4 +357,3 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::post('/{id}/messages/{messageId}/mark-important', [ChatController::class, 'markImportant'])->name('chat.mark_important');
 });
-

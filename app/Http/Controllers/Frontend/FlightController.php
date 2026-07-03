@@ -59,7 +59,7 @@ class FlightController extends Controller
         $origin = $request->input('origin', 'HAN');
         $destination = $request->input('destination', 'SGN');
         $departureDate = $request->input('departure_date', date('Y-m-d', strtotime('+7 days')));
-        
+
         // Duffel API requires dates to be in the future. If test data has past dates, shift it to future.
         if (strtotime($departureDate) < strtotime(date('Y-m-d'))) {
             $departureDate = date('Y-m-d', strtotime('+7 days'));
@@ -75,8 +75,8 @@ class FlightController extends Controller
 
         if ($origin === $destination) {
             return response()->json([
-                'success' => false, 
-                'message' => 'Điểm xuất phát trùng với điểm tập trung của Tour. Vui lòng chọn Tự Túc hoặc chọn điểm xuất phát khác.'
+                'success' => false,
+                'message' => 'Điểm xuất phát trùng với điểm tập trung của Tour. Vui lòng chọn Tự Túc hoặc chọn điểm xuất phát khác.',
             ]);
         }
 
@@ -105,6 +105,7 @@ class FlightController extends Controller
             if (isset($errorData['errors'][0]['message'])) {
                 $errorMsg = $errorData['errors'][0]['message'];
             }
+
             return response()->json(['success' => false, 'message' => $errorMsg]);
         }
 

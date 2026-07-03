@@ -412,8 +412,15 @@
             @endphp
 
             <div class="col-12 col-md-6 col-lg-3">
-                <a href="{{ route('frontend.tours.show', $tourSlug) }}" class="text-decoration-none h-100 d-block">
-                    <div class="combo-card">
+                <div class="tour-preview-wrapper h-100"
+                     x-data="{ showPreview: false }"
+                     @mouseenter="showPreview = true"
+                     @mouseleave="showPreview = false">
+                    
+                    <a href="{{ route('frontend.tours.show', $tourSlug) }}" 
+                       class="text-decoration-none h-100 d-block"
+                       @mouseenter.stop>
+                        <div class="combo-card h-100">
                         <div class="combo-card-img-wrapper">
 
                             @if($tour->duration_days && $tour->duration_nights)
@@ -468,6 +475,10 @@
                         </div>
                     </div>
                 </a>
+
+                <!-- Tour Preview Component -->
+                <x-tour-preview :tour="$tour" />
+                </div>
             </div>
         @empty
             <div class="col-12">

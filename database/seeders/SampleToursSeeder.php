@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Tour;
 use App\Models\Destination;
+use App\Models\Tour;
+use App\Models\TourImage;
 use App\Models\TourSchedule;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class SampleToursSeeder extends Seeder
@@ -31,74 +32,74 @@ class SampleToursSeeder extends Seeder
                 'title' => 'Nghỉ dưỡng 5 sao Đảo Ngọc Phú Quốc',
                 'dest' => 'Phú Quốc', 'dep' => 'Hồ Chí Minh',
                 'price' => 12500000, 'transport' => 'bay', 'stars' => 5,
-                'image' => 'https://images.unsplash.com/photo-1596395819057-cbcf88eb0dfb?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1596395819057-cbcf88eb0dfb?q=80&w=800',
             ],
             [
                 'title' => 'Khám phá Hà Nội - Vịnh Hạ Long',
                 'dest' => 'Hạ Long', 'dep' => 'Hồ Chí Minh',
                 'price' => 8500000, 'transport' => 'bay', 'stars' => 4,
-                'image' => 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800',
             ],
             [
                 'title' => 'Phượt Sapa mùa lúa chín bằng Ô Tô',
                 'dest' => 'Sapa', 'dep' => 'Hà Nội',
                 'price' => 3200000, 'transport' => 'xe', 'stars' => 3,
-                'image' => 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=800',
             ],
             [
                 'title' => 'Trải nghiệm cáp treo Bà Nà Hills',
                 'dest' => 'Đà Nẵng', 'dep' => 'Hà Nội',
                 'price' => 6500000, 'transport' => 'bay', 'stars' => 4,
-                'image' => 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800',
             ],
             [
                 'title' => 'Vi vu Thành phố ngàn hoa Đà Lạt',
                 'dest' => 'Đà Lạt', 'dep' => 'Hồ Chí Minh',
                 'price' => 4500000, 'transport' => 'xe', 'stars' => 3,
-                'image' => 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?q=80&w=800',
             ],
             [
                 'title' => 'Tour Siêu Tiết Kiệm Nha Trang 3 Ngày',
                 'dest' => 'Nha Trang', 'dep' => 'Hồ Chí Minh',
                 'price' => 2800000, 'transport' => 'xe', 'stars' => 2,
-                'image' => 'https://images.unsplash.com/photo-1582715014902-530932da6687?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1582715014902-530932da6687?q=80&w=800',
             ],
             [
                 'title' => 'Tour Cao Cấp Sài Gòn - Đà Nẵng 4 Ngày',
                 'dest' => 'Đà Nẵng', 'dep' => 'Hồ Chí Minh',
                 'price' => 11000000, 'transport' => 'bay', 'stars' => 5,
-                'image' => 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1555921015-c262060f5899?q=80&w=800',
             ],
             [
                 'title' => 'Tuần Trăng Mật Đỉnh Cao Phú Quốc',
                 'dest' => 'Phú Quốc', 'dep' => 'Hà Nội',
                 'price' => 25000000, 'transport' => 'bay', 'stars' => 5,
-                'image' => 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800',
             ],
             [
                 'title' => 'Du Lịch Gia Đình Hạ Long Cuối Tuần',
                 'dest' => 'Hạ Long', 'dep' => 'Hà Nội',
                 'price' => 4000000, 'transport' => 'xe', 'stars' => 4,
-                'image' => 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=800',
             ],
             [
                 'title' => 'Hành Trình Di Sản Miền Trung (Huế - Đà Nẵng)',
                 'dest' => 'Đà Nẵng', 'dep' => 'Hồ Chí Minh',
                 'price' => 7800000, 'transport' => 'bay', 'stars' => 4,
-                'image' => 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800'
+                'image' => 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=800',
             ],
         ];
 
         foreach ($samples as $index => $sample) {
-            $slug = Str::slug($sample['title']) . '-' . rand(100, 999);
-            
+            $slug = Str::slug($sample['title']).'-'.rand(100, 999);
+
             $tour = Tour::updateOrCreate(
                 ['slug' => Str::slug($sample['title'])], // search by base slug
                 [
                     'title' => ['vi' => $sample['title'], 'en' => $sample['title']],
                     'destination_id' => $destinations[$sample['dest']]->id ?? null,
                     'departure_location_id' => $destinations[$sample['dep']]->id ?? null,
-                    'description' => ['vi' => 'Mô tả chi tiết cho tour ' . $sample['title'], 'en' => 'Description for ' . $sample['title']],
+                    'description' => ['vi' => 'Mô tả chi tiết cho tour '.$sample['title'], 'en' => 'Description for '.$sample['title']],
                     'duration_days' => rand(2, 5),
                     'duration_nights' => rand(1, 4),
                     'base_price' => $sample['price'],
@@ -116,7 +117,7 @@ class SampleToursSeeder extends Seeder
             }
 
             // Insert image
-            \App\Models\TourImage::updateOrCreate(
+            TourImage::updateOrCreate(
                 ['tour_id' => $tour->id],
                 [
                     'image_url' => $sample['image'],

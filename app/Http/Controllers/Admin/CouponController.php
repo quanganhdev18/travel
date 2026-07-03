@@ -78,7 +78,7 @@ class CouponController extends Controller
         $maxValidUntil = $validFrom ? Carbon::parse($validFrom)->addYear()->format('Y-m-d') : null;
 
         $request->validate([
-            'code' => 'required|unique:coupons,code,' . $coupon->id,
+            'code' => 'required|unique:coupons,code,'.$coupon->id,
             'discount_type' => 'required',
             'discount_value' => 'required|numeric|min:0',
             'valid_from' => 'required|date|after_or_equal:today',

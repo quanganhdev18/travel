@@ -1,19 +1,23 @@
 <?php
+
+use App\Models\Tour;
+use Illuminate\Contracts\Console\Kernel;
+
 require __DIR__.'/vendor/autoload.php';
 $app = require_once __DIR__.'/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
-$tours = \App\Models\Tour::with('destination')->get();
+$tours = Tour::with('destination')->get();
 
-foreach($tours as $tour) {
+foreach ($tours as $tour) {
     // Clear old
     $tour->addons()->detach();
     $tour->tickets()->detach();
 
     $title = mb_strtolower($tour->title, 'UTF-8');
     $dest = $tour->destination ? mb_strtolower($tour->destination->name, 'UTF-8') : '';
-    $search = $title . ' ' . $dest;
+    $search = $title.' '.$dest;
 
     $ticketIds = [];
     $addonIds = [1, 5]; // Generic addons: xe điện, xe lăn
@@ -51,4 +55,4 @@ foreach($tours as $tour) {
         $tour->addons()->attach(array_unique($addonIds));
     }
 }
-echo "Done fixing mapping";
+echo 'Done fixing mapping';
