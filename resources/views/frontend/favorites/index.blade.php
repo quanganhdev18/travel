@@ -39,7 +39,7 @@
                                 {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
                             </div>
                             @endif
-                            <img src="{{ $imageUrl }}"
+                            <img src="{{ $tourImage }}"
                                  class="card-img-top"
                                  style="height: 180px; object-fit: cover;"
                                  alt="{{ $tour->title }}"
@@ -62,7 +62,8 @@
                                 Xem chi tiết
                             </a>
                             <form action="{{ route('frontend.favorites.destroy', $tour->id) }}"
-                                method="POST">
+                                method="POST"
+                                class="favorite-form-delete">
                                 @csrf
                                 @method('DELETE')
 

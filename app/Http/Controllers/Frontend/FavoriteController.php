@@ -13,11 +13,11 @@ class FavoriteController extends Controller
     {
         $favorites = Favorite::with([
             'tour.destination',
-            'tour.tour_images'
+            'tour.tour_images',
         ])
-        ->where('user_id', Auth::id())
-        ->latest()
-        ->get();
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->get();
 
         return view('frontend.favorites.index', compact('favorites'));
     }
@@ -30,16 +30,28 @@ class FavoriteController extends Controller
 
         if ($favorite) {
             $favorite->delete();
-
-            return back()->with('success', 'Đã bỏ lưu tour.');
+            $isFavorite = false;
+            $message = 'Đã bỏ lưu tour.';
+        } else {
+            Favorite::create([
+                'user_id' => Auth::id(),
+                'tour_id' => $tour->id,
+            ]);
+            $isFavorite = true;
+            $message = 'Đã lưu tour yêu thích.';
         }
 
-        Favorite::create([
-            'user_id' => Auth::id(),
-            'tour_id' => $tour->id,
-        ]);
+        // Kiểm tra nếu là AJAX request
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'is_favorite' => $isFavorite,
+                'tour_id' => $tour->id,
+            ]);
+        }
 
-        return back()->with('success', 'Đã lưu tour yêu thích.');
+        return back()->with('success', $message);
     }
 
     public function destroy(Tour $tour)
@@ -48,6 +60,17 @@ class FavoriteController extends Controller
             ->where('tour_id', $tour->id)
             ->delete();
 
-        return back()->with('success', 'Đã xóa tour khỏi danh sách đã lưu.');
+        $message = 'Đã xóa tour khỏi danh sách đã lưu.';
+
+        // Kiểm tra nếu là AJAX request
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'tour_id' => $tour->id,
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 }
