@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 if (auth()->user()->hasAnyRole(['Staff', 'cskh'])) {
                     return route('admin.chat.index');
                 }
-                if (auth()->user()->hasRole('Guide')) {
+                if (auth()->user()->role === 'guide') {
                     return route('guide.dashboard');
                 }
             }

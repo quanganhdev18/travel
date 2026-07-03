@@ -1,0 +1,225 @@
+<?php
+
+use App\Models\Booking;
+use App\Models\Destination;
+use App\Models\ScheduleGuide;
+use App\Models\Tour;
+use App\Models\TourGuide;
+use App\Models\TourSchedule;
+use App\Models\User;
+use Carbon\Carbon;
+use Spatie\Permission\Models\Role;
+
+/**
+ * Tạo đầy đủ dữ liệu: user guide + tour guide profile + schedule + booking
+ *
+ * @return array{guideUser: User, tourGuide: TourGuide, schedule: TourSchedule, booking: Booking}
+ */
+function setupGuideScenario(string $tourStatus = Booking::TOUR_IN_PROGRESS): array
+{
+    Role::firstOrCreate(['name' => 'Super Admin']);
+
+    $destination = Destination::create([
+        'name' => 'Địa danh Test '.uniqid(),
+        'description' => 'Mô tả test',
+    ]);
+
+    $tour = Tour::create([
+        'destination_id' => $destination->id,
+        'title' => 'Tour Test '.uniqid(),
+        'slug' => 'tour-test-'.uniqid(),
+        'description' => 'Mô tả',
+        'duration_days' => 3,
+        'duration_nights' => 2,
+        'base_price' => 3500000,
+    ]);
+
+    $schedule = TourSchedule::create([
+        'tour_id' => $tour->id,
+        'departure_date' => Carbon::today()->toDateTimeString(),
+        'return_date' => Carbon::today()->addDays(2)->toDateTimeString(),
+        'capacity' => 20,
+        'available_seats' => 18,
+        'status' => 'available',
+    ]);
+
+    // User có role guide
+    $guideUser = User::factory()->create(['role' => 'guide']);
+    $tourGuide = TourGuide::create([
+        'user_id' => $guideUser->id,
+        'name' => $guideUser->name,
+        'phone' => '0900000001',
+        'email' => $guideUser->email,
+    ]);
+
+    // Gán HDV vào lịch trình
+    ScheduleGuide::create([
+        'tour_schedule_id' => $schedule->id,
+        'guide_id' => $tourGuide->id,
+    ]);
+
+    // Tạo booking đã thanh toán với trạng thái tour cho trước
+    $customer = User::factory()->create();
+    $booking = Booking::create([
+        'user_id' => $customer->id,
+        'tour_schedule_id' => $schedule->id,
+        'total_price' => 3500000,
+        'adults_count' => 2,
+        'children_count' => 0,
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => $tourStatus,
+    ]);
+
+    return compact('guideUser', 'tourGuide', 'schedule', 'booking');
+}
+
+// ─── ADMIN bị khóa ──────────────────────────────────────────────────────────
+
+test('admin không thể thay đổi tour_status khi booking đang in_progress', function () {
+    Role::firstOrCreate(['name' => 'Super Admin']);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $admin->assignRole('Super Admin');
+
+    ['booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    $response = $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_IN_PROGRESS);
+});
+
+test('admin không thể thay đổi tour_status khi booking đang checking_in', function () {
+    Role::firstOrCreate(['name' => 'Super Admin']);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $admin->assignRole('Super Admin');
+
+    ['booking' => $booking] = setupGuideScenario(Booking::TOUR_CHECKING_IN);
+
+    $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ])->assertSessionHas('error');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_CHECKING_IN);
+});
+
+test('admin vẫn có thể cập nhật payment_status khi tour đang in_progress', function () {
+    Role::firstOrCreate(['name' => 'Super Admin']);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $admin->assignRole('Super Admin');
+
+    ['booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    // Gửi tour_status giống hiện tại (không thay đổi)
+    $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_IN_PROGRESS,
+    ])->assertSessionHas('success');
+
+    expect($booking->fresh()->payment_status)->toBe(Booking::PAYMENT_PAID_100);
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_IN_PROGRESS);
+});
+
+test('admin vẫn có thể thay đổi tour_status khi booking còn ở upcoming', function () {
+    Role::firstOrCreate(['name' => 'Super Admin']);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $admin->assignRole('Super Admin');
+
+    ['booking' => $booking] = setupGuideScenario(Booking::TOUR_UPCOMING);
+
+    $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_CANCELLED_ADMIN,
+    ])->assertSessionHas('success');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_CANCELLED_ADMIN);
+});
+
+// ─── GUIDE có quyền ─────────────────────────────────────────────────────────
+
+test('guide có thể chuyển booking từ in_progress sang checking_in', function () {
+    ['guideUser' => $guideUser, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    $this->actingAs($guideUser)->post(route('guide.bookings.update_status', $booking->id), [
+        'tour_status' => Booking::TOUR_CHECKING_IN,
+        'current_checkin_step' => 'Sân bay Nội Bài',
+    ])->assertRedirect()->assertSessionHas('success');
+
+    $booking->refresh();
+    expect($booking->tour_status)->toBe(Booking::TOUR_CHECKING_IN);
+    expect($booking->current_checkin_step)->toBe('Sân bay Nội Bài');
+});
+
+test('guide có thể hoàn thành tour (completed)', function () {
+    ['guideUser' => $guideUser, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    $this->actingAs($guideUser)->post(route('guide.bookings.update_status', $booking->id), [
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
+});
+
+test('guide không thể chuyển booking đã completed', function () {
+    ['guideUser' => $guideUser, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_COMPLETED);
+
+    $this->actingAs($guideUser)->post(route('guide.bookings.update_status', $booking->id), [
+        'tour_status' => Booking::TOUR_IN_PROGRESS,
+    ])->assertForbidden();
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
+});
+
+test('guide không thể thao tác booking của lịch trình không được giao', function () {
+    // Booking thuộc schedule khác, guide này không được giao
+    $destination = Destination::create(['name' => 'Khác '.uniqid(), 'description' => '']);
+    $tour = Tour::create([
+        'destination_id' => $destination->id,
+        'title' => 'Tour khác',
+        'slug' => 'tour-khac-'.uniqid(),
+        'description' => '',
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'base_price' => 1000000,
+    ]);
+    $otherSchedule = TourSchedule::create([
+        'tour_id' => $tour->id,
+        'departure_date' => Carbon::today()->toDateTimeString(),
+        'return_date' => Carbon::today()->addDays(1)->toDateTimeString(),
+        'capacity' => 10,
+        'available_seats' => 10,
+        'status' => 'available',
+    ]);
+    $customer = User::factory()->create();
+    $otherBooking = Booking::create([
+        'user_id' => $customer->id,
+        'tour_schedule_id' => $otherSchedule->id,
+        'total_price' => 1000000,
+        'adults_count' => 1,
+        'children_count' => 0,
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_IN_PROGRESS,
+    ]);
+
+    // Guide được giao lịch khác, không phải $otherSchedule
+    ['guideUser' => $guideUser] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    $this->actingAs($guideUser)->post(route('guide.bookings.update_status', $otherBooking->id), [
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ])->assertForbidden();
+});
+
+test('khách hàng bình thường không thể gọi route guide.bookings.update_status', function () {
+    ['booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    $customer = User::factory()->create();
+
+    $this->actingAs($customer)->post(route('guide.bookings.update_status', $booking->id), [
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ])->assertForbidden();
+});

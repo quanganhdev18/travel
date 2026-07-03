@@ -312,6 +312,18 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
         ->name('guide.schedules.show');
+
+    Route::post('/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'toggleCheckin'])
+        ->name('guide.passengers.toggle_checkin');
+
+    Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
+        ->name('guide.passengers.update_note');
+
+    Route::post('/schedules/{schedule}/checkin-location', [ScheduleController::class, 'updateCheckinLocation'])
+        ->name('guide.schedules.update_checkin_location');
+
+    Route::post('/bookings/{booking}/status', [ScheduleController::class, 'updateBookingStatus'])
+        ->name('guide.bookings.update_status');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])
@@ -327,7 +339,6 @@ Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])
 Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])
     ->name('admin.coupons.destroy');
 
-
 Route::get('/coupons/trash', [CouponController::class, 'trash'])
     ->name('admin.coupons.trash');
 
@@ -336,7 +347,7 @@ Route::post('/coupons/{id}/restore', [CouponController::class, 'restore'])
 
 Route::delete('/coupons/{id}/force-delete', [CouponController::class, 'forceDelete'])
     ->name('admin.coupons.forceDelete');
-    Route::resource('coupons', CouponController::class);
+Route::resource('coupons', CouponController::class);
 /*
 |--------------------------------------------------------------------------
 | Auth Routes
@@ -357,4 +368,3 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/{id}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
 });
-

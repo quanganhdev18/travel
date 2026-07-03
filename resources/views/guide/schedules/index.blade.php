@@ -51,13 +51,13 @@
                             <td>{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
                             <td>
-                                {{ $tourSchedule->bookings->sum('passengers_count') }} / {{ $tourSchedule->capacity }}
+                                {{ $tourSchedule->bookings->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}
                             </td>
                             <td>
                                 <span class="badge badge-soft-{{ $statusClass }}">{{ $statusText }}</span>
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('guide.schedules.show', $scheduleGuide->id) }}" class="btn btn-sm btn-admin-primary">
+                                <a href="{{ route('guide.schedules.show', $tourSchedule->id) }}" class="btn btn-sm btn-admin-primary">
                                     <i class="bi bi-eye"></i> Chi tiết
                                 </a>
                             </td>
