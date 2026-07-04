@@ -33,6 +33,7 @@ class TicketOption extends Model
         'ticket_id' => 'int',
         'price' => 'float',
         'original_price' => 'float',
+        'conditions' => 'json',
     ];
 
     protected $fillable = [

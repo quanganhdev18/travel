@@ -176,108 +176,6 @@
     </div>
 </section>
 
-<!-- Featured Destinations -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title-premium">{{ __('Điểm Đến Nổi Bật') }}</h2>
-            <p class="text-muted">{{ __('Khám phá những điểm đến được yêu thích nhất') }}</p>
-        </div>
-        
-        @php
-            $featuredDestinations = \App\Models\Destination::withCount('tickets')
-                ->having('tickets_count', '>', 0)
-                ->orderBy('tickets_count', 'desc')
-                ->take(6)
-                ->get();
-        @endphp
-        
-        <div class="row g-4">
-            @forelse($featuredDestinations as $destination)
-            <div class="col-md-4 col-sm-6">
-                <a href="{{ route('frontend.tickets.search', ['destination_id' => $destination->id]) }}" class="text-decoration-none">
-                    <div class="card border-0 shadow-sm h-100 hover-lift">
-                        <div class="position-relative" style="height: 200px; overflow: hidden; border-radius: 12px 12px 0 0;">
-                            @php
-                                $destImages = [
-                                    'Hà Nội' => 'https://images.unsplash.com/photo-1509023464722-18d996393ca8',
-                                    'Hồ Chí Minh' => 'https://images.unsplash.com/photo-1583417319070-4a69db38a482',
-                                    'Đà Nẵng' => 'https://images.unsplash.com/photo-1559592413-7cff772a6f1e',
-                                    'Nha Trang' => 'https://images.unsplash.com/photo-1582653291997-079a1c04e5d1',
-                                    'Phú Quốc' => 'https://images.unsplash.com/photo-1559827260-dc66d52bef19',
-                                    'Sapa' => 'https://images.unsplash.com/photo-1528127269322-539801943592',
-                                ];
-                                $destImage = $destImages[$destination->name] ?? 'https://images.unsplash.com/photo-1488646953014-85cb44e25828';
-                            @endphp
-                            <img src="{{ $destImage }}?q=80&w=600" alt="{{ $destination->name }}" class="w-100 h-100 object-fit-cover">
-                            <div class="position-absolute top-0 start-0 end-0 bottom-0" style="background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7));"></div>
-                            <div class="position-absolute bottom-0 start-0 p-3 text-white w-100">
-                                <h4 class="fw-bold mb-1">{{ $destination->name }}</h4>
-                                <p class="mb-0 small"><i class="bi bi-ticket-perforated me-1"></i>{{ $destination->tickets_count }} {{ __('vé tham quan') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            @empty
-            <div class="col-12 text-center py-5">
-                <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
-                <p class="text-muted">{{ __('Chưa có điểm đến nào có vé tham quan') }}</p>
-            </div>
-            @endforelse
-        </div>
-    </div>
-</section>
-
-<!-- Why Choose Us -->
-<section class="py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title-premium">{{ __('Tại Sao Chọn TravelWonder?') }}</h2>
-            <p class="text-muted">{{ __('Đặt vé dễ dàng, trải nghiệm tuyệt vời') }}</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center">
-                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-lightning-charge-fill fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2">{{ __('Xác Nhận Nhanh') }}</h5>
-                    <p class="text-muted small">{{ __('Nhận vé ngay sau khi thanh toán') }}</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center">
-                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-shield-check-fill fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2">{{ __('An Toàn & Bảo Mật') }}</h5>
-                    <p class="text-muted small">{{ __('Thông tin được mã hóa và bảo vệ') }}</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center">
-                    <div class="bg-info bg-opacity-10 text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-cash-coin fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2">{{ __('Giá Tốt Nhất') }}</h5>
-                    <p class="text-muted small">{{ __('Cam kết giá rẻ và nhiều ưu đãi') }}</p>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div class="text-center">
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                        <i class="bi bi-headset fs-1"></i>
-                    </div>
-                    <h5 class="fw-bold mb-2">{{ __('Hỗ Trợ 24/7') }}</h5>
-                    <p class="text-muted small">{{ __('Đội ngũ hỗ trợ luôn sẵn sàng') }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 @endsection
 
 @push('scripts')
@@ -409,22 +307,6 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     color: #ffffff;
-}
-
-/* Other styles */
-.hover-lift {
-    transition: all 0.3s ease;
-}
-
-.hover-lift:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
-}
-
-.section-title-premium {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a202c;
 }
 
 /* Responsive */

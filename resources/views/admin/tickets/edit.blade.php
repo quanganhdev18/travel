@@ -215,126 +215,161 @@
     </div>
 </div>
 
+@endsection
+
 @push('scripts')
 <script>
-let optionIndex = {{ $ticket->ticket_options->count() }};
+(function() {
+    'use strict';
+    
+    // Namespace để tránh init nhiều lần
+    if (window.ticketEditInitialized) {
+        return;
+    }
+    
+    let optionIndex = {{ $ticket->ticket_options->count() }};
 
-const optionTemplate = (index) => `
-    <div class="option-item border rounded p-3 mb-3" data-index="${index}">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="mb-0">Loại vé #${index + 1}</h6>
-            <button type="button" class="btn btn-sm btn-outline-danger remove-option">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        
-        <input type="hidden" name="option_ids[]" value="">
-        
-        <div class="mb-2">
-            <label class="form-label fw-bold small">Tên loại vé <span class="text-danger">*</span></label>
-            <input type="text" name="option_names[]" class="form-control form-control-sm" 
-                   required placeholder="VD: Vé người lớn, Vé trẻ em...">
-        </div>
-        
-        <div class="row mb-2">
-            <div class="col-md-6">
-                <label class="form-label fw-bold small">Giá bán <span class="text-danger">*</span></label>
-                <input type="number" name="option_prices[]" class="form-control form-control-sm" 
-                       required min="0" placeholder="500000">
+    const optionTemplate = (index) => `
+        <div class="option-item border rounded p-3 mb-3" data-index="${index}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">Loại vé #${index + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-option">
+                    <i class="bi bi-trash"></i>
+                </button>
             </div>
-            <div class="col-md-6">
-                <label class="form-label fw-bold small">Giá gốc (nếu có)</label>
-                <input type="number" name="option_original_prices[]" class="form-control form-control-sm" 
-                       min="0" placeholder="700000">
+            
+            <input type="hidden" name="option_ids[]" value="">
+            
+            <div class="mb-2">
+                <label class="form-label fw-bold small">Tên loại vé <span class="text-danger">*</span></label>
+                <input type="text" name="option_names[]" class="form-control form-control-sm" 
+                       required placeholder="VD: Vé người lớn, Vé trẻ em...">
+            </div>
+            
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Giá bán <span class="text-danger">*</span></label>
+                    <input type="number" name="option_prices[]" class="form-control form-control-sm" 
+                           required min="0" placeholder="500000">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Giá gốc (nếu có)</label>
+                    <input type="number" name="option_original_prices[]" class="form-control form-control-sm" 
+                           min="0" placeholder="700000">
+                </div>
+            </div>
+            
+            <div class="mb-2">
+                <label class="form-label fw-bold small">Mô tả</label>
+                <textarea name="option_descriptions[]" class="form-control form-control-sm" rows="2" 
+                          placeholder="Mô tả loại vé..."></textarea>
+            </div>
+            
+            <div class="mb-0">
+                <label class="form-label fw-bold small">Điều kiện áp dụng</label>
+                <textarea name="option_conditions[]" class="form-control form-control-sm" rows="2" 
+                          placeholder="VD: Áp dụng cho trẻ em từ 1m-1m4..."></textarea>
             </div>
         </div>
-        
-        <div class="mb-2">
-            <label class="form-label fw-bold small">Mô tả</label>
-            <textarea name="option_descriptions[]" class="form-control form-control-sm" rows="2" 
-                      placeholder="Mô tả loại vé..."></textarea>
-        </div>
-        
-        <div class="mb-0">
-            <label class="form-label fw-bold small">Điều kiện áp dụng</label>
-            <textarea name="option_conditions[]" class="form-control form-control-sm" rows="2" 
-                      placeholder="VD: Áp dụng cho trẻ em từ 1m-1m4..."></textarea>
-        </div>
-    </div>
-`;
+    `;
 
-document.getElementById('addOption').addEventListener('click', function() {
-    const container = document.getElementById('optionsContainer');
-    container.insertAdjacentHTML('beforeend', optionTemplate(optionIndex));
-    optionIndex++;
-});
+    function initTicketEdit() {
+        const addOptionBtn = document.getElementById('addOption');
+        const optionsContainer = document.getElementById('optionsContainer');
 
-// Xóa option
-document.getElementById('optionsContainer').addEventListener('click', function(e) {
-    if (e.target.closest('.remove-option')) {
-        const optionItem = e.target.closest('.option-item');
-        optionItem.remove();
-        
-        // Cập nhật lại số thứ tự
-        document.querySelectorAll('.option-item').forEach((item, idx) => {
-            item.querySelector('h6').textContent = `Loại vé #${idx + 1}`;
+        if (!addOptionBtn || !optionsContainer) {
+            console.error('Required elements not found');
+            return;
+        }
+
+        // Đánh dấu đã init
+        window.ticketEditInitialized = true;
+
+        // Thêm option mới
+        addOptionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            optionsContainer.insertAdjacentHTML('beforeend', optionTemplate(optionIndex));
+            optionIndex++;
+        });
+
+        // Xóa option
+        optionsContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-option')) {
+                const optionItems = document.querySelectorAll('.option-item');
+                
+                // Không cho xóa nếu chỉ còn 1 option
+                if (optionItems.length <= 1) {
+                    alert('Phải có ít nhất 1 loại vé!');
+                    return;
+                }
+                
+                const optionItem = e.target.closest('.option-item');
+                optionItem.remove();
+                
+                // Cập nhật lại số thứ tự
+                document.querySelectorAll('.option-item').forEach((item, idx) => {
+                    item.querySelector('h6').textContent = `Loại vé #${idx + 1}`;
+                });
+            }
+        });
+
+        // Xóa ảnh
+        document.querySelectorAll('.delete-image').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+                
+                const imageId = this.dataset.id;
+                const ticketId = this.dataset.ticketId;
+                const imageItem = this.closest('.image-item');
+                
+                fetch(`/admin/tickets/${ticketId}/images/${imageId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        imageItem.remove();
+                        alert('Đã xóa ảnh thành công.');
+                    }
+                })
+                .catch(error => {
+                    alert('Có lỗi xảy ra khi xóa ảnh.');
+                });
+            });
+        });
+
+        // Đặt ảnh chính
+        document.querySelectorAll('.set-primary').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const imageId = this.dataset.id;
+                const ticketId = this.dataset.ticketId;
+                
+                fetch(`/admin/tickets/${ticketId}/images/${imageId}/set-primary`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Có lỗi xảy ra.');
+                });
+            });
         });
     }
-});
 
-// Xóa ảnh
-document.querySelectorAll('.delete-image').forEach(btn => {
-    btn.addEventListener('click', function() {
-        if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
-        
-        const imageId = this.dataset.id;
-        const ticketId = this.dataset.ticketId;
-        const imageItem = this.closest('.image-item');
-        
-        fetch(`/admin/tickets/${ticketId}/images/${imageId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                imageItem.remove();
-                alert('Đã xóa ảnh thành công.');
-            }
-        })
-        .catch(error => {
-            alert('Có lỗi xảy ra khi xóa ảnh.');
-        });
-    });
-});
-
-// Đặt ảnh chính
-document.querySelectorAll('.set-primary').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const imageId = this.dataset.id;
-        const ticketId = this.dataset.ticketId;
-        
-        fetch(`/admin/tickets/${ticketId}/images/${imageId}/set-primary`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            }
-        })
-        .catch(error => {
-            alert('Có lỗi xảy ra.');
-        });
-    });
-});
+    // Khởi tạo ngay lập tức
+    initTicketEdit();
+})();
 </script>
 @endpush
-@endsection
