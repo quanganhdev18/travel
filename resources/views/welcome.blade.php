@@ -192,6 +192,73 @@
         align-items: flex-end;
         margin-bottom: 1.5rem;
     }
+
+    /* Tour Card Styles */
+    .combo-card-img-wrapper {
+        position: relative;
+    }
+
+    .tour-duration-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1e3a5f;
+        font-weight: 700;
+        font-size: 0.875rem;
+        padding: 6px 12px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .favorite-form {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 9999;
+        margin: 0;
+    }
+
+    .favorite-btn {
+        width: 46px;
+        height: 46px;
+        border: none;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(0,0,0,.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .favorite-btn i {
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    .favorite-btn:hover {
+        transform: scale(1.08);
+    }
+
+    .favorite-btn.active {
+        color: #ff3366;
+    }
+
+    .favorite-btn.active i {
+        color: #ff3366;
+    }
+
+    /* Tour Preview Overlay Styles */
+    .tour-preview-wrapper {
+        position: relative;
+        cursor: pointer;
+    }
 </style>
 
 <section class="container py-5 reveal-up dest-slider-section">
@@ -421,63 +488,62 @@
                        class="text-decoration-none h-100 d-block"
                        @mouseenter.stop>
                         <div class="combo-card h-100">
-                        <div class="combo-card-img-wrapper">
-
-                            @if($tour->duration_days && $tour->duration_nights)
-                            <div class="tour-duration-badge">
-                                {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
-                            </div>
-                            @endif
-
-                            @auth
-                            @php
-                                $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-                                    ->where('tour_id', $tour->id)
-                                    ->exists();
-                            @endphp
-                            <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-                                  method="POST"
-                                  class="favorite-form"
-                                  onclick="event.stopPropagation();">
-                                @csrf
-                                <button type="submit"
-                                        class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-                                </button>
-                            </form>
-                            @endauth
-
-                            <img src="{{ $tourImage }}"
-                                 alt="{{ $tourTitle }}"
-                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
-                        </div>
-                        <div class="combo-card-body">
-                            <h3 class="combo-title">{{ $tourTitle }}</h3>
-                            <div class="combo-stars">
-                                @php
-                                    $stars = $tour->hotel_stars ?? 4;
-                                @endphp
-                                @for($i = 1; $i <= $stars; $i++)
-                                <i class="bi bi-star-fill text-warning"></i>
-                                @endfor
-                            </div>
-                            <div class="combo-location">
-                                <i class="bi bi-geo-alt"></i>
-                                <span>{{ $destinationName }}</span>
-                            </div>
-                            <div class="combo-footer">
-                                <div>
-                                    <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                    <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
+                            <div class="combo-card-img-wrapper">
+                                @if($tour->duration_days && $tour->duration_nights)
+                                <div class="tour-duration-badge">
+                                    {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
                                 </div>
-                                <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
+                                @endif
+
+                                @auth
+                                @php
+                                    $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+                                        ->where('tour_id', $tour->id)
+                                        ->exists();
+                                @endphp
+                                <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+                                      method="POST"
+                                      class="favorite-form"
+                                      onclick="event.stopPropagation();">
+                                    @csrf
+                                    <button type="submit"
+                                            class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+                                        <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                    </button>
+                                </form>
+                                @endauth
+
+                                <img src="{{ $tourImage }}"
+                                     alt="{{ $tourTitle }}"
+                                     onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
+                            </div>
+                            <div class="combo-card-body">
+                                <h3 class="combo-title">{{ $tourTitle }}</h3>
+                                <div class="combo-stars">
+                                    @php
+                                        $stars = $tour->hotel_stars ?? 4;
+                                    @endphp
+                                    @for($i = 1; $i <= $stars; $i++)
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    @endfor
+                                </div>
+                                <div class="combo-location">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span>{{ $destinationName }}</span>
+                                </div>
+                                <div class="combo-footer">
+                                    <div>
+                                        <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                        <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
+                                    </div>
+                                    <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
 
-                <!-- Tour Preview Component -->
-                <x-tour-preview :tour="$tour" />
+                    <!-- Tour Preview Component -->
+                    <x-tour-preview :tour="$tour" />
                 </div>
             </div>
         @empty
@@ -729,44 +795,61 @@ if (container) {
 
     <div class="row g-4">
         @forelse($tickets as $ticket)
+            @php
+                $primaryImage = $ticket->ticket_images->where('is_primary', true)->first() 
+                    ?? $ticket->ticket_images->first();
+                
+                $ticketImage = 'https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';
+                
+                if ($primaryImage && !empty($primaryImage->image_url)) {
+                    if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
+                        $ticketImage = $primaryImage->image_url;
+                    } else {
+                        $ticketImage = asset(ltrim($primaryImage->image_url, '/'));
+                    }
+                }
+                
+                $ticketTitle = $ticket->title ?? 'Vé tham quan';
+                $destinationName = optional($ticket->destination)->name ?: 'Địa điểm';
+                $minPrice = $ticket->ticket_options->min('price') ?? 0;
+            @endphp
+            
             <div class="col-12 col-md-6 col-lg-3">
-                <div class="premium-card">
-                    <div class="card-img-wrapper">
-                        <span class="badge-glass">
-                            <i class="bi bi-star-fill text-warning me-1"></i>{{ __('Hot') }}
-                        </span>
+                <a href="{{ route('frontend.tickets.show', $ticket->slug) }}" class="text-decoration-none h-100 d-block">
+                    <div class="combo-card h-100">
+                        <div class="combo-card-img-wrapper">
+                            <span class="badge-glass">
+                                <i class="bi bi-star-fill text-warning me-1"></i>{{ __('Hot') }}
+                            </span>
 
-                        <img src="https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800"
-                            class="card-img-top"
-                            alt="{{ $ticket->title ?? 'Vé tham quan' }}">
-                    </div>
-
-                    <div class="card-body">
-                        <h3 class="card-title"
-                            style="display:block !important; color:#111827 !important; font-size:18px !important; font-weight:700 !important; line-height:1.4 !important; margin-bottom:12px !important;">
-                            {{ $ticket->title ?? $ticket->name ?? 'Chưa có tên vé' }}
-                        </h3>
-
-                        <div class="location-text">
-                            <i class="bi bi-geo-alt text-danger"></i>
-                            {{ $ticket->destination->name ?? 'Điểm vui chơi' }}
+                            <img src="{{ $ticketImage }}"
+                                 alt="{{ $ticketTitle }}"
+                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';">
                         </div>
-
-                        @php
-                            $minPrice = $ticket->ticket_options->min('price') ?? 0;
-                        @endphp
-                        <div class="price-wrap">
-                            <span class="text-muted small">{{ __('Từ') }}</span>
-                            <div class="price-val" style="font-size: 1.1rem;">
-                                @if($minPrice > 0)
-                                    {{ number_format($minPrice, 0, ',', '.') }}đ
-                                @else
-                                    {{ __('Liên hệ') }}
-                                @endif
+                        <div class="combo-card-body">
+                            <h3 class="combo-title">{{ $ticketTitle }}</h3>
+                            
+                            <div class="combo-location">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>{{ $destinationName }}</span>
+                            </div>
+                            
+                            <div class="combo-footer">
+                                <div>
+                                    <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                    <div class="combo-price-val">
+                                        @if($minPrice > 0)
+                                            {{ format_currency($minPrice) }}
+                                        @else
+                                            {{ __('Liên hệ') }}
+                                        @endif
+                                    </div>
+                                </div>
+                                <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
         @empty
             <div class="col-12">
@@ -775,57 +858,4 @@ if (container) {
         @endforelse
     </div>
 </section>
-<style>
-.card-img-wrapper {
-    position: relative;
-}
-
-.tour-duration-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 10;
-    background: rgba(255, 255, 255, 0.95);
-    color: #1e3a5f;
-    font-weight: 700;
-    font-size: 0.875rem;
-    padding: 6px 12px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.favorite-form {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 9999;
-    margin: 0;
-}
-
-.favorite-btn {
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 50%;
-    background: #fff;
-    color: #ff3366;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,.2);
-    cursor: pointer;
-}
-
-.favorite-btn i {
-    font-size: 20px;
-}
-
-.favorite-btn:hover {
-    background: #ff3366;
-    color: #fff;
-}
-
-</style>
 @endsection

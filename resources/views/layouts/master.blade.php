@@ -116,7 +116,7 @@
                             </a>
                         </li>
                         @endauth
-                        <li class="nav-item"><a class="nav-link fs-6" href="#">{{ __('Vé tham quan') }}</a></li>
+                        <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tickets.index') }}">{{ __('Vé tham quan') }}</a></li>
                     </ul>
 
                     <!-- Mobile Only Top Utilities -->

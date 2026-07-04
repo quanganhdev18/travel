@@ -367,7 +367,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/tickets*') ? 'active' : '' }}" href="#">
+                <a class="nav-link {{ request()->is('admin/tickets*') ? 'active' : '' }}" href="{{ route('admin.tickets.index') }}">
                     <i class="bi bi-ticket-perforated"></i> Vé tham quan
                 </a>
             </li>
