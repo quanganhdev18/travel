@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
-
 /**
  * Class Destination
  *
@@ -27,8 +26,6 @@ use Spatie\Translatable\HasTranslations;
  */
 class Destination extends Model
 {
-
-
     use HasLocalImageUrl, HasTranslations;
 
     protected $table = 'destinations';

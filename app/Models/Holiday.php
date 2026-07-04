@@ -28,12 +28,13 @@ class Holiday extends Model
     /**
      * Check if a given date falls in any holiday.
      *
-     * @param string|Carbon $date
+     * @param  string|Carbon  $date
      * @return bool
      */
     public static function isHoliday($date)
     {
         $dateStr = $date instanceof Carbon ? $date->toDateString() : $date;
+
         return self::where('start_date', '<=', $dateStr)
             ->where('end_date', '>=', $dateStr)
             ->exists();
@@ -42,7 +43,7 @@ class Holiday extends Model
     /**
      * Get the max price increase percentage for a given date.
      *
-     * @param string|Carbon $date
+     * @param  string|Carbon  $date
      * @return float
      */
     public static function getIncreasePercentage($date)

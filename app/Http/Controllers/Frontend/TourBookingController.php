@@ -71,7 +71,7 @@ class TourBookingController extends Controller
             $totalPersons = $request->adults + $request->children;
             $schedule = TourSchedule::with('tour')->lockForUpdate()->find($request->schedule_id);
 
-            if (!$schedule || $schedule->available_seats < $totalPersons) {
+            if (! $schedule || $schedule->available_seats < $totalPersons) {
                 DB::rollBack();
 
                 return redirect()->back()->with('error', 'Tour không còn đủ chỗ trống cho số lượng hành khách này. Vui lòng chọn ngày khác.');
@@ -79,7 +79,7 @@ class TourBookingController extends Controller
 
             $identity = UserIdentity::where('user_id', $user->id)->first();
 
-            if (!$identity) {
+            if (! $identity) {
                 $identity = new UserIdentity;
                 $identity->user_id = $user->id;
             } else {
@@ -108,12 +108,12 @@ class TourBookingController extends Controller
 
                 if ($request->hasFile('front_image')) {
                     $frontPath = $request->file('front_image')->store('identities', 'public');
-                    $identity->front_image_url = '/storage/' . $frontPath;
+                    $identity->front_image_url = '/storage/'.$frontPath;
                 }
 
                 if ($request->hasFile('back_image')) {
                     $backPath = $request->file('back_image')->store('identities', 'public');
-                    $identity->back_image_url = '/storage/' . $backPath;
+                    $identity->back_image_url = '/storage/'.$backPath;
                 }
 
                 $identity->save();
@@ -307,7 +307,7 @@ class TourBookingController extends Controller
             broadcast(new SeatAvailabilityUpdated($schedule->id, $schedule->available_seats))->toOthers();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Lỗi đặt tour: ' . $e->getMessage());
+            Log::error('Lỗi đặt tour: '.$e->getMessage());
 
             return redirect()->back()->with('error', 'Đã có lỗi xảy ra trong quá trình đặt tour. Vui lòng thử lại.');
         }
@@ -317,7 +317,7 @@ class TourBookingController extends Controller
                 new TourBookingMail($booking, $schedule, $request->customer_name, $request->customer_phone)
             );
         } catch (\Exception $e) {
-            Log::error('Lỗi gửi mail đặt tour: ' . $e->getMessage());
+            Log::error('Lỗi gửi mail đặt tour: '.$e->getMessage());
         }
 
         if ($request->payment_method === 'vnpay') {
@@ -347,13 +347,13 @@ class TourBookingController extends Controller
      */
     private function bookFlightForBooking(Booking $booking)
     {
-        if (!$booking->transport_data || !isset($booking->transport_data['offer_id'])) {
+        if (! $booking->transport_data || ! isset($booking->transport_data['offer_id'])) {
             return false;
         }
 
         $offerId = $booking->transport_data['offer_id'];
         $primaryPassenger = $booking->booking_passengers()->where('passenger_type', 'adult')->first();
-        if (!$primaryPassenger) {
+        if (! $primaryPassenger) {
             return false;
         }
 
@@ -363,34 +363,34 @@ class TourBookingController extends Controller
 
         // Gọi API Duffel
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('DUFFEL_ACCESS_TOKEN'),
+            'Authorization' => 'Bearer '.env('DUFFEL_ACCESS_TOKEN'),
             'Duffel-Version' => 'v2',
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ])->post('https://api.duffel.com/air/orders', [
-                    'data' => [
-                        'type' => 'instant',
-                        'selected_offers' => [$offerId],
-                        'passengers' => [
-                            [
-                                'id' => $offerId, // API thường map hành khách hoặc bỏ qua tuỳ version. Gửi kèm thông tin.
-                                'family_name' => $familyName,
-                                'given_name' => $givenName,
-                                'phone_number' => str_replace(' ', '', $booking->user->phone ?? '+84999999999'),
-                                'email' => $booking->user->email,
-                                'born_on' => $primaryPassenger->date_of_birth,
-                                'gender' => $primaryPassenger->gender === 'male' ? 'm' : 'f',
-                            ],
-                        ],
-                        'payments' => [
-                            [
-                                'type' => 'balance',
-                                'amount' => strval($booking->transport_price),
-                                'currency' => 'VND',
-                            ],
-                        ],
+            'data' => [
+                'type' => 'instant',
+                'selected_offers' => [$offerId],
+                'passengers' => [
+                    [
+                        'id' => $offerId, // API thường map hành khách hoặc bỏ qua tuỳ version. Gửi kèm thông tin.
+                        'family_name' => $familyName,
+                        'given_name' => $givenName,
+                        'phone_number' => str_replace(' ', '', $booking->user->phone ?? '+84999999999'),
+                        'email' => $booking->user->email,
+                        'born_on' => $primaryPassenger->date_of_birth,
+                        'gender' => $primaryPassenger->gender === 'male' ? 'm' : 'f',
                     ],
-                ]);
+                ],
+                'payments' => [
+                    [
+                        'type' => 'balance',
+                        'amount' => strval($booking->transport_price),
+                        'currency' => 'VND',
+                    ],
+                ],
+            ],
+        ]);
 
         if ($response->successful()) {
             $bookingRef = $response->json()['data']['booking_reference'] ?? null;
@@ -403,13 +403,13 @@ class TourBookingController extends Controller
                         new FlightTicketMail($booking, $bookingRef, $primaryPassenger->full_name)
                     );
                 } catch (\Exception $e) {
-                    Log::error('Lỗi gửi mail vé máy bay: ' . $e->getMessage());
+                    Log::error('Lỗi gửi mail vé máy bay: '.$e->getMessage());
                 }
 
                 return true;
             }
         } else {
-            Log::error('Lỗi book vé Duffel: ' . $response->body());
+            Log::error('Lỗi book vé Duffel: '.$response->body());
         }
 
         return false;
@@ -534,8 +534,8 @@ class TourBookingController extends Controller
         $vnp_Url = config('vnpay.url');
         $vnp_Returnurl = route('frontend.tours.vnpay_return');
 
-        $vnp_TxnRef = $booking->id . '_' . time();
-        $vnp_OrderInfo = 'Thanh toan dat tour #' . str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
+        $vnp_TxnRef = $booking->id.'_'.time();
+        $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $vnp_OrderType = 'billpayment';
 
         // Xác định số tiền cần thanh toán:
@@ -545,7 +545,7 @@ class TourBookingController extends Controller
         if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
             // Đã cọc rồi, giờ thanh toán phần còn lại 70%
             $actualAmount = $booking->total_price * 0.7;
-            $vnp_OrderInfo = 'Thanh toan phan con lai tour #' . str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
+            $vnp_OrderInfo = 'Thanh toan phan con lai tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         } elseif ($booking->payment_type === 'deposit') {
             // Cọc lần đầu 30%
             $actualAmount = $booking->total_price * 0.3;
@@ -587,22 +587,22 @@ class TourBookingController extends Controller
         $hashdata = '';
         foreach ($inputData as $key => $value) {
             if ($i == 1) {
-                $hashdata .= '&' . urlencode($key) . '=' . urlencode($value);
-                $query .= '&' . urlencode($key) . '=' . urlencode($value);
+                $hashdata .= '&'.urlencode($key).'='.urlencode($value);
+                $query .= '&'.urlencode($key).'='.urlencode($value);
             } else {
-                $hashdata .= urlencode($key) . '=' . urlencode($value);
-                $query .= urlencode($key) . '=' . urlencode($value);
+                $hashdata .= urlencode($key).'='.urlencode($value);
+                $query .= urlencode($key).'='.urlencode($value);
                 $i = 1;
             }
         }
 
-        $vnp_Url = $vnp_Url . '?' . $query;
+        $vnp_Url = $vnp_Url.'?'.$query;
         if (isset($vnp_HashSecret)) {
             $vnpSecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-            $vnp_Url .= '&vnp_SecureHash=' . $vnpSecureHash;
+            $vnp_Url .= '&vnp_SecureHash='.$vnpSecureHash;
         }
 
-        Log::debug('VNPay Redirect URL: ' . $vnp_Url);
+        Log::debug('VNPay Redirect URL: '.$vnp_Url);
 
         return $vnp_Url;
     }
@@ -625,9 +625,9 @@ class TourBookingController extends Controller
         $hashData = '';
         foreach ($inputData as $key => $value) {
             if ($i == 1) {
-                $hashData .= '&' . urlencode($key) . '=' . urlencode($value);
+                $hashData .= '&'.urlencode($key).'='.urlencode($value);
             } else {
-                $hashData .= urlencode($key) . '=' . urlencode($value);
+                $hashData .= urlencode($key).'='.urlencode($value);
                 $i = 1;
             }
         }
@@ -683,7 +683,7 @@ class TourBookingController extends Controller
                     ]);
                 }
 
-                return redirect()->route('user.bookings')->with('error', 'Thanh toán không thành công. Mã lỗi: ' . $request->vnp_ResponseCode);
+                return redirect()->route('user.bookings')->with('error', 'Thanh toán không thành công. Mã lỗi: '.$request->vnp_ResponseCode);
             }
         }
 
@@ -708,9 +708,9 @@ class TourBookingController extends Controller
         $hashData = '';
         foreach ($inputData as $key => $value) {
             if ($i == 1) {
-                $hashData .= '&' . urlencode($key) . '=' . urlencode($value);
+                $hashData .= '&'.urlencode($key).'='.urlencode($value);
             } else {
-                $hashData .= urlencode($key) . '=' . urlencode($value);
+                $hashData .= urlencode($key).'='.urlencode($value);
                 $i = 1;
             }
         }
@@ -726,7 +726,7 @@ class TourBookingController extends Controller
                 $booking = Booking::find($bookingId);
                 $payment = Payment::where('transaction_code', $txnRef)->first();
 
-                if (!$booking || !$payment) {
+                if (! $booking || ! $payment) {
                     return response()->json([
                         'RspCode' => '01',
                         'Message' => 'Order not found',
@@ -822,7 +822,7 @@ class TourBookingController extends Controller
 
         $coupon = $couponQuery->first();
 
-        if (!$coupon) {
+        if (! $coupon) {
             return response()->json(['success' => false, 'message' => 'Mã không tồn tại, đã hết hạn hoặc không áp dụng cho tour này.']);
         }
 

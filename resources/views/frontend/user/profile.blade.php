@@ -771,6 +771,11 @@
                                 Đơn đặt tour
                                 <span class="ms-auto badge rounded-pill" style="background:#007CE8;color:white;font-size:0.72rem;">{{ $bookings->count() }}</span>
                             </a>
+                            <a href="#" class="profile-nav-item" id="nav-tickets" onclick="switchProfileTab('tickets', event)">
+                                <span class="nav-icon"><i class="bi bi-ticket-perforated-fill"></i></span>
+                                Vé tham quan
+                                <span class="ms-auto badge rounded-pill" style="background:#10b981;color:white;font-size:0.72rem;">{{ $ticketBookings->count() }}</span>
+                            </a>
                             <a href="#" class="profile-nav-item" id="nav-wishlists" onclick="switchProfileTab('wishlists', event)">
                                 <span class="nav-icon"><i class="bi bi-heart-fill"></i></span>
                                 Tour đã lưu
@@ -1423,6 +1428,20 @@
                     @endif
                     </div>{{-- end tab-wishlists --}}
 
+                    {{-- ===== TAB: VÉ THAM QUAN ===== --}}
+                    <div id="tab-tickets" style="display:none;">
+                        <div class="content-card mb-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h5 class="fw-800 mb-1" style="color:#0B132B;">Vé tham quan</h5>
+                                <p class="text-muted small mb-0">{{ $ticketBookings->count() }} vé đã đặt</p>
+                            </div>
+                            <a href="{{ route('frontend.tickets.index') }}" class="btn btn-sm btn-primary rounded-pill px-4 fw-600">
+                                <i class="bi bi-search me-1"></i>Tìm vé tham quan
+                            </a>
+                        </div>
+
+                        @include('frontend.user._ticket_bookings')
+                    </div>{{-- end tab-tickets --}}
                 </div>{{-- end col-lg-9 --}}
             </div>{{-- end row --}}
         </div>{{-- end container --}}
@@ -1432,7 +1451,7 @@
         // ===== Profile Tab Switching =====
         function switchProfileTab(tab, e) {
             if (e) e.preventDefault();
-            const tabs = ['info', 'bookings', 'wishlists'];
+            const tabs = ['info', 'bookings', 'tickets', 'wishlists'];
             tabs.forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById('nav-' + t);

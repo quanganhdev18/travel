@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class TourCategory extends Model
 {
     use SoftDeletes;
+
     protected $table = 'tour_categories';
 
     public $incrementing = false;

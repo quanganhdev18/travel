@@ -40,7 +40,7 @@ class AddonSeeder extends Seeder
                 'description' => 'Xe lăn gấp gọn, hỗ trợ di chuyển trong suốt hành trình.',
                 'price' => 200000,
                 'is_active' => true,
-            ]
+            ],
         ];
 
         foreach ($addons as $addonData) {

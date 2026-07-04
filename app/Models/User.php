@@ -101,6 +101,7 @@ class User extends Authenticatable
     {
         return $this->hasOne(TourGuide::class);
     }
+
     public function favorites()
     {
         return $this->hasMany(Favorite::class);

@@ -165,8 +165,15 @@
             <div class="row g-4 px-3">
                 @forelse($tours as $tour)
                 <div class="col-12 col-md-6 col-lg-3">
-                    <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
-                        <div class="combo-card">
+                    <div class="tour-preview-wrapper h-100"
+                         x-data="{ showPreview: false }"
+                         @mouseenter="showPreview = true"
+                         @mouseleave="showPreview = false">
+                        
+                        <a href="{{ route('frontend.tours.show', $tour->slug) }}" 
+                           class="text-decoration-none h-100 d-block"
+                           @mouseenter.stop>
+                            <div class="combo-card h-100">
                             <div class="combo-card-img-wrapper">
 
     @if($tour->duration_days && $tour->duration_nights)
@@ -234,6 +241,10 @@
                             </div>
                         </div>
                     </a>
+
+                    <!-- Tour Preview Component -->
+                    <x-tour-preview :tour="$tour" />
+                    </div>
                 </div>
                 @empty
                 <div class="col-12 text-center py-5">
@@ -319,6 +330,203 @@
 
 .favorite-btn.active i {
     color: #ff3366;
+}
+
+/* Tour Preview Overlay Styles */
+.tour-preview-wrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+.tour-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    background: linear-gradient(to bottom, 
+                rgba(0, 0, 0, 0.85) 0%, 
+                rgba(0, 0, 0, 0.90) 50%,
+                rgba(0, 0, 0, 0.95) 100%);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.tour-preview-content {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    color: #ffffff;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tour-preview-content h5 {
+    color: #ffffff !important;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.tour-preview-content .badge {
+    font-size: 0.65rem;
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+.tour-preview-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.preview-item {
+    display: flex;
+    gap: 10px;
+    align-items: start;
+}
+
+.preview-item i {
+    font-size: 1rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+    color: #4ade80;
+    opacity: 0.95;
+}
+
+.preview-item small {
+    font-size: 0.65rem;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+}
+
+.preview-item strong {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.preview-item .text-success {
+    color: #4ade80 !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+}
+
+.preview-item.border-top {
+    border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding-top: 8px;
+    margin-top: 4px;
+}
+
+/* Adjust combo card */
+.combo-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+.tour-preview-wrapper:hover .combo-card {
+    transform: scale(1.03);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* Button styling in overlay */
+.tour-preview-content .btn-primary {
+    background: linear-gradient(135deg, #4ade80 0%, #3b82f6 100%);
+    color: #ffffff;
+    border: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+    border-radius: 8px;
+}
+
+.tour-preview-content .btn-primary:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #4ade80 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.5);
+}
+
+/* Price styling */
+.preview-item .fs-5 {
+    font-size: 1.15rem !important;
+    color: #4ade80 !important;
+    font-weight: 800;
+    text-shadow: 0 2px 8px rgba(74, 222, 128, 0.3);
+}
+
+/* Smooth badge styling */
+.bg-primary-subtle {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Scrollbar for overlay content */
+.tour-preview-content::-webkit-scrollbar {
+    width: 3px;
+}
+
+.tour-preview-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.tour-preview-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+.tour-preview-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Icon colors for different types */
+.preview-item:nth-child(1) i { color: #f59e0b; } /* Destination - amber */
+.preview-item:nth-child(2) i { color: #3b82f6; } /* Duration - blue */
+.preview-item:nth-child(3) i { color: #8b5cf6; } /* Departure - purple */
+.preview-item:nth-child(4) i { color: #ec4899; } /* Schedule - pink */
+.preview-item.border-top i { color: #4ade80; } /* Price - green */
+
+/* Mobile adjustments */
+@media (max-width: 767.98px) {
+    .tour-preview-content {
+        padding: 16px;
+    }
+    
+    .tour-preview-content h5 {
+        font-size: 0.9rem;
+    }
+    
+    .preview-item {
+        gap: 8px;
+    }
+    
+    .preview-item i {
+        font-size: 0.95rem;
+    }
+    
+    .preview-item strong {
+        font-size: 0.8rem;
+    }
+    
+    .preview-item .fs-5 {
+        font-size: 1rem !important;
+    }
 }
 </style>
 @endsection

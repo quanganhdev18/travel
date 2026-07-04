@@ -25,7 +25,7 @@ it('encrypts front_image_url and back_image_url when saving via model', function
 
     // Đọc giá trị thô trong DB — phải là chuỗi encrypted, không phải plaintext
     $rawFront = DB::table('user_identities')->where('id', $identity->id)->value('front_image_url');
-    $rawBack  = DB::table('user_identities')->where('id', $identity->id)->value('back_image_url');
+    $rawBack = DB::table('user_identities')->where('id', $identity->id)->value('back_image_url');
 
     expect($rawFront)->not->toBe('/storage/identities/front.jpg');
     expect($rawBack)->not->toBe('/storage/identities/back.jpg');

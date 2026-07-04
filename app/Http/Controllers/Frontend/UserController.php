@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Favorite;
 use App\Models\Review;
+use App\Models\TicketBooking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,13 +79,23 @@ class UserController extends Controller
             Booking::TOUR_CANCELLED_CUSTOMER,
         ]);
 
+        // Load ticket bookings
+        $ticketBookings = TicketBooking::with([
+            'ticket_option.ticket.ticket_images',
+            'ticket_option.ticket.destination',
+            'coupon',
+        ])
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         // Load favorites (saved tours) with tour relations for the saved tours tab
         $wishlists = Favorite::with(['tour.destination', 'tour.tour_images'])
             ->where('user_id', Auth::id())
             ->latest()
             ->get();
 
-        return view('frontend.user.profile', compact('user', 'bookings', 'activeBookings', 'pastBookings', 'wishlists'));
+        return view('frontend.user.profile', compact('user', 'bookings', 'activeBookings', 'pastBookings', 'wishlists', 'ticketBookings'));
     }
 
     public function updateProfile(Request $request): RedirectResponse
