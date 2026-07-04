@@ -353,6 +353,18 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
         ->name('guide.schedules.show');
+
+    Route::post('/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'toggleCheckin'])
+        ->name('guide.passengers.toggle_checkin');
+
+    Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
+        ->name('guide.passengers.update_note');
+
+    Route::post('/schedules/{schedule}/checkin-location', [ScheduleController::class, 'updateCheckinLocation'])
+        ->name('guide.schedules.update_checkin_location');
+
+    Route::post('/bookings/{booking}/status', [ScheduleController::class, 'updateBookingStatus'])
+        ->name('guide.bookings.update_status');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

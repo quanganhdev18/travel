@@ -196,6 +196,9 @@
                             @endif
                         </td>
                         <td class="text-end pe-4">
+                            @php
+                            $tourStatusLocked = in_array($booking->tour_status, ['in_progress', 'checking_in', 'completed']);
+                            @endphp
                             <div class="dropdown">
                                 <button class="btn btn-action" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -208,7 +211,11 @@
                                     </li>
                                     <li>
                                         <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#updateStatus{{ $booking->id }}">
-                                            <i class="bi bi-pencil-square me-2 text-warning"></i> Cập nhật trạng thái
+                                            @if($tourStatusLocked)
+                                                <i class="bi bi-credit-card me-2 text-info"></i> Cập nhật thanh toán
+                                            @else
+                                                <i class="bi bi-pencil-square me-2 text-warning"></i> Cập nhật trạng thái
+                                            @endif
                                         </a>
                                     </li>
                                 </ul>
@@ -333,7 +340,13 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom px-4 py-3 bg-light">
-                <h5 class="modal-title fw-bold text-dark">Cập nhật trạng thái #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</h5>
+                <h5 class="modal-title fw-bold text-dark">
+                    @if($tourStatusLocked)
+                        <i class="bi bi-credit-card me-2 text-info"></i>Cập nhật thanh toán #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}
+                    @else
+                        Cập nhật trạng thái #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}
+                    @endif
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('admin.bookings.update_status', $booking->id) }}" method="POST">
@@ -348,21 +361,36 @@
                             <option value="failed" {{ $booking->payment_status == 'failed' ? 'selected' : '' }}>Thanh toán thất bại / Hủy</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Trạng thái Tour</label>
-                        <select name="tour_status" class="form-select tour-status-select" data-booking-id="{{ $booking->id }}">
-                            <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
-                            <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
-                            <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
-                            <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
-                            <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
-                            <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 checkin-step-container" id="checkinStepContainer{{ $booking->id }}" style="display: {{ $booking->tour_status == 'checking_in' ? 'block' : 'none' }};">
-                        <label class="form-label fw-bold">Điểm check-in hiện tại</label>
-                        <input type="text" name="current_checkin_step" class="form-control" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $booking->current_checkin_step }}">
-                    </div>
+
+                    @if($tourStatusLocked)
+                        {{-- Tour đang được điều hành bởi HDV: admin chỉ xem, không sửa tour_status --}}
+                        <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" style="font-size:0.875rem;">
+                            <i class="bi bi-shield-lock-fill flex-shrink-0 mt-1"></i>
+                            <div>
+                                <strong>Tour đang do Hướng dẫn viên điều hành.</strong><br>
+                                Trạng thái tour hiện tại: <span class="fw-semibold">{{ ['in_progress'=>'Đang thực hiện','checking_in'=>'Đang check-in','completed'=>'Hoàn thành'][$booking->tour_status] ?? $booking->tour_status }}</span>.<br>
+                                Admin không thể thay đổi trạng thái tour trong giai đoạn này.
+                            </div>
+                        </div>
+                        {{-- Giữ giá trị tour_status hiện tại để server không coi là thay đổi --}}
+                        <input type="hidden" name="tour_status" value="{{ $booking->tour_status }}">
+                    @else
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Trạng thái Tour</label>
+                            <select name="tour_status" class="form-select tour-status-select" data-booking-id="{{ $booking->id }}">
+                                <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
+                                <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
+                                <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
+                                <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
+                                <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
+                                <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 checkin-step-container" id="checkinStepContainer{{ $booking->id }}" style="display: {{ $booking->tour_status == 'checking_in' ? 'block' : 'none' }};">
+                            <label class="form-label fw-bold">Điểm check-in hiện tại</label>
+                            <input type="text" name="current_checkin_step" class="form-control" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $booking->current_checkin_step }}">
+                        </div>
+                    @endif
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-admin btn-light border" data-bs-dismiss="modal">Hủy</button>

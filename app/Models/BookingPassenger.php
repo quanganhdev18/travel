@@ -30,6 +30,7 @@ class BookingPassenger extends Model
     protected $casts = [
         'booking_id' => 'int',
         'date_of_birth' => 'datetime',
+        'checked_in' => 'boolean',
     ];
 
     protected $fillable = [
@@ -39,6 +40,8 @@ class BookingPassenger extends Model
         'identity_number',
         'gender',
         'passenger_type',
+        'checked_in',
+        'special_note',
     ];
 
     public function booking()

@@ -990,7 +990,7 @@
                     <div id="tab-bookings" style="display:none;">
                     <style>
                     /* Booking tab inline styles */
-                    .bk-card { background:#fff; border-radius:20px; border:1px solid #e8edf5; overflow:hidden; transition:all 0.25s ease; margin-bottom:24px; }
+                    .bk-card { background:#fff; border-radius:20px; border:1px solid #e8edf5; overflow:hidden; transition:box-shadow 0.25s ease,transform 0.25s ease,border-color 0.25s ease; margin-bottom:24px; }
                     .bk-card:hover { border-color:rgba(0,124,232,0.25); box-shadow:0 8px 32px rgba(0,0,0,0.1); transform:translateY(-2px); }
                     .bk-card-header { padding:16px 24px; background:#f8fafc; border-bottom:1px solid #e8edf5; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
                     .bk-order-id { font-size:0.82rem; font-weight:700; color:#374151; letter-spacing:0.5px; }
@@ -1204,7 +1204,6 @@
                                             @endif
                                             @if($paymentStatus === 'paid_100')
                                                 <div class="ps-badge ps-paid100"><i class="bi bi-check-circle-fill"></i>Đã thanh toán 100%</div>
-                                            </div>
                                             @elseif($paymentStatus === 'paid_30')
                                                 <div class="ps-badge ps-paid30"><i class="bi bi-pie-chart-fill"></i>Đã thanh toán 30% (Cọc)</div>
                                                 @if(!$isCancelled)
@@ -1472,6 +1471,17 @@
                 url.searchParams.set('tab', tab);
             }
             history.replaceState({}, '', url);
+
+            // Re-apply booking pagination when switching to bookings tab
+            if (tab === 'bookings' && typeof window.bookingApply === 'function') {
+                bookingCurrentPage = 1;
+                currentBookingFilter = 'all';
+                // Reset filter button UI
+                document.querySelectorAll('.bk-filter-btn').forEach((b, i) => {
+                    b.classList.toggle('active', i === 0);
+                });
+                window.bookingApply(1);
+            }
         }
 
         // ===== Booking & Wishlist JS Pagination =====
@@ -1481,164 +1491,140 @@
         function initWishlistPagination() {
             const container = document.getElementById('wishlist-cards-container');
             if (!container) return;
-            const items = container.querySelectorAll('.wishlist-card-item');
-            const totalItems = items.length;
-            if (totalItems === 0) return;
+            const items = Array.from(container.querySelectorAll('.wishlist-card-item'));
+            if (items.length === 0) return;
 
-            const totalPages = Math.ceil(totalItems / wishlistItemsPerPage);
-            
+            const totalPages = Math.ceil(items.length / wishlistItemsPerPage);
+
             function showPage(page) {
                 wishlistCurrentPage = page;
                 const start = (page - 1) * wishlistItemsPerPage;
                 const end = start + wishlistItemsPerPage;
-                
+
                 items.forEach((item, index) => {
-                    if (index >= start && index < end) {
-                        item.style.setProperty('display', 'block', 'important');
-                    } else {
-                        item.style.setProperty('display', 'none', 'important');
-                    }
+                    item.style.display = (index >= start && index < end) ? '' : 'none';
                 });
-                
+
                 renderPagination();
             }
-            
+
             function renderPagination() {
                 const paginationContainer = document.getElementById('wishlist-pagination');
                 if (!paginationContainer) return;
-                
+
                 if (totalPages <= 1) {
                     paginationContainer.innerHTML = '';
                     return;
                 }
-                
-                let html = '<ul class="pagination shadow-sm border-0 rounded-pill overflow-hidden">';
-                
-                // Prev button
-                html += `<li class="page-item ${wishlistCurrentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link border-0 px-3" href="#" onclick="changeWishlistPage(${wishlistCurrentPage - 1}, event)"><i class="bi bi-chevron-left"></i></a>
-                </li>`;
-                
+
+                let html = '<nav><ul class="pagination justify-content-center mb-0">';
+                html += `<li class="page-item ${wishlistCurrentPage === 1 ? 'disabled' : ''}">`;
+                html += `<a class="page-link" href="#" onclick="window.changeWishlistPage(${wishlistCurrentPage - 1}, event)"><i class="bi bi-chevron-left"></i></a></li>`;
+
                 for (let i = 1; i <= totalPages; i++) {
-                    html += `<li class="page-item ${wishlistCurrentPage === i ? 'active' : ''}">
-                        <a class="page-link border-0 px-3 fw-600" href="#" onclick="changeWishlistPage(${i}, event)">${i}</a>
-                    </li>`;
+                    html += `<li class="page-item ${wishlistCurrentPage === i ? 'active' : ''}">`;
+                    html += `<a class="page-link fw-bold" href="#" onclick="window.changeWishlistPage(${i}, event)">${i}</a></li>`;
                 }
-                
-                // Next button
-                html += `<li class="page-item ${wishlistCurrentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link border-0 px-3" href="#" onclick="changeWishlistPage(${wishlistCurrentPage + 1}, event)"><i class="bi bi-chevron-right"></i></a>
-                </li>`;
-                
-                html += '</ul>';
+
+                html += `<li class="page-item ${wishlistCurrentPage === totalPages ? 'disabled' : ''}">`;
+                html += `<a class="page-link" href="#" onclick="window.changeWishlistPage(${wishlistCurrentPage + 1}, event)"><i class="bi bi-chevron-right"></i></a></li>`;
+                html += '</ul></nav>';
                 paginationContainer.innerHTML = html;
             }
-            
+
             window.changeWishlistPage = function(page, e) {
                 if (e) e.preventDefault();
-                if (page < 1 || page > totalPages) return;
-                showPage(page);
+                if (page >= 1 && page <= totalPages) showPage(page);
             };
-            
+
             showPage(1);
         }
 
         let bookingCurrentPage = 1;
-        const bookingItemsPerPage = 5;
+        const bookingItemsPerPage = 4;
         let currentBookingFilter = 'all';
 
         function initBookingPagination() {
-            const container = document.getElementById('tab-bookings');
-            if (!container) return;
-            const allCards = container.querySelectorAll('.bk-card');
+            const tabEl = document.getElementById('tab-bookings');
+            if (!tabEl) return;
+            const allCards = Array.from(tabEl.querySelectorAll('.bk-card'));
             if (allCards.length === 0) return;
-            
-            function applyPagination(page = 1) {
+
+            function applyPagination(page) {
+                page = page || 1;
                 bookingCurrentPage = page;
-                
-                // Lọc các card thỏa mãn điều kiện filter hiện tại
-                const visibleCards = Array.from(allCards).filter(card => {
-                    const tabs = card.dataset.bkTab || '';
-                    return currentBookingFilter === 'all' || tabs.includes(currentBookingFilter);
+
+                const visibleCards = allCards.filter(card => {
+                    const bkTab = card.dataset.bkTab || '';
+                    return currentBookingFilter === 'all' || bkTab.includes(currentBookingFilter);
                 });
-                
-                const totalVisible = visibleCards.length;
-                const totalPages = Math.ceil(totalVisible / bookingItemsPerPage);
-                
-                // Ẩn toàn bộ cards trước
-                allCards.forEach(card => card.style.setProperty('display', 'none', 'important'));
-                
-                // Chỉ hiển thị cards thuộc trang hiện tại
+
+                const totalPages = Math.max(1, Math.ceil(visibleCards.length / bookingItemsPerPage));
+
+                // Hide all cards
+                allCards.forEach(card => { card.style.display = 'none'; });
+
+                // Show only cards on current page
                 const start = (page - 1) * bookingItemsPerPage;
-                const end = start + bookingItemsPerPage;
-                
-                visibleCards.forEach((card, index) => {
-                    if (index >= start && index < end) {
-                        card.style.setProperty('display', 'block', 'important');
-                    }
+                visibleCards.slice(start, start + bookingItemsPerPage).forEach(card => {
+                    card.style.display = 'block';
                 });
-                
-                renderPagination(totalPages);
-            }
-            
-            function renderPagination(totalPages) {
-                const paginationContainer = document.getElementById('booking-pagination');
-                if (!paginationContainer) return;
-                
+
+                // Render pagination controls
+                const paginationEl = document.getElementById('booking-pagination');
+                if (!paginationEl) return;
+
                 if (totalPages <= 1) {
-                    paginationContainer.innerHTML = '';
+                    paginationEl.innerHTML = '';
                     return;
                 }
-                
-                let html = '<ul class="pagination shadow-sm border-0 rounded-pill overflow-hidden">';
-                
-                // Prev button
-                html += `<li class="page-item ${bookingCurrentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link border-0 px-3" href="#" onclick="changeBookingPage(${bookingCurrentPage - 1}, event)"><i class="bi bi-chevron-left"></i></a>
-                </li>`;
-                
+
+                let html = '<nav aria-label="Booking pagination"><ul class="pagination justify-content-center mb-0">';
+                html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">`;
+                html += `<a class="page-link" href="#" onclick="window.changeBookingPage(${page - 1}, event)"><i class="bi bi-chevron-left"></i></a></li>`;
+
                 for (let i = 1; i <= totalPages; i++) {
-                    html += `<li class="page-item ${bookingCurrentPage === i ? 'active' : ''}">
-                        <a class="page-link border-0 px-3 fw-600" href="#" onclick="changeBookingPage(${i}, event)">${i}</a>
-                    </li>`;
+                    html += `<li class="page-item ${page === i ? 'active' : ''}">`;
+                    html += `<a class="page-link fw-bold" href="#" onclick="window.changeBookingPage(${i}, event)">${i}</a></li>`;
                 }
-                
-                // Next button
-                html += `<li class="page-item ${bookingCurrentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link border-0 px-3" href="#" onclick="changeBookingPage(${bookingCurrentPage + 1}, event)"><i class="bi bi-chevron-right"></i></a>
-                </li>`;
-                
-                html += '</ul>';
-                paginationContainer.innerHTML = html;
+
+                html += `<li class="page-item ${page === totalPages ? 'disabled' : ''}">`;
+                html += `<a class="page-link" href="#" onclick="window.changeBookingPage(${page + 1}, event)"><i class="bi bi-chevron-right"></i></a></li>`;
+                html += '</ul></nav>';
+                paginationEl.innerHTML = html;
             }
-            
+
+            // Expose globally
+            window.bookingApply = applyPagination;
+
             window.changeBookingPage = function(page, e) {
                 if (e) e.preventDefault();
-                const totalVisible = Array.from(allCards).filter(c => currentBookingFilter === 'all' || (c.dataset.bkTab || '').includes(currentBookingFilter)).length;
-                const totalPages = Math.ceil(totalVisible / bookingItemsPerPage);
-                if (page < 1 || page > totalPages) return;
-                applyPagination(page);
+                const visibleCount = allCards.filter(c =>
+                    currentBookingFilter === 'all' || (c.dataset.bkTab || '').includes(currentBookingFilter)
+                ).length;
+                const total = Math.max(1, Math.ceil(visibleCount / bookingItemsPerPage));
+                if (page >= 1 && page <= total) applyPagination(page);
             };
-            
+
             window.filterBkCards = function(tab, btn) {
                 document.querySelectorAll('.bk-filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                if (btn) btn.classList.add('active');
                 currentBookingFilter = tab;
                 applyPagination(1);
             };
-            
+
             applyPagination(1);
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            // ===== Initialize JS Pagination =====
-            initWishlistPagination();
-            initBookingPagination();
-
-            // ===== Init tab from URL param =====
+            // ===== Init tab from URL param FIRST =====
             const urlParams = new URLSearchParams(window.location.search);
             const activeTab = urlParams.get('tab') || 'info';
             switchProfileTab(activeTab, null);
+
+            // ===== Initialize JS Pagination AFTER tab is visible =====
+            initWishlistPagination();
+            initBookingPagination();
 
             // ===== Scroll reveal =====
             const revealEls = document.querySelectorAll('.reveal-up');
