@@ -256,6 +256,25 @@
     position: relative;
 }
 
+<<<<<<< Updated upstream
+=======
+.tour-duration-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+   }
+
+>>>>>>> Stashed changes
 .favorite-form {
     position: absolute;
     top: 16px;
