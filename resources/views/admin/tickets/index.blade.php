@@ -6,7 +6,7 @@
 <div class="admin-card border-0 mb-4">
     <div class="admin-card-header bg-white py-3">
         <h5 class="admin-card-title"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Quản lý Vé Tham Quan</h5>
-        <a href="{{ route('admin.tickets.create') }}" class="btn btn-admin btn-admin-primary">
+        <a href="{{ route('admin.tickets.create') }}" class="btn btn-admin btn-admin-primary no-pjax">
             <i class="bi bi-plus-lg me-1"></i> Thêm Vé Tham Quan
         </a>
     </div>
@@ -77,7 +77,7 @@
                         <td class="text-end pe-4">
                             <div class="d-inline-flex gap-1">
                                 <a href="{{ route('admin.tickets.edit', $ticket->id) }}"
-                                   class="btn btn-action text-primary bg-primary bg-opacity-10" title="Chỉnh sửa">
+                                   class="btn btn-action text-primary bg-primary bg-opacity-10 no-pjax" title="Chỉnh sửa">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <form action="{{ route('admin.tickets.destroy', $ticket->id) }}" method="POST" class="d-inline"

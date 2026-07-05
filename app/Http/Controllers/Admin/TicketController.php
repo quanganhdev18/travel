@@ -78,13 +78,20 @@ class TicketController extends Controller
 
             // Lưu các option vé
             foreach ($request->option_names as $index => $name) {
+                $conditions = $request->option_conditions[$index] ?? null;
+
+                // Chỉ encode nếu có giá trị và không rỗng
+                if ($conditions !== null && trim($conditions) !== '') {
+                    $conditions = json_encode(['text' => $conditions]);
+                }
+
                 TicketOption::create([
                     'ticket_id' => $ticket->id,
                     'name' => $name,
                     'description' => $request->option_descriptions[$index] ?? null,
                     'price' => $request->option_prices[$index],
                     'original_price' => $request->option_original_prices[$index] ?? null,
-                    'conditions' => $request->option_conditions[$index] ?? null,
+                    'conditions' => $conditions,
                 ]);
             }
 
@@ -168,6 +175,13 @@ class TicketController extends Controller
             foreach ($request->option_names as $index => $name) {
                 $optionId = $existingIds[$index] ?? null;
 
+                $conditions = $request->option_conditions[$index] ?? null;
+
+                // Chỉ encode nếu có giá trị và không rỗng
+                if ($conditions !== null && trim($conditions) !== '') {
+                    $conditions = json_encode(['text' => $conditions]);
+                }
+
                 if ($optionId && TicketOption::where('id', $optionId)->where('ticket_id', $ticket->id)->exists()) {
                     // Cập nhật option hiện có
                     $option = TicketOption::find($optionId);
@@ -176,7 +190,7 @@ class TicketController extends Controller
                         'description' => $request->option_descriptions[$index] ?? null,
                         'price' => $request->option_prices[$index],
                         'original_price' => $request->option_original_prices[$index] ?? null,
-                        'conditions' => $request->option_conditions[$index] ?? null,
+                        'conditions' => $conditions,
                     ]);
                     $currentIds[] = $optionId;
                 } else {
@@ -187,7 +201,7 @@ class TicketController extends Controller
                         'description' => $request->option_descriptions[$index] ?? null,
                         'price' => $request->option_prices[$index],
                         'original_price' => $request->option_original_prices[$index] ?? null,
-                        'conditions' => $request->option_conditions[$index] ?? null,
+                        'conditions' => $conditions,
                     ]);
                     $currentIds[] = $newOption->id;
                 }

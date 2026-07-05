@@ -5,6 +5,35 @@
 @section('content')
 <div class="row">
     <div class="col-12">
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Có lỗi xảy ra:</strong>
+                <ul class="mb-0 mt-2">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="admin-card">
             <div class="admin-card-header">
                 <h5 class="admin-card-title">Thông tin Vé Tham Quan</h5>
@@ -125,7 +154,7 @@
 
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <a href="{{ route('admin.tickets.index') }}" class="btn btn-light border">Hủy</a>
-                        <button type="submit" class="btn btn-admin-primary">
+                        <button type="submit" class="btn btn-admin-primary" id="submitBtn">
                             <i class="bi bi-check-lg me-1"></i> Lưu lại
                         </button>
                     </div>
@@ -134,76 +163,122 @@
         </div>
     </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-let optionIndex = 0;
-
-const optionTemplate = (index) => `
-    <div class="option-item border rounded p-3 mb-3" data-index="${index}">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="mb-0">Loại vé #${index + 1}</h6>
-            <button type="button" class="btn btn-sm btn-outline-danger remove-option">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        
-        <div class="mb-2">
-            <label class="form-label fw-bold small">Tên loại vé <span class="text-danger">*</span></label>
-            <input type="text" name="option_names[]" class="form-control form-control-sm" 
-                   required placeholder="VD: Vé người lớn, Vé trẻ em...">
-        </div>
-        
-        <div class="row mb-2">
-            <div class="col-md-6">
-                <label class="form-label fw-bold small">Giá bán <span class="text-danger">*</span></label>
-                <input type="number" name="option_prices[]" class="form-control form-control-sm" 
-                       required min="0" placeholder="500000">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label fw-bold small">Giá gốc (nếu có)</label>
-                <input type="number" name="option_original_prices[]" class="form-control form-control-sm" 
-                       min="0" placeholder="700000">
-            </div>
-        </div>
-        
-        <div class="mb-2">
-            <label class="form-label fw-bold small">Mô tả</label>
-            <textarea name="option_descriptions[]" class="form-control form-control-sm" rows="2" 
-                      placeholder="Mô tả loại vé..."></textarea>
-        </div>
-        
-        <div class="mb-0">
-            <label class="form-label fw-bold small">Điều kiện áp dụng</label>
-            <textarea name="option_conditions[]" class="form-control form-control-sm" rows="2" 
-                      placeholder="VD: Áp dụng cho trẻ em từ 1m-1m4..."></textarea>
-        </div>
-    </div>
-`;
-
-document.getElementById('addOption').addEventListener('click', function() {
-    const container = document.getElementById('optionsContainer');
-    container.insertAdjacentHTML('beforeend', optionTemplate(optionIndex));
-    optionIndex++;
-});
-
-// Xóa option
-document.getElementById('optionsContainer').addEventListener('click', function(e) {
-    if (e.target.closest('.remove-option')) {
-        const optionItem = e.target.closest('.option-item');
-        optionItem.remove();
-        
-        // Cập nhật lại số thứ tự
-        document.querySelectorAll('.option-item').forEach((item, idx) => {
-            item.querySelector('h6').textContent = `Loại vé #${idx + 1}`;
-        });
+(function() {
+    'use strict';
+    
+    // Namespace để tránh init nhiều lần
+    if (window.ticketOptionsInitialized) {
+        return;
     }
-});
+    
+    let optionIndex = 0;
 
-// Thêm 1 option mặc định khi load trang
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('addOption').click();
-});
+    const optionTemplate = (index) => `
+        <div class="option-item border rounded p-3 mb-3" data-index="${index}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0">Loại vé #${index + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-option">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            
+            <div class="mb-2">
+                <label class="form-label fw-bold small">Tên loại vé <span class="text-danger">*</span></label>
+                <input type="text" name="option_names[]" class="form-control form-control-sm" 
+                       required placeholder="VD: Vé người lớn, Vé trẻ em...">
+            </div>
+            
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Giá bán <span class="text-danger">*</span></label>
+                    <input type="number" name="option_prices[]" class="form-control form-control-sm" 
+                           required min="0" placeholder="500000">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">Giá gốc (nếu có)</label>
+                    <input type="number" name="option_original_prices[]" class="form-control form-control-sm" 
+                           min="0" placeholder="700000">
+                </div>
+            </div>
+            
+            <div class="mb-2">
+                <label class="form-label fw-bold small">Mô tả</label>
+                <textarea name="option_descriptions[]" class="form-control form-control-sm" rows="2" 
+                          placeholder="Mô tả loại vé..."></textarea>
+            </div>
+            
+            <div class="mb-0">
+                <label class="form-label fw-bold small">Điều kiện áp dụng</label>
+                <textarea name="option_conditions[]" class="form-control form-control-sm" rows="2" 
+                          placeholder="VD: Áp dụng cho trẻ em từ 1m-1m4..."></textarea>
+            </div>
+        </div>
+    `;
+
+    function initTicketOptions() {
+        const addOptionBtn = document.getElementById('addOption');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const ticketForm = document.getElementById('ticketForm');
+
+        if (!addOptionBtn || !optionsContainer || !ticketForm) {
+            console.error('Required elements not found');
+            return;
+        }
+
+        // Đánh dấu đã init
+        window.ticketOptionsInitialized = true;
+
+        // Thêm option mới
+        addOptionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            optionsContainer.insertAdjacentHTML('beforeend', optionTemplate(optionIndex));
+            optionIndex++;
+        });
+
+        // Xóa option
+        optionsContainer.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-option')) {
+                const optionItems = document.querySelectorAll('.option-item');
+                
+                // Không cho xóa nếu chỉ còn 1 option
+                if (optionItems.length <= 1) {
+                    alert('Phải có ít nhất 1 loại vé!');
+                    return;
+                }
+                
+                const optionItem = e.target.closest('.option-item');
+                optionItem.remove();
+                
+                // Cập nhật lại số thứ tự
+                document.querySelectorAll('.option-item').forEach((item, idx) => {
+                    item.querySelector('h6').textContent = `Loại vé #${idx + 1}`;
+                });
+            }
+        });
+
+        // Validate form trước khi submit
+        ticketForm.addEventListener('submit', function(e) {
+            const optionItems = document.querySelectorAll('.option-item');
+            
+            if (optionItems.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng thêm ít nhất 1 loại vé!');
+                return false;
+            }
+        });
+
+        // Thêm 1 option mặc định nếu chưa có
+        if (optionsContainer.children.length === 0) {
+            addOptionBtn.click();
+        }
+    }
+
+    // Khởi tạo ngay lập tức (vì script được load sau DOM)
+    initTicketOptions();
+})();
 </script>
 @endpush
-@endsection
