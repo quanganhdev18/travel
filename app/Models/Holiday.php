@@ -33,7 +33,11 @@ class Holiday extends Model
      */
     public static function isHoliday($date)
     {
-        $dateStr = $date instanceof Carbon ? $date->toDateString() : $date;
+        try {
+            $dateStr = $date instanceof Carbon ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        } catch (\Exception $e) {
+            $dateStr = is_string($date) ? explode(' ', $date)[0] : $date;
+        }
 
         return self::where('start_date', '<=', $dateStr)
             ->where('end_date', '>=', $dateStr)
@@ -48,11 +52,16 @@ class Holiday extends Model
      */
     public static function getIncreasePercentage($date)
     {
-        $dateStr = $date instanceof Carbon ? $date->toDateString() : $date;
+        try {
+            $dateStr = $date instanceof Carbon ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        } catch (\Exception $e) {
+            $dateStr = is_string($date) ? explode(' ', $date)[0] : $date;
+        }
+
         $maxIncrease = self::where('start_date', '<=', $dateStr)
             ->where('end_date', '>=', $dateStr)
             ->max('price_increase_percentage');
 
-        return $maxIncrease ?? 0;
+        return (float) ($maxIncrease ?? 0);
     }
 }

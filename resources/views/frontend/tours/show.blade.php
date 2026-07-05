@@ -573,12 +573,16 @@
                                         }
                                     @endphp
 
+                                    @php
+                                        $surcharge = \App\Models\Holiday::getIncreasePercentage($schedule->departure_date);
+                                    @endphp
                                     <div class="position-relative">
                                         <input type="radio"
-                                               class="btn-check"
+                                               class="btn-check schedule-radio"
                                                name="schedule_id"
                                                id="schedule-{{ $schedule->id }}"
                                                value="{{ $schedule->id }}"
+                                               data-surcharge="{{ $surcharge }}"
                                                {{ $isChecked ? 'checked' : '' }}
                                                {{ $isFull ? 'disabled' : '' }}
                                                required>
@@ -598,6 +602,9 @@
                                             </div>
 
                                             <div class="text-end ms-2">
+                                                @if($surcharge > 0)
+                                                    <div class="mb-1"><span class="badge bg-danger" style="font-size:0.65rem">+{{ $surcharge }}% Lễ</span></div>
+                                                @endif
                                                 @if($isFull)
                                                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1"><i class="bi bi-x-circle me-1"></i>{{ __('Hết chỗ') }}</span>
                                                 @else
@@ -689,8 +696,10 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const basePriceVND = {{ $tour->base_price ?? 0 }};
-        const childPriceVND = {{ $tour->child_price ?? (($tour->base_price ?? 0) * 0.75) }};
+        let basePriceVND = {{ $tour->base_price ?? 0 }};
+        let childPriceVND = {{ $tour->child_price ?? (($tour->base_price ?? 0) * 0.75) }};
+        const originalBasePrice = {{ $tour->base_price ?? 0 }};
+        const originalChildPrice = {{ $tour->child_price ?? (($tour->base_price ?? 0) * 0.75) }};
         const currency = '{{ Session::get("currency", "VND") }}';
 
         let rate = 1;
@@ -724,9 +733,33 @@
                 break;
         }
 
+        function formatCurrency(amount) {
+            const converted = amount / rate;
+            let formatted = new Intl.NumberFormat(currency === 'VND' ? 'vi-VN' : 'en-US', {
+                minimumFractionDigits: currency === 'VND' ? 0 : 2,
+                maximumFractionDigits: currency === 'VND' ? 0 : 2
+            }).format(converted);
+            return prefix ? symbol + formatted : formatted + symbol;
+        }
+
         const adultsInput = document.getElementById('adults');
         const childrenInput = document.getElementById('children');
         const totalPriceSpan = document.getElementById('totalPrice');
+        const scheduleRadios = document.querySelectorAll('input[name="schedule_id"]');
+
+        function updatePriceWithSurcharge() {
+            const selected = document.querySelector('input[name="schedule_id"]:checked');
+            if(selected) {
+                const surcharge = parseFloat(selected.dataset.surcharge || 0);
+                basePriceVND = originalBasePrice * (1 + surcharge / 100);
+                childPriceVND = originalChildPrice * (1 + surcharge / 100);
+                
+                document.querySelector('.booking-price').innerHTML = formatCurrency(basePriceVND) + (surcharge > 0 ? ` <span class="badge bg-danger fs-6 align-middle ms-2">+${surcharge}% Lễ</span>` : '');
+                const childPriceElem = document.querySelector('.fs-5.fw-bold.text-info');
+                if(childPriceElem) childPriceElem.innerHTML = formatCurrency(childPriceVND) + (surcharge > 0 ? ` <span class="badge bg-danger ms-2" style="font-size:0.65rem">+${surcharge}% Lễ</span>` : '');
+            }
+            updateTotalPrice();
+        }
 
         function updateTotalPrice() {
             if (!adultsInput || !childrenInput || !totalPriceSpan) {
@@ -736,19 +769,19 @@
             const adults = parseInt(adultsInput.value) || 0;
             const children = parseInt(childrenInput.value) || 0;
             const totalVND = (basePriceVND * adults) + (childPriceVND * children);
-            const convertedTotal = totalVND / rate;
-
-            let formatted = new Intl.NumberFormat(currency === 'VND' ? 'vi-VN' : 'en-US', {
-                minimumFractionDigits: currency === 'VND' ? 0 : 2,
-                maximumFractionDigits: currency === 'VND' ? 0 : 2
-            }).format(convertedTotal);
-
-            totalPriceSpan.textContent = prefix ? symbol + formatted : formatted + symbol;
+            
+            totalPriceSpan.textContent = formatCurrency(totalVND);
         }
 
         if (adultsInput && childrenInput) {
             adultsInput.addEventListener('input', updateTotalPrice);
             childrenInput.addEventListener('input', updateTotalPrice);
+        }
+        
+        if (scheduleRadios) {
+            scheduleRadios.forEach(radio => radio.addEventListener('change', updatePriceWithSurcharge));
+            // Trigger calculation for initially selected
+            updatePriceWithSurcharge();
         }
     });
 </script>

@@ -346,10 +346,11 @@
     bottom: 0;
     z-index: 10;
     background: linear-gradient(to bottom, 
-                rgba(0, 0, 0, 0.85) 0%, 
-                rgba(0, 0, 0, 0.90) 50%,
-                rgba(0, 0, 0, 0.95) 100%);
-    backdrop-filter: blur(8px);
+                rgba(0, 0, 0, 0.3) 0%, 
+                rgba(0, 0, 0, 0.5) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
     overflow: hidden;
     display: flex;

@@ -500,12 +500,20 @@
                 <div class="mb-4 pb-4 border-bottom">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted fw-500">{{ __('Người lớn:') }}</span>
-                        <strong class="text-dark">{{ $adults }} × {{ format_currency($schedule->tour->base_price) }}</strong>
+                        <strong class="text-dark">{{ $adults }} × {{ format_currency($basePrice) }}
+                            @if($holidaySurcharge > 0)
+                            <span class="badge bg-danger ms-1 px-1 py-0" style="font-size:0.6rem">+{{ $holidaySurcharge }}% Lễ</span>
+                            @endif
+                        </strong>
                     </div>
                     @if($children > 0)
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted fw-500">{{ __('Trẻ em:') }}</span>
-                        <strong class="text-dark">{{ $children }} × {{ format_currency($schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75)) }}</strong>
+                        <strong class="text-dark">{{ $children }} × {{ format_currency($childPrice) }}
+                            @if($holidaySurcharge > 0)
+                            <span class="badge bg-danger ms-1 px-1 py-0" style="font-size:0.6rem">+{{ $holidaySurcharge }}% Lễ</span>
+                            @endif
+                        </strong>
                     </div>
                     @endif
                     <div class="d-flex justify-content-between align-items-center pt-2">

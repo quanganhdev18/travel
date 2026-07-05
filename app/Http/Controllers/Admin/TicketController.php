@@ -26,7 +26,7 @@ class TicketController extends Controller
     public function create()
     {
         $destinations = Destination::select('id', 'name')->orderBy('name')->get();
-        $tours = Tour::select('id', 'title')->get();
+        $tours = Tour::select('id', 'title', 'destination_id')->get();
 
         return view('admin.tickets.create', compact('destinations', 'tours'));
     }
@@ -114,7 +114,7 @@ class TicketController extends Controller
     {
         $ticket->load(['destination', 'ticket_images', 'ticket_options', 'tours']);
         $destinations = Destination::select('id', 'name')->orderBy('name')->get();
-        $tours = Tour::select('id', 'title')->get();
+        $tours = Tour::select('id', 'title', 'destination_id')->get();
         $selectedTours = $ticket->tours->pluck('id')->toArray();
 
         return view('admin.tickets.edit', compact('ticket', 'destinations', 'tours', 'selectedTours'));

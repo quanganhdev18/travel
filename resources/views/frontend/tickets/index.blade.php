@@ -133,14 +133,7 @@
                                     $hasDiscount = $minOriginalPrice && $minOriginalPrice > $minPrice;
                                 @endphp
 
-                                @if($hasDiscount)
-                                @php
-                                    $discount = round((($minOriginalPrice - $minPrice) / $minOriginalPrice) * 100);
-                                @endphp
-                                <div class="tour-duration-badge">
-                                    -{{ $discount }}%
-                                </div>
-                                @endif
+
 
                                 <img src="{{ $imageUrl }}" alt="{{ $ticket->title }}" 
                                      onerror="this.onerror=null;this.src='{{ $fallbackImage }}';">

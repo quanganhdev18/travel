@@ -505,6 +505,8 @@ class TourBookingController extends Controller
             'user' => $user,
             'identity' => $identity, // Có thể null nếu user chưa cập nhật CCCD/Hộ chiếu
             'holidaySurcharge' => $holidaySurcharge,
+            'basePrice' => $basePrice,
+            'childPrice' => $childPrice,
             'holidays' => $holidays,
             'coupons' => $coupons,
         ]);

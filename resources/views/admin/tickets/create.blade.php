@@ -133,9 +133,12 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="form-text mb-2">Chọn các Tour được phép hiển thị vé này.</div>
-                                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;" id="toursListContainer">
+                                        <div id="noDestMsg" class="text-muted small mb-2" style="display: none;">Vui lòng chọn điểm đến để hiển thị danh sách Tour.</div>
+                                        <div id="noToursMsg" class="text-muted small mb-2" style="display: none;">Không có Tour nào thuộc điểm đến này.</div>
+                                        
                                         @forelse($tours as $tour)
-                                        <div class="form-check mb-2">
+                                        <div class="form-check mb-2 tour-item" data-destination="{{ $tour->destination_id }}">
                                             <input class="form-check-input" type="checkbox" name="tours[]" 
                                                    value="{{ $tour->id }}" id="tour_{{ $tour->id }}"
                                                    {{ in_array($tour->id, old('tours', [])) ? 'checked' : '' }}>
@@ -144,7 +147,7 @@
                                             </label>
                                         </div>
                                         @empty
-                                        <div class="text-muted small">Chưa có Tour nào trong hệ thống.</div>
+                                        <div class="text-muted small empty-system-tours">Chưa có Tour nào trong hệ thống.</div>
                                         @endforelse
                                     </div>
                                 </div>
@@ -274,6 +277,58 @@
         // Thêm 1 option mặc định nếu chưa có
         if (optionsContainer.children.length === 0) {
             addOptionBtn.click();
+        }
+
+        // Lọc tour theo điểm đến
+        const destSelect = document.querySelector('select[name="destination_id"]');
+        const tourItems = document.querySelectorAll('.tour-item');
+        const noDestMsg = document.getElementById('noDestMsg');
+        const noToursMsg = document.getElementById('noToursMsg');
+        const emptySystemMsg = document.querySelector('.empty-system-tours');
+
+        function filterTours(isInitialLoad = false) {
+            if (!destSelect || emptySystemMsg) return;
+            const selectedDestId = destSelect.value;
+            let visibleCount = 0;
+
+            if (!selectedDestId) {
+                tourItems.forEach(item => {
+                    item.style.display = 'none';
+                    if (!isInitialLoad) {
+                        const cb = item.querySelector('input[type="checkbox"]');
+                        if (cb) cb.checked = false;
+                    }
+                });
+                if(noDestMsg) noDestMsg.style.display = 'block';
+                if(noToursMsg) noToursMsg.style.display = 'none';
+                return;
+            }
+
+            if(noDestMsg) noDestMsg.style.display = 'none';
+
+            tourItems.forEach(item => {
+                if (item.dataset.destination === selectedDestId) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                    if (!isInitialLoad) {
+                        const cb = item.querySelector('input[type="checkbox"]');
+                        if (cb) cb.checked = false;
+                    }
+                }
+            });
+
+            if (visibleCount === 0) {
+                if(noToursMsg) noToursMsg.style.display = 'block';
+            } else {
+                if(noToursMsg) noToursMsg.style.display = 'none';
+            }
+        }
+
+        if (destSelect) {
+            destSelect.addEventListener('change', () => filterTours(false));
+            filterTours(true);
         }
     }
 
