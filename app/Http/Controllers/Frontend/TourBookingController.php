@@ -332,14 +332,25 @@ class TourBookingController extends Controller
         }
 
         if ($request->transport_type === 'flight') {
-            return redirect()->route('home')->with('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
+            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
         }
 
         if ($request->transport_type === 'bus') {
-            return redirect()->route('home')->with('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
+            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
         }
 
-        return redirect()->route('home')->with('success', 'Đặt tour thành công. Bạn tự túc phương tiện di chuyển.');
+        return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour thành công. Bạn tự túc phương tiện di chuyển.');
+    }
+
+    public function bookingSuccess($id)
+    {
+        $booking = Booking::with(['tour_schedule.tour'])->findOrFail($id);
+
+        if ($booking->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        return view('frontend.tours.booking_success', compact('booking'));
     }
 
     /**

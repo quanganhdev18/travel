@@ -409,19 +409,6 @@
                                             </div>
                                         </div>
                                     </label>
-                                    
-                                    <!-- VietQR Container -->
-                                    <div id="vietqr-container" class="mt-3 text-center" style="display: none;">
-                                        <div class="p-3 border rounded bg-white shadow-sm">
-                                            <h6 class="fw-bold text-primary mb-2">Quét mã QR để thanh toán</h6>
-                                            <img id="vietqr-image" src="" alt="VietQR" class="img-fluid rounded border p-2" style="max-width: 200px;">
-                                            <div class="mt-2 small text-muted">
-                                                Ngân hàng: <strong class="text-dark">MB</strong><br>
-                                                STK: <strong class="text-dark">8803074347</strong><br>
-                                                Tên CTK: <strong class="text-dark">LE PHUONG HA</strong>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <input type="radio" class="btn-check" name="payment_method" id="payment_vnpay" value="vnpay">
@@ -1328,10 +1315,6 @@
         } else {
             depositRow.style.setProperty('display', 'none', 'important');
         }
-        
-        if (typeof updateVietQR === 'function') {
-            updateVietQR();
-        }
     };
 
     // Listen to payment type change
@@ -1352,49 +1335,10 @@
                 el.nextElementSibling.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
             });
             this.nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
-            
-            // VietQR logic display
-            const qrContainer = document.getElementById('vietqr-container');
-            if (this.value === 'transfer') {
-                if (qrContainer) qrContainer.style.display = 'block';
-            } else {
-                if (qrContainer) qrContainer.style.display = 'none';
-            }
         });
     });
 
     document.querySelector('input[name="payment_type"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
     document.querySelector('input[name="payment_method"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
-
-    // VietQR initialization function
-    function updateVietQR() {
-        const qrImage = document.getElementById('vietqr-image');
-        if (!qrImage) return;
-
-        const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
-        const subtotal = baseTourPrice + currentTransportPrice + currentTicketPrice + currentAddonPrice;
-        const finalTotal = Math.max(0, subtotal - currentCouponDiscount);
-        
-        let amount = finalTotal;
-        if (paymentType === 'deposit') {
-            amount = finalTotal * 0.3;
-        }
-
-        const bankId = 'BIDV'; // Có thể thay đổi bank
-        const accountNo = '0818802032'; // Số tài khoản
-        const template = 'compact2'; // Giao diện
-        const accountName = 'TRavelWondel';
-        const description = 'Dat tour TravelWondel'; 
-        
-        const url = `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(accountName)}`;
-        qrImage.src = url;
-    }
-
-    // Initial display for VietQR
-    const initialQrContainer = document.getElementById('vietqr-container');
-    if (initialQrContainer && document.querySelector('input[name="payment_method"]:checked').value === 'transfer') {
-        initialQrContainer.style.display = 'block';
-    }
-    setTimeout(updateVietQR, 500);
 </script>
 @endsection
