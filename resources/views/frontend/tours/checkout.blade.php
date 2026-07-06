@@ -404,8 +404,8 @@
                                         <div class="d-flex align-items-center">
                                             <i class="bi bi-bank text-muted" style="font-size: 32px;"></i>
                                             <div class="ms-3">
-                                                <div class="fw-bold fs-5 text-dark">{{ __('Tiền mặt / Chuyển khoản') }}</div>
-                                                <div class="small text-muted mt-1">{{ __('Chuyển khoản thủ công hoặc nộp tiền mặt') }}</div>
+                                                <div class="fw-bold fs-5 text-dark">{{ __(' Chuyển khoản') }}</div>
+                                                <div class="small text-muted mt-1">{{ __('Chuyển khoản thủ công qua QR ') }}</div>
                                             </div>
                                         </div>
                                     </label>

@@ -290,7 +290,7 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.5);
-}
+   }
 
 .favorite-form {
     position: absolute;

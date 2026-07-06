@@ -149,6 +149,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tours/book', [TourBookingController::class, 'store'])
         ->name('frontend.tours.store');
 
+    Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
+        ->name('frontend.tours.booking_success');
+
     // Đặt vé máy bay
     Route::get('/flights/checkout', [FlightController::class, 'checkout'])
         ->name('frontend.flights.checkout');

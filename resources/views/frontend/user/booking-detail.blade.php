@@ -115,6 +115,17 @@
                                 @if(!empty($booking->pnr_code))
                                     &nbsp;<strong class="text-danger">({{ $booking->pnr_code }})</strong>
                                 @endif
+                                
+                                @if($booking->tour_schedule)
+                                    @php
+                                        $isTourStarted = \Carbon\Carbon::now()->startOfDay()->gte(\Carbon\Carbon::parse($booking->tour_schedule->departure_date)->startOfDay());
+                                    @endphp
+                                    @if($isTourStarted)
+                                        <span class="badge bg-success ms-2 fw-normal"><i class="bi bi-check-circle me-1"></i>Đã nhận</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark ms-2 fw-normal"><i class="bi bi-clock me-1"></i>Chờ xuất vé</span>
+                                    @endif
+                                @endif
                             @elseif($booking->transport_type === 'bus')
                                 <i class="bi bi-bus-front-fill text-info me-1"></i>Xe ô tô
                             @else
