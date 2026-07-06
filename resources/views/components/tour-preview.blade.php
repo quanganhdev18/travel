@@ -2,12 +2,12 @@
 
 <!-- Tour Preview Overlay -->
 <div x-show="showPreview"
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="transition ease-in duration-200"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0"
+     x-transition:enter="preview-enter"
+     x-transition:enter-start="preview-enter-start"
+     x-transition:enter-end="preview-enter-end"
+     x-transition:leave="preview-leave"
+     x-transition:leave-start="preview-leave-start"
+     x-transition:leave-end="preview-leave-end"
      class="tour-preview-overlay"
      style="display: none;"
      @click.stop>

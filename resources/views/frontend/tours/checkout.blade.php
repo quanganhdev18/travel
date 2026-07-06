@@ -485,7 +485,7 @@
                     @if($schedule->tour->departure_time)
                     <div class="d-flex align-items-center text-muted fw-500 mb-2">
                         <i class="bi bi-alarm fs-5 text-info me-3"></i> 
-                        {{ \Carbon\Carbon::parse($schedule->tour->departure_time)->format('H:i') }}
+                        {{ \Carbon\Carbon::parse($schedule->tour->departure_time)->format('H\hi') }}
                     </div>
                     @endif
                     @if($schedule->tour->meeting_point)

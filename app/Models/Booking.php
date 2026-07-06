@@ -144,4 +144,81 @@ class Booking extends Model
     {
         return $this->hasMany(Refund::class);
     }
+
+    /**
+     * Tự động cập nhật các booking sắp khởi hành (upcoming) sang đang diễn ra (in_progress)
+     * nếu thời gian hiện tại đã vượt qua ngày và giờ khởi hành của tour.
+     */
+    public static function updateUpcomingTourStatuses(): void
+    {
+        $now = now();
+        $todayDate = $now->toDateString();
+
+        $bookings = self::where('tour_status', self::TOUR_UPCOMING)
+            ->whereHas('tour_schedule', function ($q) use ($todayDate) {
+                $q->where('departure_date', '<=', $todayDate)
+                    ->where('return_date', '>=', $todayDate);
+            })
+            ->with(['tour_schedule.tour'])
+            ->get();
+
+        foreach ($bookings as $booking) {
+            $schedule = $booking->tour_schedule;
+            if (! $schedule) {
+                continue;
+            }
+
+            $tour = $schedule->tour;
+            $departureDateTime = Carbon::parse($schedule->departure_date->toDateString());
+
+            if ($tour && $tour->departure_time) {
+                $timeParts = explode(':', $tour->departure_time);
+                $hour = isset($timeParts[0]) ? (int) $timeParts[0] : 0;
+                $minute = isset($timeParts[1]) ? (int) $timeParts[1] : 0;
+                $second = isset($timeParts[2]) ? (int) $timeParts[2] : 0;
+                $departureDateTime->setTime($hour, $minute, $second);
+            }
+
+            if ($now->greaterThanOrEqualTo($departureDateTime)) {
+                $booking->tour_status = self::TOUR_IN_PROGRESS;
+                $booking->save();
+            }
+        }
+    }
+
+    /**
+     * Lấy danh sách các trạng thái tour tiếp theo hợp lệ từ trạng thái hiện tại.
+     * Tránh việc thay đổi trạng thái tour nhảy cóc.
+     *
+     * @return array<int, string>
+     */
+    public static function getValidNextStatuses(string $currentStatus): array
+    {
+        return match ($currentStatus) {
+            self::TOUR_UPCOMING => [
+                self::TOUR_UPCOMING,
+                self::TOUR_IN_PROGRESS,
+                self::TOUR_CHECKING_IN,
+                self::TOUR_CANCELLED_CUSTOMER,
+                self::TOUR_CANCELLED_ADMIN,
+            ],
+            self::TOUR_IN_PROGRESS => [
+                self::TOUR_IN_PROGRESS,
+                self::TOUR_CHECKING_IN,
+                self::TOUR_COMPLETED,
+                self::TOUR_CANCELLED_CUSTOMER,
+                self::TOUR_CANCELLED_ADMIN,
+            ],
+            self::TOUR_CHECKING_IN => [
+                self::TOUR_CHECKING_IN,
+                self::TOUR_IN_PROGRESS,
+                self::TOUR_COMPLETED,
+                self::TOUR_CANCELLED_CUSTOMER,
+                self::TOUR_CANCELLED_ADMIN,
+            ],
+            default => [
+                $currentStatus,
+            ],
+        };
+    }
 }

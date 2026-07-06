@@ -375,15 +375,30 @@
                         {{-- Giữ giá trị tour_status hiện tại để server không coi là thay đổi --}}
                         <input type="hidden" name="tour_status" value="{{ $booking->tour_status }}">
                     @else
+                        @php
+                            $validNextStatuses = \App\Models\Booking::getValidNextStatuses($booking->tour_status);
+                        @endphp
                         <div class="mb-3">
                             <label class="form-label fw-bold">Trạng thái Tour</label>
                             <select name="tour_status" class="form-select tour-status-select" data-booking-id="{{ $booking->id }}">
-                                <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
-                                <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
-                                <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
-                                <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
-                                <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
-                                <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
+                                @if(in_array('upcoming', $validNextStatuses))
+                                    <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
+                                @endif
+                                @if(in_array('in_progress', $validNextStatuses))
+                                    <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
+                                @endif
+                                @if(in_array('checking_in', $validNextStatuses))
+                                    <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
+                                @endif
+                                @if(in_array('completed', $validNextStatuses))
+                                    <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
+                                @endif
+                                @if(in_array('cancelled_by_customer', $validNextStatuses))
+                                    <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
+                                @endif
+                                @if(in_array('cancelled_by_admin', $validNextStatuses))
+                                    <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
+                                @endif
                             </select>
                         </div>
                         <div class="mb-3 checkin-step-container" id="checkinStepContainer{{ $booking->id }}" style="display: {{ $booking->tour_status == 'checking_in' ? 'block' : 'none' }};">

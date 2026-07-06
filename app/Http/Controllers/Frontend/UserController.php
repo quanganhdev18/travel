@@ -19,6 +19,8 @@ class UserController extends Controller
 {
     public function myBookings(): View
     {
+        Booking::updateUpcomingTourStatuses();
+
         $bookings = Booking::with([
             'tour_schedule.tour.tour_images',
             'tour_schedule.tour.primaryImage',
@@ -52,6 +54,8 @@ class UserController extends Controller
     {
         $user = Auth::user();
         $user->load(['bookings', 'wishlists', 'reviews', 'identity']);
+
+        Booking::updateUpcomingTourStatuses();
 
         // Load bookings with full relations for the bookings tab
         $bookings = Booking::with([

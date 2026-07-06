@@ -309,7 +309,7 @@
                     <i class="bi bi-alarm fs-5 me-2 text-info"></i>
                     {{ __('Giờ khởi hành:') }}
                     <strong class="ms-1 text-dark">
-                        {{ \Carbon\Carbon::parse($tour->departure_time)->format('H:i') }}
+                        {{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }}
                     </strong>
                 </span>
                 @endif
@@ -597,7 +597,12 @@
                                                 </div>
                                                 <div>
                                                     <div class="fw-bold text-dark fs-6">{{ $dayOfWeek }}</div>
-                                                    <div class="small text-muted mt-1"><i class="bi bi-calendar2-check text-primary me-1"></i> {{ __('Khởi hành:') }} {{ $formattedDate }}</div>
+                                                                                  <div class="small text-muted mt-1">
+                                                        <i class="bi bi-calendar2-check text-primary me-1"></i> {{ __('Khởi hành:') }} {{ $formattedDate }}
+                                                        @if($tour->departure_time)
+                                                            <span class="ms-2 text-warning fw-bold"><i class="bi bi-clock-fill me-1"></i>{{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }}</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
 
