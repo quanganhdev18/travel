@@ -45,6 +45,7 @@ class TourSchedule extends Model
         'capacity',
         'available_seats',
         'status',
+        'checkin_location',
     ];
 
     public function tour()

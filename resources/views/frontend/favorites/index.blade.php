@@ -33,11 +33,18 @@
 
                 <div class="col-12 col-md-6 col-lg-3">
                     <div class="card h-100 shadow-sm border-0">
-                        <img src="{{ $tourImage }}"
-                             class="card-img-top"
-                             style="height: 180px; object-fit: cover;"
-                             alt="{{ $tour->title }}"
-                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
+                        <div class="position-relative">
+                            @if($tour->duration_days && $tour->duration_nights)
+                            <div class="tour-duration-badge">
+                                {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
+                            </div>
+                            @endif
+                            <img src="{{ $tourImage }}"
+                                 class="card-img-top"
+                                 style="height: 180px; object-fit: cover;"
+                                 alt="{{ $tour->title }}"
+                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
+                        </div>
 
                         <div class="card-body">
                             <h5 class="card-title fw-bold" style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ $tour->title }}</h5>
@@ -55,7 +62,8 @@
                                 Xem chi tiết
                             </a>
                             <form action="{{ route('frontend.favorites.destroy', $tour->id) }}"
-                                method="POST">
+                                method="POST"
+                                class="favorite-form-delete">
                                 @csrf
                                 @method('DELETE')
 
@@ -84,6 +92,22 @@
 <style>
 .card-img-wrapper {
     position: relative;
+}
+
+.tour-duration-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .favorite-form {

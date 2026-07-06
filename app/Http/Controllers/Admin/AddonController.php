@@ -6,19 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Addon;
 use App\Models\Tour;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class AddonController extends Controller
 {
     public function index()
     {
         $addons = Addon::orderBy('id', 'desc')->paginate(10);
+
         return view('admin.addons.index', compact('addons'));
     }
 
     public function create()
     {
         $tours = Tour::select('id', 'title')->get();
+
         return view('admin.addons.create', compact('tours'));
     }
 
@@ -39,7 +40,7 @@ class AddonController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('addons', 'public');
-            $data['image_url'] = '/storage/' . $path;
+            $data['image_url'] = '/storage/'.$path;
         }
 
         $addon = Addon::create($data);
@@ -55,6 +56,7 @@ class AddonController extends Controller
     {
         $tours = Tour::select('id', 'title')->get();
         $selectedTours = $addon->tours->pluck('id')->toArray();
+
         return view('admin.addons.edit', compact('addon', 'tours', 'selectedTours'));
     }
 
@@ -75,7 +77,7 @@ class AddonController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('addons', 'public');
-            $data['image_url'] = '/storage/' . $path;
+            $data['image_url'] = '/storage/'.$path;
         }
 
         $addon->update($data);
@@ -92,6 +94,7 @@ class AddonController extends Controller
     public function destroy(Addon $addon)
     {
         $addon->delete();
+
         return redirect()->route('admin.addons.index')->with('success', 'Đã xóa dịch vụ Addon thành công.');
     }
 }

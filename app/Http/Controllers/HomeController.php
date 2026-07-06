@@ -40,7 +40,9 @@ class HomeController extends Controller
 
         $categories = Category::all();
 
-        $tours = Tour::with(['destination', 'tour_images', 'departure_location'])
+        $tours = Tour::with(['destination', 'tour_images', 'departure_location', 'categories', 'activeSchedules' => function ($q) {
+            $q->orderBy('departure_date', 'asc')->limit(1);
+        }])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
                 $q->whereDate('departure_date', '>=', Carbon::today());
@@ -86,7 +88,15 @@ class HomeController extends Controller
         $allDestinations = Destination::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
 
-        $query = Tour::with(['destination', 'tour_images'])
+        $query = Tour::with([
+            'destination',
+            'tour_images',
+            'departure_location',
+            'categories',
+            'activeSchedules' => function ($q) {
+                $q->orderBy('departure_date', 'asc')->limit(1);
+            },
+        ])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
                 $q->whereDate('departure_date', '>=', Carbon::today());
@@ -232,7 +242,6 @@ class HomeController extends Controller
                 $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
             });
         }
-
 
         if ($request->filled('budget')) {
             match ($request->budget) {

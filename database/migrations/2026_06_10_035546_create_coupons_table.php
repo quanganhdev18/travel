@@ -19,13 +19,14 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('discount_type');
-            $table->double('discount_value');
-            $table->double('min_order_value')->nullable();
-            $table->double('max_discount')->nullable();
+            $table->decimal('discount_value', 15, 2);
+            $table->decimal('min_order_value', 15, 2)->nullable();
+            $table->decimal('max_discount', 15, 2)->nullable();
             $table->dateTime('valid_from')->nullable();
             $table->dateTime('valid_until')->nullable();
             $table->integer('usage_limit')->nullable();
             $table->integer('used_count')->default(0);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

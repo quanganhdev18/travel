@@ -2,10 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -41,12 +42,12 @@ class RolePermissionSeeder extends Seeder
         $guide->givePermissionTo(['view guide schedules']);
 
         $cskh = Role::firstOrCreate(['name' => 'cskh', 'guard_name' => 'web']);
-        
+
         $cskhUser = User::firstOrCreate(
             ['email' => 'cskh@travel.com'],
             [
                 'name' => 'Nhân viên CSKH',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'password' => Hash::make('password'),
                 'phone' => '0987654321',
                 'role' => 'cskh',
             ]

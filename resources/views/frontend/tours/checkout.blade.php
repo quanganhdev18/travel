@@ -478,22 +478,42 @@
                         <i class="bi bi-geo-alt fs-5 text-danger me-3"></i> 
                         {{ $schedule->tour->destination->name ?? __('Đang cập nhật') }}
                     </div>
-                    <div class="d-flex align-items-center text-muted fw-500">
+                    <div class="d-flex align-items-center text-muted fw-500 mb-2">
                         <i class="bi bi-calendar-event fs-5 text-primary me-3"></i> 
                         {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}
                     </div>
+                    @if($schedule->tour->departure_time)
+                    <div class="d-flex align-items-center text-muted fw-500 mb-2">
+                        <i class="bi bi-alarm fs-5 text-info me-3"></i> 
+                        {{ \Carbon\Carbon::parse($schedule->tour->departure_time)->format('H:i') }}
+                    </div>
+                    @endif
+                    @if($schedule->tour->meeting_point)
+                    <div class="d-flex align-items-center text-muted fw-500">
+                        <i class="bi bi-geo fs-5 text-success me-3"></i> 
+                        {{ $schedule->tour->meeting_point }}
+                    </div>
+                    @endif
                 </div>
 
                 <!-- Passenger Count -->
                 <div class="mb-4 pb-4 border-bottom">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted fw-500">{{ __('Người lớn:') }}</span>
-                        <strong class="text-dark">{{ $adults }} × {{ format_currency($schedule->tour->base_price) }}</strong>
+                        <strong class="text-dark">{{ $adults }} × {{ format_currency($basePrice) }}
+                            @if($holidaySurcharge > 0)
+                            <span class="badge bg-danger ms-1 px-1 py-0" style="font-size:0.6rem">+{{ $holidaySurcharge }}% Lễ</span>
+                            @endif
+                        </strong>
                     </div>
                     @if($children > 0)
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <span class="text-muted fw-500">{{ __('Trẻ em:') }}</span>
-                        <strong class="text-dark">{{ $children }} × {{ format_currency($schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75)) }}</strong>
+                        <strong class="text-dark">{{ $children }} × {{ format_currency($childPrice) }}
+                            @if($holidaySurcharge > 0)
+                            <span class="badge bg-danger ms-1 px-1 py-0" style="font-size:0.6rem">+{{ $holidaySurcharge }}% Lễ</span>
+                            @endif
+                        </strong>
                     </div>
                     @endif
                     <div class="d-flex justify-content-between align-items-center pt-2">
@@ -885,12 +905,26 @@
                     .then(res => res.json())
                     .then(data => {
                         transportLoading.style.display = 'none';
-                        // Chỉ lọc các chuyến bay của Duffel Airways
-                        let duffelOffers = (data.data || []).filter(offer => (offer.owner.name || '').includes('Duffel'));
+                        let tourDepartureTimeStr = '{{ $schedule->tour->departure_time }}';
+                        let tourDepartureDateStr = '{{ \Carbon\Carbon::parse($schedule->departure_date)->format("Y-m-d") }}';
+                        let tourDepartureDateTime = tourDepartureTimeStr ? new Date(`${tourDepartureDateStr}T${tourDepartureTimeStr}`) : null;
+
+                        let validOffers = (data.data || []).filter(offer => {
+                            let slice = offer.slices[0];
+                            if (!slice) return false;
+                            let segmentLast = slice.segments[slice.segments.length - 1];
+                            let arrivingAt = new Date(segmentLast.arriving_at);
+                            
+                            if (tourDepartureDateTime) {
+                                let diffHours = (tourDepartureDateTime.getTime() - arrivingAt.getTime()) / (1000 * 60 * 60);
+                                if (diffHours < 2) return false;
+                            }
+                            return true;
+                        });
                         
-                        if(data.success && duffelOffers.length > 0) {
+                        if(data.success && validOffers.length > 0) {
                             let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Bay") }}</h5>';
-                            duffelOffers.forEach(offer => {
+                            validOffers.forEach(offer => {
                                 let priceVND = parseFloat(offer.total_amount) * 25000;
                                 if (offer.total_currency === 'VND') {
                                     priceVND = parseFloat(offer.total_amount);
@@ -902,6 +936,14 @@
                                 
                                 let departTime = new Date(segmentFirst.departing_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
                                 let arriveTime = new Date(segmentLast.arriving_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                                let departDate = new Date(segmentFirst.departing_at).toLocaleDateString('vi-VN');
+                                let arriveDate = new Date(segmentLast.arriving_at).toLocaleDateString('vi-VN');
+                                
+                                let flightNumber = segmentFirst.operating_carrier_flight_number || segmentFirst.marketing_carrier_flight_number || '';
+                                let carrierCode = (segmentFirst.operating_carrier && segmentFirst.operating_carrier.iata_code) || 
+                                                  (segmentFirst.marketing_carrier && segmentFirst.marketing_carrier.iata_code) || '';
+                                let flightCode = carrierCode ? (carrierCode + ' ' + flightNumber).trim() : flightNumber;
+                                if (!flightCode) flightCode = offer.owner.name;
                                 
                                 let dur = slice.duration || '';
                                 let hMatch = dur.match(/(\d+)H/);
@@ -924,13 +966,17 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div class="fw-bold text-primary"><i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}</div>
+                                            <div class="fw-bold text-primary">
+                                                <i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}
+                                                <span class="badge bg-light text-dark ms-2 border">${flightCode}</span>
+                                            </div>
                                             <div class="fw-bold text-danger fs-5">+ ${formatCurrencyDynamic(priceVND)}</div>
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3">
                                             <div class="text-center">
                                                 <div class="fw-bold fs-4 text-dark lh-1 mb-1">${departTime}</div>
                                                 <div class="small fw-500 text-muted">${originCode}</div>
+                                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">${departDate}</div>
                                             </div>
                                             <div class="text-center flex-grow-1 px-4">
                                                 <div class="small text-muted mb-2 fw-500">${durationStr}</div>
@@ -941,6 +987,7 @@
                                             <div class="text-center">
                                                 <div class="fw-bold fs-4 text-dark lh-1 mb-1">${arriveTime}</div>
                                                 <div class="small fw-500 text-muted">${destCode}</div>
+                                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">${arriveDate}</div>
                                             </div>
                                         </div>
                                     </div>

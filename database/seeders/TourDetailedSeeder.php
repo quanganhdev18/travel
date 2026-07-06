@@ -265,6 +265,8 @@ class TourDetailedSeeder extends Seeder
                 'duration_nights' => $tData['duration_nights'],
                 'base_price' => $tData['base_price'],
                 'child_price' => $tData['child_price'],
+                'departure_time' => sprintf('%02d:00:00', rand(6, 10)),
+                'meeting_point' => 'Văn phòng công ty hoặc Sân bay',
             ]);
 
             // Sync category

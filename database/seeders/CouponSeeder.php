@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Coupon;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class CouponSeeder extends Seeder
 {
@@ -32,7 +32,7 @@ class CouponSeeder extends Seeder
                 'valid_until' => Carbon::now()->addMonths(1),
                 'usage_limit' => 50,
                 'used_count' => 0,
-            ]
+            ],
         ];
 
         foreach ($coupons as $data) {

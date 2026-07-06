@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Conversation;
-use App\Models\Message;
 use App\Events\MessageSent;
+use App\Models\Conversation;
+use App\Services\ProfanityFilter;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ChatController extends Controller
@@ -14,23 +14,24 @@ class ChatController extends Controller
     {
         $user = Auth::user();
         if ($user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff'])) {
-            $conversations = Conversation::with(['user', 'cskh', 'messages' => function($q) {
+            $conversations = Conversation::with(['user', 'cskh', 'messages' => function ($q) {
                 $q->latest()->limit(1);
             }])->orderBy('updated_at', 'desc')->get();
         } else {
-            $conversations = Conversation::with(['cskh', 'messages' => function($q) {
+            $conversations = Conversation::with(['cskh', 'messages' => function ($q) {
                 $q->latest()->limit(1);
             }])->where('user_id', $user->id)->orderBy('updated_at', 'desc')->get();
         }
+
         return response()->json($conversations);
     }
 
     public function getMessages($id)
     {
         $conversation = Conversation::with('messages.sender')->findOrFail($id);
-        
+
         $user = Auth::user();
-        if (!$user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
             abort(403);
         }
 
@@ -41,13 +42,13 @@ class ChatController extends Controller
     {
         $request->validate([
             'message' => 'nullable|string',
-            'attachment' => 'nullable|file|max:10240' // max 10MB
+            'attachment' => 'nullable|file|max:10240', // max 10MB
         ]);
 
         $conversation = Conversation::findOrFail($id);
-        
+
         $user = Auth::user();
-        if (!$user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
             abort(403);
         }
 
@@ -65,14 +66,14 @@ class ChatController extends Controller
             $path = $file->store('chat_attachments', 'public');
         }
 
-        if (!$request->message && !$path) {
+        if (! $request->message && ! $path) {
             return response()->json(['error' => 'Message or attachment is required'], 422);
         }
 
         $message = $conversation->messages()->create([
             'sender_id' => $user->id,
-            'message' => \App\Services\ProfanityFilter::filter($request->message),
-            'attachment_path' => $path ? '/storage/' . $path : null,
+            'message' => ProfanityFilter::filter($request->message),
+            'attachment_path' => $path ? '/storage/'.$path : null,
             'attachment_name' => $originalName,
         ]);
 
@@ -86,7 +87,7 @@ class ChatController extends Controller
     public function startConversation(Request $request)
     {
         $user = Auth::user();
-        
+
         // Find existing open conversation or create new
         $conversation = Conversation::firstOrCreate(
             ['user_id' => $user->id, 'status' => 'open'],
@@ -94,5 +95,23 @@ class ChatController extends Controller
         );
 
         return response()->json($conversation);
+    }
+
+    public function markImportant(Request $request, $id, $messageId)
+    {
+        $conversation = Conversation::findOrFail($id);
+        $user = Auth::user();
+
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $message = $conversation->messages()->findOrFail($messageId);
+        $message->is_important = ! $message->is_important;
+        $message->save();
+
+        // Optionally, broadcast an event here if real-time UI update is needed,
+        // but simple response is enough if UI updates optimistically.
+        return response()->json(['success' => true, 'is_important' => $message->is_important]);
     }
 }

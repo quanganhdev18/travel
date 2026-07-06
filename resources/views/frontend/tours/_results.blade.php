@@ -28,7 +28,11 @@
         <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
             <div class="combo-card h-100">
                 <div class="combo-card-img-wrapper" style="height: 240px;">
-                    @auth
+                    @if($tour->duration_days && $tour->duration_nights)
+                    <div class="tour-duration-badge">
+                        {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
+                    </div>
+                    @endif
                     @php
                         $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
                             ->where('tour_id', $tour->id)

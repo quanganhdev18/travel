@@ -7,22 +7,25 @@ use App\Models\Booking;
 use App\Models\Tour;
 use App\Models\TourSchedule;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
         $rangeInput = $request->input('range');
         $validRanges = ['today', '7days', 'this_month', 'last_month', 'this_quarter', 'this_year', 'custom'];
         $range = in_array($rangeInput, $validRanges) ? $rangeInput : 'this_month';
-        
+
         $customErrors = [];
         $now = now();
         $startDate = $now->copy()->startOfMonth();
         $endDate = $now->copy()->endOfMonth();
 
         if ($range === 'custom') {
-            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            $validator = Validator::make($request->all(), [
                 'from' => 'required|date_format:Y-m-d',
                 'to' => 'required|date_format:Y-m-d|after_or_equal:from|before_or_equal:today',
             ], [
@@ -37,8 +40,8 @@ class DashboardController extends Controller
             $validator->after(function ($validator) use ($request) {
                 if ($request->filled('from') && $request->filled('to')) {
                     try {
-                        $from = \Carbon\Carbon::parse($request->from);
-                        $to = \Carbon\Carbon::parse($request->to);
+                        $from = Carbon::parse($request->from);
+                        $to = Carbon::parse($request->to);
                         if ($from->diffInDays($to) > 366) {
                             $validator->errors()->add('to', 'Khoảng cách tối đa 366 ngày.');
                         }
@@ -54,8 +57,8 @@ class DashboardController extends Controller
                 $startDate = $now->copy()->startOfMonth();
                 $endDate = $now->copy()->endOfMonth();
             } else {
-                $startDate = \Carbon\Carbon::parse($request->from)->startOfDay();
-                $endDate = \Carbon\Carbon::parse($request->to)->endOfDay();
+                $startDate = Carbon::parse($request->from)->startOfDay();
+                $endDate = Carbon::parse($request->to)->endOfDay();
             }
         } else {
             switch ($range) {

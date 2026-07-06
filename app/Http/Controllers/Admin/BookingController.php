@@ -56,42 +56,62 @@ class BookingController extends Controller
         return view('admin.bookings.index', compact('bookings', 'stats'));
     }
 
+    /**
+     * Các trạng thái tour mà admin không được phép thay đổi.
+     * Sau khi tour bắt đầu, quyền điều hành thuộc về Hướng dẫn viên.
+     */
+    private const GUIDE_CONTROLLED_STATUSES = [
+        Booking::TOUR_IN_PROGRESS,
+        Booking::TOUR_CHECKING_IN,
+        Booking::TOUR_COMPLETED,
+    ];
+
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
             'payment_status' => 'required|in:pending,paid_30,paid_100,failed',
-            'tour_status' => 'required|in:upcoming,in_progress,checking_in,completed,cancelled_by_customer,cancelled_by_admin',
+            'tour_status' => 'nullable|in:upcoming,in_progress,checking_in,completed,cancelled_by_customer,cancelled_by_admin',
             'current_checkin_step' => 'nullable|string|max:255',
         ]);
 
         $booking = Booking::with('tour_schedule')->findOrFail($id);
 
-        $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
-        $willBeCancelled = in_array($request->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
+        // Kiểm tra xem admin có bị khóa quyền đổi tour_status không
+        $isTourStatusLocked = in_array($booking->tour_status, self::GUIDE_CONTROLLED_STATUSES);
 
-        if ($willBeCancelled && ! $isCurrentlyCancelled) {
-            $totalPersons = $booking->adults_count + $booking->children_count;
-            if ($booking->tour_schedule) {
-                $booking->tour_schedule->increment('available_seats', $totalPersons);
-            }
+        if ($isTourStatusLocked && $request->filled('tour_status') && $request->tour_status !== $booking->tour_status) {
+            return back()->with('error', 'Tour đang được điều hành bởi Hướng dẫn viên. Admin không thể thay đổi trạng thái tour lúc này.');
         }
 
-        if (! $willBeCancelled && $isCurrentlyCancelled) {
-            $totalPersons = $booking->adults_count + $booking->children_count;
-            if ($booking->tour_schedule) {
-                $booking->tour_schedule->decrement('available_seats', $totalPersons);
+        // Chỉ cập nhật tour_status nếu tour chưa bị khoá
+        if (! $isTourStatusLocked && $request->filled('tour_status')) {
+            $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
+            $willBeCancelled = in_array($request->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
+
+            if ($willBeCancelled && ! $isCurrentlyCancelled) {
+                $totalPersons = $booking->adults_count + $booking->children_count;
+                if ($booking->tour_schedule) {
+                    $booking->tour_schedule->increment('available_seats', $totalPersons);
+                }
+            }
+
+            if (! $willBeCancelled && $isCurrentlyCancelled) {
+                $totalPersons = $booking->adults_count + $booking->children_count;
+                if ($booking->tour_schedule) {
+                    $booking->tour_schedule->decrement('available_seats', $totalPersons);
+                }
+            }
+
+            $booking->tour_status = $request->tour_status;
+
+            if ($request->tour_status === Booking::TOUR_CHECKING_IN) {
+                $booking->current_checkin_step = $request->current_checkin_step;
+            } else {
+                $booking->current_checkin_step = null;
             }
         }
 
         $booking->payment_status = $request->payment_status;
-        $booking->tour_status = $request->tour_status;
-
-        if ($request->tour_status === Booking::TOUR_CHECKING_IN) {
-            $booking->current_checkin_step = $request->current_checkin_step;
-        } else {
-            $booking->current_checkin_step = null;
-        }
-
         $booking->save();
 
         return back()->with('success', 'Cập nhật trạng thái đơn hàng thành công.');

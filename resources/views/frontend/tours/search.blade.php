@@ -204,25 +204,14 @@
                         <div class="col-12 col-md-4">
                             <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
                                 <div class="combo-card h-100">
-                                    <div class="combo-card-img-wrapper" style="height: 240px;">
-                                        @auth
-                                        @php
-                                            $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-                                                ->where('tour_id', $tour->id)
-                                                ->exists();
-                                        @endphp
-                                        <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-                                              method="POST"
-                                              class="favorite-form"
-                                              onclick="event.stopPropagation();">
-                                            @csrf
-                                            <button type="submit"
-                                                    class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-                                                <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-                                            </button>
-                                        </form>
-                                        @endauth
-
+                                    <div class="combo-card-img-wrapper" style="height: 240px; position: relative;">
+                                        {{-- Duration Badge --}}
+                                        @if($tour->duration_days && $tour->duration_nights)
+                                        <div class="tour-duration-badge">
+                                            {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
+                                        </div>
+                                        @endif
+                                      
                                         @php
                                             $primaryImage = $tour->tour_images->where('is_primary', 1)->first()
                                                          ?? $tour->tour_images->first();
@@ -294,6 +283,21 @@
     }
     .ts-dropdown {
         border-radius: 8px;
+    }
+    .tour-duration-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.95);
+        color: #1e3a5f;
+        font-weight: 700;
+        font-size: 0.875rem;
+        padding: 6px 12px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
     }
 </style>
 <script>

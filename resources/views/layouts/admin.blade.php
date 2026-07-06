@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Hệ thống Quản trị TravelWonder</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -367,7 +368,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/tickets*') ? 'active' : '' }}" href="#">
+                <a class="nav-link {{ request()->is('admin/tickets*') ? 'active' : '' }}" href="{{ route('admin.tickets.index') }}">
                     <i class="bi bi-ticket-perforated"></i> Vé tham quan
                 </a>
             </li>
@@ -418,11 +419,6 @@
             <li class="nav-item">
                 <a class="nav-link" href="#">
                     <i class="bi bi-star"></i> Đánh giá khách hàng
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="bi bi-megaphone"></i> Khuyến mãi & Coupon
                 </a>
             </li>
         </ul>

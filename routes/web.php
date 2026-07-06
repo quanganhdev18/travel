@@ -38,6 +38,7 @@ use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
+use App\Http\Controllers\Frontend\TicketBookingController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
@@ -81,11 +82,40 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 
 /*
 |--------------------------------------------------------------------------
-| Profile
+| Tickets Routes
 |--------------------------------------------------------------------------
 */
 
+Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
 Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
+
+// Ticket Booking Routes (require authentication) - MUST be before {slug} route
+Route::middleware(['auth'])->group(function () {
+    Route::get('/tickets/checkout', [TicketBookingController::class, 'checkout'])
+        ->name('frontend.tickets.checkout');
+
+    Route::post('/tickets/book', [TicketBookingController::class, 'store'])
+        ->name('frontend.tickets.book');
+
+    Route::get('/tickets/booking/{id}/success', [TicketBookingController::class, 'success'])
+        ->name('frontend.tickets.booking.success');
+
+    Route::post('/api/tickets/apply-coupon', [TicketBookingController::class, 'applyCoupon'])
+        ->name('frontend.tickets.apply_coupon');
+});
+
+// VNPay Callbacks for Tickets
+Route::get('/tickets/vnpay-return', [TicketBookingController::class, 'vnpayReturn'])
+    ->name('frontend.tickets.vnpay_return');
+
+// Ticket detail - MUST be last to avoid conflicts
+Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
+
+/*
+|--------------------------------------------------------------------------
+| Profile
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])
@@ -299,6 +329,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Addons
     Route::resource('addons', AddonController::class)
         ->names('admin.addons');
+
+    // Tickets - Vé tham quan
+    Route::resource('tickets', App\Http\Controllers\Admin\TicketController::class)
+        ->except(['show'])
+        ->names('admin.tickets');
+
+    Route::delete('tickets/{ticketId}/images/{imageId}', [App\Http\Controllers\Admin\TicketController::class, 'destroyImage'])
+        ->name('admin.tickets.images.destroy');
+
+    Route::post('tickets/{ticketId}/images/{imageId}/set-primary', [App\Http\Controllers\Admin\TicketController::class, 'setPrimaryImage'])
+        ->name('admin.tickets.images.set-primary');
 });
 
 /*
@@ -315,6 +356,18 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::get('/schedules/{id}', [ScheduleController::class, 'show'])
         ->name('guide.schedules.show');
+
+    Route::post('/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'toggleCheckin'])
+        ->name('guide.passengers.toggle_checkin');
+
+    Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
+        ->name('guide.passengers.update_note');
+
+    Route::post('/schedules/{schedule}/checkin-location', [ScheduleController::class, 'updateCheckinLocation'])
+        ->name('guide.schedules.update_checkin_location');
+
+    Route::post('/bookings/{booking}/status', [ScheduleController::class, 'updateBookingStatus'])
+        ->name('guide.bookings.update_status');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])
@@ -330,7 +383,6 @@ Route::put('/admin/coupons/{coupon}', [CouponController::class, 'update'])
 Route::delete('/admin/coupons/{coupon}', [CouponController::class, 'destroy'])
     ->name('admin.coupons.destroy');
 
-
 Route::get('/coupons/trash', [CouponController::class, 'trash'])
     ->name('admin.coupons.trash');
 
@@ -339,7 +391,7 @@ Route::post('/coupons/{id}/restore', [CouponController::class, 'restore'])
 
 Route::delete('/coupons/{id}/force-delete', [CouponController::class, 'forceDelete'])
     ->name('admin.coupons.forceDelete');
-    Route::resource('coupons', CouponController::class);
+Route::resource('coupons', CouponController::class);
 /*
 |--------------------------------------------------------------------------
 | Auth Routes
@@ -359,5 +411,5 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/conversations', [ChatController::class, 'getConversations'])->name('chat.conversations');
     Route::get('/{id}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/{id}/messages/{messageId}/mark-important', [ChatController::class, 'markImportant'])->name('chat.mark_important');
 });
-
