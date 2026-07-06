@@ -7,19 +7,18 @@
     $tourSchedule = $scheduleGuide->tour_schedule;
     $tour = $tourSchedule->tour;
 
-    $statusClass = 'secondary';
-    $statusText = 'Chưa xác định';
+    $firstBooking = $tourSchedule->bookings->first();
+    $groupStatus = $firstBooking ? $firstBooking->tour_status : 'upcoming';
 
-    if ($tourSchedule->departure_date > now()) {
-        $statusClass = 'primary';
-        $statusText = 'Sắp tới';
-    } elseif ($tourSchedule->departure_date <= now() && $tourSchedule->return_date >= now()) {
-        $statusClass = 'success';
-        $statusText = 'Đang diễn ra';
-    } else {
-        $statusClass = 'secondary';
-        $statusText = 'Đã kết thúc';
-    }
+    $tourStatusMap = [
+        'upcoming' => ['badge-soft-primary', 'Sắp bắt đầu'],
+        'in_progress' => ['badge-soft-warning', 'Đang thực hiện'],
+        'checking_in' => ['badge-soft-info', 'Đang check-in'],
+        'completed' => ['badge-soft-success', 'Hoàn thành'],
+        'cancelled_by_customer' => ['badge-soft-danger', 'Hủy (Khách)'],
+        'cancelled_by_admin' => ['badge-soft-danger', 'Hủy (Admin)']
+    ];
+    $ts = $tourStatusMap[$groupStatus] ?? ['badge-soft-secondary', 'N/A'];
 
     $allPassengers = $tourSchedule->bookings
         ->whereIn('payment_status', ['paid_30', 'paid_100'])
@@ -34,61 +33,78 @@
     </a>
 </div>
 
-<!-- Card địa điểm check-in -->
+<!-- Card điều hành trạng thái Tour của Nhóm -->
 <div class="card border-0 shadow-sm border-start border-4 border-warning mb-4">
     <div class="card-body py-3">
-        <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
                 <div class="rounded-circle bg-warning bg-opacity-15 d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
                     <i class="bi bi-geo-alt-fill text-warning fs-5"></i>
                 </div>
                 <div>
-                    <div class="fw-semibold" style="font-size:0.85rem;">Địa điểm Check-in hiện tại</div>
-                    <div class="text-muted" style="font-size:0.75rem;">HDV cập nhật vị trí đoàn đang check-in</div>
+                    <div class="fw-semibold" style="font-size:0.85rem;">Trạng thái Tour Đoàn hiện tại</div>
+                    <div class="text-muted" style="font-size:0.75rem;">
+                        Trạng thái: <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
+                        @if($groupStatus === 'checking_in')
+                            @php
+                                $checkinSteps = $tourSchedule->bookings->pluck('current_checkin_step')->filter()->unique();
+                            @endphp
+                            @if($checkinSteps->isNotEmpty())
+                                <span class="text-secondary ms-1">(Tại: <strong>{{ $checkinSteps->implode(', ') }}</strong>)</span>
+                            @endif
+                        @endif
+                    </div>
                 </div>
             </div>
-            <div class="flex-grow-1 d-flex gap-2 align-items-center">
-                <input
-                    type="text"
-                    id="checkin-location-input"
-                    class="form-control form-control-sm"
-                    placeholder="Ví dụ: Sảnh khách sạn Mường Thanh, Cổng chính Vịnh Hạ Long..."
-                    value="{{ $tourSchedule->checkin_location ?? '' }}"
-                    maxlength="500"
-                    style="min-width:200px;"
-                >
-                <button
-                    id="save-location-btn"
-                    class="btn btn-warning btn-sm fw-semibold flex-shrink-0"
-                    data-url="{{ route('guide.schedules.update_checkin_location', $tourSchedule->id) }}"
-                >
-                    <i class="bi bi-floppy me-1"></i>Lưu
-                </button>
-                <button
-                    id="clear-location-btn"
-                    class="btn btn-outline-secondary btn-sm flex-shrink-0"
-                    title="Xóa địa điểm"
-                >
-                    <i class="bi bi-x-lg"></i>
-                </button>
+            
+            <div class="d-flex gap-2 align-items-center">
+                @if($groupStatus !== 'completed' && !in_array($groupStatus, ['cancelled_by_customer', 'cancelled_by_admin']))
+                    <button id="toggle-group-status-btn" class="btn btn-warning btn-sm fw-bold">
+                        <i class="bi bi-gear-fill me-1"></i>Thay đổi trạng thái Tour
+                    </button>
+                @else
+                    <button class="btn btn-secondary btn-sm fw-bold" disabled>
+                        <i class="bi bi-lock-fill me-1"></i>Đã khóa trạng thái
+                    </button>
+                @endif
             </div>
-            <div id="location-status" class="text-muted" style="font-size:0.8rem;"></div>
         </div>
-        @if($tourSchedule->checkin_location)
-        <div class="mt-2 ps-1">
-            <span class="badge badge-soft-warning">
-                <i class="bi bi-pin-map-fill me-1"></i>
-                <span id="current-location-text">{{ $tourSchedule->checkin_location }}</span>
-            </span>
+
+        <!-- Khối nhập thay đổi trạng thái tour đoàn, mở ra khi click "Thay đổi trạng thái Tour" -->
+        <div id="group-status-form-wrapper" class="mt-3 p-3 bg-light rounded" style="display: none; border: 1px dashed #ffc107;">
+            <p class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i>Lưu ý: Thay đổi này sẽ cập nhật trạng thái đồng loạt cho tất cả các đơn đặt chỗ thuộc tour đoàn này.</p>
+            <form action="{{ route('guide.schedules.update_group_status', $tourSchedule->id) }}" method="POST">
+                @csrf
+                @php
+                    $validGroupNextStatuses = \App\Models\Booking::getValidNextStatuses($groupStatus);
+                @endphp
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold small">Chọn trạng thái Tour</label>
+                        <select name="tour_status" class="form-select form-select-sm" id="group-tour-status-select">
+                            @if(in_array('in_progress', $validGroupNextStatuses))
+                                <option value="in_progress" {{ $groupStatus == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
+                            @endif
+                            @if(in_array('checking_in', $validGroupNextStatuses))
+                                <option value="checking_in" {{ $groupStatus == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
+                            @endif
+                            @if(in_array('completed', $validGroupNextStatuses))
+                                <option value="completed" {{ $groupStatus == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
+                            @endif
+                        </select>
+                    </div>
+                    <div class="col-md-5" id="group-checkin-step-container" style="display: {{ $groupStatus == 'checking_in' ? 'block' : 'none' }};">
+                        <label class="form-label fw-bold small">Điểm check-in hiện tại</label>
+                        <input type="text" name="current_checkin_step" class="form-control form-control-sm" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $firstBooking ? $firstBooking->current_checkin_step : '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark w-100">
+                            <i class="bi bi-floppy me-1"></i>Lưu Thay Đổi
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-        @else
-        <div class="mt-2 ps-1" id="current-location-display" style="display:none;">
-            <span class="badge badge-soft-warning">
-                <i class="bi bi-pin-map-fill me-1"></i>
-                <span id="current-location-text"></span>
-            </span>
-        </div>
-        @endif
     </div>
 </div>
 
@@ -117,7 +133,7 @@
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Trạng thái:</span>
-                        <span class="badge badge-soft-{{ $statusClass }}">{{ $statusText }}</span>
+                        <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Tổng khách:</span>
@@ -152,11 +168,20 @@
 
     <div class="col-lg-8 mb-4">
         <div class="card border-0 shadow-sm">
-            <div class="admin-card-header d-flex justify-content-between align-items-center">
-                <h5 class="admin-card-title mb-0">Danh sách Hành khách</h5>
-                <span class="badge bg-primary" id="checkin-badge">{{ $checkedInCount }}/{{ $totalCount }} đã điểm danh</span>
-            </div>
-            <div class="card-body p-0">
+            <form action="{{ route('guide.schedules.save_attendance', $tourSchedule->id) }}" method="POST" id="attendance-form">
+                @csrf
+                <div class="admin-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="admin-card-title mb-0">Danh sách Hành khách</h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="fw-semibold text-dark" id="attendance-selected-counter" style="font-size: 0.9rem;">
+                            Đã chọn: <span class="text-success" id="selected-count-val">{{ $checkedInCount }}</span> / <span id="total-count-val">{{ $totalCount }}</span> khách
+                        </span>
+                        <button type="submit" class="btn btn-success btn-sm fw-bold px-3">
+                            <i class="bi bi-floppy me-1"></i>Lưu điểm danh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead class="table-light">
@@ -210,6 +235,8 @@
                                                     <input
                                                         class="form-check-input checkin-checkbox"
                                                         type="checkbox"
+                                                        name="checked_passengers[]"
+                                                        value="{{ $passenger->id }}"
                                                         id="checkin-{{ $passenger->id }}"
                                                         data-id="{{ $passenger->id }}"
                                                         data-url="{{ route('guide.passengers.toggle_checkin', $passenger) }}"
@@ -256,159 +283,12 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-
-@php
-    $activeBookings = $tourSchedule->bookings->filter(fn($b) =>
-        in_array($b->tour_status, ['in_progress', 'checking_in'])
-        && in_array($b->payment_status, ['paid_30', 'paid_100'])
-    );
-@endphp
-
-@if($activeBookings->isNotEmpty())
-<div class="card border-0 shadow-sm border-start border-4 border-primary mb-4">
-    <div class="admin-card-header d-flex align-items-center gap-2">
-        <i class="bi bi-toggles text-primary fs-5"></i>
-        <h5 class="admin-card-title mb-0">Điều hành Trạng thái Tour</h5>
-        <span class="badge bg-primary ms-auto">{{ $activeBookings->count() }} đơn đang hoạt động</span>
-    </div>
-    <div class="card-body">
-        <p class="text-muted small mb-3">
-            <i class="bi bi-info-circle me-1"></i>
-            Bạn có thể cập nhật trạng thái tour cho từng đơn đặt chỗ bên dưới.
-            Chỉ các đơn đang <strong>Đang thực hiện</strong> hoặc <strong>Đang check-in</strong> mới hiển thị.
-        </p>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Mã đơn</th>
-                        <th>Khách hàng</th>
-                        <th>Trạng thái hiện tại</th>
-                        <th class="text-center">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($activeBookings as $activeBooking)
-                    <tr>
-                        <td><span class="fw-bold text-primary">#{{ $activeBooking->id }}</span></td>
-                        <td>
-                            <div class="fw-semibold">{{ $activeBooking->user->name ?? 'N/A' }}</div>
-                            <div class="small text-muted">{{ $activeBooking->adults_count + $activeBooking->children_count }} khách</div>
-                        </td>
-                        <td>
-                            @if($activeBooking->tour_status === 'in_progress')
-                                <span class="badge badge-soft-warning"><i class="bi bi-play-fill me-1"></i>Đang thực hiện</span>
-                            @else
-                                <span class="badge badge-soft-info"><i class="bi bi-geo-alt-fill me-1"></i>Đang check-in</span>
-                                @if($activeBooking->current_checkin_step)
-                                    <div class="small text-muted mt-1">{{ $activeBooking->current_checkin_step }}</div>
-                                @endif
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex gap-2 justify-content-center flex-wrap">
-                                @if($activeBooking->tour_status === 'in_progress')
-                                    {{-- Chuyển sang Đang check-in --}}
-                                    <button class="btn btn-sm btn-outline-info"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#checkinModal{{ $activeBooking->id }}">
-                                        <i class="bi bi-geo-alt me-1"></i>Check-in
-                                    </button>
-                                @else
-                                    {{-- Quay lại Đang thực hiện --}}
-                                    <form action="{{ route('guide.bookings.update_status', $activeBooking->id) }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="tour_status" value="in_progress">
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">
-                                            <i class="bi bi-play me-1"></i>Tiếp tục tour
-                                        </button>
-                                    </form>
-                                @endif
-                                {{-- Hoàn thành tour --}}
-                                <button class="btn btn-sm btn-success"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#completeModal{{ $activeBooking->id }}">
-                                    <i class="bi bi-check2-circle me-1"></i>Hoàn thành
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-{{-- Modals cho từng booking --}}
-@foreach($activeBookings as $activeBooking)
-
-{{-- Modal Check-in --}}
-@if($activeBooking->tour_status === 'in_progress')
-<div class="modal fade" id="checkinModal{{ $activeBooking->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-info text-white border-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-geo-alt-fill me-2"></i>Chuyển sang Check-in</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('guide.bookings.update_status', $activeBooking->id) }}" method="POST">
-                @csrf
-                <input type="hidden" name="tour_status" value="checking_in">
-                <div class="modal-body p-4">
-                    <p class="text-muted mb-3">Đơn <strong>#{{ $activeBooking->id }}</strong> – {{ $activeBooking->user->name ?? 'N/A' }}</p>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Địa điểm check-in <span class="text-muted fw-normal">(tuỳ chọn)</span></label>
-                        <input type="text" name="current_checkin_step" class="form-control"
-                            placeholder="VD: Sân bay Nội Bài, Cổng Vịnh Hạ Long..."
-                            maxlength="255">
-                    </div>
-                </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
-                    <button type="submit" class="btn btn-info text-white fw-semibold">
-                        <i class="bi bi-geo-alt-fill me-1"></i>Xác nhận Check-in
-                    </button>
-                </div>
             </form>
         </div>
     </div>
 </div>
-@endif
 
-{{-- Modal Hoàn thành --}}
-<div class="modal fade" id="completeModal{{ $activeBooking->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-success text-white border-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-check2-circle me-2"></i>Xác nhận Hoàn thành Tour</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('guide.bookings.update_status', $activeBooking->id) }}" method="POST">
-                @csrf
-                <input type="hidden" name="tour_status" value="completed">
-                <div class="modal-body p-4">
-                    <div class="alert alert-warning d-flex gap-2 align-items-start py-2">
-                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
-                        <div>Thao tác này <strong>không thể hoàn tác</strong>. Sau khi hoàn thành, không ai có thể thay đổi trạng thái tour này nữa.</div>
-                    </div>
-                    <p class="mb-0">Xác nhận hoàn thành tour cho đơn <strong>#{{ $activeBooking->id }}</strong> – <strong>{{ $activeBooking->user->name ?? 'N/A' }}</strong>?</p>
-                </div>
-                <div class="modal-footer border-0 bg-light">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Huỷ</button>
-                    <button type="submit" class="btn btn-success fw-semibold">
-                        <i class="bi bi-check2-circle me-1"></i>Xác nhận Hoàn thành
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-@endforeach
-@endif
+
 
 <!-- Modal Ghi chú đặc biệt -->
 <div class="modal fade" id="noteModal" tabindex="-1" aria-labelledby="noteModalLabel" aria-hidden="true">
@@ -480,8 +360,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ─── Update progress bar & counters ───────────────────────────────
     function updateProgress() {
         const pct = totalCount > 0 ? Math.round(checkedCount / totalCount * 100) : 0;
-        document.getElementById('checkin-counter').textContent = `${checkedCount} / ${totalCount}`;
-        document.getElementById('checkin-badge').textContent  = `${checkedCount}/${totalCount} đã điểm danh`;
+        const counterEl = document.getElementById('checkin-counter');
+        if (counterEl) counterEl.textContent = `${checkedCount} / ${totalCount}`;
+        
+        const selectedCountVal = document.getElementById('selected-count-val');
+        if (selectedCountVal) selectedCountVal.textContent = checkedCount;
+
         const bar = document.getElementById('checkin-progress');
         const pctEl = document.getElementById('checkin-pct');
         if (bar) bar.style.width = pct + '%';
@@ -492,102 +376,58 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.checkin-checkbox').forEach(function (checkbox) {
         checkbox.addEventListener('change', function () {
             const passengerId = this.dataset.id;
-            const url = this.dataset.url;
             const row = document.getElementById('row-' + passengerId);
             const label = document.getElementById('checkin-label-' + passengerId);
 
-            this.disabled = true;
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.checked_in) {
-                    row.classList.add('table-success');
-                    label.innerHTML = '<span class="text-success fw-semibold">&#10003; Đã điểm danh</span>';
-                    checkedCount++;
-                } else {
-                    row.classList.remove('table-success');
-                    label.innerHTML = '<span class="text-muted">Chưa</span>';
-                    checkedCount--;
-                }
-                updateProgress();
-                showToast(data.message, data.checked_in ? 'success' : 'secondary');
-            })
-            .catch(() => {
-                this.checked = !this.checked;
-                showToast('Có lỗi xảy ra, vui lòng thử lại.', 'danger');
-            })
-            .finally(() => {
-                this.disabled = false;
-            });
+            if (this.checked) {
+                row.classList.add('table-success');
+                label.innerHTML = '<span class="text-success fw-semibold">&#10003; Đã chọn (Chờ lưu)</span>';
+                checkedCount++;
+            } else {
+                row.classList.remove('table-success');
+                label.innerHTML = '<span class="text-muted">Chưa chọn (Chờ lưu)</span>';
+                checkedCount--;
+            }
+            updateProgress();
         });
     });
 
-    // ─── Checkin location ─────────────────────────────────────────────
-    const saveLocationBtn = document.getElementById('save-location-btn');
-    const clearLocationBtn = document.getElementById('clear-location-btn');
-    const locationInput = document.getElementById('checkin-location-input');
-    const locationStatus = document.getElementById('location-status');
-
-    function saveLocation(value) {
-        const url = saveLocationBtn.dataset.url;
-        saveLocationBtn.disabled = true;
-        saveLocationBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ location: value }),
-        })
-        .then(res => res.json())
-        .then(data => {
-            // Update the displayed badge
-            const display = document.getElementById('current-location-display');
-            const text = document.getElementById('current-location-text');
-            if (text) text.textContent = data.location || '';
-            if (display) display.style.display = data.location ? '' : 'none';
-
-            locationStatus.innerHTML = value
-                ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' + data.message + '</span>'
-                : '<span class="text-muted"><i class="bi bi-x-circle me-1"></i>' + data.message + '</span>';
-            setTimeout(() => { locationStatus.innerHTML = ''; }, 3000);
-
-            showToast(data.message, 'success');
-        })
-        .catch(() => showToast('Có lỗi xảy ra, vui lòng thử lại.', 'danger'))
-        .finally(() => {
-            saveLocationBtn.disabled = false;
-            saveLocationBtn.innerHTML = '<i class="bi bi-floppy me-1"></i>Lưu';
+    // ─── Group Status Toggle ──────────────────────────────────────────
+    const toggleGroupBtn = document.getElementById('toggle-group-status-btn');
+    const groupWrapper = document.getElementById('group-status-form-wrapper');
+    if (toggleGroupBtn && groupWrapper) {
+        toggleGroupBtn.addEventListener('click', function() {
+            if (groupWrapper.style.display === 'none') {
+                groupWrapper.style.display = 'block';
+            } else {
+                groupWrapper.style.display = 'none';
+            }
         });
     }
 
-    if (saveLocationBtn) {
-        saveLocationBtn.addEventListener('click', () => saveLocation(locationInput.value.trim()));
-    }
-
-    if (clearLocationBtn) {
-        clearLocationBtn.addEventListener('click', () => {
-            locationInput.value = '';
-            saveLocation('');
+    const groupStatusSelect = document.getElementById('group-tour-status-select');
+    const groupCheckinContainer = document.getElementById('group-checkin-step-container');
+    if (groupStatusSelect && groupCheckinContainer) {
+        groupStatusSelect.addEventListener('change', function() {
+            if (this.value === 'checking_in') {
+                groupCheckinContainer.style.display = 'block';
+            } else {
+                groupCheckinContainer.style.display = 'none';
+            }
         });
     }
 
-    // Also allow Enter key in location input
-    if (locationInput) {
-        locationInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); saveLocation(this.value.trim()); }
+    document.querySelectorAll('.tour-status-select-guide').forEach(function(select) {
+        select.addEventListener('change', function() {
+            let bookingId = this.getAttribute('data-booking-id');
+            let container = document.getElementById('checkinStepContainerGuide' + bookingId);
+            if(this.value === 'checking_in') {
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
         });
-    }
+    });
 
     // ─── Note modal ───────────────────────────────────────────────────
     let currentNoteBtn = null;

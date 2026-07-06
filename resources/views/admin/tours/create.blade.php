@@ -85,6 +85,31 @@
                         </select>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label text-muted">Giờ khởi hành</label>
+                        <div class="d-flex gap-2">
+                            <div class="flex-grow-1">
+                                <select name="departure_hour" class="form-select">
+                                    <option value="">Giờ</option>
+                                    @for($h = 0; $h < 24; $h++)
+                                        <option value="{{ $h }}" {{ old('departure_hour') !== null && old('departure_hour') == $h ? 'selected' : '' }}>
+                                            {{ sprintf('%02dh', $h) }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="flex-grow-1">
+                                <select name="departure_minute" class="form-select">
+                                    <option value="">Phút</option>
+                                    @for($m = 0; $m < 60; $m++)
+                                        <option value="{{ $m }}" {{ old('departure_minute') !== null && old('departure_minute') == $m ? 'selected' : '' }}>
+                                            {{ sprintf('%02d', $m) }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label text-muted">Điểm đến</label>
                         <select name="destination_id" class="form-select" required>
                             <option value="">-- Chọn điểm đến --</option>

@@ -13,6 +13,8 @@ class ScheduleController extends Controller
 {
     public function index()
     {
+        Booking::updateUpcomingTourStatuses();
+
         $user = auth()->user();
         $tourGuide = $user->tour_guide;
 
@@ -32,6 +34,8 @@ class ScheduleController extends Controller
 
     public function show($id)
     {
+        Booking::updateUpcomingTourStatuses();
+
         $user = auth()->user();
         $tourGuide = $user->tour_guide;
 
@@ -141,6 +145,11 @@ class ScheduleController extends Controller
             'current_checkin_step' => 'nullable|string|max:255',
         ]);
 
+        $validStatuses = Booking::getValidNextStatuses($booking->tour_status);
+        if (! in_array($request->tour_status, $validStatuses)) {
+            return back()->with('error', 'Không thể chuyển đổi trạng thái tour từ trạng thái hiện tại sang trạng thái này (Không được nhảy cóc).');
+        }
+
         $booking->tour_status = $request->tour_status;
 
         if ($request->tour_status === Booking::TOUR_CHECKING_IN) {
@@ -152,5 +161,95 @@ class ScheduleController extends Controller
         $booking->save();
 
         return back()->with('success', 'Đã cập nhật trạng thái tour thành công.');
+    }
+
+    /**
+     * Hướng dẫn viên lưu điểm danh hàng loạt cho hành khách trong lịch trình.
+     */
+    public function saveAttendance(Request $request, TourSchedule $schedule): RedirectResponse
+    {
+        $tourGuide = auth()->user()->tour_guide;
+        abort_unless($tourGuide, 403);
+
+        $assigned = $tourGuide->schedule_guides()
+            ->where('tour_schedule_id', $schedule->id)
+            ->exists();
+        abort_unless($assigned, 403);
+
+        $request->validate([
+            'checked_passengers' => 'nullable|array',
+            'checked_passengers.*' => 'integer|exists:booking_passengers,id',
+        ]);
+
+        $checkedPassengerIds = $request->input('checked_passengers', []);
+
+        // Lấy tất cả các passenger_ids của các booking thuộc schedule này
+        $allPassengerIds = $schedule->bookings
+            ->whereIn('payment_status', ['paid_30', 'paid_100'])
+            ->flatMap(fn ($b) => $b->booking_passengers->pluck('id'))
+            ->toArray();
+
+        if (empty($allPassengerIds)) {
+            return back()->with('error', 'Không có hành khách nào để điểm danh.');
+        }
+
+        // Cập nhật checked_in = true cho các passenger được check
+        BookingPassenger::whereIn('id', $allPassengerIds)
+            ->whereIn('id', $checkedPassengerIds)
+            ->update(['checked_in' => true]);
+
+        // Cập nhật checked_in = false cho các passenger không được check
+        BookingPassenger::whereIn('id', $allPassengerIds)
+            ->whereNotIn('id', $checkedPassengerIds)
+            ->update(['checked_in' => false]);
+
+        return back()->with('success', 'Đã lưu danh sách điểm danh thành công.');
+    }
+
+    /**
+     * Hướng dẫn viên cập nhật trạng thái tour cho tất cả bookings trong lịch trình.
+     */
+    public function updateGroupStatus(Request $request, TourSchedule $schedule): RedirectResponse
+    {
+        $tourGuide = auth()->user()->tour_guide;
+        abort_unless($tourGuide, 403);
+
+        $assigned = $tourGuide->schedule_guides()
+            ->where('tour_schedule_id', $schedule->id)
+            ->exists();
+        abort_unless($assigned, 403);
+
+        $request->validate([
+            'tour_status' => 'required|in:in_progress,checking_in,completed',
+            'current_checkin_step' => 'nullable|string|max:255',
+        ]);
+
+        $bookings = $schedule->bookings()
+            ->whereIn('payment_status', ['paid_30', 'paid_100'])
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return back()->with('error', 'Không có đơn đặt chỗ nào hoạt động để cập nhật.');
+        }
+
+        // Kiểm tra xem trạng thái mới có hợp lệ đối với tất cả bookings không (tránh nhảy cóc)
+        foreach ($bookings as $booking) {
+            $validStatuses = Booking::getValidNextStatuses($booking->tour_status);
+            if (! in_array($request->tour_status, $validStatuses)) {
+                return back()->with('error', 'Không thể chuyển đổi trạng thái tour (Không được nhảy cóc).');
+            }
+        }
+
+        foreach ($bookings as $booking) {
+            $booking->tour_status = $request->tour_status;
+            if ($request->tour_status === Booking::TOUR_CHECKING_IN) {
+                $booking->current_checkin_step = $request->current_checkin_step;
+            } else {
+                $booking->current_checkin_step = null;
+            }
+            $booking->save();
+        }
+
+        return back()->with('success', 'Đã cập nhật trạng thái tour đoàn thành công.');
     }
 }

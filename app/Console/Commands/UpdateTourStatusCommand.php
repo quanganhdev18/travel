@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\Booking;
 use App\Models\TourSchedule;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class UpdateTourStatusCommand extends Command
@@ -31,28 +30,22 @@ class UpdateTourStatusCommand extends Command
     {
         $today = now()->startOfDay();
 
-        /** @var Collection<int, int> $scheduleIds */
-        $scheduleIds = TourSchedule::where('departure_date', '<=', $today)
+        $scheduleExists = TourSchedule::where('departure_date', '<=', $today)
             ->where('return_date', '>=', $today)
-            ->pluck('id');
+            ->exists();
 
-        if ($scheduleIds->isEmpty()) {
+        if (! $scheduleExists) {
             $this->info('Không có lịch trình nào đang diễn ra hôm nay.');
 
             return self::SUCCESS;
         }
 
-        $updatedCount = 0;
+        $beforeCount = Booking::where('tour_status', Booking::TOUR_UPCOMING)->count();
 
-        Booking::whereIn('tour_schedule_id', $scheduleIds)
-            ->where('tour_status', Booking::TOUR_UPCOMING)
-            ->chunkById(100, function ($bookings) use (&$updatedCount) {
-                foreach ($bookings as $booking) {
-                    $booking->tour_status = Booking::TOUR_IN_PROGRESS;
-                    $booking->save();
-                    $updatedCount++;
-                }
-            });
+        Booking::updateUpcomingTourStatuses();
+
+        $afterCount = Booking::where('tour_status', Booking::TOUR_UPCOMING)->count();
+        $updatedCount = $beforeCount - $afterCount;
 
         $message = "Đã cập nhật {$updatedCount} booking sang trạng thái 'in_progress'.";
 
