@@ -247,16 +247,25 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.activities.destroy');
 
     // Điểm đến
+    Route::get('/destinations/trash', [DestinationController::class, 'trash'])->name('admin.destinations.trash');
+    Route::post('/destinations/{id}/restore', [DestinationController::class, 'restore'])->name('admin.destinations.restore');
+    Route::delete('/destinations/{id}/force-delete', [DestinationController::class, 'forceDelete'])->name('admin.destinations.force-delete');
     Route::resource('destinations', DestinationController::class)
         ->except(['show'])
         ->names('admin.destinations');
 
     // Danh mục
+    Route::get('/categories/trash', [CategoryController::class, 'trash'])->name('admin.categories.trash');
+    Route::post('/categories/{id}/restore', [CategoryController::class, 'restore'])->name('admin.categories.restore');
+    Route::delete('/categories/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('admin.categories.force-delete');
     Route::resource('categories', CategoryController::class)
         ->except(['show'])
         ->names('admin.categories');
 
     // Banner
+    Route::get('/banners/trash', [BannerController::class, 'trash'])->name('admin.banners.trash');
+    Route::post('/banners/{id}/restore', [BannerController::class, 'restore'])->name('admin.banners.restore');
+    Route::delete('/banners/{id}/force-delete', [BannerController::class, 'forceDelete'])->name('admin.banners.force-delete');
     Route::resource('banners', BannerController::class)
         ->except(['show'])
         ->names('admin.banners');
@@ -327,10 +336,16 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->names('admin.holidays');
 
     // Addons
+    Route::get('/addons/trash', [AddonController::class, 'trash'])->name('admin.addons.trash');
+    Route::post('/addons/{id}/restore', [AddonController::class, 'restore'])->name('admin.addons.restore');
+    Route::delete('/addons/{id}/force-delete', [AddonController::class, 'forceDelete'])->name('admin.addons.force-delete');
     Route::resource('addons', AddonController::class)
         ->names('admin.addons');
 
     // Tickets - Vé tham quan
+    Route::get('/tickets/trash', [App\Http\Controllers\Admin\TicketController::class, 'trash'])->name('admin.tickets.trash');
+    Route::post('/tickets/{id}/restore', [App\Http\Controllers\Admin\TicketController::class, 'restore'])->name('admin.tickets.restore');
+    Route::delete('/tickets/{id}/force-delete', [App\Http\Controllers\Admin\TicketController::class, 'forceDelete'])->name('admin.tickets.force-delete');
     Route::resource('tickets', App\Http\Controllers\Admin\TicketController::class)
         ->except(['show'])
         ->names('admin.tickets');

@@ -10,6 +10,7 @@ use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Addon
@@ -22,11 +23,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool|null $is_active
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property Collection|Booking[] $bookings
  */
 class Addon extends Model
 {
-    use HasLocalImageUrl;
+    use HasLocalImageUrl, SoftDeletes;
 
     protected $table = 'addons';
 

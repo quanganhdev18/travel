@@ -101,14 +101,41 @@ class DestinationController extends Controller
             return back()->with('error', 'Không thể xóa! Điểm đến này đang gắn với '.$destination->tours()->count().' tour. Cần đưa các tour đó vào thùng rác hoặc chuyển sang điểm đến khác trước.');
         }
 
-        // Nếu an toàn, tiến hành xóa ảnh vật lý
+        // Nếu an toàn, tiến hành xóa ảnh vật lý (Chuyển sang xóa mềm: bỏ qua để giữ lại khi restore)
+        // if ($destination->image_url) {
+        //     Storage::disk('public')->delete(str_replace('/storage/', '', $destination->image_url));
+        // }
+
+        // Xóa điểm đến (sẽ thành xóa mềm)
+        $destination->delete();
+
+        return back()->with('success', 'Đã xóa điểm đến an toàn!');
+    }
+
+    public function trash()
+    {
+        $destinations = Destination::onlyTrashed()->latest()->paginate(10);
+        return view('admin.destinations.trash', compact('destinations'));
+    }
+
+    public function restore($id)
+    {
+        $destination = Destination::onlyTrashed()->findOrFail($id);
+        $destination->restore();
+
+        return redirect()->route('admin.destinations.trash')->with('success', 'Đã khôi phục điểm đến!');
+    }
+
+    public function forceDelete($id)
+    {
+        $destination = Destination::onlyTrashed()->findOrFail($id);
+
         if ($destination->image_url) {
             Storage::disk('public')->delete(str_replace('/storage/', '', $destination->image_url));
         }
 
-        // Xóa điểm đến
-        $destination->delete();
+        $destination->forceDelete();
 
-        return back()->with('success', 'Đã xóa điểm đến an toàn!');
+        return redirect()->route('admin.destinations.trash')->with('success', 'Đã xóa vĩnh viễn điểm đến!');
     }
 }

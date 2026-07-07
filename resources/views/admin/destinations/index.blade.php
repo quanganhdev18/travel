@@ -5,9 +5,14 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="text-dark fs-5 fw-bold">Danh sách Điểm đến và khởi hành</div>
-    <a href="{{ route('admin.destinations.create') }}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Thêm Điểm đến và khởi hành
-    </a>
+    <div>
+        <a href="{{ route('admin.destinations.trash') }}" class="btn btn-secondary shadow-sm me-2">
+            <i class="bi bi-trash me-1"></i> Thùng rác
+        </a>
+        <a href="{{ route('admin.destinations.create') }}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Thêm Điểm đến và khởi hành
+        </a>
+    </div>
 </div>
 
 @if (session('success'))
