@@ -112,6 +112,42 @@
                             @endforeach
                         </select>
                     </div>
+                    @php
+                        $currentHour = null;
+                        $currentMinute = null;
+                        if ($tour->departure_time) {
+                            $timeParts = explode(':', $tour->departure_time);
+                            $currentHour = isset($timeParts[0]) ? (int)$timeParts[0] : null;
+                            $currentMinute = isset($timeParts[1]) ? (int)$timeParts[1] : null;
+                        }
+                        $selectedHour = old('departure_hour', $currentHour);
+                        $selectedMinute = old('departure_minute', $currentMinute);
+                    @endphp
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Giờ khởi hành</label>
+                        <div class="d-flex gap-2">
+                            <div class="flex-grow-1">
+                                <select name="departure_hour" class="form-select">
+                                    <option value="">Giờ</option>
+                                    @for($h = 0; $h < 24; $h++)
+                                        <option value="{{ $h }}" {{ $selectedHour !== null && $selectedHour == $h ? 'selected' : '' }}>
+                                            {{ sprintf('%02dh', $h) }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="flex-grow-1">
+                                <select name="departure_minute" class="form-select">
+                                    <option value="">Phút</option>
+                                    @for($m = 0; $m < 60; $m++)
+                                        <option value="{{ $m }}" {{ $selectedMinute !== null && $selectedMinute == $m ? 'selected' : '' }}>
+                                            {{ sprintf('%02d', $m) }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">Điểm đến</label>
                         <select name="destination_id" class="form-select" required>

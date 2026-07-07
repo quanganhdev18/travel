@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Tự động chuyển trạng thái booking sang "Đang thực hiện" khi đến ngày khởi hành
-Schedule::command('tours:update-status')->dailyAt('00:00');
+// Tự động chuyển trạng thái booking sang "Đang thực hiện" khi đến giờ khởi hành
+Schedule::command('tours:update-status')->everyMinute();

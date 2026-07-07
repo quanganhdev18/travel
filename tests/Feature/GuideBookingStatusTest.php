@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Booking;
+use App\Models\BookingPassenger;
 use App\Models\Destination;
 use App\Models\ScheduleGuide;
 use App\Models\Tour;
@@ -156,7 +157,7 @@ test('guide có thể chuyển booking từ in_progress sang checking_in', funct
 });
 
 test('guide có thể hoàn thành tour (completed)', function () {
-    ['guideUser' => $guideUser, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+    ['guideUser' => $guideUser, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_CHECKING_IN);
 
     $this->actingAs($guideUser)->post(route('guide.bookings.update_status', $booking->id), [
         'tour_status' => Booking::TOUR_COMPLETED,
@@ -222,4 +223,117 @@ test('khách hàng bình thường không thể gọi route guide.bookings.updat
     $this->actingAs($customer)->post(route('guide.bookings.update_status', $booking->id), [
         'tour_status' => Booking::TOUR_COMPLETED,
     ])->assertForbidden();
+});
+
+test('guide co the cap nhat checkin location ma khong reset trang thai diem danh cua hanh khach', function () {
+    ['guideUser' => $guideUser, 'schedule' => $schedule, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    // Tạo hành khách cho booking và đánh dấu đã điểm danh
+    $passenger = BookingPassenger::create([
+        'booking_id' => $booking->id,
+        'full_name' => 'Nguyễn Văn A',
+        'passenger_type' => 'adult',
+        'gender' => 'male',
+        'checked_in' => true,
+    ]);
+
+    // Gọi API cập nhật địa điểm check-in mới
+    $response = $this->actingAs($guideUser)->postJson(route('guide.schedules.update_checkin_location', $schedule->id), [
+        'location' => 'Điểm check-in mới',
+    ]);
+
+    $response->assertOk();
+    $response->assertJson([
+        'location' => 'Điểm check-in mới',
+    ]);
+
+    // Đảm bảo không bị reset checked_in của passenger
+    expect($passenger->fresh()->checked_in)->toBeTrue();
+});
+
+test('guide co the chuyen trang thai tu in_progress sang completed truc tiep', function () {
+    ['guideUser' => $guideUser, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    // in_progress được phép chuyển trực tiếp sang hoàn thành (completed) theo yêu cầu mới
+    $this->actingAs($guideUser)->post(route('guide.bookings.update_status', $booking->id), [
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
+});
+
+test('admin khong the chuyen trang thai tour nhay coc tu upcoming sang completed hoac checking_in', function () {
+    Role::firstOrCreate(['name' => 'Super Admin']);
+    $admin = User::factory()->create(['role' => 'admin']);
+    $admin->assignRole('Super Admin');
+
+    ['booking' => $booking] = setupGuideScenario(Booking::TOUR_UPCOMING);
+
+    // upcoming sang completed: không hợp lệ
+    $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_COMPLETED,
+    ])->assertRedirect()->assertSessionHas('error');
+
+    // upcoming sang checking_in: không hợp lệ
+    $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'tour_status' => Booking::TOUR_CHECKING_IN,
+    ])->assertRedirect()->assertSessionHas('error');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_UPCOMING);
+});
+
+test('guide co the luu diem danh hang loat cho hanh khach', function () {
+    ['guideUser' => $guideUser, 'schedule' => $schedule, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    $passenger1 = BookingPassenger::create([
+        'booking_id' => $booking->id,
+        'full_name' => 'Khách A',
+        'passenger_type' => 'adult',
+        'gender' => 'male',
+        'checked_in' => false,
+    ]);
+
+    $passenger2 = BookingPassenger::create([
+        'booking_id' => $booking->id,
+        'full_name' => 'Khách B',
+        'passenger_type' => 'adult',
+        'gender' => 'female',
+        'checked_in' => true,
+    ]);
+
+    $this->actingAs($guideUser)->post(route('guide.schedules.save_attendance', $schedule->id), [
+        'checked_passengers' => [$passenger1->id], // chỉ check khách A, bỏ check khách B
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($passenger1->fresh()->checked_in)->toBeTrue();
+    expect($passenger2->fresh()->checked_in)->toBeFalse();
+});
+
+test('guide co the cap nhat trang thai tour doan hang loat', function () {
+    ['guideUser' => $guideUser, 'schedule' => $schedule, 'booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
+
+    // Thêm một booking thứ hai cho lịch trình này
+    $booking2 = Booking::create([
+        'user_id' => User::factory()->create()->id,
+        'tour_schedule_id' => $schedule->id,
+        'tour_status' => Booking::TOUR_IN_PROGRESS,
+        'payment_status' => Booking::PAYMENT_PAID_100,
+        'adults_count' => 1,
+        'children_count' => 0,
+        'sub_total' => 1000000,
+        'total_price' => 1000000,
+    ]);
+
+    $this->actingAs($guideUser)->post(route('guide.schedules.update_group_status', $schedule->id), [
+        'tour_status' => Booking::TOUR_CHECKING_IN,
+        'current_checkin_step' => 'Trạm kiểm soát số 1',
+    ])->assertRedirect()->assertSessionHas('success');
+
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_CHECKING_IN);
+    expect($booking->fresh()->current_checkin_step)->toBe('Trạm kiểm soát số 1');
+
+    expect($booking2->fresh()->tour_status)->toBe(Booking::TOUR_CHECKING_IN);
+    expect($booking2->fresh()->current_checkin_step)->toBe('Trạm kiểm soát số 1');
 });

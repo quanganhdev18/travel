@@ -45,6 +45,8 @@ class TourController extends Controller
             'departure_location_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
+            'departure_hour' => 'nullable|integer|between:0,23',
+            'departure_minute' => 'nullable|integer|between:0,59',
         ]);
 
         // 2. Tạo Tour và tự động sinh slug
@@ -64,6 +66,11 @@ class TourController extends Controller
         $tour->child_price = $request->child_price;
         $tour->destination_id = $request->destination_id;
         $tour->departure_location_id = $request->departure_location_id;
+        if ($request->filled('departure_hour') && $request->filled('departure_minute')) {
+            $tour->departure_time = sprintf('%02d:%02d:00', $request->departure_hour, $request->departure_minute);
+        } else {
+            $tour->departure_time = null;
+        }
         $tour->duration_days = $request->duration_days;
         $tour->duration_nights = $request->duration_nights;
         $tour->save();
@@ -172,7 +179,6 @@ class TourController extends Controller
         return view('admin.tours.edit', compact('tour', 'destinations', 'categories', 'tourCategoryIds'));
     }
 
-    // 2. Xử lý Cập nhật
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -185,6 +191,8 @@ class TourController extends Controller
             'departure_location_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
+            'departure_hour' => 'nullable|integer|between:0,23',
+            'departure_minute' => 'nullable|integer|between:0,59',
         ]);
 
         $tour = Tour::findOrFail($id);
@@ -202,6 +210,11 @@ class TourController extends Controller
         $tour->child_price = $request->child_price;
         $tour->destination_id = $request->destination_id;
         $tour->departure_location_id = $request->departure_location_id;
+        if ($request->filled('departure_hour') && $request->filled('departure_minute')) {
+            $tour->departure_time = sprintf('%02d:%02d:00', $request->departure_hour, $request->departure_minute);
+        } else {
+            $tour->departure_time = null;
+        }
         $tour->duration_days = $request->duration_days;
         $tour->duration_nights = $request->duration_nights;
 

@@ -45,6 +45,9 @@
                         <td>
                             <div class="fw-500 text-primary">
                                 <i class="bi bi-calendar-event me-1"></i>{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}
+                                @if($schedule->tour && $schedule->tour->departure_time)
+                                    <span class="ms-1 text-warning" title="Giờ khởi hành"><i class="bi bi-clock-fill me-1"></i>{{ \Carbon\Carbon::parse($schedule->tour->departure_time)->format('H\hi') }}</span>
+                                @endif
                             </div>
                             <small class="text-muted">Đến {{ \Carbon\Carbon::parse($schedule->return_date)->format('d/m/Y') }}</small>
                         </td>
@@ -108,7 +111,7 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label text-muted fw-bold small text-uppercase">Tour: {{ $schedule->tour->title ?? 'N/A' }}</label>
-                        <p class="mb-0">Khởi hành: <strong>{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}</strong></p>
+                        <p class="mb-0">Khởi hành: <strong>{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}@if($schedule->tour && $schedule->tour->departure_time) ({{ \Carbon\Carbon::parse($schedule->tour->departure_time)->format('H\hi') }})@endif</strong></p>
                     </div>
 
                     <hr>

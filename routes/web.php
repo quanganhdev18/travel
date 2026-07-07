@@ -383,6 +383,12 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/bookings/{booking}/status', [ScheduleController::class, 'updateBookingStatus'])
         ->name('guide.bookings.update_status');
+
+    Route::post('/schedules/{schedule}/save-attendance', [ScheduleController::class, 'saveAttendance'])
+        ->name('guide.schedules.save_attendance');
+
+    Route::post('/schedules/{schedule}/update-status', [ScheduleController::class, 'updateGroupStatus'])
+        ->name('guide.schedules.update_group_status');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

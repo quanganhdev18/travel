@@ -164,6 +164,69 @@
 .preview-item:nth-child(4) i { color: #ec4899; } /* Pink */
 .preview-item.border-top i { color: #4ade80; } /* Green */
 
+/* Custom Alpine transition classes for overlay */
+.preview-enter {
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.preview-enter-start {
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+}
+.preview-enter-end {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.preview-leave {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.preview-leave-start {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.preview-leave-end {
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+}
+
+/* Stagger animation for internal items on hover */
+.tour-preview-content .preview-item {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tour-preview-wrapper:hover .preview-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.tour-preview-content .preview-item:nth-child(1) { transition-delay: 0.08s; }
+.tour-preview-content .preview-item:nth-child(2) { transition-delay: 0.14s; }
+.tour-preview-content .preview-item:nth-child(3) { transition-delay: 0.2s; }
+.tour-preview-content .preview-item:nth-child(4) { transition-delay: 0.26s; }
+.tour-preview-content .preview-item:nth-child(5) { transition-delay: 0.32s; }
+.tour-preview-content .preview-item.border-top { transition-delay: 0.38s; }
+
+.tour-preview-content .btn-primary {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: 0.44s;
+}
+
+.tour-preview-wrapper:hover .tour-preview-content .btn-primary {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+}
+
 /* Responsive */
 @media (max-width: 767.98px) {
     .tour-preview-content {

@@ -10,6 +10,8 @@ class BookingController extends Controller
 {
     public function index(Request $request)
     {
+        Booking::updateUpcomingTourStatuses();
+
         $query = Booking::with(['user.identity', 'tour_schedule.tour', 'booking_passengers']);
 
         // Tìm kiếm & Lọc (Business Logic)
@@ -85,6 +87,11 @@ class BookingController extends Controller
 
         // Chỉ cập nhật tour_status nếu tour chưa bị khoá
         if (! $isTourStatusLocked && $request->filled('tour_status')) {
+            $validStatuses = Booking::getValidNextStatuses($booking->tour_status);
+            if (! in_array($request->tour_status, $validStatuses)) {
+                return back()->with('error', 'Không thể chuyển đổi trạng thái tour từ trạng thái hiện tại sang trạng thái này (Không được nhảy cóc).');
+            }
+
             $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
             $willBeCancelled = in_array($request->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
 

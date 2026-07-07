@@ -1152,6 +1152,9 @@
                                                     @if($schedule)
                                                     <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
                                                         <i class="bi bi-calendar-event-fill text-success"></i>{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}
+                                                        @if($tour?->departure_time)
+                                                            ({{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }})
+                                                        @endif
                                                     </span>
                                                     @endif
                                                 </div>
