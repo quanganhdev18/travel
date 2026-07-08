@@ -97,4 +97,28 @@ class AddonController extends Controller
 
         return redirect()->route('admin.addons.index')->with('success', 'Đã xóa dịch vụ Addon thành công.');
     }
+
+    public function trash()
+    {
+        $addons = Addon::onlyTrashed()->orderBy('id', 'desc')->paginate(10);
+        return view('admin.addons.trash', compact('addons'));
+    }
+
+    public function restore($id)
+    {
+        $addon = Addon::onlyTrashed()->findOrFail($id);
+        $addon->restore();
+
+        return redirect()->route('admin.addons.trash')->with('success', 'Đã khôi phục dịch vụ Addon thành công.');
+    }
+
+    public function forceDelete($id)
+    {
+        $addon = Addon::onlyTrashed()->findOrFail($id);
+        
+        $addon->tours()->detach();
+        $addon->forceDelete();
+
+        return redirect()->route('admin.addons.trash')->with('success', 'Đã xóa vĩnh viễn dịch vụ Addon thành công.');
+    }
 }

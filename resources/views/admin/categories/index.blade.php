@@ -5,9 +5,14 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0 text-dark">Danh sách Danh mục</h4>
-    <a href="{{ route('admin.categories.create') }}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Thêm Danh mục mới
-    </a>
+    <div>
+        <a href="{{ route('admin.categories.trash') }}" class="btn btn-admin btn-light border text-danger me-2">
+            <i class="bi bi-trash"></i> Thùng rác
+        </a>
+        <a href="{{ route('admin.categories.create') }}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Thêm Danh mục mới
+        </a>
+    </div>
 </div>
 
 <!-- Hiển thị thông báo thành công -->

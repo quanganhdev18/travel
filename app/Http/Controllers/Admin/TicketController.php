@@ -234,16 +234,16 @@ class TicketController extends Controller
         try {
             DB::beginTransaction();
 
-            // Xóa các hình ảnh
-            $ticket->ticket_images()->delete();
+            // Xóa các hình ảnh (Chuyển sang xóa mềm: bỏ qua để giữ lại khi restore)
+            // $ticket->ticket_images()->delete();
 
-            // Xóa các option
-            $ticket->ticket_options()->delete();
+            // Xóa các option (Chuyển sang xóa mềm: bỏ qua để giữ lại khi restore)
+            // $ticket->ticket_options()->delete();
 
-            // Xóa liên kết với tours
-            $ticket->tours()->detach();
+            // Xóa liên kết với tours (Chuyển sang xóa mềm: bỏ qua để giữ lại khi restore)
+            // $ticket->tours()->detach();
 
-            // Xóa vé
+            // Xóa vé (sẽ thành xóa mềm)
             $ticket->delete();
 
             DB::commit();
@@ -282,6 +282,52 @@ class TicketController extends Controller
             DB::rollBack();
 
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra.'], 500);
+        }
+    }
+
+    public function trash()
+    {
+        $tickets = Ticket::onlyTrashed()->with(['destination', 'ticket_options', 'ticket_images'])
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+
+        return view('admin.tickets.trash', compact('tickets'));
+    }
+
+    public function restore($id)
+    {
+        $ticket = Ticket::onlyTrashed()->findOrFail($id);
+        $ticket->restore();
+
+        return redirect()->route('admin.tickets.trash')->with('success', 'Đã khôi phục vé tham quan thành công.');
+    }
+
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $ticket = Ticket::onlyTrashed()->findOrFail($id);
+
+            // Xóa các hình ảnh
+            $ticket->ticket_images()->delete();
+
+            // Xóa các option
+            $ticket->ticket_options()->delete();
+
+            // Xóa liên kết với tours
+            $ticket->tours()->detach();
+
+            // Xóa vé vĩnh viễn
+            $ticket->forceDelete();
+
+            DB::commit();
+
+            return redirect()->route('admin.tickets.trash')->with('success', 'Đã xóa vĩnh viễn vé tham quan thành công.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return back()->with('error', 'Có lỗi xảy ra: '.$e->getMessage());
         }
     }
 }

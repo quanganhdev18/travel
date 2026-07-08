@@ -6,9 +6,14 @@
 <div class="admin-card border-0 mb-4">
     <div class="admin-card-header bg-white py-3">
         <h5 class="admin-card-title"><i class="bi bi-images me-2 text-primary"></i>Danh sách Banner</h5>
-        <a href="{{ route('admin.banners.create') }}" class="btn btn-admin btn-admin-primary">
-            <i class="bi bi-plus-lg me-1"></i> Thêm Banner
-        </a>
+        <div>
+            <a href="{{ route('admin.banners.trash') }}" class="btn btn-admin btn-light border text-danger me-2">
+                <i class="bi bi-trash"></i> Thùng rác
+            </a>
+            <a href="{{ route('admin.banners.create') }}" class="btn btn-admin btn-admin-primary">
+                <i class="bi bi-plus-lg me-1"></i> Thêm Banner
+            </a>
+        </div>
     </div>
     <div class="admin-card-body p-0">
         <div class="table-responsive">

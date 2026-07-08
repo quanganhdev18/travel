@@ -9,6 +9,7 @@ namespace App\Models;
 use App\Models\Concerns\HasLocalImageUrl;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Class Banner
@@ -25,11 +26,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $end_date
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property Coupon|null $coupon
  */
 class Banner extends Model
 {
-    use HasLocalImageUrl;
+    use HasLocalImageUrl, SoftDeletes;
 
     protected $table = 'banners';
 
