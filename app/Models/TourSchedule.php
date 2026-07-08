@@ -62,4 +62,9 @@ class TourSchedule extends Model
     {
         return $this->hasMany(ScheduleGuide::class);
     }
+
+    public function activity_checkins()
+    {
+        return $this->hasMany(ScheduleActivityCheckin::class);
+    }
 }

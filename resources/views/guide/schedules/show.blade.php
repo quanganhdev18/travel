@@ -164,126 +164,210 @@
         </div>
     </div>
 
-    <!-- Cột danh sách hành khách -->
-
+    <!-- Cột danh sách hành khách và điểm tham quan -->
     <div class="col-lg-8 mb-4">
-        <div class="card border-0 shadow-sm">
-            <form action="{{ route('guide.schedules.save_attendance', $tourSchedule->id) }}" method="POST" id="attendance-form">
-                @csrf
-                <div class="admin-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="admin-card-title mb-0">Danh sách Hành khách</h5>
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="fw-semibold text-dark" id="attendance-selected-counter" style="font-size: 0.9rem;">
-                            Đã chọn: <span class="text-success" id="selected-count-val">{{ $checkedInCount }}</span> / <span id="total-count-val">{{ $totalCount }}</span> khách
-                        </span>
-                        <button type="submit" class="btn btn-success btn-sm fw-bold px-3">
-                            <i class="bi bi-floppy me-1"></i>Lưu điểm danh
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 50px;">STT</th>
-                                <th>Họ tên</th>
-                                <th>Loại vé</th>
-                                <th>Booking</th>
-                                <th>Liên hệ</th>
-                                <th class="text-center" style="width: 100px;">Điểm danh</th>
-                                <th class="text-center" style="width: 90px;">Ghi chú</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php $stt = 1; @endphp
-                            @forelse($tourSchedule->bookings as $booking)
-                                @if(in_array($booking->payment_status, ['paid_30', 'paid_100']))
-                                    @foreach($booking->booking_passengers as $passenger)
-                                        <tr id="row-{{ $passenger->id }}" class="{{ $passenger->checked_in ? 'table-success' : '' }}">
-                                            <td>{{ $stt++ }}</td>
-                                            <td>
-                                                <div class="fw-bold">{{ $passenger->full_name }}</div>
-                                                <div class="small text-muted">
-                                                    {{ $passenger->gender == 'male' ? 'Nam' : ($passenger->gender == 'female' ? 'Nữ' : 'Khác') }}
-                                                    @if($passenger->date_of_birth)
-                                                        &ndash; Sinh: {{ \Carbon\Carbon::parse($passenger->date_of_birth)->format('d/m/Y') }}
-                                                    @endif
-                                                </div>
-                                                @if($passenger->identity_number)
-                                                    <div class="small text-muted">CCCD: {{ $passenger->identity_number }}</div>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if($passenger->passenger_type == 'adult')
-                                                    <span class="badge badge-soft-primary">Người lớn</span>
-                                                @elseif($passenger->passenger_type == 'child')
-                                                    <span class="badge badge-soft-warning">Trẻ em</span>
-                                                @else
-                                                    <span class="badge badge-soft-secondary">Em bé</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="text-primary fw-bold">#{{ $booking->id }}</span>
-                                            </td>
-                                            <td>
-                                                <div>{{ $booking->user->phone ?? '—' }}</div>
-                                                <div class="small text-muted">{{ $booking->user->email ?? '' }}</div>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="form-check d-flex justify-content-center">
-                                                    <input
-                                                        class="form-check-input checkin-checkbox"
-                                                        type="checkbox"
-                                                        name="checked_passengers[]"
-                                                        value="{{ $passenger->id }}"
-                                                        id="checkin-{{ $passenger->id }}"
-                                                        data-id="{{ $passenger->id }}"
-                                                        data-url="{{ route('guide.passengers.toggle_checkin', $passenger) }}"
-                                                        {{ $passenger->checked_in ? 'checked' : '' }}
-                                                        style="width: 1.3em; height: 1.3em; cursor: pointer;"
-                                                    >
-                                                </div>
-                                                <div id="checkin-label-{{ $passenger->id }}" class="mt-1" style="font-size:0.68rem; line-height:1.2;">
-                                                    @if($passenger->checked_in)
-                                                        <span class="text-success fw-semibold">&#10003; Đã điểm danh</span>
-                                                    @else
-                                                        <span class="text-muted">Chưa</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="text-center">
-                                                <button
-                                                    class="btn btn-sm btn-outline-warning note-btn"
-                                                    data-id="{{ $passenger->id }}"
-                                                    data-name="{{ $passenger->full_name }}"
-                                                    data-note="{{ $passenger->special_note ?? '' }}"
-                                                    data-url="{{ route('guide.passengers.update_note', $passenger) }}"
-                                                    title="Ghi chú đặc biệt"
-                                                >
-                                                    @if($passenger->special_note)
-                                                        <i class="bi bi-sticky-fill text-warning"></i>
-                                                    @else
-                                                        <i class="bi bi-sticky"></i>
-                                                    @endif
-                                                </button>
+        <!-- Tabs Nav -->
+        <ul class="nav nav-tabs mb-3 border-bottom-0" id="scheduleTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold text-dark border-0 border-bottom border-3 border-warning bg-transparent tab-btn" id="passengers-tab" data-bs-toggle="tab" data-bs-target="#passengers" type="button" role="tab" aria-controls="passengers" aria-selected="true">
+                    <i class="bi bi-people-fill me-1 text-warning"></i>Danh sách Hành khách
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold text-muted border-0 bg-transparent tab-btn" id="activities-tab" data-bs-toggle="tab" data-bs-target="#activities" type="button" role="tab" aria-controls="activities" aria-selected="false">
+                    <i class="bi bi-geo-alt-fill me-1 text-info"></i>Điểm Tham Quan
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="scheduleTabContent">
+            <!-- Tab Passengers -->
+            <div class="tab-pane fade show active" id="passengers" role="tabpanel" aria-labelledby="passengers-tab">
+                <div class="card border-0 shadow-sm">
+                    <form action="{{ route('guide.schedules.save_attendance', $tourSchedule->id) }}" method="POST" id="attendance-form">
+                        @csrf
+                        <div class="admin-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <h5 class="admin-card-title mb-0">Danh sách Hành khách</h5>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fw-semibold text-dark" id="attendance-selected-counter" style="font-size: 0.9rem;">
+                                    Đã chọn: <span class="text-success" id="selected-count-val">{{ $checkedInCount }}</span> / <span id="total-count-val">{{ $totalCount }}</span> khách
+                                </span>
+                                <button type="submit" class="btn btn-success btn-sm fw-bold px-3">
+                                    <i class="bi bi-floppy me-1"></i>Lưu điểm danh
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 50px;">STT</th>
+                                        <th>Họ tên</th>
+                                        <th>Loại vé</th>
+                                        <th>Booking</th>
+                                        <th>Liên hệ</th>
+                                        <th class="text-center" style="width: 100px;">Điểm danh</th>
+                                        <th class="text-center" style="width: 90px;">Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php $stt = 1; @endphp
+                                    @forelse($tourSchedule->bookings as $booking)
+                                        @if(in_array($booking->payment_status, ['paid_30', 'paid_100']))
+                                            @foreach($booking->booking_passengers as $passenger)
+                                                <tr id="row-{{ $passenger->id }}" class="{{ $passenger->checked_in ? 'table-success' : '' }}">
+                                                    <td>{{ $stt++ }}</td>
+                                                    <td>
+                                                        <div class="fw-bold">{{ $passenger->full_name }}</div>
+                                                        <div class="small text-muted">
+                                                            {{ $passenger->gender == 'male' ? 'Nam' : ($passenger->gender == 'female' ? 'Nữ' : 'Khác') }}
+                                                            @if($passenger->date_of_birth)
+                                                                &ndash; Sinh: {{ \Carbon\Carbon::parse($passenger->date_of_birth)->format('d/m/Y') }}
+                                                            @endif
+                                                        </div>
+                                                        @if($passenger->identity_number)
+                                                            <div class="small text-muted">CCCD: {{ $passenger->identity_number }}</div>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($passenger->passenger_type == 'adult')
+                                                            <span class="badge badge-soft-primary">Người lớn</span>
+                                                        @elseif($passenger->passenger_type == 'child')
+                                                            <span class="badge badge-soft-warning">Trẻ em</span>
+                                                        @else
+                                                            <span class="badge badge-soft-secondary">Em bé</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-primary fw-bold">#{{ $booking->id }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <div>{{ $booking->user->phone ?? '—' }}</div>
+                                                        <div class="small text-muted">{{ $booking->user->email ?? '' }}</div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="form-check d-flex justify-content-center">
+                                                            <input
+                                                                class="form-check-input checkin-checkbox"
+                                                                type="checkbox"
+                                                                name="checked_passengers[]"
+                                                                value="{{ $passenger->id }}"
+                                                                id="checkin-{{ $passenger->id }}"
+                                                                data-id="{{ $passenger->id }}"
+                                                                data-url="{{ route('guide.passengers.toggle_checkin', $passenger) }}"
+                                                                {{ $passenger->checked_in ? 'checked' : '' }}
+                                                                style="width: 1.3em; height: 1.3em; cursor: pointer;"
+                                                            >
+                                                        </div>
+                                                        <div id="checkin-label-{{ $passenger->id }}" class="mt-1" style="font-size:0.68rem; line-height:1.2;">
+                                                            @if($passenger->checked_in)
+                                                                <span class="text-success fw-semibold">&#10003; Đã điểm danh</span>
+                                                            @else
+                                                                <span class="text-muted">Chưa</span>
+                                                            @endif
+                                                        </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm btn-outline-warning note-btn"
+                                                            data-id="{{ $passenger->id }}"
+                                                            data-name="{{ $passenger->full_name }}"
+                                                            data-note="{{ $passenger->special_note ?? '' }}"
+                                                            data-url="{{ route('guide.passengers.update_note', $passenger) }}"
+                                                            title="Ghi chú đặc biệt"
+                                                        >
+                                                            @if($passenger->special_note)
+                                                                <i class="bi bi-sticky-fill text-warning"></i>
+                                                            @else
+                                                                <i class="bi bi-sticky"></i>
+                                                            @endif
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4 text-muted">
+                                                <i class="bi bi-people fs-1 d-block mb-2"></i>
+                                                Chưa có hành khách nào đặt chỗ cho lịch trình này.
                                             </td>
                                         </tr>
-                                    @endforeach
-                                @endif
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">
-                                        <i class="bi bi-people fs-1 d-block mb-2"></i>
-                                        Chưa có hành khách nào đặt chỗ cho lịch trình này.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    </form>
                 </div>
             </div>
-            </form>
+
+            <!-- Tab Activities -->
+            <div class="tab-pane fade" id="activities" role="tabpanel" aria-labelledby="activities-tab">
+                <div class="card border-0 shadow-sm">
+                    <div class="admin-card-header">
+                        <h5 class="admin-card-title mb-0">Lịch trình & Các điểm tham quan</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="accordion accordion-flush" id="itineraryAccordion">
+                            @forelse($tour->tour_itineraries as $itinerary)
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading-day-{{ $itinerary->id }}">
+                                        <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }} fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-day-{{ $itinerary->id }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}" aria-controls="collapse-day-{{ $itinerary->id }}">
+                                            Ngày {{ $itinerary->day_number }}: {{ $itinerary->title }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-day-{{ $itinerary->id }}" class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" aria-labelledby="heading-day-{{ $itinerary->id }}" data-bs-parent="#itineraryAccordion">
+                                        <div class="accordion-body bg-light">
+                                            @if($itinerary->activities->isNotEmpty())
+                                                <div class="list-group list-group-flush rounded">
+                                                    @foreach($itinerary->activities as $activity)
+                                                        @php
+                                                            $checkin = $tourSchedule->activity_checkins->firstWhere('tour_activity_id', $activity->id);
+                                                            $isChecked = $checkin ? true : false;
+                                                        @endphp
+                                                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                                            <div>
+                                                                <h6 class="mb-1 fw-bold text-dark">
+                                                                    <i class="bi bi-check-circle-fill text-{{ $isChecked ? 'success' : 'secondary' }} me-2" id="icon-act-{{ $activity->id }}"></i>
+                                                                    {{ $activity->title }}
+                                                                </h6>
+                                                                <p class="mb-1 text-muted small"><i class="bi bi-clock me-1"></i>{{ \Carbon\Carbon::parse($activity->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($activity->end_time)->format('H:i') }} | <span class="badge bg-secondary">{{ $activity->activity_type }}</span></p>
+                                                                <p class="mb-0 text-success small fw-semibold mt-1" id="time-act-{{ $activity->id }}" style="display:{{ $isChecked ? 'block' : 'none' }};">
+                                                                    Đã check-in lúc {{ $isChecked ? $checkin->checked_in_at->format('H:i d/m/Y') : '' }}
+                                                                </p>
+                                                            </div>
+                                                            <button class="btn btn-sm btn-{{ $isChecked ? 'outline-secondary' : 'success' }} fw-bold px-3 btn-checkin-activity" 
+                                                                data-id="{{ $activity->id }}" 
+                                                                data-url="{{ route('guide.activities.toggle_checkin', [$tourSchedule->id, $activity->id]) }}"
+                                                                id="btn-act-{{ $activity->id }}">
+                                                                @if($isChecked)
+                                                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Hủy
+                                                                @else
+                                                                    <i class="bi bi-geo-alt-fill me-1"></i>Check-in
+                                                                @endif
+                                                            </button>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <p class="text-muted small mb-0">Không có hoạt động chi tiết nào.</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="p-4 text-center text-muted">
+                                    <i class="bi bi-map fs-1 d-block mb-2"></i>
+                                    Chưa có lịch trình chi tiết.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -497,6 +581,68 @@ document.addEventListener('DOMContentLoaded', function () {
             saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i>Lưu ghi chú';
         });
     });
+    // Tab switching styles
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('show.bs.tab', function (e) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('text-dark', 'border-bottom', 'border-3', 'border-warning');
+                b.classList.add('text-muted');
+            });
+            e.target.classList.remove('text-muted');
+            e.target.classList.add('text-dark', 'border-bottom', 'border-3', 'border-warning');
+        });
+    });
+
+    // Toggle Activity Checkin
+    document.querySelectorAll('.btn-checkin-activity').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const actId = this.dataset.id;
+            const url = this.dataset.url;
+            const selfBtn = this;
+            const iconEl = document.getElementById('icon-act-' + actId);
+            const timeEl = document.getElementById('time-act-' + actId);
+
+            selfBtn.disabled = true;
+            let originalHtml = selfBtn.innerHTML;
+            selfBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast(data.message, data.checked_in ? 'success' : 'secondary');
+                
+                if (data.checked_in) {
+                    selfBtn.className = 'btn btn-sm btn-outline-secondary fw-bold px-3 btn-checkin-activity';
+                    selfBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i>Hủy';
+                    iconEl.className = 'bi bi-check-circle-fill text-success me-2';
+                    timeEl.style.display = 'block';
+                    timeEl.textContent = 'Đã check-in lúc ' + data.time;
+                } else {
+                    selfBtn.className = 'btn btn-sm btn-success fw-bold px-3 btn-checkin-activity';
+                    selfBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Check-in';
+                    iconEl.className = 'bi bi-check-circle-fill text-secondary me-2';
+                    timeEl.style.display = 'none';
+                    timeEl.textContent = '';
+                }
+            })
+            .catch(() => {
+                showToast('Có lỗi xảy ra, vui lòng thử lại.', 'danger');
+                selfBtn.innerHTML = originalHtml;
+            })
+            .finally(() => {
+                selfBtn.disabled = false;
+            });
+        });
+    });
+
 });
 </script>
 @endpush

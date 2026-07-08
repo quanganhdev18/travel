@@ -44,7 +44,7 @@ class ScheduleController extends Controller
         }
 
         $scheduleGuide = $tourGuide->schedule_guides()
-            ->with(['tour_schedule.tour', 'tour_schedule.bookings.booking_passengers', 'tour_schedule.bookings.user'])
+            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers', 'tour_schedule.bookings.user'])
             ->where('tour_schedule_id', $id)
             ->firstOrFail();
 
@@ -86,6 +86,62 @@ class ScheduleController extends Controller
         return response()->json([
             'checked_in' => $passenger->checked_in,
             'message' => $passenger->checked_in ? 'Đã điểm danh' : 'Đã bỏ điểm danh',
+        ]);
+    }
+
+    /**
+     * Toggle check-in status for an activity (AJAX).
+     */
+    public function toggleActivityCheckin(TourSchedule $schedule, \App\Models\TourActivity $activity)
+    {
+        $tourGuide = auth()->user()->tour_guide;
+        abort_unless($tourGuide, 403);
+
+        $assigned = $tourGuide->schedule_guides()
+            ->where('tour_schedule_id', $schedule->id)
+            ->exists();
+        abort_unless($assigned, 403);
+
+        // Đảm bảo activity thuộc về tour này
+        abort_unless($activity->tour_itinerary->tour_id === $schedule->tour_id, 403);
+
+        $checkin = \App\Models\ScheduleActivityCheckin::where('tour_schedule_id', $schedule->id)
+            ->where('tour_activity_id', $activity->id)
+            ->first();
+
+        if ($checkin) {
+            $checkin->delete();
+            $status = false;
+            
+            // Revert bookings if it was the current checkin step
+            \App\Models\Booking::where('tour_schedule_id', $schedule->id)
+                ->where('current_checkin_step', $activity->title)
+                ->update([
+                    'current_checkin_step' => null,
+                    'tour_status' => \App\Models\Booking::TOUR_IN_PROGRESS
+                ]);
+        } else {
+            \App\Models\ScheduleActivityCheckin::create([
+                'tour_schedule_id' => $schedule->id,
+                'tour_activity_id' => $activity->id,
+                'guide_id' => $tourGuide->id,
+                'checked_in_at' => now(),
+            ]);
+            $status = true;
+
+            // Update all bookings to show they are at this step
+            \App\Models\Booking::where('tour_schedule_id', $schedule->id)
+                ->whereIn('tour_status', [\App\Models\Booking::TOUR_UPCOMING, \App\Models\Booking::TOUR_IN_PROGRESS, \App\Models\Booking::TOUR_CHECKING_IN])
+                ->update([
+                    'tour_status' => \App\Models\Booking::TOUR_CHECKING_IN,
+                    'current_checkin_step' => $activity->title
+                ]);
+        }
+
+        return response()->json([
+            'checked_in' => $status,
+            'message' => $status ? 'Đã check-in điểm tham quan' : 'Đã hủy check-in điểm tham quan',
+            'time' => now()->format('H:i d/m/Y')
         ]);
     }
 

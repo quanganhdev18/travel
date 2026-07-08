@@ -375,6 +375,9 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'toggleCheckin'])
         ->name('guide.passengers.toggle_checkin');
 
+    Route::post('/schedules/{schedule}/activities/{activity}/toggle-checkin', [ScheduleController::class, 'toggleActivityCheckin'])
+        ->name('guide.activities.toggle_checkin');
+
     Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
         ->name('guide.passengers.update_note');
 

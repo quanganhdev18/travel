@@ -1,3 +1,16 @@
+// Ghi đè hàm addEventListener toàn cục để xử lý DOMContentLoaded cho PJAX
+(function() {
+    const originalAddEventListener = document.addEventListener;
+    document.addEventListener = function(type, listener, options) {
+        if (type === 'DOMContentLoaded' && (document.readyState === 'complete' || document.readyState === 'interactive')) {
+            // Trang đã tải xong (PJAX inject HTML), thực thi script ngay lập tức
+            setTimeout(listener, 1);
+            return;
+        }
+        originalAddEventListener.call(document, type, listener, options);
+    };
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
     // Top progress loading bar
     const showProgressBar = () => {
@@ -96,7 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     Alpine.initTree(oldMainContent);
                 }
 
-                // 7. Re-bind click event listeners to new elements
+                // 7. Re-initialize Bootstrap components if needed
+                if (typeof bootstrap !== 'undefined') {
+                    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                    const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+                    [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
+                }
+
+                // 8. Re-bind click event listeners to new elements
                 setupPjax();
                 hideProgressBar();
             })
