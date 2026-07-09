@@ -237,6 +237,7 @@ class TourBookingController extends Controller
             $booking->payment_type = $request->payment_type ?? 'full';
             $booking->payment_method = $request->payment_method ?? 'transfer';
             $booking->paid_amount = 0;
+            $booking->is_passenger_list_submitted = ($totalPersons < 2);
             $booking->save();
 
             // Lưu TicketBooking

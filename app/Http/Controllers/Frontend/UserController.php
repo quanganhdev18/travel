@@ -181,11 +181,27 @@ class UserController extends Controller
 
     public function cancelBooking(int $id): RedirectResponse
     {
-        $booking = Booking::where('user_id', Auth::id())
+        $booking = Booking::with('tour_schedule')->where('user_id', Auth::id())
             ->whereIn('booking_status', ['pending', 'confirmed'])
             ->findOrFail($id);
 
-        $booking->update(['booking_status' => 'cancelled']);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($booking) {
+            $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
+
+            $booking->update([
+                'booking_status' => 'cancelled',
+                'payment_status' => Booking::PAYMENT_FAILED,
+                'tour_status' => Booking::TOUR_CANCELLED_CUSTOMER
+            ]);
+
+            if (! $isCurrentlyCancelled && $booking->tour_schedule) {
+                $totalPersons = $booking->adults_count + $booking->children_count;
+                $booking->tour_schedule->increment('available_seats', $totalPersons);
+                
+                // Broadcast event for UI updates (optional, similar to booking)
+                broadcast(new \App\Events\SeatAvailabilityUpdated($booking->tour_schedule->id, $booking->tour_schedule->available_seats))->toOthers();
+            }
+        });
 
         return redirect()->back()->with('success', 'Hủy đơn đặt tour thành công.');
     }

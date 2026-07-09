@@ -119,6 +119,21 @@ class BookingController extends Controller
         }
 
         $booking->payment_status = $request->payment_status;
+        
+        if ($booking->payment_status === Booking::PAYMENT_PAID_100) {
+            $booking->paid_amount = $booking->total_price;
+            if (in_array($booking->booking_status, ['pending', 'confirmed'])) {
+                $booking->booking_status = 'paid';
+            }
+        } elseif ($booking->payment_status === Booking::PAYMENT_PAID_30) {
+            $booking->paid_amount = $booking->total_price * 0.3;
+            if ($booking->booking_status === 'pending') {
+                $booking->booking_status = 'confirmed';
+            }
+        } elseif ($booking->payment_status === Booking::PAYMENT_FAILED || $booking->payment_status === Booking::PAYMENT_PENDING) {
+            $booking->paid_amount = 0;
+        }
+
         $booking->save();
 
         return back()->with('success', 'Cập nhật trạng thái đơn hàng thành công.');

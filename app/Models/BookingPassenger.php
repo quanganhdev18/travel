@@ -31,6 +31,9 @@ class BookingPassenger extends Model
         'booking_id' => 'int',
         'date_of_birth' => 'datetime',
         'checked_in' => 'boolean',
+        'is_free_time' => 'boolean',
+        'free_time_start' => 'datetime',
+        'free_time_end' => 'datetime',
     ];
 
     protected $fillable = [
@@ -42,6 +45,9 @@ class BookingPassenger extends Model
         'passenger_type',
         'checked_in',
         'special_note',
+        'is_free_time',
+        'free_time_start',
+        'free_time_end',
     ];
 
     public function booking()

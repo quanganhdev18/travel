@@ -86,6 +86,7 @@ class Booking extends Model
         'transport_price',
         'transport_data',
         'payment_method',
+        'is_passenger_list_submitted',
         'payment_type',
         'paid_amount',
         'payment_step',

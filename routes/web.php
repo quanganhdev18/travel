@@ -178,6 +178,12 @@ Route::middleware(['auth'])->group(function () {
     // Thanh toán lại bằng VNPay
     Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
         ->name('frontend.bookings.pay_vnpay');
+
+    // Bổ sung danh sách hành khách
+    Route::get('/bookings/{id}/passengers', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'index'])->name('frontend.bookings.passengers');
+    Route::post('/bookings/{id}/passengers/manual', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'storeManual'])->name('frontend.bookings.passengers.manual');
+    Route::get('/bookings/passengers/template', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'downloadTemplate'])->name('frontend.bookings.passengers.template');
+    Route::post('/bookings/{id}/passengers/import', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'importExcel'])->name('frontend.bookings.passengers.import');
 });
 
 // Điểm đến
@@ -392,6 +398,11 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/schedules/{schedule}/update-status', [ScheduleController::class, 'updateGroupStatus'])
         ->name('guide.schedules.update_group_status');
+        
+    // Guide passenger actions
+    Route::post('/schedules/{schedule}/bookings/{booking}/passengers/manual', [ScheduleController::class, 'storeManualPassengers'])->name('guide.passengers.manual');
+    Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
+    Route::post('/schedules/{schedule}/passengers/{passenger}/free-time', [ScheduleController::class, 'updateFreeTime'])->name('guide.passengers.free_time');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

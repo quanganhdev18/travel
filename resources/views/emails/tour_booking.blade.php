@@ -292,6 +292,21 @@
     {{-- ===== DANH SÁCH HÀNH KHÁCH ===== --}}
     <div class="section">
         <span class="section-title">Danh Sách Hành Khách ({{ $booking->adults_count }} Người lớn @if($booking->children_count > 0)+ {{ $booking->children_count }} Trẻ em @endif)</span>
+        
+        @if(!$booking->is_passenger_list_submitted)
+        <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 16px; margin-bottom: 16px;">
+            <div style="color: #b45309; font-size: 14px; font-weight: 600; margin-bottom: 8px;">
+                <i class="bi bi-info-circle-fill"></i> Quý khách chưa điền đủ danh sách hành khách!
+            </div>
+            <div style="color: #92400e; font-size: 13px; margin-bottom: 12px;">
+                Để hoàn tất thủ tục, vui lòng bổ sung thông tin hành khách trước ngày khởi hành 24 tiếng.
+            </div>
+            <a href="{{ route('frontend.bookings.passengers', $booking->id) }}" style="display: inline-block; background: #ea580c; color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 600;">
+                Bổ Sung Danh Sách Hành Khách
+            </a>
+        </div>
+        @endif
+
         <table class="table">
             <thead>
                 <tr>

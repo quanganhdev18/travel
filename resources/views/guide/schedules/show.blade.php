@@ -7,7 +7,7 @@
     $tourSchedule = $scheduleGuide->tour_schedule;
     $tour = $tourSchedule->tour;
 
-    $firstBooking = $tourSchedule->bookings->first();
+    $firstBooking = $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->first();
     $groupStatus = $firstBooking ? $firstBooking->tour_status : 'upcoming';
 
     $tourStatusMap = [
@@ -21,7 +21,9 @@
     $ts = $tourStatusMap[$groupStatus] ?? ['badge-soft-secondary', 'N/A'];
 
     $allPassengers = $tourSchedule->bookings
-        ->whereIn('payment_status', ['paid_30', 'paid_100'])
+        ->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])
+        ->whereNotIn('booking_status', ['cancelled'])
+        ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
         ->flatMap(fn($b) => $b->booking_passengers);
     $checkedInCount = $allPassengers->where('checked_in', true)->count();
     $totalCount = $allPassengers->count();
@@ -137,7 +139,7 @@
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Tổng khách:</span>
-                        <strong>{{ $tourSchedule->bookings->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
+                        <strong>{{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Điểm danh:</span>
@@ -208,13 +210,14 @@
                                         <th>Booking</th>
                                         <th>Liên hệ</th>
                                         <th class="text-center" style="width: 100px;">Điểm danh</th>
+                                        <th class="text-center" style="width: 100px;">Tách đoàn</th>
                                         <th class="text-center" style="width: 90px;">Ghi chú</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @php $stt = 1; @endphp
                                     @forelse($tourSchedule->bookings as $booking)
-                                        @if(in_array($booking->payment_status, ['paid_30', 'paid_100']))
+                                        @if(in_array($booking->payment_status, ['pending', 'paid_30', 'paid_100']) && !in_array($booking->tour_status, [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER]) && $booking->booking_status !== 'cancelled')
                                             @foreach($booking->booking_passengers as $passenger)
                                                 <tr id="row-{{ $passenger->id }}" class="{{ $passenger->checked_in ? 'table-success' : '' }}">
                                                     <td>{{ $stt++ }}</td>
@@ -241,6 +244,13 @@
                                                     </td>
                                                     <td>
                                                         <span class="text-primary fw-bold">#{{ $booking->id }}</span>
+                                                        @if($loop->first)
+                                                        <div class="mt-1">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#addPassengerModal-{{ $booking->id }}" title="Quản lý danh sách khách">
+                                                                <i class="bi bi-people-fill"></i> Sửa
+                                                            </button>
+                                                        </div>
+                                                        @endif
                                                     </td>
                                                     <td>
                                                         <div>{{ $booking->user->phone ?? '—' }}</div>
@@ -267,6 +277,17 @@
                                                                 <span class="text-muted">Chưa</span>
                                                             @endif
                                                         </div>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if($passenger->is_free_time)
+                                                        <button type="button" class="btn btn-sm btn-success py-0 px-2 free-time-btn" style="font-size: 0.75rem;" data-id="{{ $passenger->id }}" data-start="{{ $passenger->free_time_start ? \Carbon\Carbon::parse($passenger->free_time_start)->format('Y-m-d\TH:i') : '' }}" data-end="{{ $passenger->free_time_end ? \Carbon\Carbon::parse($passenger->free_time_end)->format('Y-m-d\TH:i') : '' }}" data-url="{{ route('guide.passengers.free_time', [$tourSchedule->id, $passenger->id]) }}">
+                                                            <i class="bi bi-clock-history"></i> Đang tách
+                                                        </button>
+                                                        @else
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 free-time-btn" style="font-size: 0.75rem;" data-id="{{ $passenger->id }}" data-start="" data-end="" data-url="{{ route('guide.passengers.free_time', [$tourSchedule->id, $passenger->id]) }}">
+                                                            <i class="bi bi-clock"></i> Tách đoàn
+                                                        </button>
+                                                        @endif
                                                     </td>
                                                     <td class="text-center">
                                                         <button
@@ -414,6 +435,130 @@
     </div>
 </div>
 
+<!-- Modal Free Time -->
+<div class="modal fade" id="freeTimeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="" id="freeTimeForm">
+            @csrf
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-clock-history text-primary me-2"></i>Tách đoàn (Tự do tham quan)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small">Hành khách được đánh dấu tách đoàn sẽ không bị yêu cầu điểm danh trong khoảng thời gian này.</div>
+                    
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="is_free_time" id="is_free_time" value="1">
+                        <label class="form-check-label fw-bold" for="is_free_time">Cho phép tách đoàn</label>
+                    </div>
+                    
+                    <div id="freeTimeDates" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label small">Từ thời gian</label>
+                            <input type="datetime-local" name="free_time_start" id="free_time_start" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Đến thời gian</label>
+                            <input type="datetime-local" name="free_time_end" id="free_time_end" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Lưu</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Manage Passengers per Booking -->
+@foreach($tourSchedule->bookings as $b)
+@if(in_array($b->payment_status, ['pending', 'paid_30', 'paid_100']) && !in_array($b->tour_status, [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER]) && $b->booking_status !== 'cancelled')
+<div class="modal fade" id="addPassengerModal-{{ $b->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Quản lý hành khách (Booking #{{ $b->id }})</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" id="bookingTab-{{ $b->id }}" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-bold" id="manual-tab-{{ $b->id }}" data-bs-toggle="tab" data-bs-target="#manual-pane-{{ $b->id }}" type="button">Nhập thủ công</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-bold" id="excel-tab-{{ $b->id }}" data-bs-toggle="tab" data-bs-target="#excel-pane-{{ $b->id }}" type="button">Excel</button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="manual-pane-{{ $b->id }}">
+                        <form action="{{ route('guide.passengers.manual', [$tourSchedule->id, $b->id]) }}" method="POST">
+                            @csrf
+                            <div class="alert alert-warning small">Sửa danh sách này sẽ xóa các khách (trừ khách số 1) hiện tại của booking và lưu lại.</div>
+                            
+                            @for($i = 0; $i < $b->adults_count; $i++)
+                            @php $p = $b->booking_passengers->where('passenger_type', 'adult')->values()->get($i); @endphp
+                            <div class="p-2 border rounded mb-2 bg-light">
+                                <div class="fw-bold small mb-1">Người lớn {{ $i+1 }}</div>
+                                <input type="hidden" name="passengers[{{ $i }}][passenger_type]" value="adult">
+                                <div class="row g-2">
+                                    <div class="col-md-3"><input type="text" name="passengers[{{ $i }}][full_name]" class="form-control form-control-sm" placeholder="Họ tên" value="{{ $p ? $p->full_name : '' }}" required></div>
+                                    <div class="col-md-3"><input type="text" name="passengers[{{ $i }}][identity_number]" class="form-control form-control-sm" placeholder="CCCD" value="{{ $p ? $p->identity_number : '' }}"></div>
+                                    <div class="col-md-3"><input type="date" name="passengers[{{ $i }}][date_of_birth]" class="form-control form-control-sm" value="{{ $p && $p->date_of_birth ? $p->date_of_birth->format('Y-m-d') : '' }}"></div>
+                                    <div class="col-md-3">
+                                        <select name="passengers[{{ $i }}][gender]" class="form-select form-select-sm">
+                                            <option value="male" {{ $p && $p->gender == 'male' ? 'selected' : '' }}>Nam</option>
+                                            <option value="female" {{ $p && $p->gender == 'female' ? 'selected' : '' }}>Nữ</option>
+                                            <option value="other" {{ $p && $p->gender == 'other' ? 'selected' : '' }}>Khác</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            @endfor
+
+                            @for($i = 0; $i < $b->children_count; $i++)
+                            @php 
+                                $idx = $b->adults_count + $i; 
+                                $p = $b->booking_passengers->where('passenger_type', 'child')->values()->get($i);
+                            @endphp
+                            <div class="p-2 border rounded mb-2 bg-light">
+                                <div class="fw-bold small mb-1">Trẻ em {{ $i+1 }}</div>
+                                <input type="hidden" name="passengers[{{ $idx }}][passenger_type]" value="child">
+                                <div class="row g-2">
+                                    <div class="col-md-4"><input type="text" name="passengers[{{ $idx }}][full_name]" class="form-control form-control-sm" placeholder="Họ tên" value="{{ $p ? $p->full_name : '' }}" required></div>
+                                    <div class="col-md-4"><input type="date" name="passengers[{{ $idx }}][date_of_birth]" class="form-control form-control-sm" value="{{ $p && $p->date_of_birth ? $p->date_of_birth->format('Y-m-d') : '' }}"></div>
+                                    <div class="col-md-4">
+                                        <select name="passengers[{{ $idx }}][gender]" class="form-select form-select-sm">
+                                            <option value="male" {{ $p && $p->gender == 'male' ? 'selected' : '' }}>Nam</option>
+                                            <option value="female" {{ $p && $p->gender == 'female' ? 'selected' : '' }}>Nữ</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            @endfor
+                            <div class="text-end mt-3"><button type="submit" class="btn btn-primary btn-sm">Lưu danh sách</button></div>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="excel-pane-{{ $b->id }}">
+                        <form action="{{ route('guide.passengers.import', [$tourSchedule->id, $b->id]) }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label">Chọn file Excel hành khách</label>
+                                <input type="file" name="excel_file" accept=".xls,.xlsx" class="form-control" required>
+                            </div>
+                            <div class="text-end"><button type="submit" class="btn btn-success btn-sm">Upload Excel</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+@endforeach
+
 <!-- Toast thông báo -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
     <div id="toast-msg" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -522,14 +667,61 @@ document.addEventListener('DOMContentLoaded', function () {
             const name = this.dataset.name;
             const note = this.dataset.note;
 
-            document.getElementById('note-passenger-name').textContent = name;
-            const textarea = document.getElementById('note-textarea');
-            textarea.value = note;
-            document.getElementById('note-char-count').textContent = note.length;
+            const notePassengerName = document.getElementById('note-passenger-name');
+            const noteTextarea = document.getElementById('note-textarea');
+            const noteCharCount = document.getElementById('note-char-count');
+            const saveNoteBtn = document.getElementById('save-note-btn');
+            
+            notePassengerName.textContent = name;
+            noteTextarea.value = note;
+            noteCharCount.textContent = note.length;
 
             new bootstrap.Modal(document.getElementById('noteModal')).show();
         });
     });
+
+    // ─── Free Time logic ──────────────────────────────────────────────
+    const freeTimeModalEl = document.getElementById('freeTimeModal');
+    if (freeTimeModalEl) {
+        const freeTimeModal = new bootstrap.Modal(freeTimeModalEl);
+        const freeTimeForm = document.getElementById('freeTimeForm');
+        const isFreeTimeCheck = document.getElementById('is_free_time');
+        const freeTimeDates = document.getElementById('freeTimeDates');
+
+        isFreeTimeCheck.addEventListener('change', function() {
+            if(this.checked) {
+                freeTimeDates.style.display = 'block';
+            } else {
+                freeTimeDates.style.display = 'none';
+            }
+        });
+
+        document.querySelectorAll('.free-time-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const id = this.getAttribute('data-id');
+                const url = this.getAttribute('data-url');
+                const start = this.getAttribute('data-start');
+                const end = this.getAttribute('data-end');
+
+                freeTimeForm.action = url;
+                
+                if(start || end || this.classList.contains('btn-success')) {
+                    isFreeTimeCheck.checked = true;
+                    freeTimeDates.style.display = 'block';
+                    document.getElementById('free_time_start').value = start;
+                    document.getElementById('free_time_end').value = end;
+                } else {
+                    isFreeTimeCheck.checked = false;
+                    freeTimeDates.style.display = 'none';
+                    document.getElementById('free_time_start').value = '';
+                    document.getElementById('free_time_end').value = '';
+                }
+
+                freeTimeModal.show();
+            });
+        });
+    }
 
     // Character counter
     document.getElementById('note-textarea').addEventListener('input', function () {
