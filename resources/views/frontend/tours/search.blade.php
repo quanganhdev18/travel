@@ -206,9 +206,9 @@
                                 <div class="combo-card h-100">
                                     <div class="combo-card-img-wrapper" style="height: 240px; position: relative;">
                                         {{-- Duration Badge --}}
-                                        @if($tour->duration_days && $tour->duration_nights)
+                                        @if($tour->duration_days)
                                         <div class="tour-duration-badge">
-                                            {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
+                                            {{ $tour->duration_days }}N{{ $tour->duration_nights > 0 ? $tour->duration_nights . 'Đ' : '' }}
                                         </div>
                                         @endif
                                       

@@ -51,7 +51,7 @@
                         </td>
                         <td>
                             <span class="badge-soft badge-soft-secondary px-3">
-                                <i class="bi bi-clock me-1"></i>{{ $tour->duration_days }} Ngày {{ $tour->duration_nights }} Đêm
+                                <i class="bi bi-clock me-1"></i>{{ $tour->duration_days }} Ngày {{ $tour->duration_nights > 0 ? $tour->duration_nights . ' Đêm' : '' }}
                             </span>
                         </td>
                         <td>

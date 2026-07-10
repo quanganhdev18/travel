@@ -89,25 +89,7 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
 Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
 
-// Ticket Booking Routes (require authentication) - MUST be before {slug} route
-Route::middleware(['auth'])->group(function () {
-    Route::get('/tickets/checkout', [TicketBookingController::class, 'checkout'])
-        ->name('frontend.tickets.checkout');
-
-    Route::post('/tickets/book', [TicketBookingController::class, 'store'])
-        ->name('frontend.tickets.book');
-
-    Route::get('/tickets/booking/{id}/success', [TicketBookingController::class, 'success'])
-        ->name('frontend.tickets.booking.success');
-
-    Route::post('/api/tickets/apply-coupon', [TicketBookingController::class, 'applyCoupon'])
-        ->name('frontend.tickets.apply_coupon');
-});
-
-// VNPay Callbacks for Tickets
-Route::get('/tickets/vnpay-return', [TicketBookingController::class, 'vnpayReturn'])
-    ->name('frontend.tickets.vnpay_return');
-
+// Ticket Booking Routes removed - tickets can only be booked along with tours
 // Ticket detail - MUST be last to avoid conflicts
 Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
 

@@ -73,19 +73,13 @@
                         </div>
 
                         @if($ticketBooking->booking_status === 'confirmed')
-                            <a href="{{ route('frontend.tickets.booking.success', $ticketBooking->id) }}" 
-                               class="btn btn-sm btn-primary rounded-pill px-3">
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" onclick="alert('Tính năng đang được nâng cấp')">
                                 <i class="bi bi-qr-code me-1"></i>{{ __('Xem vé') }}
-                            </a>
+                            </button>
                         @else
-                            <a href="{{ route('frontend.tickets.checkout', [
-                                'ticket_id' => $ticket?->id,
-                                'ticket_option_id' => $ticketBooking->ticket_option_id,
-                                'quantity' => $ticketBooking->quantity,
-                                'visit_date' => $ticketBooking->visit_date->format('Y-m-d')
-                            ]) }}" class="btn btn-sm btn-warning rounded-pill px-3">
-                                <i class="bi bi-credit-card me-1"></i>{{ __('Thanh toán') }}
-                            </a>
+                            <button type="button" class="btn btn-sm btn-secondary rounded-pill px-3" onclick="alert('Không thể thanh toán vé lẻ lúc này')">
+                                <i class="bi bi-info-circle me-1"></i>{{ __('Chờ xử lý') }}
+                            </button>
                         @endif
                     </div>
                 </div>

@@ -203,7 +203,7 @@
                 <td class="t-value">
                     <span class="em">{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}</span>
                     đến {{ \Carbon\Carbon::parse($schedule->return_date)->format('d/m/Y') }}
-                    <span style="color:#64748b;">({{ $durationDays }} Ngày {{ $durationNights }} Đêm)</span>
+                    <span style="color:#64748b;">({{ $durationDays }} Ngày{{ $durationNights > 0 ? ' ' . $durationNights . ' Đêm' : '' }})</span>
                 </td>
             </tr>
             <tr>

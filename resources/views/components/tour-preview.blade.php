@@ -32,12 +32,12 @@
             @endif
 
             <!-- Duration -->
-            @if($tour->duration_days && $tour->duration_nights)
+            @if($tour->duration_days)
             <div class="preview-item">
                 <i class="bi bi-clock-fill"></i>
                 <div>
                     <small class="d-block">Thời gian</small>
-                    <strong>{{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ</strong>
+                    <strong>{{ $tour->duration_days }}N{{ $tour->duration_nights > 0 ? $tour->duration_nights . 'Đ' : '' }}</strong>
                 </div>
             </div>
             @endif

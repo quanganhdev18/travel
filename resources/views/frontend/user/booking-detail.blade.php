@@ -83,7 +83,7 @@
                                     <span><i class="bi bi-geo-alt me-1 text-danger"></i>{{ $tour->destination->name }}</span>
                                 @endif
                                 @if($tour)
-                                    <span><i class="bi bi-clock me-1 text-warning"></i>{{ $tour->duration_days }} ngày {{ $tour->duration_nights }} đêm</span>
+                                    <span><i class="bi bi-clock me-1 text-warning"></i>{{ $tour->duration_days }} ngày{{ $tour->duration_nights > 0 ? ' ' . $tour->duration_nights . ' đêm' : '' }}</span>
                                 @endif
                                 @if($booking->tour_schedule)
                                     <span><i class="bi bi-calendar-event me-1 text-success"></i>{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}@if($tour?->departure_time) ({{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }})@endif</span>

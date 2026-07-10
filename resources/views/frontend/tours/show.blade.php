@@ -301,7 +301,7 @@
 
                 <span class="d-flex align-items-center">
                     <i class="bi bi-clock fs-5 me-2 text-warning"></i>
-                    {{ $tour->duration_days ?? 0 }} {{ __('ngày') }} {{ $tour->duration_nights ?? 0 }} {{ __('đêm') }}
+                    {{ $tour->duration_days ?? 0 }} {{ __('ngày') }}{{ ($tour->duration_nights ?? 0) > 0 ? ' ' . ($tour->duration_nights ?? 0) . ' ' . __('đêm') : '' }}
                 </span>
 
                 @if($tour->departure_time)
