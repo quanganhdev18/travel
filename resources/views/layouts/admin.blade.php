@@ -318,14 +318,14 @@
 
         <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
-            @hasanyrole('Super Admin|Admin')
+            @hasanyrole('Super Admin|Admin|Staff')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-grid-1x2"></i> Tổng quan
                 </a>
             </li>
             @endhasanyrole
-            @hasanyrole('Super Admin|Admin|Staff|cskh')
+            @hasanyrole('Super Admin|Admin|cskh')
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
                     <i class="bi bi-chat-dots"></i> Live Chat
@@ -334,7 +334,7 @@
             @endhasanyrole
         </ul>
 
-        @hasanyrole('Super Admin|Admin')
+        @hasanyrole('Super Admin|Admin|Staff')
         <div class="group-title">Nghiệp vụ kinh doanh</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -402,11 +402,13 @@
                     <i class="bi bi-images"></i> Banner quảng cáo
                 </a>
             </li>
+            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
                     <i class="bi bi-people"></i> Tài khoản & Phân quyền
                 </a>
             </li>
+            @endhasanyrole
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/holidays*') ? 'active' : '' }}" href="{{ route('admin.holidays.index') }}">
                     <i class="bi bi-calendar-event"></i> Quản lý ngày lễ

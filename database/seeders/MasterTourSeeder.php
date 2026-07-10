@@ -681,7 +681,7 @@ class MasterTourSeeder extends Seeder
                         [
                             'return_date' => $retDate->toDateTimeString(),
                             'capacity' => 20,
-                            'available_seats' => rand(5, 20),
+                            'available_seats' => 20,
                             'status' => 'available',
                         ]
                     );

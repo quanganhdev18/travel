@@ -281,7 +281,8 @@
         <a href="{{ url('/') }}" class="admin-brand">
             <i class="bi bi-cursor-fill"></i>
             <div>Travel<span>Wonder</span></div>
-              <div class="group-title">Bảng điều khiển</div>
+        </a>
+        <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('guide.dashboard') ? 'active' : '' }}" href="{{ route('guide.dashboard') }}">

@@ -28,11 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if (Auth::user()->role === 'admin') {
+        if (Auth::user()->role === 'admin' || Auth::user()->role === 'staff') {
             return redirect()->intended('/admin/dashboard');
         }
 
-        if (Auth::user()->role === 'staff' || Auth::user()->role === 'cskh') {
+        if (Auth::user()->role === 'cskh') {
             return redirect()->intended(route('admin.chat.index', absolute: false));
         }
 

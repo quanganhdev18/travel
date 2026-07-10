@@ -39,6 +39,8 @@
                                 <span class="badge bg-danger">Admin</span>
                             @elseif($user->role === 'staff')
                                 <span class="badge bg-warning text-dark">Nhân viên</span>
+                            @elseif($user->role === 'cskh')
+                                <span class="badge bg-primary">Nhân viên CSKH</span>
                             @elseif($user->role === 'guide')
                                 <span class="badge bg-info text-dark">Hướng dẫn viên</span>
                             @else

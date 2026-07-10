@@ -52,8 +52,12 @@ class GoogleAuthController extends Controller
 
         Auth::login($user, remember: true);
 
-        if ($user->role === 'admin') {
+        if ($user->role === 'admin' || $user->role === 'staff') {
             return redirect()->intended('/admin/dashboard');
+        }
+
+        if ($user->role === 'cskh') {
+            return redirect()->intended(route('admin.chat.index', absolute: false));
         }
 
         if ($user->role === 'guide') {

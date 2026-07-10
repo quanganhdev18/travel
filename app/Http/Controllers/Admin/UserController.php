@@ -33,7 +33,7 @@ class UserController extends Controller
 
         // Only admin can assign roles
         if (auth()->user()->role === 'admin') {
-            $rules['role'] = ['required', Rule::in(['admin', 'staff', 'guide', 'customer'])];
+            $rules['role'] = ['required', Rule::in(['admin', 'staff', 'cskh', 'guide', 'customer'])];
         }
 
         $validated = $request->validate($rules);
@@ -68,7 +68,7 @@ class UserController extends Controller
 
         // Only admin can assign/change roles
         if (auth()->user()->role === 'admin') {
-            $rules['role'] = ['required', Rule::in(['admin', 'staff', 'guide', 'customer'])];
+            $rules['role'] = ['required', Rule::in(['admin', 'staff', 'cskh', 'guide', 'customer'])];
         }
 
         $validated = $request->validate($rules);

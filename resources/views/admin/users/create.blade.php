@@ -49,6 +49,7 @@
                         <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                             <option value="customer" {{ old('role') == 'customer' ? 'selected' : '' }}>Khách hàng</option>
                             <option value="guide" {{ old('role') == 'guide' ? 'selected' : '' }}>Hướng dẫn viên</option>
+                            <option value="cskh" {{ old('role') == 'cskh' ? 'selected' : '' }}>Nhân viên CSKH</option>
                             <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Nhân viên</option>
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>
