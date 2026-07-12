@@ -15,7 +15,7 @@ class TourController extends Controller
             'departure_location',
             'tour_images',
             'tour_schedules' => function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today())->orderBy('departure_date', 'asc');
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3))->orderBy('departure_date', 'asc');
             },
             'tour_itineraries.activities',
             'categories',

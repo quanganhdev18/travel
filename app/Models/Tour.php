@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
@@ -119,7 +120,7 @@ class Tour extends Model
     public function activeSchedules()
     {
         return $this->hasMany(TourSchedule::class, 'tour_id')
-            ->where('departure_date', '>=', now())
+            ->whereDate('departure_date', '>=', Carbon::today()->addDays(3))
             ->where('status', 'available')
             ->orderBy('departure_date', 'asc');
     }

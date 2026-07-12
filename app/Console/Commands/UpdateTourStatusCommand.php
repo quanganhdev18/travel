@@ -28,10 +28,10 @@ class UpdateTourStatusCommand extends Command
      */
     public function handle(): int
     {
-        $today = now()->startOfDay();
+        $todayDate = now()->toDateString();
 
-        $scheduleExists = TourSchedule::where('departure_date', '<=', $today)
-            ->where('return_date', '>=', $today)
+        $scheduleExists = TourSchedule::whereDate('departure_date', '<=', $todayDate)
+            ->whereDate('return_date', '>=', $todayDate)
             ->exists();
 
         if (! $scheduleExists) {

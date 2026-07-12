@@ -103,7 +103,7 @@ test('booking stores successfully for flight transport', function () {
     ]);
 
     $booking = Booking::where('user_id', $user->id)->first();
-    $response->assertRedirect(route('home'));
+    $response->assertRedirect(route('frontend.tours.booking_success', $booking->id));
     $response->assertSessionHas('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
 });
 
@@ -148,7 +148,8 @@ test('booking stores successfully for bus transport', function () {
         'transport_type' => 'bus',
     ]);
 
-    $response->assertRedirect(route('home'));
+    $booking = Booking::where('user_id', $user->id)->first();
+    $response->assertRedirect(route('frontend.tours.booking_success', $booking->id));
     $response->assertSessionHas('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
 });
 
@@ -193,7 +194,8 @@ test('booking stores successfully for self transport', function () {
         'transport_type' => 'self',
     ]);
 
-    $response->assertRedirect(route('home'));
+    $booking = Booking::where('user_id', $user->id)->first();
+    $response->assertRedirect(route('frontend.tours.booking_success', $booking->id));
     $response->assertSessionHas('success', 'Đặt tour thành công. Bạn tự túc phương tiện di chuyển.');
 });
 
@@ -372,5 +374,78 @@ test('vnpay ipn updates payment status correctly', function () {
     $this->assertDatabaseHas('bookings', [
         'id' => $booking->id,
         'booking_status' => 'confirmed',
+    ]);
+});
+
+test('authenticated user cannot access checkout for schedule starting within 3 days', function () {
+    $user = User::factory()->create();
+
+    // Create a schedule starting 2 days from now
+    $closeSchedule = TourSchedule::create([
+        'tour_id' => $this->tour->id,
+        'departure_date' => Carbon::now()->addDays(2)->toDateTimeString(),
+        'return_date' => Carbon::now()->addDays(4)->toDateTimeString(),
+        'capacity' => 20,
+        'available_seats' => 20,
+        'status' => 'available',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('frontend.tours.checkout', [
+        'schedule_id' => $closeSchedule->id,
+        'adults' => 2,
+        'children' => 0,
+    ]));
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
+});
+
+test('booking store fails for schedule starting within 3 days', function () {
+    $user = User::factory()->create();
+
+    // Create a schedule starting 2 days from now
+    $closeSchedule = TourSchedule::create([
+        'tour_id' => $this->tour->id,
+        'departure_date' => Carbon::now()->addDays(2)->toDateTimeString(),
+        'return_date' => Carbon::now()->addDays(4)->toDateTimeString(),
+        'capacity' => 20,
+        'available_seats' => 20,
+        'status' => 'available',
+    ]);
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
+        'schedule_id' => $closeSchedule->id,
+        'adults' => 2,
+        'children' => 0,
+        'customer_name' => 'Nguyễn Văn A',
+        'customer_phone' => '0987654321',
+        'customer_email' => 'customer@example.com',
+        'total_price' => 7000000,
+        'transport_type' => 'self',
+        'passengers' => [
+            'adult' => [
+                [
+                    'full_name' => 'Nguyễn Văn A',
+                    'identity_number' => '036123456789',
+                    'date_of_birth' => '1996-05-18',
+                    'gender' => 'male',
+                ],
+                [
+                    'full_name' => 'Nguyễn Thị B',
+                    'identity_number' => '036123456790',
+                    'date_of_birth' => '1998-05-18',
+                    'gender' => 'female',
+                ],
+            ],
+        ],
+        'payment_type' => 'full',
+        'payment_method' => 'transfer',
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
+
+    $this->assertDatabaseMissing('bookings', [
+        'tour_schedule_id' => $closeSchedule->id,
     ]);
 });
