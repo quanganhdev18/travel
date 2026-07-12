@@ -1009,8 +1009,8 @@
                 setTimeout(() => {
                     transportLoading.style.display = 'none';
                     let buses = [
-                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', price: 400000 * totalPersonsCount },
-                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', price: 350000 * totalPersonsCount }
+                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', basePrice: 400000, price: 400000 * totalPersonsCount },
+                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', basePrice: 350000, price: 350000 * totalPersonsCount }
                     ];
                     
                     let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Xe") }}</h5>';
@@ -1032,8 +1032,8 @@
                                     <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
                                     <div class="small text-muted">{{ __("Khởi hành:") }} ${bus.time}</div>
                                 </div>
-                                <div class="fw-bold text-danger fs-5">
-                                    + ${formatCurrencyDynamic(bus.price)}
+                                <div class="fw-bold text-danger fs-5 text-end">
+                                    + ${formatCurrencyDynamic(bus.basePrice)} <span class="fs-6 text-muted fw-normal">/người</span>
                                 </div>
                             </div>
                         </div>

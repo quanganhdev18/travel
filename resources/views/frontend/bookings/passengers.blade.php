@@ -49,7 +49,18 @@
             @endif
 
             @if(!$isLocked && !$booking->is_passenger_list_submitted)
+                @php
+                    $totalPassengers = $booking->adults_count + $booking->children_count;
+                @endphp
+
+                @if($totalPassengers > 3)
+                <div class="alert alert-warning shadow-sm border-0">
+                    <i class="bi bi-info-circle-fill me-2"></i> Do số lượng hành khách trên 3 người, vui lòng sử dụng chức năng <strong>Tải Lên Excel</strong> để bổ sung danh sách nhằm tiết kiệm thời gian.
+                </div>
+                @endif
+
                 <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+                    @if($totalPassengers <= 3)
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active fw-bold px-4" id="pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
                             <i class="bi bi-pencil-square me-2"></i> Nhập Thủ Công
@@ -60,9 +71,17 @@
                             <i class="bi bi-file-earmark-excel me-2"></i> Tải Lên Excel
                         </button>
                     </li>
+                    @else
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold px-4" id="pills-excel-tab" data-bs-toggle="pill" data-bs-target="#pills-excel" type="button" role="tab">
+                            <i class="bi bi-file-earmark-excel me-2"></i> Tải Lên Excel
+                        </button>
+                    </li>
+                    @endif
                 </ul>
 
                 <div class="tab-content" id="pills-tabContent">
+                    @if($totalPassengers <= 3)
                     <!-- Tab Thủ Công -->
                     <div class="tab-pane fade show active" id="pills-manual" role="tabpanel">
                         <form action="{{ route('frontend.bookings.passengers.manual', $booking->id) }}" method="POST">
@@ -147,9 +166,10 @@
                             </div>
                         </form>
                     </div>
+                    @endif
 
                     <!-- Tab Excel -->
-                    <div class="tab-pane fade" id="pills-excel" role="tabpanel">
+                    <div class="tab-pane fade {{ $totalPassengers > 3 ? 'show active' : '' }}" id="pills-excel" role="tabpanel">
                         <div class="card border-0 shadow-sm">
                             <div class="card-body p-5 text-center">
                                 <i class="bi bi-file-earmark-excel text-success mb-3" style="font-size: 3rem;"></i>
