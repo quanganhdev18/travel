@@ -45,7 +45,7 @@ class HomeController extends Controller
         }])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today());
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
             })
             ->latest()
             ->take(8)
@@ -99,7 +99,7 @@ class HomeController extends Controller
         ])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today());
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
             });
 
         if ($request->filled('keyword')) {
@@ -149,7 +149,7 @@ class HomeController extends Controller
         $date = $request->input('date') ?? $request->input('departure_date');
         if ($date) {
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
+                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
             });
         }
 
@@ -195,7 +195,7 @@ class HomeController extends Controller
         $query = Tour::with(['destination', 'departure_location', 'tour_images'])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today());
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
             });
 
         if ($request->filled('keyword')) {
@@ -239,7 +239,7 @@ class HomeController extends Controller
         if ($request->filled('date')) {
             $date = $request->date;
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->toDateString()));
+                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
             });
         }
 

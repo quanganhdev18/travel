@@ -272,6 +272,34 @@
             background: #dbeafe;
             color: var(--admin-primary) !important;
         }
+
+        /* Responsive Sidebar */
+        @media (max-width: 991px) {
+            .sidebar {
+                left: -260px;
+                transition: left 0.3s ease;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0,0,0,0.4);
+                z-index: 999;
+                display: none;
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
     </style>
 </head>
 
@@ -300,19 +328,20 @@
                 </a>
             </li>
         </ul>
-    </div>�n mãi & Coupon
-                </a>
-            </li>
-        </ul>
     </div>
 
     <div class="main-content">
         <div class="topbar">
-            <h1 class="page-title">@yield('page-title', 'Bảng Điều Khiển')</h1>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-secondary d-lg-none" id="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="page-title">@yield('page-title', 'Bảng Điều Khiển')</h1>
+            </div>
             
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border" title="Xem trang chủ">
-                    <i class="bi bi-box-arrow-up-right me-1"></i> Xem Website
+                    <i class="bi bi-box-arrow-up-right"></i> <span class="d-none d-sm-inline">Xem Website</span>
                 </a>
                 
                 <div class="dropdown">
@@ -380,6 +409,28 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('js/pjax-navigation.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const toggle = document.getElementById('sidebar-toggle');
+            
+            if (toggle && sidebar) {
+                const overlay = document.createElement('div');
+                overlay.className = 'sidebar-overlay';
+                document.body.appendChild(overlay);
+                
+                toggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                });
+                
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                });
+            }
+        });
+    </script>
     @yield('scripts')
     @stack('scripts')
 </body>
