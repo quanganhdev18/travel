@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,7 @@ Route::get('/tours/search', function (Request $request) {
     return redirect()->route('frontend.tours.index', $request->query());
 })->name('frontend.tours.search');
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
+Route::get('/api/provinces/{province}/wards', [LocationController::class, 'getWards'])->name('api.provinces.wards');
 
 use App\Http\Controllers\Admin\AddonController;
 // Frontend Controllers
