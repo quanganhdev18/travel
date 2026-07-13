@@ -696,6 +696,69 @@
         </div>
         </div> <!-- Close mb-5 reveal-up -->
 
+        @if(isset($relatedTours) && $relatedTours->count() > 0)
+        <div class="mt-5 pt-4 border-top reveal-up">
+            <h3 class="fw-bold text-dark mb-4">{{ __('Tour cùng danh mục') }}</h3>
+            <div class="row g-4">
+                @foreach($relatedTours as $relatedTour)
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <a href="{{ route('frontend.tours.show', $relatedTour->slug) }}" class="text-decoration-none h-100 d-block">
+                            <div class="combo-card h-100">
+                                <div class="combo-card-img-wrapper" style="height: 200px; position: relative;">
+                                    @if($relatedTour->duration_days && $relatedTour->duration_nights)
+                                        <div class="tour-duration-badge">
+                                            {{ $relatedTour->duration_days }}N{{ $relatedTour->duration_nights }}Đ
+                                        </div>
+                                    @endif
+
+                                    @php
+                                        $rPrimaryImage = $relatedTour->tour_images->where('is_primary', 1)->first()
+                                                     ?? $relatedTour->tour_images->first();
+                                        $rTourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                        if ($rPrimaryImage && !empty($rPrimaryImage->image_url)) {
+                                            if (\Illuminate\Support\Str::startsWith($rPrimaryImage->image_url, ['http://', 'https://'])) {
+                                                $rTourImage = $rPrimaryImage->image_url;
+                                            } else {
+                                                $rTourImage = asset(ltrim($rPrimaryImage->image_url, '/'));
+                                            }
+                                        }
+                                        $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
+                                        $rStars = $relatedTour->hotel_stars ?? 4;
+                                    @endphp
+                                    <img src="{{ $rTourImage }}"
+                                         alt="{{ $relatedTour->title }}"
+                                         class="w-100 h-100 object-fit-cover"
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
+                                </div>
+                                <div class="combo-card-body">
+                                    <h3 class="combo-title" style="font-size: 1.1rem; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-weight: 700; color: var(--dark-blue);">
+                                        {{ $relatedTour->title }}
+                                    </h3>
+                                    <div class="combo-stars mb-2">
+                                        @for($i = 1; $i <= $rStars; $i++)
+                                            <i class="bi bi-star-fill text-warning" style="font-size: 0.85rem;"></i>
+                                        @endfor
+                                    </div>
+                                    <div class="combo-location mb-3" style="font-size: 0.9rem;">
+                                        <i class="bi bi-geo-alt text-primary"></i>
+                                        <span class="text-muted ms-1">{{ $rDestinationName }}</span>
+                                    </div>
+                                    <div class="combo-footer d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="combo-price-label text-muted small" style="font-size: 0.75rem;">{{ __('Giá từ:') }}</div>
+                                            <div class="combo-price-val fw-bold text-danger" style="font-size: 1.1rem;">{{ format_currency($relatedTour->base_price ?? 0) }}</div>
+                                        </div>
+                                        <span class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.85rem;">{{ __('Chi tiết') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
     </div>
 </div>
 

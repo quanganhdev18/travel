@@ -27,11 +27,13 @@ class ScheduleGuide extends Model
     protected $fillable = [
         'tour_schedule_id',
         'guide_id',
+        'is_backup',
     ];
 
     protected $casts = [
         'tour_schedule_id' => 'int',
         'guide_id' => 'int',
+        'is_backup' => 'bool',
     ];
 
     public function tour_schedule()

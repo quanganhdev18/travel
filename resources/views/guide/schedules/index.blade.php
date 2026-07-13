@@ -47,6 +47,13 @@
                             <td>
                                 <strong>{{ $tour->name }}</strong>
                                 <div class="text-muted small mt-1">Mã: {{ $tour->tour_code }}</div>
+                                <div class="mt-1">
+                                    @if($scheduleGuide->is_backup)
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-2 py-0.5" style="font-size: 10px; font-weight: 500;">HDV Dự phòng</span>
+                                    @else
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-2 py-0.5" style="font-size: 10px; font-weight: 500;">HDV Chính</span>
+                                    @endif
+                                </div>
                             </td>
                             <td>{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
                             <td>{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
