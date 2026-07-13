@@ -253,3 +253,45 @@
         font-size: 1rem !important;
     }
 }
+
+/* Favorite Button Styles in Tour Preview Overlay */
+.tour-preview-overlay .favorite-form {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 99;
+    margin: 0;
+}
+
+.tour-preview-overlay .favorite-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tour-preview-overlay .favorite-btn i {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.tour-preview-overlay .favorite-btn:hover {
+    transform: scale(1.08);
+    background: #ffffff;
+}
+
+.tour-preview-overlay .favorite-btn.active {
+    color: #ff3366;
+}
+
+.tour-preview-overlay .favorite-btn.active i {
+    color: #ff3366;
+}

@@ -11,8 +11,27 @@
      class="tour-preview-overlay"
      style="display: none;"
      @click.stop>
+    
+    @auth
+    @php
+        $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+            ->where('tour_id', $tour->id)
+            ->exists();
+    @endphp
+    <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
+          method="POST"
+          class="favorite-form"
+          onclick="event.stopPropagation();">
+        @csrf
+        <button type="submit"
+                class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+            <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+        </button>
+    </form>
+    @endauth
+
     <div class="tour-preview-content">
-        <div class="d-flex justify-content-between align-items-start mb-2">
+        <div class="d-flex justify-content-between align-items-start mb-2 {{ auth()->check() ? 'pe-5' : '' }}">
             <h5 class="fw-bold mb-0">{{ \Illuminate\Support\Str::limit($tour->title, 45) }}</h5>
             @if($tour->categories->isNotEmpty())
                 <span class="badge bg-primary-subtle ms-2 flex-shrink-0">{{ $tour->categories->first()->name }}</span>

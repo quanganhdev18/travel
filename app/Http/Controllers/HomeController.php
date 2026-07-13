@@ -53,7 +53,7 @@ class HomeController extends Controller
 
         $tickets = Ticket::with(['destination', 'ticket_options'])
             ->latest()
-            ->take(4)
+            ->take(12)
             ->get();
 
         $allDestinations = Destination::all();
