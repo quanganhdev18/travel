@@ -72,17 +72,25 @@
                         <label class="form-label text-muted">Ảnh đại diện Tour</label>
                         <input type="file" name="primary_image" class="form-control" accept="image/*">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Điểm khởi hành <span class="text-danger">*</span></label>
-                        <select name="departure_location_id" class="form-control" required>
-                            <option value="">-- Chọn điểm khởi hành --</option>
-                            @foreach($destinations as $dest)
-                            <option value="{{ $dest->id }}"
-                                {{ (old('departure_location_id', $tour->departure_location_id ?? '') == $dest->id) ? 'selected' : '' }}>
-                                {{ $dest->name }}
-                            </option>
-                            @endforeach
-                        </select>
+                    <div class="mb-3 border p-3 rounded bg-light">
+                        <label class="form-label fw-bold">Điểm khởi hành <span class="text-danger">*</span></label>
+                        <div class="mb-2">
+                            <label class="form-label text-muted small">Tỉnh / Thành phố</label>
+                            <select name="departure_province_id" id="departure_province_id" class="form-select province-select" data-target="#departure_ward_id" required>
+                                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                @foreach($provinces as $province)
+                                <option value="{{ $province->id }}" {{ old('departure_province_id') == $province->id ? 'selected' : '' }}>
+                                    {{ $province->full_name ?? $province->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label text-muted small">Quận / Huyện / Xã</label>
+                            <select name="departure_ward_id" id="departure_ward_id" class="form-select" required disabled>
+                                <option value="">-- Chọn Xã/Phường --</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">Giờ khởi hành</label>
@@ -109,14 +117,25 @@
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label text-muted">Điểm đến</label>
-                        <select name="destination_id" class="form-select" required>
-                            <option value="">-- Chọn điểm đến --</option>
-                            @foreach($destinations as $dest)
-                            <option value="{{ $dest->id }}">{{ $dest->name }}</option>
-                            @endforeach
-                        </select>
+                    <div class="mb-3 border p-3 rounded bg-light">
+                        <label class="form-label fw-bold">Điểm đến <span class="text-danger">*</span></label>
+                        <div class="mb-2">
+                            <label class="form-label text-muted small">Tỉnh / Thành phố</label>
+                            <select name="destination_province_id" id="destination_province_id" class="form-select province-select" data-target="#destination_ward_id" required>
+                                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                @foreach($provinces as $province)
+                                <option value="{{ $province->id }}" {{ old('destination_province_id') == $province->id ? 'selected' : '' }}>
+                                    {{ $province->full_name ?? $province->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label text-muted small">Quận / Huyện / Xã</label>
+                            <select name="destination_ward_id" id="destination_ward_id" class="form-select" required disabled>
+                                <option value="">-- Chọn Xã/Phường --</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -210,6 +229,52 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = false;
             spinner.classList.add('d-none');
             btnText.textContent = 'Lưu và Tiếp tục thêm lịch trình';
+        });
+    });
+
+    // Initialize Select2
+    $('.province-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: '-- Chọn Tỉnh/Thành phố --'
+    });
+
+    $('#departure_ward_id, #destination_ward_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: '-- Chọn Xã/Phường --'
+    });
+
+    // Handle province selection to load wards
+    const provinceSelects = document.querySelectorAll('.province-select');
+    provinceSelects.forEach(select => {
+        $(select).on('change', function() {
+            const provinceId = this.value;
+            const targetSelector = this.getAttribute('data-target');
+            const $wardSelect = $(targetSelector);
+            
+            $wardSelect.html('<option value="">-- Đang tải... --</option>').prop('disabled', true).trigger('change');
+
+            if (provinceId) {
+                fetch(`/api/provinces/${provinceId}/wards`)
+                    .then(response => response.json())
+                    .then(data => {
+                        $wardSelect.html('<option value="">-- Chọn Xã/Phường --</option>');
+                        data.forEach(ward => {
+                            const option = document.createElement('option');
+                            option.value = ward.id;
+                            option.textContent = ward.name_with_type || ward.name;
+                            $wardSelect.append(option);
+                        });
+                        $wardSelect.prop('disabled', false).trigger('change');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching wards:', error);
+                        $wardSelect.html('<option value="">-- Lỗi tải dữ liệu --</option>').trigger('change');
+                    });
+            } else {
+                $wardSelect.html('<option value="">-- Chọn Xã/Phường --</option>').trigger('change');
+            }
         });
     });
 });
