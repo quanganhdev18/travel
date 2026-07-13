@@ -23,25 +23,32 @@ async function handleFavoriteSubmit(e) {
     e.stopPropagation();
 
     const form = e.currentTarget;
-    const button = form.querySelector('button[type="submit"]');
-    const icon = button.querySelector('i');
-    const formData = new FormData(form);
+    const actionUrl = form.getAttribute('action');
+    const sameTourForms = document.querySelectorAll(`form[action="${actionUrl}"]`);
+    const sameTourButtons = [];
+    
+    sameTourForms.forEach(tForm => {
+        const btn = tForm.querySelector('button[type="submit"]');
+        if (btn) {
+            sameTourButtons.push(btn);
+        }
+    });
 
     // Lưu trạng thái ban đầu
-    const wasActive = button.classList.contains('active');
-    const originalDisabled = button.disabled;
-
-    // Disable button để tránh double click
-    button.disabled = true;
+    const button = form.querySelector('button[type="submit"]');
+    const wasActive = button ? button.classList.contains('active') : false;
+    
+    // Disable tất cả các nút cùng tour để tránh double click
+    sameTourButtons.forEach(btn => btn.disabled = true);
 
     try {
-        const response = await fetch(form.action, {
+        const response = await fetch(actionUrl, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
             },
-            body: formData
+            body: new FormData(form)
         });
 
         const data = await response.json();
@@ -49,20 +56,23 @@ async function handleFavoriteSubmit(e) {
         if (data.success) {
             // Toggle favorite state
             if (typeof data.is_favorite !== 'undefined') {
-                // Đây là toggle action
-                if (data.is_favorite) {
-                    button.classList.add('active');
-                    if (icon) {
-                        icon.classList.remove('bi-heart');
-                        icon.classList.add('bi-heart-fill');
+                // Đây là toggle action - cập nhật tất cả các nút của cùng tour
+                sameTourButtons.forEach(btn => {
+                    const icon = btn.querySelector('i');
+                    if (data.is_favorite) {
+                        btn.classList.add('active');
+                        if (icon) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                        }
+                    } else {
+                        btn.classList.remove('active');
+                        if (icon) {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                        }
                     }
-                } else {
-                    button.classList.remove('active');
-                    if (icon) {
-                        icon.classList.remove('bi-heart-fill');
-                        icon.classList.add('bi-heart');
-                    }
-                }
+                });
             } else {
                 // Đây là destroy action (từ trang favorites)
                 // Ẩn card tour với animation
@@ -95,7 +105,7 @@ async function handleFavoriteSubmit(e) {
         } else {
             // Khôi phục trạng thái nếu có lỗi
             if (wasActive) {
-                button.classList.add('active');
+                sameTourButtons.forEach(btn => btn.classList.add('active'));
             }
             showToast('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
         }
@@ -103,12 +113,12 @@ async function handleFavoriteSubmit(e) {
         console.error('Favorite error:', error);
         // Khôi phục trạng thái
         if (wasActive) {
-            button.classList.add('active');
+            sameTourButtons.forEach(btn => btn.classList.add('active'));
         }
         showToast('Có lỗi xảy ra. Vui lòng thử lại!', 'error');
     } finally {
-        // Enable lại button
-        button.disabled = originalDisabled;
+        // Enable lại tất cả các nút
+        sameTourButtons.forEach(btn => btn.disabled = false);
     }
 }
 

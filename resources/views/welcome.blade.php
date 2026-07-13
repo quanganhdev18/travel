@@ -193,6 +193,81 @@
         margin-bottom: 1.5rem;
     }
 
+    /* Ticket Slider Styles */
+    .ticket-slider-section { position: relative; }
+    .ticket-slider-outer {
+        position: relative;
+        padding: 0 36px;
+    }
+    .ticket-slider-viewport {
+        overflow: hidden;
+    }
+    .ticket-slider-track {
+        display: flex;
+        gap: 20px;
+        will-change: transform;
+    }
+    .ticket-slider-item {
+        flex: 0 0 calc(25% - 15px);
+        min-width: 0;
+    }
+    @media (max-width: 991px) {
+        .ticket-slider-item { flex: 0 0 calc(50% - 10px); }
+    }
+    @media (max-width: 575px) {
+        .ticket-slider-item { flex: 0 0 calc(100% - 0px); }
+        .ticket-slider-outer { padding: 0 28px; }
+    }
+    .ticket-slider-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 20;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: none;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #1e3a5f;
+        cursor: pointer;
+        transition: background 0.25s, box-shadow 0.25s, transform 0.25s;
+        flex-shrink: 0;
+    }
+    .ticket-slider-btn:hover {
+        background: var(--primary-color, #007CE8);
+        color: #fff;
+        box-shadow: 0 6px 24px rgba(0,124,232,0.35);
+        transform: translateY(-50%) scale(1.1);
+    }
+    .ticket-slider-btn.prev { left: 0; }
+    .ticket-slider-btn.next { right: 0; }
+    .ticket-slider-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 20px;
+    }
+    .ticket-slider-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .ticket-slider-dot.active {
+        background: var(--primary-color, #007CE8);
+        width: 24px;
+        border-radius: 4px;
+    }
+
     /* Tour Card Styles */
     .combo-card-img-wrapper {
         position: relative;
@@ -780,7 +855,7 @@ if (container) {
 </script>
 @endif
 
-<section class="container py-5 mb-5 reveal-up">
+<section class="container py-5 mb-5 reveal-up ticket-slider-section">
     <div class="d-flex justify-content-between align-items-end mb-4">
         <div>
             <h2 class="section-heading">{{ __('Vé Vui Chơi & Hoạt Động') }}</h2>
@@ -793,69 +868,185 @@ if (container) {
         </a>
     </div>
 
-    <div class="row g-4">
-        @forelse($tickets as $ticket)
-            @php
-                $primaryImage = $ticket->ticket_images->where('is_primary', true)->first() 
-                    ?? $ticket->ticket_images->first();
-                
-                $ticketImage = 'https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';
-                
-                if ($primaryImage && !empty($primaryImage->image_url)) {
-                    if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
-                        $ticketImage = $primaryImage->image_url;
-                    } else {
-                        $ticketImage = asset(ltrim($primaryImage->image_url, '/'));
-                    }
-                }
-                
-                $ticketTitle = $ticket->title ?? 'Vé tham quan';
-                $destinationName = optional($ticket->destination)->name ?: 'Địa điểm';
-                $minPrice = $ticket->ticket_options->min('price') ?? 0;
-            @endphp
-            
-            <div class="col-12 col-md-6 col-lg-3">
-                <a href="{{ route('frontend.tickets.show', $ticket->slug) }}" class="text-decoration-none h-100 d-block">
-                    <div class="combo-card h-100">
-                        <div class="combo-card-img-wrapper">
-                            <span class="badge-glass">
-                                <i class="bi bi-star-fill text-warning me-1"></i>{{ __('Hot') }}
-                            </span>
+    @if($tickets->count() > 0)
+    <div class="ticket-slider-outer">
+        <button class="ticket-slider-btn prev" id="ticketPrev" aria-label="Trước">
+            <i class="bi bi-chevron-left"></i>
+        </button>
 
-                            <img src="{{ $ticketImage }}"
-                                 alt="{{ $ticketTitle }}"
-                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';">
-                        </div>
-                        <div class="combo-card-body">
-                            <h3 class="combo-title">{{ $ticketTitle }}</h3>
-                            
-                            <div class="combo-location">
-                                <i class="bi bi-geo-alt"></i>
-                                <span>{{ $destinationName }}</span>
-                            </div>
-                            
-                            <div class="combo-footer">
-                                <div>
-                                    <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                    <div class="combo-price-val">
-                                        @if($minPrice > 0)
-                                            {{ format_currency($minPrice) }}
-                                        @else
-                                            {{ __('Liên hệ') }}
-                                        @endif
+        <div class="ticket-slider-viewport">
+            <div class="ticket-slider-track" id="ticketTrack">
+                @foreach($tickets as $ticket)
+                    @php
+                        $primaryImage = $ticket->ticket_images->where('is_primary', true)->first() 
+                            ?? $ticket->ticket_images->first();
+                        
+                        $ticketImage = 'https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';
+                        
+                        if ($primaryImage && !empty($primaryImage->image_url)) {
+                            if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
+                                $ticketImage = $primaryImage->image_url;
+                            } else {
+                                $ticketImage = asset(ltrim($primaryImage->image_url, '/'));
+                            }
+                        }
+                        
+                        $ticketTitle = $ticket->title ?? 'Vé tham quan';
+                        $destinationName = optional($ticket->destination)->name ?: 'Địa điểm';
+                        $minPrice = $ticket->ticket_options->min('price') ?? 0;
+                    @endphp
+
+                    <div class="ticket-slider-item">
+                        <a href="{{ route('frontend.tickets.show', $ticket->slug) }}" class="text-decoration-none h-100 d-block">
+                            <div class="combo-card h-100">
+                                <div class="combo-card-img-wrapper">
+                                    <img src="{{ $ticketImage }}"
+                                         alt="{{ $ticketTitle }}"
+                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1513889961551-628c1e5e2ee9?q=80&w=800';">
+                                </div>
+                                <div class="combo-card-body">
+                                    <h3 class="combo-title">{{ $ticketTitle }}</h3>
+                                    
+                                    <div class="combo-location">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span>{{ $destinationName }}</span>
+                                    </div>
+                                    
+                                    <div class="combo-footer">
+                                        <div>
+                                            <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                            <div class="combo-price-val">
+                                                @if($minPrice > 0)
+                                                    {{ format_currency($minPrice) }}
+                                                @else
+                                                    {{ __('Liên hệ') }}
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                     </div>
                                 </div>
-                                <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                             </div>
-                        </div>
+                        </a>
                     </div>
-                </a>
+                @endforeach
             </div>
-        @empty
-            <div class="col-12">
-                <p class="text-muted">{{ __('Đang cập nhật vé tham quan.') }}</p>
-            </div>
-        @endforelse
+        </div>
+
+        <button class="ticket-slider-btn next" id="ticketNext" aria-label="Tiếp">
+            <i class="bi bi-chevron-right"></i>
+        </button>
     </div>
+
+    <div class="ticket-slider-dots" id="ticketDots"></div>
+    @else
+        <p class="text-muted">{{ __('Đang cập nhật vé tham quan.') }}</p>
+    @endif
 </section>
+
+<script>
+(function () {
+    const track   = document.getElementById('ticketTrack');
+    const btnPrev = document.getElementById('ticketPrev');
+    const btnNext = document.getElementById('ticketNext');
+    const dotsEl  = document.getElementById('ticketDots');
+    const section = track ? track.closest('.ticket-slider-section') : null;
+
+    if (!track) return;
+
+    const GAP    = 20;
+    const AUTO   = 4000;
+    const DUR    = 450;
+    let busy     = false;
+    let timer    = null;
+
+    const orig  = Array.from(track.querySelectorAll('.ticket-slider-item'));
+    const N     = orig.length;
+
+    if (N === 0) return;
+
+    // Clone all items
+    orig.forEach(el => track.appendChild(el.cloneNode(true)));
+    [...orig].reverse().forEach(el => track.insertBefore(el.cloneNode(true), track.firstChild));
+
+    let idx = N;
+
+    function move(i, anim) {
+        const all   = track.querySelectorAll('.ticket-slider-item');
+        const itemW = all[0].offsetWidth;
+        track.style.transition = anim ? `transform ${DUR}ms cubic-bezier(.25,.46,.45,.94)` : 'none';
+        track.style.transform  = `translateX(-${i * (itemW + GAP)}px)`;
+    }
+
+    function realIdx() { return ((idx - N) % N + N) % N; }
+
+    function buildDots() {
+        dotsEl.innerHTML = '';
+        for (let i = 0; i < N; i++) {
+            const d = document.createElement('button');
+            d.className = 'ticket-slider-dot' + (i === 0 ? ' active' : '');
+            d.setAttribute('aria-label', 'Slide ' + (i + 1));
+            d.addEventListener('click', () => {
+                if (busy) return;
+                idx = N + i;
+                move(idx, true);
+                syncDots();
+                resetTimer();
+            });
+            dotsEl.appendChild(d);
+        }
+    }
+    function syncDots() {
+        const ri = realIdx();
+        dotsEl.querySelectorAll('.ticket-slider-dot').forEach((d, i) =>
+            d.classList.toggle('active', i === ri)
+        );
+    }
+
+    function step(dir) {
+        if (busy) return;
+        busy = true;
+        idx += dir;
+        move(idx, true);
+        syncDots();
+
+        setTimeout(() => {
+            if (idx < N) {
+                idx += N;
+                move(idx, false);
+            } else if (idx >= N * 2) {
+                idx -= N;
+                move(idx, false);
+            }
+            requestAnimationFrame(() => requestAnimationFrame(() => { busy = false; }));
+        }, DUR + 16);
+    }
+
+    function startTimer() { stopTimer(); timer = setInterval(() => step(1), AUTO); }
+    function stopTimer()  { clearInterval(timer); }
+    function resetTimer() { stopTimer(); startTimer(); }
+
+    btnPrev.addEventListener('click', () => { step(-1); resetTimer(); });
+    btnNext.addEventListener('click', () => { step(1);  resetTimer(); });
+
+    if (section) {
+        section.addEventListener('mouseenter', stopTimer);
+        section.addEventListener('mouseleave', startTimer);
+    }
+
+    let sx = 0;
+    track.addEventListener('touchstart', e => { sx = e.touches[0].clientX; stopTimer(); }, { passive: true });
+    track.addEventListener('touchend',   e => {
+        const dx = e.changedTouches[0].clientX - sx;
+        if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+        resetTimer();
+    }, { passive: true });
+
+    window.addEventListener('resize', () => move(idx, false));
+
+    buildDots();
+    move(idx, false);
+    startTimer();
+})();
+</script>
 @endsection
