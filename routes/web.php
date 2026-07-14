@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\OngoingTourController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
@@ -37,10 +38,10 @@ use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
+use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
-use App\Http\Controllers\Frontend\TicketBookingController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
@@ -75,6 +76,10 @@ Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
     ->name('frontend.tours.vnpay_return');
 Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
     ->name('frontend.tours.vnpay_ipn');
+
+// Tóm tắt AI
+Route::get('/tours/{id}/ai-summary', [FrontendTourController::class, 'aiSummary'])
+    ->name('frontend.tours.ai_summary');
 
 // Tìm chuyến bay
 Route::get('/flights', [FlightController::class, 'search'])
@@ -164,10 +169,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('frontend.bookings.pay_vnpay');
 
     // Bổ sung danh sách hành khách
-    Route::get('/bookings/{id}/passengers', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'index'])->name('frontend.bookings.passengers');
-    Route::post('/bookings/{id}/passengers/manual', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'storeManual'])->name('frontend.bookings.passengers.manual');
-    Route::get('/bookings/passengers/template', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'downloadTemplate'])->name('frontend.bookings.passengers.template');
-    Route::post('/bookings/{id}/passengers/import', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'importExcel'])->name('frontend.bookings.passengers.import');
+    Route::get('/bookings/{id}/passengers', [BookingPassengerController::class, 'index'])->name('frontend.bookings.passengers');
+    Route::post('/bookings/{id}/passengers/manual', [BookingPassengerController::class, 'storeManual'])->name('frontend.bookings.passengers.manual');
+    Route::get('/bookings/passengers/template', [BookingPassengerController::class, 'downloadTemplate'])->name('frontend.bookings.passengers.template');
+    Route::post('/bookings/{id}/passengers/import', [BookingPassengerController::class, 'importExcel'])->name('frontend.bookings.passengers.import');
 });
 
 // Điểm đến
@@ -203,6 +208,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
         ->name('admin.users.toggle-status');
+
+    // Reviews
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+    Route::post('/reviews/{id}/toggle-hidden', [ReviewController::class, 'toggleHidden'])->name('admin.reviews.toggle-hidden');
 
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
@@ -382,7 +391,7 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/schedules/{schedule}/update-status', [ScheduleController::class, 'updateGroupStatus'])
         ->name('guide.schedules.update_group_status');
-        
+
     // Guide passenger actions
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/manual', [ScheduleController::class, 'storeManualPassengers'])->name('guide.passengers.manual');
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
