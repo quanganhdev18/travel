@@ -1382,14 +1382,13 @@
                                         {{-- Remove button (unfavorite) --}}
                                         <form action="{{ $t ? route('frontend.favorites.destroy', $t->id) : '#' }}"
                                               method="POST"
-                                              class="favorite-form"
-                                              onclick="event.stopPropagation();"
-                                              onsubmit="return confirm('Bỏ lưu tour này?')">
+                                              class="favorite-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit"
+                                            <button type="button"
                                                     class="favorite-btn active"
-                                                    title="Bỏ lưu">
+                                                    title="Bỏ lưu"
+                                                    onclick="event.stopPropagation(); event.preventDefault(); if(confirm('Bỏ lưu tour này?')) { this.closest('form').submit(); }">
                                                 <i class="bi bi-heart-fill"></i>
                                             </button>
                                         </form>
