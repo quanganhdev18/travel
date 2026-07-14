@@ -22,6 +22,10 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @vite(['resources/js/app.js'])
 
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
     <style>
         :root {
             --admin-primary: #007CE8;
@@ -318,14 +322,14 @@
 
         <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
-            @hasanyrole('Super Admin|Admin')
+            @hasanyrole('Super Admin|Admin|Staff')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-grid-1x2"></i> Tổng quan
                 </a>
             </li>
             @endhasanyrole
-            @hasanyrole('Super Admin|Admin|Staff|cskh')
+            @hasanyrole('Super Admin|Admin|cskh')
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
                     <i class="bi bi-chat-dots"></i> Live Chat
@@ -334,7 +338,7 @@
             @endhasanyrole
         </ul>
 
-        @hasanyrole('Super Admin|Admin')
+        @hasanyrole('Super Admin|Admin|Staff')
         <div class="group-title">Nghiệp vụ kinh doanh</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -402,11 +406,13 @@
                     <i class="bi bi-images"></i> Banner quảng cáo
                 </a>
             </li>
+            @hasanyrole('Super Admin|Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
                     <i class="bi bi-people"></i> Tài khoản & Phân quyền
                 </a>
             </li>
+            @endhasanyrole
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/holidays*') ? 'active' : '' }}" href="{{ route('admin.holidays.index') }}">
                     <i class="bi bi-calendar-event"></i> Quản lý ngày lễ
@@ -506,12 +512,15 @@
         <div class="text-center text-muted small mt-4 pt-4 border-top">
             &copy; {{ date('Y') }} Hệ thống Quản trị Travel Wonder. Bảo lưu mọi quyền.
         </div>
+
+        @yield('scripts')
+        @stack('scripts')
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/pjax-navigation.js') }}"></script>
-    @yield('scripts')
-    @stack('scripts')
 </body>
 
 </html>

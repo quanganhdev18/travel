@@ -33,11 +33,15 @@
                                     <p class="text-sm text-secondary">{{ $user->email }}</p>
                                     
                                     @if($user->role === 'admin')
-                                    <span class="badge badge-lg bg-gradient-danger">{{ $user->role_label }}</span>
+                                    <span class="badge badge-lg bg-gradient-danger">{{ $user->role_label ?? 'Admin' }}</span>
                                     @elseif($user->role === 'staff')
-                                    <span class="badge badge-lg bg-gradient-success">{{ $user->role_label }}</span>
+                                    <span class="badge badge-lg bg-gradient-success">{{ $user->role_label ?? 'Nhân viên' }}</span>
+                                    @elseif($user->role === 'cskh')
+                                    <span class="badge badge-lg bg-gradient-primary">{{ $user->role_label ?? 'Nhân viên CSKH' }}</span>
+                                    @elseif($user->role === 'guide')
+                                    <span class="badge badge-lg bg-gradient-info">{{ $user->role_label ?? 'Hướng dẫn viên' }}</span>
                                     @else
-                                    <span class="badge badge-lg bg-gradient-info">{{ $user->role_label }}</span>
+                                    <span class="badge badge-lg bg-gradient-secondary">{{ $user->role_label ?? 'Khách hàng' }}</span>
                                     @endif
 
                                     <hr class="horizontal dark my-3">

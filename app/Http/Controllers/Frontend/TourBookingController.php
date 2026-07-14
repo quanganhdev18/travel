@@ -17,6 +17,7 @@ use App\Models\TicketBooking;
 use App\Models\TicketOption;
 use App\Models\TourSchedule;
 use App\Models\UserIdentity;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -71,7 +72,13 @@ class TourBookingController extends Controller
             $totalPersons = $request->adults + $request->children;
             $schedule = TourSchedule::with('tour')->lockForUpdate()->find($request->schedule_id);
 
-            if (! $schedule || $schedule->available_seats < $totalPersons) {
+            if (! $schedule || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+                DB::rollBack();
+
+                return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
+            }
+
+            if ($schedule->available_seats < $totalPersons) {
                 DB::rollBack();
 
                 return redirect()->back()->with('error', 'Tour không còn đủ chỗ trống cho số lượng hành khách này. Vui lòng chọn ngày khác.');
@@ -237,6 +244,7 @@ class TourBookingController extends Controller
             $booking->payment_type = $request->payment_type ?? 'full';
             $booking->payment_method = $request->payment_method ?? 'transfer';
             $booking->paid_amount = 0;
+            $booking->is_passenger_list_submitted = ($totalPersons < 2);
             $booking->save();
 
             // Lưu TicketBooking
@@ -435,6 +443,10 @@ class TourBookingController extends Controller
         ]);
 
         $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons'])->findOrFail($request->schedule_id);
+
+        if (Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+            return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
+        }
         $totalPersons = $request->adults + $request->children;
 
         // Cơ chế giữ chỗ (Seat Hold) qua Cache (15 phút)
@@ -679,6 +691,7 @@ class TourBookingController extends Controller
                     $booking->update([
                         'payment_status' => $newPaymentStatus,
                         'paid_amount' => $newPaidAmount,
+                        'booking_status' => 'confirmed',
                     ]);
                 }
 

@@ -44,13 +44,35 @@
     .wizard-panel { display: none; }
     .wizard-panel.active { display: block; animation: fadeIn 0.4s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .coupon-card {
-        transition: all 0.2s ease-in-out;
-    }
     .coupon-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         border-color: var(--primary-color) !important;
+    }
+    
+    .qty-input {
+        -moz-appearance: textfield;
+    }
+    .qty-input:focus {
+        box-shadow: none !important;
+        border-color: #6c757d !important;
+        z-index: 1 !important;
+    }
+    .btn-qty-minus, .btn-qty-plus,
+    .btn-ticket-qty-minus, .btn-ticket-qty-plus,
+    .btn-addon-qty-minus, .btn-addon-qty-plus {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+    }
+    .btn-qty-minus:hover, .btn-qty-plus:hover,
+    .btn-ticket-qty-minus:hover, .btn-ticket-qty-plus:hover,
+    .btn-addon-qty-minus:hover, .btn-addon-qty-plus:hover {
+        background-color: #e9ecef;
+    }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
 </style>
 
@@ -276,7 +298,15 @@
                                                         <div class="text-danger fw-bold">{{ format_currency($option->price) }}</div>
                                                     </div>
                                                     <div class="d-flex align-items-center" style="width: 120px;">
-                                                        <input type="number" name="tickets[{{ $option->id }}]" class="form-control ticket-qty-input text-center" value="0" min="0" max="99" data-price="{{ $option->price }}">
+                                                        <div class="input-group input-group-sm">
+                                                            <button class="btn btn-outline-secondary border-end-0 btn-ticket-qty-minus" type="button" data-target="ticket-{{ $option->id }}">
+                                                                <i class="bi bi-dash"></i>
+                                                            </button>
+                                                            <input type="number" name="tickets[{{ $option->id }}]" id="ticket-{{ $option->id }}" class="form-control ticket-qty-input text-center border-secondary border-start-0 border-end-0 fw-bold bg-white qty-input" value="0" min="0" max="99" data-price="{{ $option->price }}">
+                                                            <button class="btn btn-outline-secondary border-start-0 btn-ticket-qty-plus" type="button" data-target="ticket-{{ $option->id }}">
+                                                                <i class="bi bi-plus"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </li>
                                                 @endforeach
@@ -331,7 +361,15 @@
                                                 </div>
                                                 <div>
                                                     <label class="small text-muted mb-1">Số lượng</label>
-                                                    <input type="number" name="addons[{{ $addon->id }}][qty]" class="form-control form-control-sm addon-qty-input text-center" style="width: 70px;" value="0" min="0" max="99" data-addon-id="{{ $addon->id }}">
+                                                    <div class="input-group input-group-sm" style="width: 110px;">
+                                                        <button class="btn btn-outline-secondary border-end-0 btn-addon-qty-minus" type="button" data-target="addon-{{ $addon->id }}">
+                                                            <i class="bi bi-dash"></i>
+                                                        </button>
+                                                        <input type="number" name="addons[{{ $addon->id }}][qty]" id="addon-{{ $addon->id }}" class="form-control form-control-sm addon-qty-input text-center border-secondary border-start-0 border-end-0 fw-bold bg-white qty-input" value="0" min="0" max="99" data-addon-id="{{ $addon->id }}">
+                                                        <button class="btn btn-outline-secondary border-start-0 btn-addon-qty-plus" type="button" data-target="addon-{{ $addon->id }}">
+                                                            <i class="bi bi-plus"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -795,15 +833,54 @@
 
     // Xử lý khi thay đổi số lượng vé tham quan
     const ticketInputs = document.querySelectorAll('.ticket-qty-input');
+    
+    function updateTicketTotal() {
+        let totalTicket = 0;
+        ticketInputs.forEach(inp => {
+            let qty = parseInt(inp.value);
+            if(isNaN(qty) || qty < 0) qty = 0;
+            totalTicket += qty * parseFloat(inp.dataset.price);
+        });
+        updateTotalDisplay(currentTransportPrice, totalTicket);
+    }
+    
     ticketInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            let totalTicket = 0;
-            ticketInputs.forEach(inp => {
-                let qty = parseInt(inp.value);
-                if(isNaN(qty) || qty < 0) qty = 0;
-                totalTicket += qty * parseFloat(inp.dataset.price);
-            });
-            updateTotalDisplay(currentTransportPrice, totalTicket);
+        input.addEventListener('change', function() {
+            let val = parseInt(this.value);
+            const min = parseInt(this.getAttribute('min')) || 0;
+            const max = parseInt(this.getAttribute('max')) || 99;
+            if (isNaN(val) || val < min) val = min;
+            if (val > max) val = max;
+            this.value = val;
+            updateTicketTotal();
+        });
+        input.addEventListener('blur', updateTicketTotal);
+        input.addEventListener('keyup', updateTicketTotal);
+    });
+
+    document.querySelectorAll('.btn-ticket-qty-minus').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            let val = parseInt(input.value) || 0;
+            const min = parseInt(input.getAttribute('min')) || 0;
+            if (val > min) {
+                input.value = val - 1;
+                updateTicketTotal();
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-ticket-qty-plus').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            let val = parseInt(input.value) || 0;
+            const max = parseInt(input.getAttribute('max')) || 99;
+            if (val < max) {
+                input.value = val + 1;
+                updateTicketTotal();
+            }
         });
     });
 
@@ -859,10 +936,51 @@
         updateTotalDisplay(currentTransportPrice, currentTicketPrice);
     }
 
-    const addonInputs = document.querySelectorAll('.addon-qty-input, .addon-date-input');
-    addonInputs.forEach(input => {
+    const addonInputs = document.querySelectorAll('.addon-qty-input');
+    const addonDateInputs = document.querySelectorAll('.addon-date-input');
+    
+    addonDateInputs.forEach(input => {
         input.addEventListener('change', updateAddonsTotal);
-        input.addEventListener('input', updateAddonsTotal);
+    });
+    
+    addonInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            let val = parseInt(this.value);
+            const min = parseInt(this.getAttribute('min')) || 0;
+            const max = parseInt(this.getAttribute('max')) || 99;
+            if (isNaN(val) || val < min) val = min;
+            if (val > max) val = max;
+            this.value = val;
+            updateAddonsTotal();
+        });
+        input.addEventListener('blur', updateAddonsTotal);
+        input.addEventListener('keyup', updateAddonsTotal);
+    });
+
+    document.querySelectorAll('.btn-addon-qty-minus').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            let val = parseInt(input.value) || 0;
+            const min = parseInt(input.getAttribute('min')) || 0;
+            if (val > min) {
+                input.value = val - 1;
+                updateAddonsTotal();
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-addon-qty-plus').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            let val = parseInt(input.value) || 0;
+            const max = parseInt(input.getAttribute('max')) || 99;
+            if (val < max) {
+                input.value = val + 1;
+                updateAddonsTotal();
+            }
+        });
     });
 
     window.selectTransportOption = function(price, dataStr) {
@@ -1009,8 +1127,8 @@
                 setTimeout(() => {
                     transportLoading.style.display = 'none';
                     let buses = [
-                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', price: 400000 * totalPersonsCount },
-                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', price: 350000 * totalPersonsCount }
+                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', basePrice: 400000, price: 400000 * totalPersonsCount },
+                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', basePrice: 350000, price: 350000 * totalPersonsCount }
                     ];
                     
                     let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Xe") }}</h5>';
@@ -1032,8 +1150,8 @@
                                     <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
                                     <div class="small text-muted">{{ __("Khởi hành:") }} ${bus.time}</div>
                                 </div>
-                                <div class="fw-bold text-danger fs-5">
-                                    + ${formatCurrencyDynamic(bus.price)}
+                                <div class="fw-bold text-danger fs-5 text-end">
+                                    + ${formatCurrencyDynamic(bus.basePrice)} <span class="fs-6 text-muted fw-normal">/người</span>
                                 </div>
                             </div>
                         </div>

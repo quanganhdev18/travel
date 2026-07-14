@@ -50,6 +50,7 @@
                         <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                             <option value="customer" {{ old('role', $user->role) == 'customer' ? 'selected' : '' }}>Khách hàng</option>
                             <option value="guide" {{ old('role', $user->role) == 'guide' ? 'selected' : '' }}>Hướng dẫn viên</option>
+                            <option value="cskh" {{ old('role', $user->role) == 'cskh' ? 'selected' : '' }}>Nhân viên CSKH</option>
                             <option value="staff" {{ old('role', $user->role) == 'staff' ? 'selected' : '' }}>Nhân viên</option>
                             <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
                         </select>

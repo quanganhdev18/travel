@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,7 @@ Route::get('/tours/search', function (Request $request) {
     return redirect()->route('frontend.tours.index', $request->query());
 })->name('frontend.tours.search');
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
+Route::get('/api/provinces/{province}/wards', [LocationController::class, 'getWards'])->name('api.provinces.wards');
 
 use App\Http\Controllers\Admin\AddonController;
 // Frontend Controllers
@@ -89,25 +91,7 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
 Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
 
-// Ticket Booking Routes (require authentication) - MUST be before {slug} route
-Route::middleware(['auth'])->group(function () {
-    Route::get('/tickets/checkout', [TicketBookingController::class, 'checkout'])
-        ->name('frontend.tickets.checkout');
-
-    Route::post('/tickets/book', [TicketBookingController::class, 'store'])
-        ->name('frontend.tickets.book');
-
-    Route::get('/tickets/booking/{id}/success', [TicketBookingController::class, 'success'])
-        ->name('frontend.tickets.booking.success');
-
-    Route::post('/api/tickets/apply-coupon', [TicketBookingController::class, 'applyCoupon'])
-        ->name('frontend.tickets.apply_coupon');
-});
-
-// VNPay Callbacks for Tickets
-Route::get('/tickets/vnpay-return', [TicketBookingController::class, 'vnpayReturn'])
-    ->name('frontend.tickets.vnpay_return');
-
+// Ticket Booking Routes removed - tickets can only be booked along with tours
 // Ticket detail - MUST be last to avoid conflicts
 Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
 
@@ -178,6 +162,12 @@ Route::middleware(['auth'])->group(function () {
     // Thanh toán lại bằng VNPay
     Route::get('/bookings/{id}/pay-vnpay', [TourBookingController::class, 'payWithVNPay'])
         ->name('frontend.bookings.pay_vnpay');
+
+    // Bổ sung danh sách hành khách
+    Route::get('/bookings/{id}/passengers', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'index'])->name('frontend.bookings.passengers');
+    Route::post('/bookings/{id}/passengers/manual', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'storeManual'])->name('frontend.bookings.passengers.manual');
+    Route::get('/bookings/passengers/template', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'downloadTemplate'])->name('frontend.bookings.passengers.template');
+    Route::post('/bookings/{id}/passengers/import', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'importExcel'])->name('frontend.bookings.passengers.import');
 });
 
 // Điểm đến
@@ -247,16 +237,25 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->name('admin.activities.destroy');
 
     // Điểm đến
+    Route::get('/destinations/trash', [DestinationController::class, 'trash'])->name('admin.destinations.trash');
+    Route::post('/destinations/{id}/restore', [DestinationController::class, 'restore'])->name('admin.destinations.restore');
+    Route::delete('/destinations/{id}/force-delete', [DestinationController::class, 'forceDelete'])->name('admin.destinations.force-delete');
     Route::resource('destinations', DestinationController::class)
         ->except(['show'])
         ->names('admin.destinations');
 
     // Danh mục
+    Route::get('/categories/trash', [CategoryController::class, 'trash'])->name('admin.categories.trash');
+    Route::post('/categories/{id}/restore', [CategoryController::class, 'restore'])->name('admin.categories.restore');
+    Route::delete('/categories/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('admin.categories.force-delete');
     Route::resource('categories', CategoryController::class)
         ->except(['show'])
         ->names('admin.categories');
 
     // Banner
+    Route::get('/banners/trash', [BannerController::class, 'trash'])->name('admin.banners.trash');
+    Route::post('/banners/{id}/restore', [BannerController::class, 'restore'])->name('admin.banners.restore');
+    Route::delete('/banners/{id}/force-delete', [BannerController::class, 'forceDelete'])->name('admin.banners.force-delete');
     Route::resource('banners', BannerController::class)
         ->except(['show'])
         ->names('admin.banners');
@@ -327,10 +326,16 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->names('admin.holidays');
 
     // Addons
+    Route::get('/addons/trash', [AddonController::class, 'trash'])->name('admin.addons.trash');
+    Route::post('/addons/{id}/restore', [AddonController::class, 'restore'])->name('admin.addons.restore');
+    Route::delete('/addons/{id}/force-delete', [AddonController::class, 'forceDelete'])->name('admin.addons.force-delete');
     Route::resource('addons', AddonController::class)
         ->names('admin.addons');
 
     // Tickets - Vé tham quan
+    Route::get('/tickets/trash', [App\Http\Controllers\Admin\TicketController::class, 'trash'])->name('admin.tickets.trash');
+    Route::post('/tickets/{id}/restore', [App\Http\Controllers\Admin\TicketController::class, 'restore'])->name('admin.tickets.restore');
+    Route::delete('/tickets/{id}/force-delete', [App\Http\Controllers\Admin\TicketController::class, 'forceDelete'])->name('admin.tickets.force-delete');
     Route::resource('tickets', App\Http\Controllers\Admin\TicketController::class)
         ->except(['show'])
         ->names('admin.tickets');
@@ -360,6 +365,9 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'toggleCheckin'])
         ->name('guide.passengers.toggle_checkin');
 
+    Route::post('/schedules/{schedule}/activities/{activity}/toggle-checkin', [ScheduleController::class, 'toggleActivityCheckin'])
+        ->name('guide.activities.toggle_checkin');
+
     Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
         ->name('guide.passengers.update_note');
 
@@ -374,6 +382,11 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/schedules/{schedule}/update-status', [ScheduleController::class, 'updateGroupStatus'])
         ->name('guide.schedules.update_group_status');
+        
+    // Guide passenger actions
+    Route::post('/schedules/{schedule}/bookings/{booking}/passengers/manual', [ScheduleController::class, 'storeManualPassengers'])->name('guide.passengers.manual');
+    Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
+    Route::post('/schedules/{schedule}/passengers/{passenger}/free-time', [ScheduleController::class, 'updateFreeTime'])->name('guide.passengers.free_time');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

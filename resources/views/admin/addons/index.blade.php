@@ -6,9 +6,14 @@
 <div class="admin-card">
     <div class="admin-card-header">
         <h5 class="admin-card-title">Danh sách Addons</h5>
-        <a href="{{ route('admin.addons.create') }}" class="btn-admin btn-admin-primary">
-            <i class="bi bi-plus-lg me-1"></i> Thêm Addon
-        </a>
+        <div>
+            <a href="{{ route('admin.addons.trash') }}" class="btn btn-admin btn-light border text-danger me-2">
+                <i class="bi bi-trash"></i> Thùng rác
+            </a>
+            <a href="{{ route('admin.addons.create') }}" class="btn-admin btn-admin-primary">
+                <i class="bi bi-plus-lg me-1"></i> Thêm Addon
+            </a>
+        </div>
     </div>
     <div class="admin-card-body p-0">
         <div class="table-responsive">

@@ -34,9 +34,9 @@
                 <div class="col-12 col-md-6 col-lg-3">
                     <div class="card h-100 shadow-sm border-0">
                         <div class="position-relative">
-                            @if($tour->duration_days && $tour->duration_nights)
+                            @if($tour->duration_days)
                             <div class="tour-duration-badge">
-                                {{ $tour->duration_days }}N{{ $tour->duration_nights }}Đ
+                                {{ $tour->duration_days }}N{{ $tour->duration_nights > 0 ? $tour->duration_nights . 'Đ' : '' }}
                             </div>
                             @endif
                             <img src="{{ $tourImage }}"

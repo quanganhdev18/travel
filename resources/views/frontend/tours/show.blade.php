@@ -215,6 +215,26 @@
         padding-bottom: 0 !important;
     }
 
+    .qty-input {
+        -moz-appearance: textfield;
+    }
+    .qty-input:focus {
+        box-shadow: none !important;
+        border-color: #6c757d !important;
+        z-index: 1 !important;
+    }
+    .btn-qty-minus, .btn-qty-plus {
+        background-color: #f8f9fa;
+    }
+    .btn-qty-minus:hover, .btn-qty-plus:hover {
+        background-color: #e9ecef;
+    }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
     @media (max-width: 768px) {
         .gallery-main {
             height: 280px;
@@ -301,7 +321,7 @@
 
                 <span class="d-flex align-items-center">
                     <i class="bi bi-clock fs-5 me-2 text-warning"></i>
-                    {{ $tour->duration_days ?? 0 }} {{ __('ngày') }} {{ $tour->duration_nights ?? 0 }} {{ __('đêm') }}
+                    {{ $tour->duration_days ?? 0 }} {{ __('ngày') }}{{ ($tour->duration_nights ?? 0) > 0 ? ' ' . ($tour->duration_nights ?? 0) . ' ' . __('đêm') : '' }}
                 </span>
 
                 @if($tour->departure_time)
@@ -633,17 +653,19 @@
                                     </label>
 
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0 text-muted">
-                                            <i class="bi bi-person-fill"></i>
-                                        </span>
-
+                                        <button class="btn btn-outline-secondary border-end-0 btn-qty-minus" type="button" data-target="adults">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
                                         <input type="number"
-                                               class="form-control search-form-control border-start-0 ps-0"
+                                               class="form-control text-center border-secondary border-start-0 border-end-0 fw-bold bg-white qty-input"
                                                name="adults"
                                                id="adults"
                                                value="1"
                                                min="1"
                                                max="10">
+                                        <button class="btn btn-outline-secondary border-start-0 btn-qty-plus" type="button" data-target="adults">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -653,17 +675,19 @@
                                     </label>
 
                                     <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0 text-muted">
-                                            <i class="bi bi-person-badge"></i>
-                                        </span>
-
+                                        <button class="btn btn-outline-secondary border-end-0 btn-qty-minus" type="button" data-target="children">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
                                         <input type="number"
-                                               class="form-control search-form-control border-start-0 ps-0"
+                                               class="form-control text-center border-secondary border-start-0 border-end-0 fw-bold bg-white qty-input"
                                                name="children"
                                                id="children"
                                                value="0"
                                                min="0"
                                                max="10">
+                                        <button class="btn btn-outline-secondary border-start-0 btn-qty-plus" type="button" data-target="children">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -842,8 +866,50 @@
         }
 
         if (adultsInput && childrenInput) {
-            adultsInput.addEventListener('input', updateTotalPrice);
-            childrenInput.addEventListener('input', updateTotalPrice);
+            function validateQty(input) {
+                let val = parseInt(input.value);
+                const min = parseInt(input.getAttribute('min')) || 0;
+                const max = parseInt(input.getAttribute('max')) || 10;
+                if (isNaN(val) || val < min) val = min;
+                if (val > max) val = max;
+                input.value = val;
+                updateTotalPrice();
+            }
+
+            adultsInput.addEventListener('change', function() { validateQty(this); });
+            adultsInput.addEventListener('blur', function() { validateQty(this); });
+            adultsInput.addEventListener('keyup', function() { updateTotalPrice(); });
+            
+            childrenInput.addEventListener('change', function() { validateQty(this); });
+            childrenInput.addEventListener('blur', function() { validateQty(this); });
+            childrenInput.addEventListener('keyup', function() { updateTotalPrice(); });
+            
+            // Handle plus/minus buttons
+            document.querySelectorAll('.btn-qty-minus').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    let val = parseInt(input.value) || 0;
+                    const min = parseInt(input.getAttribute('min')) || 0;
+                    if (val > min) {
+                        input.value = val - 1;
+                        validateQty(input);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.btn-qty-plus').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    let val = parseInt(input.value) || 0;
+                    const max = parseInt(input.getAttribute('max')) || 10;
+                    if (val < max) {
+                        input.value = val + 1;
+                        validateQty(input);
+                    }
+                });
+            });
         }
         
         if (scheduleRadios) {

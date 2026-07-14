@@ -429,7 +429,7 @@
                                                     {{ $tour->title }}
                                                 </h6>
                                                 <div class="text-muted small mb-2">
-                                                    <i class="bi bi-calendar3 me-1"></i>{{ $tour->duration_days ?? 0 }}N{{ $tour->duration_nights ?? 0 }}Đ
+                                                    <i class="bi bi-calendar3 me-1"></i>{{ $tour->duration_days ?? 0 }}N{{ ($tour->duration_nights ?? 0) > 0 ? ($tour->duration_nights ?? 0) . 'Đ' : '' }}
                                                 </div>
                                                 <div class="fw-bold text-primary">{{ format_currency($tour->base_price ?? 0) }}</div>
                                             </div>
@@ -446,9 +446,7 @@
 
             <div class="col-lg-4">
                 <div class="premium-card booking-sidebar p-4 p-md-5 reveal-up">
-                    <form action="{{ route('frontend.tickets.checkout') }}" method="GET" id="ticketBookingForm">
-                        <input type="hidden" name="ticket_id" value="{{ $ticket->id }}">
-
+                    <div class="ticket-booking-notice">
                         <div class="d-flex flex-column mb-4 pb-3 border-bottom">
                             @php
                                 $minPrice = $ticket->ticket_options->min('price') ?? 0;
@@ -467,95 +465,17 @@
                             <small class="text-muted">{{ __('Giá vé') }}</small>
                         </div>
 
-                        <h5 class="mb-4 fw-bold text-dark fs-5">
-                            {{ __('Thông tin đặt vé') }}
-                        </h5>
-
-                        <!-- Ticket Options -->
-                        @if($ticket->ticket_options->count() > 0)
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">{{ __('Chọn loại vé') }} <span class="text-danger">*</span></label>
-                            <select class="form-select @error('ticket_option_id') is-invalid @enderror" 
-                                    name="ticket_option_id" id="ticketOptionSelect" required>
-                                <option value="">{{ __('-- Chọn loại vé --') }}</option>
-                                @foreach($ticket->ticket_options as $option)
-                                <option value="{{ $option->id }}" data-price="{{ $option->price }}">
-                                    {{ $option->name }} - {{ format_currency($option->price) }}
-                                </option>
-                                @endforeach
-                            </select>
-                            @error('ticket_option_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="alert alert-info rounded-3">
+                            <h5 class="alert-heading fw-bold"><i class="bi bi-info-circle me-2"></i>{{ __('Lưu ý quan trọng') }}</h5>
+                            <p class="mb-0">{{ __('Vé tham quan này hiện không hỗ trợ đặt lẻ. Bạn chỉ có thể mua kèm vé tham quan khi đặt các tour du lịch tương ứng tại hệ thống của chúng tôi.') }}</p>
                         </div>
 
-                        <!-- Visit Date -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">{{ __('Ngày sử dụng') }} <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control @error('visit_date') is-invalid @enderror" 
-                                   name="visit_date" id="visitDate" 
-                                   min="{{ date('Y-m-d') }}" required>
-                            @error('visit_date')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="d-grid mt-4">
+                            <a href="{{ route('frontend.tours.index') }}" class="btn btn-primary btn-lg rounded-pill fw-bold py-3">
+                                <i class="bi bi-search me-2"></i>{{ __('Tìm Tour Phù Hợp') }}
+                            </a>
                         </div>
-
-                        <!-- Quantity -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">{{ __('Số lượng') }} <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <button type="button" class="btn btn-outline-secondary" id="decreaseQty">
-                                    <i class="bi bi-dash"></i>
-                                </button>
-                                <input type="number" class="form-control text-center @error('quantity') is-invalid @enderror" 
-                                       name="quantity" id="quantity" 
-                                       value="1" min="1" max="20" required readonly>
-                                <button type="button" class="btn btn-outline-secondary" id="increaseQty">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                            <small class="text-muted">{{ __('Tối đa 20 vé') }}</small>
-                            @error('quantity')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <!-- Total Price -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">{{ __('Tổng cộng:') }}</span>
-                                <span class="fw-bold fs-4 text-primary" id="totalPrice">
-                                    {{ format_currency(0) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        @auth
-                            <!-- CTA Button -->
-                            <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold py-3" id="bookingBtn">
-                                    <i class="bi bi-cart-plus me-2"></i>{{ __('Đặt vé ngay') }}
-                                </button>
-                            </div>
-                        @else
-                            <div class="d-grid mb-3">
-                                <a href="{{ route('login', ['redirect' => url()->current()]) }}" class="btn btn-primary btn-lg rounded-pill fw-bold py-3">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>{{ __('Đăng nhập để đặt vé') }}
-                                </a>
-                            </div>
-                        @endauth
-
-                        <div class="text-center">
-                            <button type="button" class="btn btn-outline-primary rounded-pill fw-bold py-2" onclick="alert('Tính năng đang phát triển')">
-                                <i class="bi bi-question-circle me-2"></i>{{ __('Liên hệ tư vấn') }}
-                            </button>
-                        </div>
-                        @else
-                        <div class="alert alert-warning">
-                            {{ __('Chưa có loại vé nào có sẵn. Vui lòng liên hệ với chúng tôi.') }}
-                        </div>
-                        @endif
-                    </form>
+                    </div>
 
                     <!-- Key Features -->
                     <div class="mb-4 mt-4 pt-4 border-top">

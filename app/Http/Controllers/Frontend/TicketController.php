@@ -13,13 +13,11 @@ class TicketController extends Controller
 {
     public function index()
     {
-        $popularTickets = Ticket::with(['destination', 'ticket_options', 'ticket_images'])
-            ->has('ticket_options')
+        $tickets = Ticket::with(['destination', 'ticket_options', 'ticket_images'])
             ->latest()
-            ->take(8)
-            ->get();
+            ->paginate(9);
 
-        return view('frontend.tickets.index', compact('popularTickets'));
+        return view('frontend.tickets.index', compact('tickets'));
     }
 
     public function search(TicketSearchRequest $request)
@@ -70,7 +68,7 @@ class TicketController extends Controller
             $query->latest();
         }
 
-        $tickets = $query->paginate(6)->withQueryString();
+        $tickets = $query->paginate(9)->withQueryString();
 
         if ($request->ajax()) {
             return view('frontend.tickets._results', compact('tickets'))->render();

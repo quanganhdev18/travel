@@ -8,6 +8,8 @@ use App\Models\BookingPassenger;
 use App\Models\TourSchedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\PassengersImport;
 
 class ScheduleController extends Controller
 {
@@ -44,7 +46,7 @@ class ScheduleController extends Controller
         }
 
         $scheduleGuide = $tourGuide->schedule_guides()
-            ->with(['tour_schedule.tour', 'tour_schedule.bookings.booking_passengers', 'tour_schedule.bookings.user'])
+            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers', 'tour_schedule.bookings.user'])
             ->where('tour_schedule_id', $id)
             ->firstOrFail();
 
@@ -86,6 +88,62 @@ class ScheduleController extends Controller
         return response()->json([
             'checked_in' => $passenger->checked_in,
             'message' => $passenger->checked_in ? 'Đã điểm danh' : 'Đã bỏ điểm danh',
+        ]);
+    }
+
+    /**
+     * Toggle check-in status for an activity (AJAX).
+     */
+    public function toggleActivityCheckin(TourSchedule $schedule, \App\Models\TourActivity $activity)
+    {
+        $tourGuide = auth()->user()->tour_guide;
+        abort_unless($tourGuide, 403);
+
+        $assigned = $tourGuide->schedule_guides()
+            ->where('tour_schedule_id', $schedule->id)
+            ->exists();
+        abort_unless($assigned, 403);
+
+        // Đảm bảo activity thuộc về tour này
+        abort_unless($activity->tour_itinerary->tour_id === $schedule->tour_id, 403);
+
+        $checkin = \App\Models\ScheduleActivityCheckin::where('tour_schedule_id', $schedule->id)
+            ->where('tour_activity_id', $activity->id)
+            ->first();
+
+        if ($checkin) {
+            $checkin->delete();
+            $status = false;
+            
+            // Revert bookings if it was the current checkin step
+            \App\Models\Booking::where('tour_schedule_id', $schedule->id)
+                ->where('current_checkin_step', $activity->title)
+                ->update([
+                    'current_checkin_step' => null,
+                    'tour_status' => \App\Models\Booking::TOUR_IN_PROGRESS
+                ]);
+        } else {
+            \App\Models\ScheduleActivityCheckin::create([
+                'tour_schedule_id' => $schedule->id,
+                'tour_activity_id' => $activity->id,
+                'guide_id' => $tourGuide->id,
+                'checked_in_at' => now(),
+            ]);
+            $status = true;
+
+            // Update all bookings to show they are at this step
+            \App\Models\Booking::where('tour_schedule_id', $schedule->id)
+                ->whereIn('tour_status', [\App\Models\Booking::TOUR_UPCOMING, \App\Models\Booking::TOUR_IN_PROGRESS, \App\Models\Booking::TOUR_CHECKING_IN])
+                ->update([
+                    'tour_status' => \App\Models\Booking::TOUR_CHECKING_IN,
+                    'current_checkin_step' => $activity->title
+                ]);
+        }
+
+        return response()->json([
+            'checked_in' => $status,
+            'message' => $status ? 'Đã check-in điểm tham quan' : 'Đã hủy check-in điểm tham quan',
+            'time' => now()->format('H:i d/m/Y')
         ]);
     }
 
@@ -250,6 +308,93 @@ class ScheduleController extends Controller
             $booking->save();
         }
 
-        return back()->with('success', 'Đã cập nhật trạng thái tour đoàn thành công.');
+        return back()->with('success', 'Trạng thái tập trung của cả đoàn đã được cập nhật.');
+    }
+
+    public function storeManualPassengers(Request $request, TourSchedule $schedule, Booking $booking)
+    {
+        $this->authorizeSchedule($schedule);
+        if ($booking->tour_schedule_id !== $schedule->id) abort(404);
+
+        $request->validate([
+            'passengers' => 'required|array',
+            'passengers.*.full_name' => 'required|string|max:255',
+            'passengers.*.identity_number' => 'nullable|string|max:50',
+            'passengers.*.date_of_birth' => 'nullable|date',
+            'passengers.*.gender' => 'nullable|in:male,female,other',
+            'passengers.*.passenger_type' => 'required|in:adult,child',
+        ]);
+
+        $leader = $booking->booking_passengers()->orderBy('id')->first();
+        if ($leader) {
+            $booking->booking_passengers()->where('id', '!=', $leader->id)->delete();
+        } else {
+            $booking->booking_passengers()->delete();
+        }
+
+        foreach ($request->passengers as $index => $pData) {
+            if ($index == 0 && $leader) {
+                $leader->update([
+                    'full_name' => $pData['full_name'],
+                    'identity_number' => $pData['identity_number'],
+                    'date_of_birth' => $pData['date_of_birth'],
+                    'gender' => $pData['gender'],
+                ]);
+            } else {
+                BookingPassenger::create([
+                    'booking_id' => $booking->id,
+                    'full_name' => $pData['full_name'],
+                    'identity_number' => $pData['identity_number'] ?? null,
+                    'date_of_birth' => $pData['date_of_birth'] ?? null,
+                    'gender' => $pData['gender'] ?? 'other',
+                    'passenger_type' => $pData['passenger_type'],
+                ]);
+            }
+        }
+
+        $booking->update(['is_passenger_list_submitted' => true]);
+
+        return back()->with('success', 'Đã bổ sung danh sách hành khách thành công!');
+    }
+
+    public function importExcelPassengers(Request $request, TourSchedule $schedule, Booking $booking)
+    {
+        $this->authorizeSchedule($schedule);
+        if ($booking->tour_schedule_id !== $schedule->id) abort(404);
+
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            $import = new PassengersImport($booking);
+            Excel::import($import, $request->file('excel_file'));
+            
+            $booking->update(['is_passenger_list_submitted' => true]);
+
+            return back()->with('success', 'Đã import danh sách hành khách thành công!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Lỗi import: ' . $e->getMessage());
+        }
+    }
+
+    public function updateFreeTime(Request $request, TourSchedule $schedule, BookingPassenger $passenger)
+    {
+        $this->authorizeSchedule($schedule);
+        if ($passenger->booking->tour_schedule_id !== $schedule->id) abort(404);
+
+        $request->validate([
+            'is_free_time' => 'required|boolean',
+            'free_time_start' => 'nullable|date',
+            'free_time_end' => 'nullable|date|after_or_equal:free_time_start',
+        ]);
+
+        $passenger->update([
+            'is_free_time' => $request->is_free_time,
+            'free_time_start' => $request->free_time_start,
+            'free_time_end' => $request->free_time_end,
+        ]);
+
+        return back()->with('success', 'Cập nhật thời gian tách đoàn thành công.');
     }
 }

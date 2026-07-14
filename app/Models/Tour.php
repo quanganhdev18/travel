@@ -6,6 +6,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
@@ -46,6 +47,10 @@ class Tour extends Model
         'base_price',
         'child_price',
         'ai_tags',
+        'departure_province_id',
+        'departure_ward_id',
+        'destination_province_id',
+        'destination_ward_id',
     ];
 
     public function departure_location()
@@ -56,6 +61,26 @@ class Tour extends Model
     public function destination()
     {
         return $this->belongsTo(Destination::class, 'destination_id');
+    }
+
+    public function departure_province()
+    {
+        return $this->belongsTo(Province::class, 'departure_province_id');
+    }
+
+    public function departure_ward()
+    {
+        return $this->belongsTo(Ward::class, 'departure_ward_id');
+    }
+
+    public function destination_province()
+    {
+        return $this->belongsTo(Province::class, 'destination_province_id');
+    }
+
+    public function destination_ward()
+    {
+        return $this->belongsTo(Ward::class, 'destination_ward_id');
     }
 
     public function reviews()
@@ -119,7 +144,7 @@ class Tour extends Model
     public function activeSchedules()
     {
         return $this->hasMany(TourSchedule::class, 'tour_id')
-            ->where('departure_date', '>=', now())
+            ->whereDate('departure_date', '>=', Carbon::today()->addDays(3))
             ->where('status', 'available')
             ->orderBy('departure_date', 'asc');
     }

@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -19,11 +20,12 @@ use Spatie\Translatable\HasTranslations;
  * @property string $slug
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Carbon|null $deleted_at
  * @property Collection|TourCategory[] $tour_categories
  */
 class Category extends Model
 {
-    use HasTranslations;
+    use HasTranslations, SoftDeletes;
 
     protected $table = 'categories';
 

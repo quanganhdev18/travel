@@ -3,6 +3,73 @@
 @section('page-title', 'Lịch trình Tour')
 
 @section('content')
+<style>
+    @media (max-width: 767px) {
+        /* Chuyển bảng sang dạng các thẻ card */
+        .table-responsive {
+            border: none;
+        }
+        .table {
+            border: none;
+        }
+        .table thead {
+            display: none;
+        }
+        .table tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 12px 4px;
+        }
+        .table tbody tr {
+            display: block;
+            background: #fff;
+            border: 1px solid var(--admin-border) !important;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            padding: 16px;
+            margin-bottom: 0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #f1f5f9;
+            font-size: 0.85rem;
+            text-align: right;
+        }
+        .table td:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .table td:first-child {
+            padding-top: 0;
+        }
+        .table td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--admin-text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-right: auto;
+            text-align: left;
+        }
+        .table td > * {
+            text-align: right;
+            margin: 0 !important;
+        }
+        .table td.text-end {
+            text-align: right;
+            justify-content: space-between;
+        }
+    }
+</style>
 <div class="card border-0 shadow-sm">
     <div class="admin-card-header">
         <h5 class="admin-card-title">Danh sách Lịch trình được phân công</h5>
@@ -28,13 +95,22 @@
                             $tourSchedule = $scheduleGuide->tour_schedule;
                             $tour = $tourSchedule->tour;
                             
+                            $departureDateTime = \Carbon\Carbon::parse($tourSchedule->departure_date->toDateString());
+                            if ($tour && $tour->departure_time) {
+                                $timeParts = explode(':', $tour->departure_time);
+                                $hour = isset($timeParts[0]) ? (int) $timeParts[0] : 0;
+                                $minute = isset($timeParts[1]) ? (int) $timeParts[1] : 0;
+                                $second = isset($timeParts[2]) ? (int) $timeParts[2] : 0;
+                                $departureDateTime->setTime($hour, $minute, $second);
+                            }
+                            
                             $statusClass = 'secondary';
                             $statusText = 'Chưa xác định';
                             
-                            if ($tourSchedule->departure_date > now()) {
+                            if ($departureDateTime > now()) {
                                 $statusClass = 'primary';
                                 $statusText = 'Sắp tới';
-                            } elseif ($tourSchedule->departure_date <= now() && $tourSchedule->return_date >= now()) {
+                            } elseif ($departureDateTime <= now() && \Carbon\Carbon::parse($tourSchedule->return_date) >= now()) {
                                 $statusClass = 'success';
                                 $statusText = 'Đang diễn ra';
                             } else {
@@ -43,27 +119,20 @@
                             }
                         @endphp
                         <tr>
-                            <td>#{{ $tourSchedule->id }}</td>
-                            <td>
-                                <strong>{{ $tour->name }}</strong>
-                                <div class="text-muted small mt-1">Mã: {{ $tour->tour_code }}</div>
-                                <div class="mt-1">
-                                    @if($scheduleGuide->is_backup)
-                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary-subtle rounded-pill px-2 py-0.5" style="font-size: 10px; font-weight: 500;">HDV Dự phòng</span>
-                                    @else
-                                        <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle rounded-pill px-2 py-0.5" style="font-size: 10px; font-weight: 500;">HDV Chính</span>
-                                    @endif
-                                </div>
+                            <td data-label="ID">#{{ $tourSchedule->id }}</td>
+                            <td data-label="Tên Tour">
+                                <strong class="text-md-start d-block">{{ $tour->name }}</strong>
+                                <div class="text-muted small mt-1 text-md-start">Mã: {{ $tour->tour_code }}</div>
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
-                            <td>{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
-                            <td>
+                            <td data-label="Khởi hành">{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
+                            <td data-label="Kết thúc">{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
+                            <td data-label="Số khách">
                                 {{ $tourSchedule->bookings->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}
                             </td>
-                            <td>
+                            <td data-label="Trạng thái">
                                 <span class="badge badge-soft-{{ $statusClass }}">{{ $statusText }}</span>
                             </td>
-                            <td class="text-end">
+                            <td data-label="Hành động" class="text-end">
                                 <a href="{{ route('guide.schedules.show', $tourSchedule->id) }}" class="btn btn-sm btn-admin-primary">
                                     <i class="bi bi-eye"></i> Chi tiết
                                 </a>

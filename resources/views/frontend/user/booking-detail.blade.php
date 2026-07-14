@@ -83,7 +83,7 @@
                                     <span><i class="bi bi-geo-alt me-1 text-danger"></i>{{ $tour->destination->name }}</span>
                                 @endif
                                 @if($tour)
-                                    <span><i class="bi bi-clock me-1 text-warning"></i>{{ $tour->duration_days }} ngày {{ $tour->duration_nights }} đêm</span>
+                                    <span><i class="bi bi-clock me-1 text-warning"></i>{{ $tour->duration_days }} ngày{{ $tour->duration_nights > 0 ? ' ' . $tour->duration_nights . ' đêm' : '' }}</span>
                                 @endif
                                 @if($booking->tour_schedule)
                                     <span><i class="bi bi-calendar-event me-1 text-success"></i>{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}@if($tour?->departure_time) ({{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }})@endif</span>
@@ -147,9 +147,15 @@
             </div>
 
             {{-- Hành khách --}}
-            @if($booking->booking_passengers->isNotEmpty())
             <div class="detail-card reveal-up">
-                <div class="detail-card-header"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Hành khách</div>
+                <div class="detail-card-header d-flex justify-content-between align-items-center">
+                    <div><i class="bi bi-person-lines-fill me-2 text-primary"></i>Hành khách</div>
+                    @if(in_array($status, ['pending', 'paid', 'confirmed']))
+                        <a href="{{ route('frontend.bookings.passengers', $booking->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="bi bi-pencil-square me-1"></i>Bổ sung / Sửa thông tin
+                        </a>
+                    @endif
+                </div>
                 <div class="detail-card-body">
                     @foreach($booking->booking_passengers as $p)
                     <div class="d-flex align-items-center py-2 {{ !$loop->last ? 'border-bottom':'' }}">
@@ -166,9 +172,14 @@
                         <span class="ms-auto badge bg-light text-muted rounded-3 small">{{ $p->passenger_type==='adult'?'Người lớn':'Trẻ em' }}</span>
                     </div>
                     @endforeach
+                    @if($booking->booking_passengers->isEmpty())
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-people" style="font-size:2rem;opacity:0.5;"></i>
+                            <div class="mt-2">Bạn chưa cung cấp thông tin hành khách.</div>
+                        </div>
+                    @endif
                 </div>
             </div>
-            @endif
 
             {{-- Đánh giá --}}
             @if(in_array($status,['completed','confirmed','paid']) && $tour)

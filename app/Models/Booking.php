@@ -86,6 +86,7 @@ class Booking extends Model
         'transport_price',
         'transport_data',
         'payment_method',
+        'is_passenger_list_submitted',
         'payment_type',
         'paid_amount',
         'payment_step',
@@ -156,8 +157,8 @@ class Booking extends Model
 
         $bookings = self::where('tour_status', self::TOUR_UPCOMING)
             ->whereHas('tour_schedule', function ($q) use ($todayDate) {
-                $q->where('departure_date', '<=', $todayDate)
-                    ->where('return_date', '>=', $todayDate);
+                $q->whereDate('departure_date', '<=', $todayDate)
+                    ->whereDate('return_date', '>=', $todayDate);
             })
             ->with(['tour_schedule.tour'])
             ->get();

@@ -146,11 +146,39 @@ class BannerController extends Controller
 
     public function destroy(Banner $banner)
     {
-        if ($banner->image_url && file_exists(public_path($banner->image_url))) {
-            unlink(public_path($banner->image_url));
-        }
+        // Chuyển sang xóa mềm: bỏ qua xóa ảnh vật lý để giữ lại khi restore
+        // if ($banner->image_url && file_exists(public_path($banner->image_url))) {
+        //     unlink(public_path($banner->image_url));
+        // }
         $banner->delete();
 
         return redirect()->route('admin.banners.index')->with('success', 'Đã xóa Banner!');
+    }
+
+    public function trash()
+    {
+        $banners = Banner::onlyTrashed()->orderBy('sort_order')->get();
+        return view('admin.banners.trash', compact('banners'));
+    }
+
+    public function restore($id)
+    {
+        $banner = Banner::onlyTrashed()->findOrFail($id);
+        $banner->restore();
+
+        return redirect()->route('admin.banners.trash')->with('success', 'Đã khôi phục Banner!');
+    }
+
+    public function forceDelete($id)
+    {
+        $banner = Banner::onlyTrashed()->findOrFail($id);
+
+        if ($banner->image_url && file_exists(public_path($banner->image_url))) {
+            unlink(public_path($banner->image_url));
+        }
+
+        $banner->forceDelete();
+
+        return redirect()->route('admin.banners.trash')->with('success', 'Đã xóa vĩnh viễn Banner!');
     }
 }
