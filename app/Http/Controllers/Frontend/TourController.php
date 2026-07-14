@@ -19,6 +19,8 @@ class TourController extends Controller
             },
             'tour_itineraries.activities',
             'categories',
+            'tickets',
+            'addons',
         ])
             ->where('slug', $slug)
             ->firstOrFail();

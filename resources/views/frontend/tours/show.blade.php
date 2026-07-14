@@ -477,6 +477,69 @@
                             </div>
                         </div>
 
+                        <!-- Dịch vụ bổ sung và Vé tham quan -->
+                        @if((isset($tour->tickets) && $tour->tickets->isNotEmpty()) || (isset($tour->addons) && $tour->addons->isNotEmpty()))
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading-extras">
+                                    <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-extras" aria-expanded="false" aria-controls="collapse-extras">
+                                        <i class="bi bi-ticket-perforated-fill text-danger me-3 fs-4"></i>
+                                        {{ __('Vé tham quan & Dịch vụ đi kèm') }}
+                                    </button>
+                                </h2>
+                                <div id="collapse-extras" class="accordion-collapse collapse" aria-labelledby="heading-extras" data-bs-parent="#masterAccordion">
+                                    <div class="accordion-body">
+                                        <div class="alert alert-info rounded-4 mb-4">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            <strong>{{ __('Lưu ý:') }}</strong> {{ __('Các dịch vụ này sẽ được chọn và thêm vào ở bước tiếp theo khi bạn tiến hành Đặt tour (Bước 2). Dưới đây là thông tin tham khảo các dịch vụ có sẵn cho tour này.') }}
+                                        </div>
+
+                                        @if(isset($tour->tickets) && $tour->tickets->isNotEmpty())
+                                            <div class="mb-4">
+                                                <h5 class="fw-bold text-dark mb-3">
+                                                    <i class="bi bi-ticket-detailed me-2 text-primary"></i>{{ __('Vé tham quan') }}
+                                                </h5>
+                                                <div class="row g-3">
+                                                    @foreach($tour->tickets as $ticket)
+                                                        <div class="col-md-6">
+                                                            <div class="activity-simple-item h-100 mb-0 shadow-sm">
+                                                                <div class="fw-bold text-dark mb-2 fs-6">{{ $ticket->title }}</div>
+                                                                @if($ticket->description)
+                                                                    <div class="small text-muted">{{ \Illuminate\Support\Str::limit($ticket->description, 100) }}</div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        @if(isset($tour->addons) && $tour->addons->isNotEmpty())
+                                            <div class="mb-3">
+                                                <h5 class="fw-bold text-dark mb-3">
+                                                    <i class="bi bi-box2-heart me-2 text-primary"></i>{{ __('Dịch vụ bổ sung') }}
+                                                </h5>
+                                                <div class="row g-3">
+                                                    @foreach($tour->addons as $addon)
+                                                        <div class="col-md-6">
+                                                            <div class="activity-simple-item h-100 mb-0 shadow-sm d-flex flex-column">
+                                                                <div class="fw-bold text-dark mb-1 fs-6">{{ $addon->name }}</div>
+                                                                @if($addon->description)
+                                                                    <div class="small text-muted mb-2 flex-grow-1">{{ \Illuminate\Support\Str::limit($addon->description, 100) }}</div>
+                                                                @endif
+                                                                <div class="fw-bold text-info mt-auto">
+                                                                    {{ format_currency($addon->price) }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
                 </div>
             </div>
