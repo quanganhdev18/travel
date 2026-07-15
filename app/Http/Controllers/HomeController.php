@@ -233,8 +233,11 @@ class HomeController extends Controller
         }
 
         if ($request->filled('destination_id')) {
-            $query->where('destination_id', $request->destination_id);
-        }
+    $query->where(
+        'tours.destination_id',
+        (int) $request->input('destination_id')
+    );
+}
 
         if ($request->filled('date')) {
             $date = $request->date;
