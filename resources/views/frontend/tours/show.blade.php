@@ -889,57 +889,80 @@
             <div class="row g-4">
                 @foreach($relatedTours as $relatedTour)
                     <div class="col-12 col-md-6 col-lg-3">
-                        <a href="{{ route('frontend.tours.show', $relatedTour->slug) }}" class="text-decoration-none h-100 d-block">
-                            <div class="combo-card h-100">
-                                <div class="combo-card-img-wrapper" style="height: 200px; position: relative;">
-                                    @if($relatedTour->duration_days && $relatedTour->duration_nights)
-                                        <div class="tour-duration-badge">
-                                            {{ $relatedTour->duration_days }}N{{ $relatedTour->duration_nights }}Đ
-                                        </div>
-                                    @endif
+                        <div class="tour-preview-wrapper h-100" x-data="{ showPreview: false }"
+                             @mouseenter="showPreview = true" @mouseleave="showPreview = false">
+                            <a href="{{ route('frontend.tours.show', $relatedTour->slug) }}" class="text-decoration-none h-100 d-block" @mouseenter.stop>
+                                <div class="combo-card h-100">
+                                    <div class="combo-card-img-wrapper" style="height: 200px; position: relative;">
+                                        @if($relatedTour->duration_days)
+                                            <div class="tour-duration-badge">
+                                                {{ $relatedTour->duration_days }}N{{ $relatedTour->duration_nights > 0 ? $relatedTour->duration_nights . 'Đ' : '' }}
+                                            </div>
+                                        @endif
 
-                                    @php
-                                        $rPrimaryImage = $relatedTour->tour_images->where('is_primary', 1)->first()
-                                                     ?? $relatedTour->tour_images->first();
-                                        $rTourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
-                                        if ($rPrimaryImage && !empty($rPrimaryImage->image_url)) {
-                                            if (\Illuminate\Support\Str::startsWith($rPrimaryImage->image_url, ['http://', 'https://'])) {
-                                                $rTourImage = $rPrimaryImage->image_url;
-                                            } else {
-                                                $rTourImage = asset(ltrim($rPrimaryImage->image_url, '/'));
+                                        @auth
+                                            @php
+                                                $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+                                                    ->where('tour_id', $relatedTour->id)
+                                                    ->exists();
+                                            @endphp
+                                            <form action="{{ route('frontend.favorites.toggle', $relatedTour->id) }}" method="POST"
+                                                class="favorite-form" onclick="event.stopPropagation();">
+                                                @csrf
+                                                <button type="submit" class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+                                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-heart"></i>
+                                            </div>
+                                        @endauth
+
+                                        @php
+                                            $rPrimaryImage = $relatedTour->tour_images->where('is_primary', 1)->first()
+                                                         ?? $relatedTour->tour_images->first();
+                                            $rTourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                            if ($rPrimaryImage && !empty($rPrimaryImage->image_url)) {
+                                                if (\Illuminate\Support\Str::startsWith($rPrimaryImage->image_url, ['http://', 'https://'])) {
+                                                    $rTourImage = $rPrimaryImage->image_url;
+                                                } else {
+                                                    $rTourImage = asset(ltrim($rPrimaryImage->image_url, '/'));
+                                                }
                                             }
-                                        }
-                                        $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
-                                        $rStars = $relatedTour->hotel_stars ?? 4;
-                                    @endphp
-                                    <img src="{{ $rTourImage }}"
-                                         alt="{{ $relatedTour->title }}"
-                                         class="w-100 h-100 object-fit-cover"
-                                         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
-                                </div>
-                                <div class="combo-card-body">
-                                    <h3 class="combo-title" style="font-size: 1.1rem; line-height: 1.4; height: 2.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-weight: 700; color: var(--dark-blue);">
-                                        {{ $relatedTour->title }}
-                                    </h3>
-                                    <div class="combo-stars mb-2">
-                                        @for($i = 1; $i <= $rStars; $i++)
-                                            <i class="bi bi-star-fill text-warning" style="font-size: 0.85rem;"></i>
-                                        @endfor
+                                            $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
+                                            $rStars = $relatedTour->hotel_stars ?? 4;
+                                        @endphp
+                                        <img src="{{ $rTourImage }}"
+                                             alt="{{ $relatedTour->title }}"
+                                             class="w-100 h-100 object-fit-cover"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
                                     </div>
-                                    <div class="combo-location mb-3" style="font-size: 0.9rem;">
-                                        <i class="bi bi-geo-alt text-primary"></i>
-                                        <span class="text-muted ms-1">{{ $rDestinationName }}</span>
-                                    </div>
-                                    <div class="combo-footer d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="combo-price-label text-muted small" style="font-size: 0.75rem;">{{ __('Giá từ:') }}</div>
-                                            <div class="combo-price-val fw-bold text-danger" style="font-size: 1.1rem;">{{ format_currency($relatedTour->base_price ?? 0) }}</div>
+                                    <div class="combo-card-body">
+                                        <h3 class="combo-title">{{ $relatedTour->title }}</h3>
+                                        <div class="combo-stars">
+                                            @for($i = 1; $i <= $rStars; $i++)
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @endfor
                                         </div>
-                                        <span class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.85rem;">{{ __('Chi tiết') }}</span>
+                                        <div class="combo-location">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>{{ $rDestinationName }}</span>
+                                        </div>
+                                        <div class="combo-footer">
+                                            <div>
+                                                <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                                <div class="combo-price-val">{{ format_currency($relatedTour->base_price ?? 0) }}</div>
+                                            </div>
+                                            <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </a>
+                            </a>
+
+                            <!-- Tour Preview Component -->
+                            <x-tour-preview :tour="$relatedTour" />
+                        </div>
                     </div>
                 @endforeach
             </div>
