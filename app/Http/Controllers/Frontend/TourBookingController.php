@@ -246,4 +246,75 @@ class TourBookingController extends Controller
             'Message' => 'Confirm Success',
         ]);
     }
+
+    /**
+     * Apply coupon code for tour checkout
+     */
+    public function applyCoupon(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'order_value' => 'required|numeric|min:0',
+            'schedule_id' => 'required|exists:tour_schedules,id',
+        ]);
+
+        $schedule = TourSchedule::with('tour.categories')->findOrFail($request->schedule_id);
+        $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+
+        $coupon = Coupon::where('code', $request->code)
+            ->where(function ($query) {
+                $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+            })
+            ->first();
+
+        if (! $coupon) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá không tồn tại hoặc đã hết hạn.',
+            ], 404);
+        }
+
+        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá đã hết lượt sử dụng.',
+            ], 400);
+        }
+
+        // Check category restriction if applicable
+        if ($coupon->category_id !== null && ! in_array($coupon->category_id, $tourCategoryIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá không áp dụng cho loại tour này.',
+            ], 400);
+        }
+
+        if ($request->order_value < $coupon->min_order_value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng chưa đạt giá trị tối thiểu '.format_currency($coupon->min_order_value),
+            ], 400);
+        }
+
+        $discount = 0;
+        if ($coupon->discount_type === 'percent') {
+            $discount = $request->order_value * ($coupon->discount_value / 100);
+            if ($coupon->max_discount) {
+                $discount = min($discount, $coupon->max_discount);
+            }
+        } else {
+            $discount = $coupon->discount_value;
+        }
+
+        $discount = min($discount, $request->order_value);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Áp dụng mã giảm giá thành công!',
+            'discount_amount' => $discount,
+        ]);
+    }
 }

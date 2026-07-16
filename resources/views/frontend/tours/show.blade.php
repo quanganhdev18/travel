@@ -131,7 +131,7 @@
     }
 
     .booking-price {
-        font-size: 34px;
+        font-size: 32px;
         font-weight: 800;
         color: var(--dark-blue);
     }

@@ -263,6 +263,64 @@
 
     <x-chatbox />
 
+    @auth
+        @if(auth()->user()->hasAnyRole(['Super Admin', 'Admin', 'Staff', 'cskh']) || auth()->user()->role === 'guide')
+            @php
+                $dashboardUrl = auth()->user()->role === 'guide' ? route('guide.dashboard') : route('admin.dashboard');
+                $dashboardLabel = auth()->user()->role === 'guide' ? 'Quay lại HDV' : 'Quay lại Quản trị';
+                $dashboardIcon = auth()->user()->role === 'guide' ? 'bi-compass-fill' : 'bi-speedometer2';
+            @endphp
+            <a href="{{ $dashboardUrl }}" class="btn-back-to-admin shadow-lg" title="{{ $dashboardLabel }}">
+                <i class="bi {{ $dashboardIcon }}"></i>
+                <span>{{ $dashboardLabel }}</span>
+            </a>
+
+            <style>
+                .btn-back-to-admin {
+                    position: fixed;
+                    bottom: 25px;
+                    left: 25px;
+                    z-index: 1040;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 12px 20px;
+                    background: linear-gradient(135deg, #0f172a, #1e293b);
+                    color: #ffffff;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 50px;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    text-decoration: none;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .btn-back-to-admin:hover {
+                    background: linear-gradient(135deg, #007CE8, #005bb5);
+                    color: #ffffff;
+                    transform: translateY(-3px) scale(1.03);
+                    box-shadow: 0 20px 25px -5px rgba(0, 124, 232, 0.4), 0 10px 10px -5px rgba(0, 124, 232, 0.4);
+                    border-color: rgba(255, 255, 255, 0.3);
+                }
+                .btn-back-to-admin i {
+                    font-size: 1.1rem;
+                    transition: transform 0.3s ease;
+                }
+                .btn-back-to-admin:hover i {
+                    transform: scale(1.1);
+                }
+                @media (max-width: 576px) {
+                    .btn-back-to-admin {
+                        bottom: 15px;
+                        left: 15px;
+                        padding: 10px 16px;
+                        font-size: 0.8rem;
+                    }
+                }
+            </style>
+        @endif
+    @endauth
+
     @stack('scripts')
 </body>
 

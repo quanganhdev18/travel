@@ -70,11 +70,12 @@
                             <label class="form-label fw-bold">{{ __('Số điện thoại') }} <span class="text-danger">*</span></label>
                             <input type="tel" class="form-control @error('customer_phone') is-invalid @enderror" 
                                    name="customer_phone" value="{{ old('customer_phone', Auth::user()->phone) }}" 
-                                   required pattern="[0-9]{10,11}" maxlength="20">
+                                   required pattern="^(03|05|08|09)[0-9]{8}$" maxlength="10"
+                                   title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.">
                             @error('customer_phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">10-11 chữ số</small>
+                            <small class="text-muted">Gồm 10 chữ số (Bắt đầu bằng 03, 05, 08, 09)</small>
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">{{ __('Email') }} <span class="text-danger">*</span></label>

@@ -28,7 +28,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'string', 'regex:/^(03|05|08|09)[0-9]{8}$/'],
         ];
 
         // Only admin can assign roles
@@ -36,7 +36,9 @@ class UserController extends Controller
             $rules['role'] = ['required', Rule::in(['admin', 'staff', 'cskh', 'guide', 'customer'])];
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.',
+        ]);
 
         $validated['password'] = Hash::make($validated['password']);
 
@@ -59,7 +61,7 @@ class UserController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'phone' => 'nullable|string|max:20',
+            'phone' => ['nullable', 'string', 'regex:/^(03|05|08|09)[0-9]{8}$/'],
         ];
 
         if ($request->filled('password')) {
@@ -71,7 +73,9 @@ class UserController extends Controller
             $rules['role'] = ['required', Rule::in(['admin', 'staff', 'cskh', 'guide', 'customer'])];
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.',
+        ]);
 
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
