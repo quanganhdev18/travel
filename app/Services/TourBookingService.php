@@ -38,7 +38,8 @@ class TourBookingService
             $totalPersons = $data['adults'] + $data['children'];
             $schedule = TourSchedule::with('tour')->lockForUpdate()->find($data['schedule_id']);
 
-            if (! $schedule || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+            $departureDateTime = Carbon::parse($schedule->departure_date->format('Y-m-d').' '.($schedule->tour->departure_time ?? '00:00:00'));
+            if (! $schedule || $departureDateTime->lt(Carbon::now()->addDays(3))) {
                 throw new Exception('Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
             }
 
@@ -49,8 +50,6 @@ class TourBookingService
             $this->handleUserIdentity($data, $user);
 
             $pricing = $this->calculatePricing($schedule, $data);
-
-
 
             $booking = new Booking;
             $booking->user_id = $user->id;

@@ -144,7 +144,7 @@ class Tour extends Model
     public function activeSchedules()
     {
         return $this->hasMany(TourSchedule::class, 'tour_id')
-            ->whereDate('departure_date', '>=', Carbon::today()->addDays(3))
+            ->whereRaw("TIMESTAMP(DATE(departure_date), COALESCE((select departure_time from tours where tours.id = tour_schedules.tour_id), '00:00:00')) >= ?", [Carbon::now()->addDays(3)->toDateTimeString()])
             ->where('status', 'available')
             ->orderBy('departure_date', 'asc');
     }

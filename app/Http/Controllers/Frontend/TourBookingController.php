@@ -81,7 +81,8 @@ class TourBookingController extends Controller
 
         $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons'])->findOrFail($request->schedule_id);
 
-        if (Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+        $departureDateTime = Carbon::parse($schedule->departure_date->format('Y-m-d').' '.($schedule->tour->departure_time ?? '00:00:00'));
+        if ($departureDateTime->lt(Carbon::now()->addDays(3))) {
             return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
         }
         $totalPersons = $request->adults + $request->children;

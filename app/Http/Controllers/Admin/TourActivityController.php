@@ -27,6 +27,11 @@ class TourActivityController extends Controller
             'en' => $request->title['en'] ?? $request->title['vi'],
             'zh' => $request->title['zh'] ?? $request->title['vi'],
         ];
+        $data['description'] = [
+            'vi' => '',
+            'en' => '',
+            'zh' => '',
+        ];
 
         if ($request->hasFile('image_upload')) {
             $path = $request->file('image_upload')->store('activities', 'public');
