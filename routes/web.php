@@ -40,7 +40,6 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\FavoriteController;
-use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
@@ -81,11 +80,9 @@ Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
 Route::get('/tours/{id}/ai-summary', [FrontendTourController::class, 'aiSummary'])
     ->name('frontend.tours.ai_summary');
 
-// Tìm chuyến bay
-Route::get('/flights', [FlightController::class, 'search'])
-    ->name('frontend.flights.search');
-Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
-    ->name('api.flights.search');
+// Tóm tắt AI
+Route::get('/tours/{id}/ai-summary', [FrontendTourController::class, 'aiSummary'])
+    ->name('frontend.tours.ai_summary');
 
 /*
 |--------------------------------------------------------------------------
@@ -141,12 +138,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
         ->name('frontend.tours.booking_success');
 
-    // Đặt vé máy bay
-    Route::get('/flights/checkout', [FlightController::class, 'checkout'])
-        ->name('frontend.flights.checkout');
-
-    Route::post('/flights/book', [FlightController::class, 'book'])
-        ->name('frontend.flights.book');
+    Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
+        ->name('frontend.tours.booking_success');
 
     // Tài khoản user
     Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
@@ -225,8 +218,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus'])
         ->name('admin.bookings.update_status');
 
-    Route::post('/bookings/{id}/pnr', [BookingController::class, 'updatePnr'])
-        ->name('admin.bookings.update_pnr');
+    Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus'])
+        ->name('admin.bookings.update_status');
 
     // Lịch trình Tour
     Route::get('tours/{tour}/itineraries', [TourItineraryController::class, 'index'])

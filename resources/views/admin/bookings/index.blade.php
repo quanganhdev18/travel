@@ -3,8 +3,7 @@
 @section('page-title', 'Quản lý Đơn đặt chỗ')
 
 @section('content')
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -17,7 +16,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -30,7 +29,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -39,19 +38,6 @@
                 <div>
                     <div class="text-muted small fw-500 text-uppercase mb-1">Doanh thu tạm tính</div>
                     <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['revenue'], 0, ',', '.') }} ₫</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="admin-card border-0 mb-0">
-            <div class="admin-card-body d-flex align-items-center">
-                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                    <i class="bi bi-airplane-engines text-danger fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Cần xuất vé MB</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['flight_ticket_needed']) }}</div>
                 </div>
             </div>
         </div>
@@ -111,7 +97,6 @@
                         <th class="ps-4">Mã Đơn / Ngày</th>
                         <th>Khách Hàng</th>
                         <th>Sản Phẩm</th>
-                        <th>Di Chuyển</th>
                         <th>Thanh Toán</th>
                         <th>TT Thanh Toán</th>
                         <th>TT Tour</th>
@@ -134,27 +119,6 @@
                                 {{ $booking->tour_schedule->tour->title ?? 'N/A' }}
                             </div>
                             <div class="small text-primary mt-1"><i class="bi bi-calendar3 me-1"></i>{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</div>
-                        </td>
-                        <td>
-                            @if($booking->transport_type == 'flight')
-                                @if($booking->pnr_code)
-                                <span class="badge-soft badge-soft-danger px-2">
-                                    <i class="bi bi-airplane me-1"></i>{{ $booking->pnr_code }}
-                                </span>
-                                @else
-                                <span class="badge-soft badge-soft-warning px-2">
-                                    <i class="bi bi-airplane me-1"></i>Chờ vé
-                                </span>
-                                @endif
-                            @elseif($booking->transport_type == 'bus')
-                            <span class="badge-soft badge-soft-info px-2">
-                                <i class="bi bi-bus-front me-1"></i>Đi bằng xe
-                            </span>
-                            @else
-                            <span class="badge-soft badge-soft-secondary px-2">
-                                <i class="bi bi-car-front me-1"></i>Tự túc
-                            </span>
-                            @endif
                         </td>
                         <td>
                             <div class="fw-bold text-danger">{{ number_format($booking->total_price, 0, ',', '.') }} ₫</div>
@@ -259,20 +223,6 @@
                         <div class="mb-2"><span class="text-muted me-2">Tên tour:</span> <strong class="text-dark">{{ $booking->tour_schedule->tour->title ?? 'N/A' }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Khởi hành:</span> <strong class="text-dark">{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Hành khách:</span> <strong class="text-dark">{{ $booking->adults_count }} NL, {{ $booking->children_count }} TE</strong></div>
-                        <div class="mb-2"><span class="text-muted me-2">Vận chuyển:</span> 
-                            @if($booking->transport_type == 'flight')
-                                <span class="badge bg-danger mb-2">Máy bay</span>
-                                <form action="{{ route('admin.bookings.update_pnr', $booking->id) }}" method="POST" class="d-inline-flex align-items-center mt-1">
-                                    @csrf
-                                    <input type="text" name="pnr_code" value="{{ $booking->pnr_code }}" class="form-control form-control-sm me-2" placeholder="Nhập mã PNR..." style="max-width: 150px;">
-                                    <button type="submit" class="btn btn-sm btn-primary">Lưu</button>
-                                </form>
-                            @elseif($booking->transport_type == 'bus')
-                                <span class="badge bg-info text-white">Xe khách / Ô tô</span>
-                            @else
-                                <span class="text-muted">Tự túc</span>
-                            @endif
-                        </div>
                     </div>
 
                     <div class="col-12">

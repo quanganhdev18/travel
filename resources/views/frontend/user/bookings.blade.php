@@ -552,28 +552,7 @@
                                     @endif
                                 </div>
 
-                                {{-- Transport --}}
-                                <div class="d-flex align-items-center gap-2 small">
-                                    @if($booking->transport_type === 'flight')
-                                        <i class="bi bi-airplane-fill text-danger fs-5"></i>
-                                        <span class="fw-600 text-dark">{{ __('Máy bay') }}</span>
-                                        @if($booking->pnr_code)
-                                            <span style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:6px;padding:2px 8px;font-size:0.76rem;font-weight:700;letter-spacing:1px;">
-                                                PNR: {{ $booking->pnr_code }}
-                                            </span>
-                                        @else
-                                            <span style="background:#fffbeb;color:#d97706;border:1px solid #fde68a;border-radius:6px;padding:2px 8px;font-size:0.76rem;font-weight:600;">
-                                                <i class="bi bi-hourglass-split me-1"></i>{{ __('Chờ vé') }}
-                                            </span>
-                                        @endif
-                                    @elseif($booking->transport_type === 'bus')
-                                        <i class="bi bi-bus-front-fill text-info fs-5"></i>
-                                        <span class="fw-600 text-dark">{{ __('Xe ô tô') }}</span>
-                                    @else
-                                        <i class="bi bi-car-front-fill text-muted fs-5"></i>
-                                        <span class="fw-600 text-dark">{{ __('Tự túc') }}</span>
-                                    @endif
-                                </div>
+
 
                                 {{-- Addon info --}}
                                 @if($booking->addons->count() > 0)
@@ -603,14 +582,7 @@
                             </div>
 
                             {{-- Price rows --}}
-                            @if($booking->transport_price > 0)
-                            <div class="payment-row">
-                                <span class="label">
-                                    <i class="bi bi-airplane me-1 text-danger"></i>{{ __('Phí di chuyển') }}
-                                </span>
-                                <span class="value">{!! format_currency($booking->transport_price) !!}</span>
-                            </div>
-                            @endif
+
 
                             @if($booking->discount_amount > 0)
                             <div class="payment-row">

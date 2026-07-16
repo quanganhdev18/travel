@@ -10,7 +10,6 @@ use App\Models\Coupon;
 use App\Models\Holiday;
 use App\Models\Payment;
 use App\Models\TourSchedule;
-use App\Services\FlightBookingService;
 use App\Services\TourBookingService;
 use App\Services\VnPayService;
 use Carbon\Carbon;
@@ -27,7 +26,6 @@ class TourBookingController extends Controller
 {
     public function __construct(
         protected TourBookingService $bookingService,
-        protected FlightBookingService $flightService,
         protected VnPayService $vnPayService
     ) {}
 
@@ -57,19 +55,6 @@ class TourBookingController extends Controller
             $vnpayUrl = $this->vnPayService->generateUrl($booking, $request->ip());
 
             return redirect()->away($vnpayUrl);
-        }
-
-        // Nếu thanh toán tiền mặt (COD), tiến hành xuất vé máy bay nếu chọn máy bay
-        if ($booking->transport_type === 'flight') {
-            $this->flightService->bookFlightForBooking($booking);
-        }
-
-        if ($request->transport_type === 'flight') {
-            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
-        }
-
-        if ($request->transport_type === 'bus') {
-            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
         }
 
         return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour thành công. Bạn tự túc phương tiện di chuyển.');
@@ -210,13 +195,6 @@ class TourBookingController extends Controller
         $result = $this->vnPayService->processTransaction($request->all());
 
         if ($result['success']) {
-            $booking = $result['booking'];
-            if ($booking && $booking->transport_type === 'flight') {
-                $this->flightService->bookFlightForBooking($booking);
-
-                return redirect()->route('user.bookings')->with('success', 'Thanh toán VNPay thành công. Vé máy bay đã được đặt và gửi vào email của bạn.');
-            }
-
             return redirect()->route('user.bookings')->with('success', 'Thanh toán đặt tour qua VNPay thành công!');
         } else {
             return redirect()->route('user.bookings')->with('error', 'Thanh toán không thành công. Mã lỗi: '.$result['responseCode']);
