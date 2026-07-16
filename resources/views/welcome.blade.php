@@ -579,7 +579,8 @@
                                 <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
                                       method="POST"
                                       class="favorite-form"
-                                      onclick="event.stopPropagation();">
+                                      onclick="event.stopPropagation();"
+                                      x-show="!showPreview">
                                     @csrf
                                     <button type="submit"
                                             class="favorite-btn {{ $isFavorite ? 'active' : '' }}">

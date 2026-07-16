@@ -145,7 +145,9 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-600 text-dark">{{ __('Số Điện Thoại') }} <span class="text-danger">*</span></label>
                                 <input type="tel" name="customer_phone" class="form-control search-form-control"
-                                    value="{{ $user->phone ?? '' }}" required placeholder="+84 (0)...">
+                                    value="{{ $user->phone ?? '' }}" required placeholder="Ví dụ: 0987654321"
+                                    pattern="^(03|05|08|09)[0-9]{8}$"
+                                    title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-600 text-dark">{{ __('Email') }} <span class="text-danger">*</span></label>

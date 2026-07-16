@@ -845,7 +845,9 @@
                                     <div class="input-with-icon">
                                         <i class="bi bi-phone field-icon"></i>
                                         <input type="tel" name="phone" class="input-field"
-                                            value="{{ old('phone', $user->phone) }}" placeholder="0912 345 678">
+                                            value="{{ old('phone', $user->phone) }}" placeholder="Ví dụ: 0987654321"
+                                            pattern="^(03|05|08|09)[0-9]{8}$"
+                                            title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.">
                                     </div>
                                 </div>
                                 <div class="col-12">
