@@ -52,7 +52,7 @@
     }
 
     .booking-price {
-        font-size: 34px;
+        font-size: 32px;
         font-weight: 800;
         color: var(--dark-blue);
     }
@@ -488,48 +488,6 @@
                                 </button>
                             @endif
                         </div>
-                    </div>
-
-                    <!-- Key Features -->
-                    <div class="mb-4 mt-4 pt-4 border-top">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; flex-shrink: 0;">
-                                <i class="bi bi-lightning-charge-fill fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ __('Xác nhận nhanh') }}</div>
-                                <div class="text-muted small">{{ __('Nhận vé ngay lập tức') }}</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; flex-shrink: 0;">
-                                <i class="bi bi-phone-fill fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ __('Vé điện tử') }}</div>
-                                <div class="text-muted small">{{ __('Không cần in vé') }}</div>
-                            </div>
-                        </div>
-                        @if($ticket->cancellation_policy)
-                        <div class="d-flex align-items-center">
-                            <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; flex-shrink: 0;">
-                                <i class="bi bi-shield-check-fill fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ __('Hỗ trợ hủy vé') }}</div>
-                                <div class="text-muted small">{{ __('Theo chính sách') }}</div>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-
-                    <!-- Support Info -->
-                    <div class="mt-4 pt-4 border-top text-center">
-                        <p class="text-muted small mb-2">{{ __('Cần hỗ trợ?') }}</p>
-                        <div class="fw-bold text-primary fs-5">
-                            <i class="bi bi-telephone-fill me-2"></i>1900-xxxx
-                        </div>
-                        <div class="text-muted small">{{ __('Hỗ trợ 24/7') }}</div>
                     </div>
                 </div>
             </div>
