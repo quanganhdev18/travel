@@ -47,46 +47,47 @@ class OngoingTourController extends Controller
     public function assignGuides(Request $request, TourSchedule $schedule)
     {
         $request->validate([
-            'guide_ids' => 'nullable|array|max:2',
-            'guide_ids.*' => 'exists:tour_guides,id',
+            'primary_guide_id' => 'nullable|exists:tour_guides,id',
+            'backup_guide_id'  => 'nullable|exists:tour_guides,id|different:primary_guide_id',
         ], [
-            'guide_ids.max' => 'Mỗi lịch trình chỉ được phân công tối đa 2 hướng dẫn viên.',
+            'backup_guide_id.different' => 'HDV dự bị không được trùng với HDV chính.',
         ]);
 
-        // Kiểm tra xem có HDV nào được chọn bị trùng lịch không
-        if ($request->has('guide_ids') && is_array($request->guide_ids)) {
-            foreach ($request->guide_ids as $guideId) {
-                $isBusy = ScheduleGuide::where('tour_schedule_id', '!=', $schedule->id)
-                    ->where('guide_id', $guideId)
-                    ->whereHas('tour_schedule', function ($q) use ($schedule) {
-                        $q->where('departure_date', '<=', $schedule->return_date)
-                            ->where('return_date', '>=', $schedule->departure_date);
-                    })
-                    ->exists();
+        $primaryId = $request->filled('primary_guide_id') ? $request->primary_guide_id : null;
+        $backupId  = $request->filled('backup_guide_id')  ? $request->backup_guide_id  : null;
 
-                if ($isBusy) {
-                    $guideName = TourGuide::find($guideId)?->name ?? 'Hướng dẫn viên';
+        // Kiểm tra trùng lịch
+        foreach (array_filter([$primaryId, $backupId]) as $guideId) {
+            $isBusy = ScheduleGuide::where('tour_schedule_id', '!=', $schedule->id)
+                ->where('guide_id', $guideId)
+                ->whereHas('tour_schedule', function ($q) use ($schedule) {
+                    $q->where('departure_date', '<=', $schedule->return_date)
+                        ->where('return_date', '>=', $schedule->departure_date);
+                })
+                ->exists();
 
-                    return redirect()->back()->with('error', "Hướng dẫn viên {$guideName} đã được phân công cho một lịch trình khác trùng thời gian này.");
-                }
+            if ($isBusy) {
+                $guideName = TourGuide::find($guideId)?->name ?? 'Hướng dẫn viên';
+
+                return redirect()->back()->with('error', "Hướng dẫn viên {$guideName} đã được phân công cho một lịch trình khác trùng thời gian này.");
             }
         }
 
-        // Cập nhật bảng schedule_guides (sync sẽ tự động xóa các liên kết cũ và tạo mới)
-        // Lưu ý: bảng schedule_guides không có created_at/updated_at và incrementing id,
-        // nếu dùng Eloquent belongsToMany, có thể gọi sync.
-        // Tuy nhiên, Model TourSchedule không định nghĩa belongsToMany('App\Models\TourGuide', 'schedule_guides').
-        // Hiện tại Model có hasMany(ScheduleGuide::class). Mình sẽ xóa cái cũ và insert cái mới.
-
+        // Xóa phân công cũ và lưu mới
         $schedule->schedule_guides()->delete();
 
-        if ($request->has('guide_ids') && is_array($request->guide_ids)) {
-            foreach ($request->guide_ids as $index => $guideId) {
-                $schedule->schedule_guides()->create([
-                    'guide_id' => $guideId,
-                    'is_backup' => $index > 0,
-                ]);
-            }
+        if ($primaryId) {
+            $schedule->schedule_guides()->create([
+                'guide_id'  => $primaryId,
+                'is_backup' => false,
+            ]);
+        }
+
+        if ($backupId) {
+            $schedule->schedule_guides()->create([
+                'guide_id'  => $backupId,
+                'is_backup' => true,
+            ]);
         }
 
         return redirect()->back()->with('success', 'Đã cập nhật danh sách Hướng dẫn viên cho Lịch trình!');

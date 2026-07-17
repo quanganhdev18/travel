@@ -105,78 +105,162 @@
 </div>
 
 @foreach($schedules as $schedule)
+@php
+    $primaryGuide = $schedule->schedule_guides->firstWhere('is_backup', false);
+    $backupGuide  = $schedule->schedule_guides->firstWhere('is_backup', true);
+    $primaryGuideId = $primaryGuide ? (string) $primaryGuide->guide_id : '';
+    $backupGuideId  = $backupGuide  ? (string) $backupGuide->guide_id  : '';
+@endphp
 <div class="modal fade" id="assignGuideModal{{ $schedule->id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow">
             <form action="{{ route('admin.ongoing_tours.assign_guides', $schedule->id) }}" method="POST">
                 @csrf
                 <div class="modal-header border-bottom px-4 py-3 bg-light">
-                    <h5 class="modal-title fw-600">Phân công Hướng Dẫn Viên</h5>
+                    <h5 class="modal-title fw-600">
+                        <i class="bi bi-person-lines-fill me-2 text-primary"></i>Phân công Hướng Dẫn Viên
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-4"
+                    x-data="guideSelectorV2('{{ $primaryGuideId }}', '{{ $backupGuideId }}', {{ json_encode($schedule->busy_guide_ids) }})">
+
+                    {{-- Tour info --}}
                     <div class="mb-3">
-                        <label class="form-label text-muted fw-bold small text-uppercase">Tour: {{ $schedule->tour->title ?? 'N/A' }}</label>
+                        <label class="form-label text-muted fw-bold small text-uppercase">
+                            Tour: {{ $schedule->tour->title ?? 'N/A' }}
+                        </label>
                         <p class="mb-0">Khởi hành: <strong>{{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}@if($schedule->tour && $schedule->tour->departure_time) ({{ \Carbon\Carbon::parse($schedule->tour->departure_time)->format('H\hi') }})@endif</strong></p>
                     </div>
 
-                    <hr>
+                    <hr class="my-3">
 
-                    <div x-data="guideSelector({{ json_encode($schedule->schedule_guides->pluck('guide_id')->toArray()) }}, {{ json_encode($schedule->busy_guide_ids) }})">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <label class="form-label fw-500 mb-0">Chọn Hướng dẫn viên:</label>
-                            <span class="badge rounded-pill"
-                                :class="selectedCount === 2 ? 'bg-danger' : 'bg-primary'">
-                                <span x-text="selectedCount"></span>/2
+                    {{-- ===== HDV CHÍNH ===== --}}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-success rounded-pill">
+                                <i class="bi bi-person-check me-1"></i>HDV Chính
                             </span>
+                            <small class="text-muted">Chọn 1 hướng dẫn viên chính cho lịch trình</small>
                         </div>
-                        <p class="text-muted small mb-3">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Mỗi lịch trình chỉ được phân công tối đa <strong>2 hướng dẫn viên</strong>.
-                        </p>
 
-                        <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
-                            @forelse($tourGuides as $guide)
+                        <div class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+                            <div class="form-check p-0">
+                                <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
+                                    :class="primaryGuide === '' ? 'border-success bg-success bg-opacity-10' : 'border-dashed text-muted'"
+                                    style="cursor: pointer; border-style: dashed !important;">
+                                    <input class="form-check-input m-0 flex-shrink-0"
+                                        type="radio"
+                                        name="primary_guide_id"
+                                        value=""
+                                        x-model="primaryGuide">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-500 fst-italic text-muted">— Không chọn HDV chính —</div>
+                                    </div>
+                                </label>
+                            </div>
+                            @foreach($tourGuides as $guide)
                             <div class="form-check p-0">
                                 <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
                                     :class="{
-                                        'border-primary bg-primary bg-opacity-10': selected.includes('{{ $guide->id }}'),
-                                        'opacity-50 pe-none': busyGuides.includes('{{ $guide->id }}') || (!selected.includes('{{ $guide->id }}') && selectedCount >= 2),
-                                        'guide-hover': selected.includes('{{ $guide->id }}') || (!busyGuides.includes('{{ $guide->id }}') && selectedCount < 2)
+                                        'border-success bg-success bg-opacity-10': primaryGuide === '{{ $guide->id }}',
+                                        'opacity-50 pe-none': busyGuides.includes('{{ $guide->id }}') && primaryGuide !== '{{ $guide->id }}',
                                     }"
-                                    for="guide_{{ $schedule->id }}_{{ $guide->id }}"
+                                    for="primary_{{ $schedule->id }}_{{ $guide->id }}"
                                     style="cursor: pointer;">
                                     <input class="form-check-input m-0 flex-shrink-0"
-                                        type="checkbox"
-                                        name="guide_ids[]"
+                                        type="radio"
+                                        name="primary_guide_id"
                                         value="{{ $guide->id }}"
-                                        id="guide_{{ $schedule->id }}_{{ $guide->id }}"
-                                        x-model="selected"
-                                        :disabled="busyGuides.includes('{{ $guide->id }}') || (!selected.includes('{{ $guide->id }}') && selectedCount >= 2)"
-                                        @change="onCheck">
+                                        id="primary_{{ $schedule->id }}_{{ $guide->id }}"
+                                        x-model="primaryGuide"
+                                        :disabled="busyGuides.includes('{{ $guide->id }}') && primaryGuide !== '{{ $guide->id }}'">
                                     <div class="flex-grow-1">
                                         <div class="fw-500 d-flex align-items-center gap-2">
                                             <span>{{ $guide->name }}</span>
                                             <template x-if="busyGuides.includes('{{ $guide->id }}')">
-                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-2 py-0.5" style="font-size: 10px; font-weight: 500;">Bận trùng lịch</span>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-2" style="font-size: 10px; font-weight: 500;">Bận trùng lịch</span>
                                             </template>
                                         </div>
                                         <small class="text-muted">{{ $guide->phone }}</small>
                                     </div>
-                                    <i class="bi bi-check-circle-fill text-primary ms-auto"
-                                        x-show="selected.includes('{{ $guide->id }}')" style="display:none!important"
-                                        x-transition></i>
+                                    <i class="bi bi-check-circle-fill text-success ms-auto"
+                                        x-show="primaryGuide === '{{ $guide->id }}'"
+                                        style="display:none!important" x-transition></i>
                                 </label>
                             </div>
-                            @empty
-                            <div class="text-muted small">Chưa có hướng dẫn viên nào trong hệ thống. Vui lòng thêm mới.</div>
-                            @endforelse
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    {{-- ===== HDV DỰ BỊ ===== --}}
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-secondary rounded-pill">
+                                <i class="bi bi-person-dash me-1"></i>HDV Dự Bị
+                            </span>
+                            <small class="text-muted">Chọn 1 hướng dẫn viên dự bị (không bắt buộc)</small>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+                            <div class="form-check p-0">
+                                <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
+                                    :class="backupGuide === '' ? 'border-secondary bg-secondary bg-opacity-10' : 'border-dashed text-muted'"
+                                    style="cursor: pointer; border-style: dashed !important;">
+                                    <input class="form-check-input m-0 flex-shrink-0"
+                                        type="radio"
+                                        name="backup_guide_id"
+                                        value=""
+                                        x-model="backupGuide">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-500 fst-italic text-muted">— Không chọn HDV dự bị —</div>
+                                    </div>
+                                </label>
+                            </div>
+                            @foreach($tourGuides as $guide)
+                            <div class="form-check p-0">
+                                <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
+                                    :class="{
+                                        'border-secondary bg-secondary bg-opacity-10': backupGuide === '{{ $guide->id }}',
+                                        'opacity-50 pe-none': (busyGuides.includes('{{ $guide->id }}') && backupGuide !== '{{ $guide->id }}') || primaryGuide === '{{ $guide->id }}',
+                                    }"
+                                    for="backup_{{ $schedule->id }}_{{ $guide->id }}"
+                                    style="cursor: pointer;">
+                                    <input class="form-check-input m-0 flex-shrink-0"
+                                        type="radio"
+                                        name="backup_guide_id"
+                                        value="{{ $guide->id }}"
+                                        id="backup_{{ $schedule->id }}_{{ $guide->id }}"
+                                        x-model="backupGuide"
+                                        :disabled="(busyGuides.includes('{{ $guide->id }}') && backupGuide !== '{{ $guide->id }}') || primaryGuide === '{{ $guide->id }}'">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-500 d-flex align-items-center gap-2">
+                                            <span>{{ $guide->name }}</span>
+                                            <template x-if="primaryGuide === '{{ $guide->id }}'">
+                                                <span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2" style="font-size: 10px;">Đang là HDV chính</span>
+                                            </template>
+                                            <template x-if="busyGuides.includes('{{ $guide->id }}') && primaryGuide !== '{{ $guide->id }}'">
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle px-2" style="font-size: 10px; font-weight: 500;">Bận trùng lịch</span>
+                                            </template>
+                                        </div>
+                                        <small class="text-muted">{{ $guide->phone }}</small>
+                                    </div>
+                                    <i class="bi bi-check-circle-fill text-secondary ms-auto"
+                                        x-show="backupGuide === '{{ $guide->id }}'"
+                                        style="display:none!important" x-transition></i>
+                                </label>
+                            </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-admin-primary">Lưu Phân Công</button>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="bi bi-check2 me-1"></i>Lưu Phân Công
+                    </button>
                 </div>
             </form>
         </div>
@@ -186,16 +270,11 @@
 
 @push('scripts')
 <script>
-function guideSelector(initialSelected, busyGuides) {
+function guideSelectorV2(initialPrimary, initialBackup, busyGuides) {
     return {
-        selected: Array.isArray(initialSelected) ? initialSelected.map(id => id.toString()) : [],
+        primaryGuide: initialPrimary || '',
+        backupGuide: initialBackup || '',
         busyGuides: Array.isArray(busyGuides) ? busyGuides.map(id => id.toString()) : [],
-        get selectedCount() {
-            return this.selected.length;
-        },
-        onCheck() {
-            // Alpine x-model handles add/remove automatically
-        }
     };
 }
 </script>
