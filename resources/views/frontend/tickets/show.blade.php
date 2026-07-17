@@ -49,6 +49,17 @@
     .booking-sidebar {
         position: sticky;
         top: 100px;
+        height: auto !important;
+        min-height: auto !important;
+    }
+
+    .booking-sidebar.premium-card {
+        height: auto !important;
+        display: block !important;
+    }
+
+    .ticket-booking-notice {
+        height: auto !important;
     }
 
     .booking-price {
@@ -445,9 +456,9 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="premium-card booking-sidebar p-4 p-md-5 reveal-up">
+                <div class="premium-card booking-sidebar p-4 reveal-up">
                     <div class="ticket-booking-notice">
-                        <div class="d-flex flex-column mb-4 pb-3 border-bottom">
+                        <div class="d-flex flex-column mb-3 pb-3 border-bottom">
                             @php
                                 $minPrice = $ticket->ticket_options->min('price') ?? 0;
                                 $maxPrice = $ticket->ticket_options->max('price') ?? 0;
@@ -465,58 +476,16 @@
                             <small class="text-muted">{{ __('Giá vé') }}</small>
                         </div>
 
-                        <div class="alert alert-info rounded-3">
-                            <h5 class="alert-heading fw-bold"><i class="bi bi-info-circle me-2"></i>{{ __('Lưu ý quan trọng') }}</h5>
+                        <div class="alert alert-info rounded-3 mb-3">
+                            <h5 class="alert-heading fw-bold mb-2"><i class="bi bi-info-circle me-2"></i>{{ __('Lưu ý quan trọng') }}</h5>
                             <p class="mb-0">{{ __('Vé tham quan này hiện không hỗ trợ đặt lẻ. Bạn chỉ có thể mua kèm vé tham quan khi đặt các tour du lịch tương ứng tại hệ thống của chúng tôi.') }}</p>
                         </div>
 
-                        <div class="d-grid mt-4">
+                        <div class="d-grid">
                             <a href="{{ route('frontend.tours.index') }}" class="btn btn-primary btn-lg rounded-pill fw-bold py-3">
                                 <i class="bi bi-search me-2"></i>{{ __('Tìm Tour Phù Hợp') }}
                             </a>
                         </div>
-                    </div>
-
-                    <!-- Key Features -->
-                    <div class="mb-4 mt-4 pt-4 border-top">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; flex-shrink: 0;">
-                                <i class="bi bi-lightning-charge-fill fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ __('Xác nhận nhanh') }}</div>
-                                <div class="text-muted small">{{ __('Nhận vé ngay lập tức') }}</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; flex-shrink: 0;">
-                                <i class="bi bi-phone-fill fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ __('Vé điện tử') }}</div>
-                                <div class="text-muted small">{{ __('Không cần in vé') }}</div>
-                            </div>
-                        </div>
-                        @if($ticket->cancellation_policy)
-                        <div class="d-flex align-items-center">
-                            <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; flex-shrink: 0;">
-                                <i class="bi bi-shield-check-fill fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold">{{ __('Hỗ trợ hủy vé') }}</div>
-                                <div class="text-muted small">{{ __('Theo chính sách') }}</div>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-
-                    <!-- Support Info -->
-                    <div class="mt-4 pt-4 border-top text-center">
-                        <p class="text-muted small mb-2">{{ __('Cần hỗ trợ?') }}</p>
-                        <div class="fw-bold text-primary fs-5">
-                            <i class="bi bi-telephone-fill me-2"></i>1900-xxxx
-                        </div>
-                        <div class="text-muted small">{{ __('Hỗ trợ 24/7') }}</div>
                     </div>
                 </div>
             </div>

@@ -440,4 +440,6 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/{id}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::post('/{id}/messages/{messageId}/mark-important', [ChatController::class, 'markImportant'])->name('chat.mark_important');
+    Route::get('/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread_count');
+    Route::post('/{id}/mark-as-read', [ChatController::class, 'markAsRead'])->name('chat.mark_as_read');
 });

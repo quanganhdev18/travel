@@ -82,6 +82,22 @@
 .chatbox-bubble:hover {
     transform: scale(1.1);
 }
+.unread-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid white;
+}
 .chatbox-panel {
     position: absolute;
     bottom: 70px;
@@ -218,8 +234,30 @@
             } else {
                 loadMessages();
             }
+            
+            // Mark as read after a short delay to ensure messages are loaded
+            setTimeout(() => {
+                markMessagesAsRead();
+            }, 500);
         } else {
             panel.style.display = 'none';
+        }
+    }
+
+    function markMessagesAsRead() {
+        if (chatConversationId) {
+            fetch('/chat/' + chatConversationId + '/mark-as-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(() => {
+                updateUnreadCount();
+            })
+            .catch(err => console.error('Error marking messages as read:', err));
         }
     }
 
@@ -256,6 +294,8 @@
     }
 
     function loadMessages() {
+        if (!chatConversationId) return;
+        
         fetch('/chat/'+chatConversationId+'/messages')
         .then(res => res.json())
         .then(messages => {
