@@ -17,6 +17,7 @@ beforeEach(function () {
     ]);
 
     $mockProvider = Mockery::mock(Provider::class);
+    $mockProvider->shouldReceive('stateless')->andReturnSelf();
     $mockProvider->shouldReceive('user')->andReturn($this->googleUser);
     $mockProvider->shouldReceive('redirect')->andReturn(redirect('https://accounts.google.com/oauth'));
 

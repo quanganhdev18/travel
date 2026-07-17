@@ -1,8 +1,9 @@
 @auth
 <div id="live-chatbox" class="live-chatbox">
     <!-- Bubble Button -->
-    <div id="chatbox-bubble" class="chatbox-bubble shadow" onclick="toggleChatbox()">
+    <div id="chatbox-bubble" class="chatbox-bubble shadow position-relative" onclick="toggleChatbox()">
         <i class="bi bi-chat-dots-fill"></i>
+        <span id="chat-badge" class="chatbox-badge" style="display: none;"></span>
     </div>
     
     <!-- Chat Panel -->
@@ -46,6 +47,7 @@
     z-index: 1050;
 }
 .chatbox-bubble {
+    position: relative;
     width: 60px;
     height: 60px;
     background-color: var(--primary-color, #0d6efd);
@@ -57,6 +59,25 @@
     font-size: 24px;
     cursor: pointer;
     transition: transform 0.3s ease;
+}
+.chatbox-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff3b30;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 10px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2px solid white;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 .chatbox-bubble:hover {
     transform: scale(1.1);
@@ -126,16 +147,76 @@
 
 <script>
     let chatConversationId = null;
+    let allMessages = [];
+    let unreadCount = 0;
+    const storageKey = 'chat_last_read_time_user_{{ auth()->id() }}';
+
+    function getStorageLastReadTime() {
+        const val = localStorage.getItem(storageKey);
+        return val ? new Date(val) : new Date(0);
+    }
+
+    function updateBadgeUI() {
+        const badge = document.getElementById('chat-badge');
+        if (!badge) return;
+
+        const panel = document.getElementById('chatbox-panel');
+        if (panel && panel.style.display !== 'none') {
+            badge.style.display = 'none';
+            return;
+        }
+
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 5 ? '5+' : unreadCount;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function calculateUnread(messages, lastReadTime) {
+        let count = 0;
+        messages.forEach(msg => {
+            if (msg.sender_id != {{ auth()->id() ?? 'null' }} && new Date(msg.created_at) > lastReadTime) {
+                count++;
+            }
+        });
+        return count;
+    }
+
+    function checkUnreadOnLoad() {
+        fetch('/chat/conversations')
+            .then(res => res.json())
+            .then(conversations => {
+                const openConv = conversations.find(c => c.status === 'open');
+                if (openConv) {
+                    chatConversationId = openConv.id;
+                    listenToChat();
+                    
+                    fetch('/chat/' + chatConversationId + '/messages')
+                        .then(res => res.json())
+                        .then(messages => {
+                            allMessages = messages;
+                            unreadCount = calculateUnread(allMessages, getStorageLastReadTime());
+                            updateBadgeUI();
+                        });
+                }
+            });
+    }
 
     function toggleChatbox() {
         const panel = document.getElementById('chatbox-panel');
         if (panel.style.display === 'none') {
             panel.style.display = 'flex';
             
+            localStorage.setItem(storageKey, new Date().toISOString());
+            unreadCount = 0;
+            updateBadgeUI();
+            
             if(!chatConversationId) {
                 initConversation();
             } else {
-                scrollToBottom();
+                loadMessages();
             }
         } else {
             panel.style.display = 'none';
@@ -178,10 +259,15 @@
         fetch('/chat/'+chatConversationId+'/messages')
         .then(res => res.json())
         .then(messages => {
+            allMessages = messages;
             const container = document.getElementById('chat-messages');
             container.innerHTML = '';
             messages.forEach(msg => appendMessage(msg));
             scrollToBottom();
+            
+            localStorage.setItem(storageKey, new Date().toISOString());
+            unreadCount = 0;
+            updateBadgeUI();
         });
     }
 
@@ -277,28 +363,47 @@
             updateFileName();
             appendMessage(msg);
             scrollToBottom();
+            allMessages.push(msg);
+            localStorage.setItem(storageKey, new Date().toISOString());
+            unreadCount = 0;
+            updateBadgeUI();
         })
         .finally(() => {
             document.getElementById('btn-send-msg').disabled = false;
         });
     }
 
+    let isListening = false;
     function listenToChat() {
-        if(window.Echo) {
+        if(window.Echo && chatConversationId && !isListening) {
             window.Echo.private('conversation.'+chatConversationId)
                 .listen('MessageSent', (e) => {
-                    // if message is not from me
                     if(e.message.sender_id != {{ auth()->id() ?? 'null' }}) {
-                        appendMessage(e.message);
-                        scrollToBottom();
-                        // Optional: auto show chatbox if hidden
+                        allMessages.push(e.message);
                         const panel = document.getElementById('chatbox-panel');
                         if (panel.style.display === 'none') {
-                            toggleChatbox();
+                            unreadCount = calculateUnread(allMessages, getStorageLastReadTime());
+                            updateBadgeUI();
+                        } else {
+                            appendMessage(e.message);
+                            scrollToBottom();
+                            localStorage.setItem(storageKey, new Date().toISOString());
+                            unreadCount = 0;
+                            updateBadgeUI();
                         }
                     }
                 });
+            isListening = true;
         }
     }
+
+    window.addEventListener('storage', (e) => {
+        if (e.key === storageKey) {
+            unreadCount = calculateUnread(allMessages, getStorageLastReadTime());
+            updateBadgeUI();
+        }
+    });
+
+    checkUnreadOnLoad();
 </script>
 @endauth

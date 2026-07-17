@@ -199,7 +199,6 @@ class Booking extends Model
             self::TOUR_UPCOMING => [
                 self::TOUR_UPCOMING,
                 self::TOUR_IN_PROGRESS,
-                self::TOUR_CHECKING_IN,
                 self::TOUR_CANCELLED_CUSTOMER,
                 self::TOUR_CANCELLED_ADMIN,
             ],
