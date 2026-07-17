@@ -40,11 +40,11 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label small">Ngày khởi hành</label>
-                        <input type="datetime-local" name="departure_date" class="form-control" required>
+                        <input type="date" name="departure_date" class="form-control" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Ngày về</label>
-                        <input type="datetime-local" name="return_date" class="form-control" required>
+                        <input type="date" name="return_date" class="form-control bg-light" readonly required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Số lượng khách tối đa</label>
@@ -72,8 +72,8 @@
                     <tbody>
                         @foreach($tour->tour_schedules as $sch)
                         <tr>
-                            <td>{{ $sch->departure_date }}</td>
-                            <td>{{ $sch->return_date }}</td>
+                            <td>{{ $sch->departure_date->format('d/m/Y') }}</td>
+                            <td>{{ $sch->return_date->format('d/m/Y') }}</td>
                             <td>{{ $sch->available_seats }}/{{ $sch->capacity }}</td>
                             <td>
                                 <span class="badge {{ $sch->status == 'available' ? 'bg-success' : 'bg-danger' }}">
@@ -88,4 +88,34 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const departureInput = document.querySelector('input[name="departure_date"]');
+    const returnInput = document.querySelector('input[name="return_date"]');
+    const durationDays = {{ $tour->duration_days ?? 1 }};
+
+    if (departureInput && returnInput) {
+        departureInput.addEventListener('change', function() {
+            const departureVal = this.value;
+            if (departureVal) {
+                const date = new Date(departureVal);
+                // Cộng thêm (durationDays - 1) ngày
+                date.setDate(date.getDate() + (durationDays - 1));
+
+                // Định dạng ngày thành YYYY-MM-DD
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+
+                returnInput.value = `${yyyy}-${mm}-${dd}`;
+            } else {
+                returnInput.value = '';
+            }
+        });
+    }
+});
+</script>
+@endpush
 @endsection

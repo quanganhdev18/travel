@@ -42,4 +42,14 @@ class Category extends Model
     {
         return $this->hasMany(TourCategory::class);
     }
+
+    public function tours()
+    {
+        return $this->belongsToMany(
+            Tour::class,
+            'tour_categories',
+            'category_id',
+            'tour_id'
+        );
+    }
 }

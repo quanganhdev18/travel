@@ -33,15 +33,21 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         if (Auth::user()->role === 'admin' || Auth::user()->role === 'staff') {
-            return redirect()->intended('/admin/dashboard');
+            session()->forget('url.intended');
+
+            return redirect()->route('admin.dashboard');
         }
 
         if (Auth::user()->role === 'cskh') {
-            return redirect()->intended(route('admin.chat.index', absolute: false));
+            session()->forget('url.intended');
+
+            return redirect()->route('admin.chat.index');
         }
 
         if (Auth::user()->role === 'guide') {
-            return redirect()->intended(route('guide.dashboard', absolute: false));
+            session()->forget('url.intended');
+
+            return redirect()->route('guide.dashboard');
         }
 
         return redirect()->intended('/');

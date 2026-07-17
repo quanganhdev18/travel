@@ -36,4 +36,17 @@ class TourActivity extends Model
     {
         return $this->resolveImageUrl($value);
     }
+
+    public function getActivityTypeLabelAttribute(): string
+    {
+        $labels = [
+            'Transportation' => 'Di chuyển',
+            'Attractions' => 'Điểm tham quan',
+            'Dining' => 'Ẩm thực',
+            'Entertainment' => 'Giải trí',
+            'Others' => 'Khác',
+        ];
+
+        return $labels[$this->activity_type] ?? $this->activity_type ?? 'Khác';
+    }
 }

@@ -518,7 +518,7 @@
                                                                     <i class="bi bi-check-circle-fill text-{{ $isChecked ? 'success' : 'secondary' }} me-2" id="icon-act-{{ $activity->id }}"></i>
                                                                     {{ $activity->title }}
                                                                 </h6>
-                                                                <p class="mb-1 text-muted small"><i class="bi bi-clock me-1"></i>{{ \Carbon\Carbon::parse($activity->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($activity->end_time)->format('H:i') }} | <span class="badge bg-secondary">{{ $activity->activity_type }}</span></p>
+                                                                <p class="mb-1 text-muted small"><i class="bi bi-clock me-1"></i>{{ \Carbon\Carbon::parse($activity->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($activity->end_time)->format('H:i') }} | <span class="badge bg-secondary">{{ $activity->activity_type_label }}</span></p>
                                                                 <p class="mb-0 text-success small fw-semibold mt-1" id="time-act-{{ $activity->id }}" style="display:{{ $isChecked ? 'block' : 'none' }};">
                                                                     Đã check-in lúc {{ $isChecked ? $checkin->checked_in_at->format('H:i d/m/Y') : '' }}
                                                                 </p>

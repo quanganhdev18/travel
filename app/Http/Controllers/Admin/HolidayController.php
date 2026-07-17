@@ -25,11 +25,11 @@ class HolidayController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'end_date' => 'required|date|after:start_date',
             'price_increase_percentage' => 'required|numeric|min:0|max:100',
         ], [
-            'start_date.after_or_equal' => 'Ngày bắt đầu ngày lễ phải là ngày trong tương lai.',
-            'end_date.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.',
+            'start_date.after_or_equal' => 'Ngày bắt đầu ngày lễ phải là ngày trong tương lai hoặc hôm nay.',
+            'end_date.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu ít nhất 1 ngày.',
         ]);
 
         Holiday::create($request->all());
@@ -47,11 +47,11 @@ class HolidayController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'start_date' => 'required|date|after_or_equal:today',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'end_date' => 'required|date|after:start_date',
             'price_increase_percentage' => 'required|numeric|min:0|max:100',
         ], [
-            'start_date.after_or_equal' => 'Ngày bắt đầu ngày lễ phải là ngày trong tương lai.',
-            'end_date.after_or_equal' => 'Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu.',
+            'start_date.after_or_equal' => 'Ngày bắt đầu ngày lễ phải là ngày trong tương lai hoặc hôm nay.',
+            'end_date.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu ít nhất 1 ngày.',
         ]);
 
         $holiday->update($request->all());

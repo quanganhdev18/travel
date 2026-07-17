@@ -32,7 +32,7 @@
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">Phụ thu (%) <span class="text-danger">*</span></label>
-                        <input type="number" name="price_increase_percentage" class="form-control" value="{{ $holiday->price_increase_percentage }}" step="0.01" min="0" max="100" required>
+                        <input type="number" name="price_increase_percentage" id="holiday_price_increase_percentage" class="form-control" value="{{ $holiday->price_increase_percentage }}" step="0.01" min="0" max="100" required>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2">
@@ -51,17 +51,47 @@
     (function () {
         const startDate = document.getElementById('holiday_start_date');
         const endDate = document.getElementById('holiday_end_date');
+        const surchargeInput = document.getElementById('holiday_price_increase_percentage');
+
         if (startDate && endDate) {
-            startDate.addEventListener('change', function () {
-                endDate.min = this.value || '{{ date("Y-m-d") }}';
-                if (endDate.value && endDate.value < this.value) {
-                    endDate.value = '';
+            function updateEndDateMin() {
+                if (startDate.value) {
+                    const date = new Date(startDate.value);
+                    date.setDate(date.getDate() + 1);
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const minDateStr = `${yyyy}-${mm}-${dd}`;
+                    
+                    endDate.min = minDateStr;
+                    if (!endDate.value || endDate.value <= startDate.value) {
+                        endDate.value = minDateStr;
+                    }
                 }
-            });
+            }
+
+            startDate.addEventListener('change', updateEndDateMin);
+            
             // Init: set end_date min based on current start_date
             if (startDate.value) {
-                endDate.min = startDate.value;
+                const date = new Date(startDate.value);
+                date.setDate(date.getDate() + 1);
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                endDate.min = `${yyyy}-${mm}-${dd}`;
             }
+        }
+
+        if (surchargeInput) {
+            surchargeInput.addEventListener('input', function () {
+                const val = parseFloat(this.value);
+                if (val > 100) {
+                    this.value = 100;
+                } else if (val < 0) {
+                    this.value = 0;
+                }
+            });
         }
     })();
 </script>

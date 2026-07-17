@@ -44,9 +44,50 @@ class TourItineraryController extends Controller
         return back()->with('success', 'Thêm ngày lịch trình thành công!');
     }
 
+    public function update(Request $request, TourItinerary $itinerary)
+    {
+        $request->validate([
+            'day_number' => 'required|integer|min:1',
+            'title.vi' => 'required|string|max:255',
+            'title.en' => 'nullable|string|max:255',
+            'title.zh' => 'nullable|string|max:255',
+        ]);
+
+        $data = $request->except(['title', 'description']);
+        $data['title'] = [
+            'vi' => $request->title['vi'],
+            'en' => $request->title['en'] ?? $request->title['vi'],
+            'zh' => $request->title['zh'] ?? $request->title['vi'],
+        ];
+        $data['description'] = [
+            'vi' => $request->description['vi'] ?? '',
+            'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
+            'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
+        ];
+
+        $itinerary->update($data);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật ngày thành công!',
+                'data' => $itinerary,
+            ]);
+        }
+
+        return back()->with('success', 'Cập nhật ngày thành công!');
+    }
+
     public function destroy(TourItinerary $itinerary)
     {
         $itinerary->delete();
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa ngày lịch trình!',
+            ]);
+        }
 
         return back()->with('success', 'Đã xóa ngày lịch trình!');
     }

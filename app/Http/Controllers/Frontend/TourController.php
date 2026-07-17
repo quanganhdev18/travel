@@ -18,7 +18,9 @@ class TourController extends Controller
             'departure_location',
             'tour_images',
             'tour_schedules' => function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3))->orderBy('departure_date', 'asc');
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3))
+                    ->where('status', 'available')
+                    ->orderBy('departure_date', 'asc');
             },
             'tour_itineraries.activities',
             'categories',
@@ -40,7 +42,7 @@ class TourController extends Controller
 
         $relatedTours = Tour::with(['destination', 'tour_images'])
             ->where('id', '!=', $tour->id)
-            ->when(!empty($categoryIds), function ($query) use ($categoryIds) {
+            ->when(! empty($categoryIds), function ($query) use ($categoryIds) {
                 $query->whereHas('categories', function ($q) use ($categoryIds) {
                     $q->whereIn('categories.id', $categoryIds);
                 });
@@ -82,7 +84,7 @@ class TourController extends Controller
             }
 
             try {
-                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
                 ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={$apiKey}", [
                     'contents' => [

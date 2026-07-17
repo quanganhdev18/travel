@@ -68,18 +68,20 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        // Gỡ bỏ toàn bộ liên kết giữa danh mục này và các tour (bỏ qua để giữ lại khi restore)
-        // $category->tours()->detach();
+        if ($category->tours()->exists()) {
+            return back()->with('error', 'Không thể xóa danh mục này vì vẫn còn tour đang liên kết với nó!');
+        }
 
         // Tiến hành xóa danh mục (sẽ thành xóa mềm)
         $category->delete();
 
-        return back()->with('success', 'Đã xóa danh mục an toàn!');
+        return back()->with('success', 'Đã xóa danh mục thành công!');
     }
 
     public function trash()
     {
         $categories = Category::onlyTrashed()->latest()->paginate(10);
+
         return view('admin.categories.trash', compact('categories'));
     }
 
@@ -94,7 +96,7 @@ class CategoryController extends Controller
     public function forceDelete($id)
     {
         $category = Category::onlyTrashed()->findOrFail($id);
-        
+
         $category->tours()->detach();
         $category->forceDelete();
 
