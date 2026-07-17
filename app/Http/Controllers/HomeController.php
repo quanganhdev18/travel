@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Ticket;
 use App\Models\Tour;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
@@ -44,9 +43,7 @@ class HomeController extends Controller
             $q->orderBy('departure_date', 'asc')->limit(1);
         }])
             ->whereNull('deleted_at')
-            ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
-            })
+            ->whereHas('activeSchedules')
             ->latest()
             ->take(8)
             ->get();
@@ -98,9 +95,7 @@ class HomeController extends Controller
             },
         ])
             ->whereNull('deleted_at')
-            ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
-            });
+            ->whereHas('activeSchedules');
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
@@ -149,7 +144,7 @@ class HomeController extends Controller
         $date = $request->input('date') ?? $request->input('departure_date');
         if ($date) {
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
+                $q->whereDate('departure_date', '>=', $date);
             });
         }
 
@@ -206,9 +201,7 @@ class HomeController extends Controller
 
         $query = Tour::with(['destination', 'departure_location', 'tour_images'])
             ->whereNull('deleted_at')
-            ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
-            });
+            ->whereHas('activeSchedules');
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
@@ -245,13 +238,16 @@ class HomeController extends Controller
         }
 
         if ($request->filled('destination_id')) {
-            $query->where('destination_id', $request->destination_id);
+            $query->where(
+                'tours.destination_id',
+                (int) $request->input('destination_id')
+            );
         }
 
         if ($request->filled('date')) {
             $date = $request->date;
             $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
+                $q->whereDate('departure_date', '>=', $date);
             });
         }
 

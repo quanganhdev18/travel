@@ -334,6 +334,25 @@
         position: relative;
         cursor: pointer;
     }
+
+    /* Premium View All Buttons */
+    .btn-view-all {
+        color: var(--primary-color) !important;
+        border: 1px solid var(--primary-color) !important;
+        font-weight: 600;
+        padding: 8px 24px;
+        border-radius: 30px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        display: inline-block;
+    }
+
+    .btn-view-all:hover {
+        background: var(--primary-color) !important;
+        color: white !important;
+        box-shadow: 0 6px 20px rgba(0, 124, 232, 0.3);
+        transform: translateY(-2px);
+    }
 </style>
 
 <section class="container py-5 reveal-up dest-slider-section">
@@ -342,8 +361,7 @@
             <h2 class="section-heading">{{ __('Điểm đến thịnh hành') }}</h2>
             <p class="section-subheading mb-0">{{ __('Khám phá những vùng đất được yêu thích nhất.') }}</p>
         </div>
-        <a href="{{ route('frontend.destinations.index') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
-            style="color:var(--primary-color); border-color:var(--primary-color);">
+        <a href="{{ route('frontend.destinations.index') }}" class="btn-view-all text-decoration-none d-none d-md-inline-block">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
     </div>
@@ -518,8 +536,7 @@
             <p class="section-subheading mb-0">{{ __('Trải nghiệm dịch vụ 5 sao với giá ưu đãi.') }}</p>
         </div>
 
-        <a href="{{ route('frontend.tours.index') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
-            style="color:var(--primary-color); border-color:var(--primary-color);">
+        <a href="{{ route('frontend.tours.index') }}" class="btn-view-all text-decoration-none d-none d-md-inline-block">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
     </div>
@@ -579,7 +596,8 @@
                                 <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
                                       method="POST"
                                       class="favorite-form"
-                                      onclick="event.stopPropagation();">
+                                      onclick="event.stopPropagation();"
+                                      x-show="!showPreview">
                                     @csrf
                                     <button type="submit"
                                             class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
@@ -862,8 +880,7 @@ if (container) {
             <p class="section-subheading mb-0">{{ __('Giải trí không giới hạn với hàng ngàn sự kiện.') }}</p>
         </div>
 
-        <a href="{{ route('frontend.tickets.search') }}" class="btn-login-premium text-decoration-none d-none d-md-inline-block"
-            style="color:var(--primary-color); border-color:var(--primary-color);">
+        <a href="{{ route('frontend.tickets.search') }}" class="btn-view-all text-decoration-none d-none d-md-inline-block">
             {{ __('Xem tất cả') }} <i class="bi bi-arrow-right"></i>
         </a>
     </div>

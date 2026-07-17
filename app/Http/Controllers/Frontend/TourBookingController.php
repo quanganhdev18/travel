@@ -10,7 +10,6 @@ use App\Models\Coupon;
 use App\Models\Holiday;
 use App\Models\Payment;
 use App\Models\TourSchedule;
-use App\Services\FlightBookingService;
 use App\Services\TourBookingService;
 use App\Services\VnPayService;
 use Carbon\Carbon;
@@ -27,7 +26,6 @@ class TourBookingController extends Controller
 {
     public function __construct(
         protected TourBookingService $bookingService,
-        protected FlightBookingService $flightService,
         protected VnPayService $vnPayService
     ) {}
 
@@ -59,19 +57,6 @@ class TourBookingController extends Controller
             return redirect()->away($vnpayUrl);
         }
 
-        // Nếu thanh toán tiền mặt (COD), tiến hành xuất vé máy bay nếu chọn máy bay
-        if ($booking->transport_type === 'flight') {
-            $this->flightService->bookFlightForBooking($booking);
-        }
-
-        if ($request->transport_type === 'flight') {
-            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
-        }
-
-        if ($request->transport_type === 'bus') {
-            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
-        }
-
         return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Đặt tour thành công. Bạn tự túc phương tiện di chuyển.');
     }
 
@@ -96,7 +81,8 @@ class TourBookingController extends Controller
 
         $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons'])->findOrFail($request->schedule_id);
 
-        if (Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+        $departureDateTime = Carbon::parse($schedule->departure_date->format('Y-m-d').' '.($schedule->tour->departure_time ?? '00:00:00'));
+        if ($departureDateTime->lt(Carbon::now()->addDays(3))) {
             return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
         }
         $totalPersons = $request->adults + $request->children;
@@ -210,13 +196,6 @@ class TourBookingController extends Controller
         $result = $this->vnPayService->processTransaction($request->all());
 
         if ($result['success']) {
-            $booking = $result['booking'];
-            if ($booking && $booking->transport_type === 'flight') {
-                $this->flightService->bookFlightForBooking($booking);
-
-                return redirect()->route('user.bookings')->with('success', 'Thanh toán VNPay thành công. Vé máy bay đã được đặt và gửi vào email của bạn.');
-            }
-
             return redirect()->route('user.bookings')->with('success', 'Thanh toán đặt tour qua VNPay thành công!');
         } else {
             return redirect()->route('user.bookings')->with('error', 'Thanh toán không thành công. Mã lỗi: '.$result['responseCode']);
@@ -266,6 +245,77 @@ class TourBookingController extends Controller
         return response()->json([
             'RspCode' => '00',
             'Message' => 'Confirm Success',
+        ]);
+    }
+
+    /**
+     * Apply coupon code for tour checkout
+     */
+    public function applyCoupon(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code' => 'required|string',
+            'order_value' => 'required|numeric|min:0',
+            'schedule_id' => 'required|exists:tour_schedules,id',
+        ]);
+
+        $schedule = TourSchedule::with('tour.categories')->findOrFail($request->schedule_id);
+        $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();
+
+        $coupon = Coupon::where('code', $request->code)
+            ->where(function ($query) {
+                $query->whereNull('valid_until')->orWhere('valid_until', '>=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('valid_from')->orWhere('valid_from', '<=', now());
+            })
+            ->first();
+
+        if (! $coupon) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá không tồn tại hoặc đã hết hạn.',
+            ], 404);
+        }
+
+        if ($coupon->usage_limit !== null && $coupon->used_count >= $coupon->usage_limit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá đã hết lượt sử dụng.',
+            ], 400);
+        }
+
+        // Check category restriction if applicable
+        if ($coupon->category_id !== null && ! in_array($coupon->category_id, $tourCategoryIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã giảm giá không áp dụng cho loại tour này.',
+            ], 400);
+        }
+
+        if ($request->order_value < $coupon->min_order_value) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng chưa đạt giá trị tối thiểu '.format_currency($coupon->min_order_value),
+            ], 400);
+        }
+
+        $discount = 0;
+        if ($coupon->discount_type === 'percent') {
+            $discount = $request->order_value * ($coupon->discount_value / 100);
+            if ($coupon->max_discount) {
+                $discount = min($discount, $coupon->max_discount);
+            }
+        } else {
+            $discount = $coupon->discount_value;
+        }
+
+        $discount = min($discount, $request->order_value);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Áp dụng mã giảm giá thành công!',
+            'discount_amount' => $discount,
         ]);
     }
 }

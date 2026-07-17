@@ -18,7 +18,8 @@ class TourController extends Controller
             'departure_location',
             'tour_images',
             'tour_schedules' => function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3))->orderBy('departure_date', 'asc');
+                $q->whereRaw("TIMESTAMP(DATE(departure_date), COALESCE((select departure_time from tours where tours.id = tour_schedules.tour_id), '00:00:00')) >= ?", [Carbon::now()->addDays(3)->toDateTimeString()])
+                    ->orderBy('departure_date', 'asc');
             },
             'tour_itineraries.activities',
             'categories',
@@ -82,7 +83,7 @@ class TourController extends Controller
             }
 
             try {
-                $response = \Illuminate\Support\Facades\Http::withHeaders([
+                $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
                 ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={$apiKey}", [
                     'contents' => [
