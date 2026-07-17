@@ -28,11 +28,11 @@ class TourGuideController extends Controller
         $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
-            'phone' => ['required', 'unique:tour_guides,phone', 'regex:/^(03|05|08|09)[0-9]{8}$/'],
+            'phone' => 'required|digits:10|unique:tour_guides,phone',
             'email' => 'nullable|email|max:255|unique:tour_guides,email',
             'bio' => 'nullable|string',
         ], [
-            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.',
+            'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
             'phone.unique' => 'Số điện thoại này đã tồn tại, vui lòng nhập số khác.',
             'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
@@ -58,11 +58,11 @@ class TourGuideController extends Controller
         $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
-            'phone' => ['required', 'unique:tour_guides,phone,'.$tourGuide->id, 'regex:/^(03|05|08|09)[0-9]{8}$/'],
+            'phone' => 'required|digits:10|unique:tour_guides,phone,'.$tourGuide->id,
             'email' => 'nullable|email|max:255|unique:tour_guides,email,'.$tourGuide->id,
             'bio' => 'nullable|string',
         ], [
-            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.',
+            'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
             'phone.unique' => 'Số điện thoại này đã tồn tại, vui lòng nhập số khác.',
             'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use App\Events\SeatAvailabilityUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Favorite;
@@ -12,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -109,9 +107,9 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.Auth::id(),
-            'phone' => ['nullable', 'string', 'regex:/^(03|05|08|09)[0-9]{8}$/'],
+            'phone' => 'nullable|regex:/^[0-9]{10}$/',
         ], [
-            'phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.',
+            'phone.regex' => 'Số điện thoại phải chứa đúng 10 chữ số.',
         ]);
 
         Auth::user()->update([
@@ -193,21 +191,21 @@ class UserController extends Controller
             ->whereIn('booking_status', ['pending', 'confirmed'])
             ->findOrFail($id);
 
-        DB::transaction(function () use ($booking) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($booking) {
             $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
 
             $booking->update([
                 'booking_status' => 'cancelled',
                 'payment_status' => Booking::PAYMENT_FAILED,
-                'tour_status' => Booking::TOUR_CANCELLED_CUSTOMER,
+                'tour_status' => Booking::TOUR_CANCELLED_CUSTOMER
             ]);
 
             if (! $isCurrentlyCancelled && $booking->tour_schedule) {
                 $totalPersons = $booking->adults_count + $booking->children_count;
                 $booking->tour_schedule->increment('available_seats', $totalPersons);
-
+                
                 // Broadcast event for UI updates (optional, similar to booking)
-                broadcast(new SeatAvailabilityUpdated($booking->tour_schedule->id, $booking->tour_schedule->available_seats))->toOthers();
+                broadcast(new \App\Events\SeatAvailabilityUpdated($booking->tour_schedule->id, $booking->tour_schedule->available_seats))->toOthers();
             }
         });
 

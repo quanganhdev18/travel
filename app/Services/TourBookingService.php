@@ -38,8 +38,7 @@ class TourBookingService
             $totalPersons = $data['adults'] + $data['children'];
             $schedule = TourSchedule::with('tour')->lockForUpdate()->find($data['schedule_id']);
 
-            $departureDateTime = Carbon::parse($schedule->departure_date->format('Y-m-d').' '.($schedule->tour->departure_time ?? '00:00:00'));
-            if (! $schedule || $departureDateTime->lt(Carbon::now()->addDays(3))) {
+            if (! $schedule || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
                 throw new Exception('Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
             }
 
@@ -51,6 +50,11 @@ class TourBookingService
 
             $pricing = $this->calculatePricing($schedule, $data);
 
+            $transportData = null;
+            if (! empty($data['transport_data'])) {
+                $transportData = is_string($data['transport_data']) ? json_decode($data['transport_data'], true) : $data['transport_data'];
+            }
+
             $booking = new Booking;
             $booking->user_id = $user->id;
             $booking->tour_schedule_id = $data['schedule_id'];
@@ -61,7 +65,9 @@ class TourBookingService
             $booking->coupon_id = $pricing['couponId'];
             $booking->payment_status = Booking::PAYMENT_PENDING;
             $booking->tour_status = Booking::TOUR_UPCOMING;
-
+            $booking->transport_type = $data['transport_type'];
+            $booking->transport_price = $data['transport_price'] ?? 0;
+            $booking->transport_data = $transportData;
             $booking->payment_type = $data['payment_type'] ?? 'full';
             $booking->payment_method = $data['payment_method'] ?? 'transfer';
             $booking->paid_amount = 0;
@@ -140,6 +146,7 @@ class TourBookingService
         }
 
         $calculatedPrice = ($basePrice * $data['adults']) + ($childPrice * $data['children']);
+        $transportPrice = $data['transport_price'] ?? 0;
 
         // Tickets
         $ticketPrice = 0;
@@ -185,7 +192,7 @@ class TourBookingService
             }
         }
 
-        $finalTotalPrice = $calculatedPrice + $ticketPrice + $addonPriceTotal;
+        $finalTotalPrice = $calculatedPrice + $transportPrice + $ticketPrice + $addonPriceTotal;
         $discountAmount = 0;
         $couponId = null;
 

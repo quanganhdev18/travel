@@ -35,9 +35,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-500">Số điện thoại <span class="text-danger">*</span></label>
-                            <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" required value="{{ old('phone') }}"
-                                   pattern="^(03|05|08|09)[0-9]{8}$"
-                                   title="Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 08 hoặc 09.">
+                            <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" required value="{{ old('phone') }}">
                             @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-6">

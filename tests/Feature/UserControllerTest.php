@@ -11,7 +11,7 @@ test('profile page displays authenticated user details', function () {
     $user = User::factory()->create([
         'name' => 'John Doe',
         'email' => 'john@example.com',
-        'phone' => '0912345678',
+        'phone' => '0123456789',
     ]);
 
     $response = $this
@@ -21,14 +21,14 @@ test('profile page displays authenticated user details', function () {
     $response->assertOk();
     $response->assertSee('John Doe');
     $response->assertSee('john@example.com');
-    $response->assertSee('0912345678');
+    $response->assertSee('0123456789');
 });
 
 test('profile information can be updated through user controller', function () {
     $user = User::factory()->create([
         'name' => 'John Doe',
         'email' => 'john@example.com',
-        'phone' => '0912345678',
+        'phone' => '0123456789',
     ]);
 
     $response = $this

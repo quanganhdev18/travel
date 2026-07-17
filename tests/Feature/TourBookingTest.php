@@ -266,7 +266,7 @@ test('vnpay ipn updates payment status correctly', function () {
 
     $response->assertJson([
         'RspCode' => '00',
-        'Message' => 'Confirm Success',
+        'Message' => 'Confirm success',
     ]);
 
     $this->assertDatabaseHas('payments', [
