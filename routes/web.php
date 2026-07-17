@@ -37,10 +37,10 @@ use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
+use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
-use App\Http\Controllers\Frontend\TicketBookingController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
@@ -164,10 +164,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('frontend.bookings.pay_vnpay');
 
     // Bổ sung danh sách hành khách
-    Route::get('/bookings/{id}/passengers', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'index'])->name('frontend.bookings.passengers');
-    Route::post('/bookings/{id}/passengers/manual', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'storeManual'])->name('frontend.bookings.passengers.manual');
-    Route::get('/bookings/passengers/template', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'downloadTemplate'])->name('frontend.bookings.passengers.template');
-    Route::post('/bookings/{id}/passengers/import', [App\Http\Controllers\Frontend\BookingPassengerController::class, 'importExcel'])->name('frontend.bookings.passengers.import');
+    Route::get('/bookings/{id}/passengers', [BookingPassengerController::class, 'index'])->name('frontend.bookings.passengers');
+    Route::post('/bookings/{id}/passengers/manual', [BookingPassengerController::class, 'storeManual'])->name('frontend.bookings.passengers.manual');
+    Route::get('/bookings/passengers/template', [BookingPassengerController::class, 'downloadTemplate'])->name('frontend.bookings.passengers.template');
+    Route::post('/bookings/{id}/passengers/import', [BookingPassengerController::class, 'importExcel'])->name('frontend.bookings.passengers.import');
 });
 
 // Điểm đến
@@ -382,7 +382,7 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/schedules/{schedule}/update-status', [ScheduleController::class, 'updateGroupStatus'])
         ->name('guide.schedules.update_group_status');
-        
+
     // Guide passenger actions
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/manual', [ScheduleController::class, 'storeManualPassengers'])->name('guide.passengers.manual');
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
@@ -431,4 +431,6 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/{id}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
     Route::post('/{id}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::post('/{id}/messages/{messageId}/mark-important', [ChatController::class, 'markImportant'])->name('chat.mark_important');
+    Route::get('/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread_count');
+    Route::post('/{id}/mark-as-read', [ChatController::class, 'markAsRead'])->name('chat.mark_as_read');
 });

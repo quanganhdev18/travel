@@ -3,6 +3,7 @@
     <!-- Bubble Button -->
     <div id="chatbox-bubble" class="chatbox-bubble shadow" onclick="toggleChatbox()">
         <i class="bi bi-chat-dots-fill"></i>
+        <span id="unread-badge" class="unread-badge" style="display: none;">0</span>
     </div>
     
     <!-- Chat Panel -->
@@ -60,6 +61,22 @@
 }
 .chatbox-bubble:hover {
     transform: scale(1.1);
+}
+.unread-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid white;
 }
 .chatbox-panel {
     position: absolute;
@@ -126,6 +143,52 @@
 
 <script>
     let chatConversationId = null;
+    let hasNewMessages = false;
+    let isListening = false;
+
+    // Load unread count on page load and init existing conversation
+    document.addEventListener('DOMContentLoaded', function() {
+        initExistingConversation();
+        updateUnreadCount();
+        // Update unread count every 30 seconds
+        setInterval(updateUnreadCount, 30000);
+    });
+
+    function initExistingConversation() {
+        // Check if user has an existing conversation to set up listener
+        fetch('/chat/start', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.id) {
+                chatConversationId = data.id;
+                listenToChat();
+            }
+        })
+        .catch(err => console.error('Error checking existing conversation:', err));
+    }
+
+    function updateUnreadCount() {
+        fetch('/chat/unread-count')
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById('unread-badge');
+            if (data.count > 0) {
+                badge.textContent = data.count > 99 ? '99+' : data.count;
+                badge.style.display = 'flex';
+                hasNewMessages = true;
+            } else {
+                badge.style.display = 'none';
+                hasNewMessages = false;
+            }
+        })
+        .catch(err => console.error('Error fetching unread count:', err));
+    }
 
     function toggleChatbox() {
         const panel = document.getElementById('chatbox-panel');
@@ -135,10 +198,33 @@
             if(!chatConversationId) {
                 initConversation();
             } else {
-                scrollToBottom();
+                // Always reload messages when opening chatbox
+                loadMessages();
             }
+            
+            // Mark as read after a short delay to ensure messages are loaded
+            setTimeout(() => {
+                markMessagesAsRead();
+            }, 500);
         } else {
             panel.style.display = 'none';
+        }
+    }
+
+    function markMessagesAsRead() {
+        if (chatConversationId) {
+            fetch('/chat/' + chatConversationId + '/mark-as-read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(() => {
+                updateUnreadCount();
+            })
+            .catch(err => console.error('Error marking messages as read:', err));
         }
     }
 
@@ -175,6 +261,8 @@
     }
 
     function loadMessages() {
+        if (!chatConversationId) return;
+        
         fetch('/chat/'+chatConversationId+'/messages')
         .then(res => res.json())
         .then(messages => {
@@ -182,6 +270,9 @@
             container.innerHTML = '';
             messages.forEach(msg => appendMessage(msg));
             scrollToBottom();
+        })
+        .catch(err => {
+            console.error('Error loading messages:', err);
         });
     }
 
@@ -284,17 +375,22 @@
     }
 
     function listenToChat() {
-        if(window.Echo) {
+        if(window.Echo && !isListening) {
+            isListening = true;
             window.Echo.private('conversation.'+chatConversationId)
                 .listen('MessageSent', (e) => {
                     // if message is not from me
                     if(e.message.sender_id != {{ auth()->id() ?? 'null' }}) {
-                        appendMessage(e.message);
-                        scrollToBottom();
-                        // Optional: auto show chatbox if hidden
                         const panel = document.getElementById('chatbox-panel');
-                        if (panel.style.display === 'none') {
-                            toggleChatbox();
+                        
+                        // If chat is open, append message and mark as read
+                        if (panel.style.display !== 'none') {
+                            appendMessage(e.message);
+                            scrollToBottom();
+                            markMessagesAsRead();
+                        } else {
+                            // If chat is closed, just update badge
+                            updateUnreadCount();
                         }
                     }
                 });
