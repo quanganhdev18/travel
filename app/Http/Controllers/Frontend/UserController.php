@@ -122,7 +122,11 @@ class UserController extends Controller
     public function updateAvatar(Request $request): RedirectResponse
     {
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'avatar' => 'required|image|max:10240',
+        ], [
+            'avatar.required' => 'Vui lòng chọn một hình ảnh.',
+            'avatar.image' => 'Tệp được chọn phải là hình ảnh định dạng (jpg, png, jpeg, webp, gif...).',
+            'avatar.max' => 'Dung lượng ảnh đại diện không được vượt quá 10MB.',
         ]);
 
         $user = Auth::user();
