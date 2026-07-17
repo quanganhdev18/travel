@@ -26,7 +26,7 @@
                                     seatBadge.textContent = e.availableSeats;
                                     seatBadge.className = e.availableSeats < 5 ? 'text-danger fw-bold' : 'text-success fw-bold';
                                 }
-                                
+
                                 const radio = document.getElementById(`schedule-${e.scheduleId}`);
                                 if (e.availableSeats <= 0 && radio) {
                                     radio.disabled = true;
@@ -375,7 +375,7 @@
 
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
                     <div class="accordion custom-accordion" id="masterAccordion">
-                        
+
                         <!-- Tổng Quan -->
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="heading-overview">
@@ -408,11 +408,11 @@
                                             @foreach($tour->tour_itineraries as $index => $itinerary)
                                                 <div class="mb-4 pb-4 border-bottom last-border-none">
                                                     <h5 class="fw-bold text-dark mb-3">
-                                                        <span class="badge bg-primary me-2">{{ __('Ngày') }} {{ $itinerary->day_number }}</span> 
+                                                        <span class="badge bg-primary me-2">{{ __('Ngày') }} {{ $itinerary->day_number }}</span>
                                                         {{ $itinerary->title }}
                                                     </h5>
                                                     <p class="mb-3 tour-content-text">{!! nl2br(e($itinerary->description ?? __('Đang cập nhật lịch trình.'))) !!}</p>
-                                                    
+
                                                     @if($itinerary->activities && $itinerary->activities->count())
                                                         <ul class="list-unstyled mb-0">
                                                             @foreach($itinerary->activities as $activity)
@@ -454,7 +454,7 @@
                                                 <h6 class="fw-bold text-dark text-uppercase mb-4" style="letter-spacing: 1px;">
                                                     {{ $type ?: __('Hoạt động') }}
                                                 </h6>
-                                                
+
                                                 @foreach($activities as $activity)
                                                     <div class="mb-3 d-flex align-items-start gap-3">
                                                         <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
@@ -542,19 +542,19 @@
 
                     </div>
                 </div>
-                
+
                 <!-- Nhận xét và đánh giá -->
                 @if(isset($tour->reviews) && $tour->reviews->isNotEmpty())
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up mt-4">
                     <h3 class="fw-bold text-dark mb-4">
                         <i class="bi bi-star-fill text-warning me-2"></i> Đánh giá từ khách hàng
                     </h3>
-                    
+
                     @php
                         $avgRating = round($tour->reviews->avg('rating'), 1);
                         $totalReviews = $tour->reviews->count();
                     @endphp
-                    
+
                     <div class="d-flex align-items-center mb-4 pb-4 border-bottom">
                         <div class="display-4 fw-bold text-dark me-3">{{ $avgRating }}</div>
                         <div>
@@ -572,14 +572,14 @@
                             <div class="text-muted">{{ $totalReviews }} đánh giá</div>
                         </div>
                     </div>
-                    
+
                     <!-- Khối Tóm tắt bằng AI -->
                     <div class="ai-summary-block mb-4 p-4 rounded-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(0,124,232,0.05) 0%, rgba(138,43,226,0.05) 100%); border: 1px solid rgba(138,43,226,0.1);">
                         <div class="d-flex align-items-center mb-3">
                             <i class="bi bi-stars fs-4 me-2" style="color: #8a2be2;"></i>
                             <h5 class="fw-bold mb-0 text-dark" style="background: -webkit-linear-gradient(45deg, #007CE8, #8a2be2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Tóm tắt đánh giá bởi AI</h5>
                         </div>
-                        
+
                         <!-- Skeleton Loader -->
                         <div id="aiSummaryLoader">
                             <div class="placeholder-glow">
@@ -591,7 +591,7 @@
                                 <i class="bi bi-arrow-repeat spin"></i> AI đang tổng hợp ý kiến từ {{ $totalReviews }} đánh giá...
                             </div>
                         </div>
-                        
+
                         <!-- Nội dung thực -->
                         <div id="aiSummaryContent" class="d-none">
                             <p class="tour-content-text mb-0 text-dark fw-500" style="line-height: 1.6;" id="aiSummaryText"></p>
@@ -601,7 +601,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="review-list" id="reviewList">
                         @foreach($tour->reviews as $index => $review)
                             <div class="review-item mb-4 pb-4 border-bottom last-border-none {{ $index >= 3 ? 'd-none' : '' }}">
@@ -631,7 +631,7 @@
                             </div>
                         @endforeach
                     </div>
-                    
+
                     @if($totalReviews > 3)
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-outline-primary rounded-pill px-4" id="btnLoadMoreReviews">
@@ -722,15 +722,15 @@
         width: 6px;
     }
     .schedule-wrapper::-webkit-scrollbar-track {
-        background: #f1f1f1; 
+        background: #f1f1f1;
         border-radius: 10px;
     }
     .schedule-wrapper::-webkit-scrollbar-thumb {
-        background: #c1c1c1; 
+        background: #c1c1c1;
         border-radius: 10px;
     }
     .schedule-wrapper::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8; 
+        background: #a8a8a8;
     }
 </style>
 
@@ -744,10 +744,10 @@
                                         $date = \Carbon\Carbon::parse($schedule->departure_date);
                                         $dayOfWeek = ucfirst($date->translatedFormat('l'));
                                         $formattedDate = $date->format('d/m/Y');
-                                        
+
                                         $isFull = $schedule->available_seats <= 0;
                                         $seatClass = $schedule->available_seats < 5 ? 'text-danger' : 'text-success';
-                                        
+
                                         if (!$isFull && !$hasAvailableSchedule) {
                                             $isChecked = true;
                                             $hasAvailableSchedule = true;
@@ -772,7 +772,7 @@
 
                                         <label class="schedule-card-label w-100 p-3 m-0 d-flex justify-content-between align-items-center"
                                                for="schedule-{{ $schedule->id }}">
-                                            
+
                                             <div class="d-flex align-items-center">
                                                 <div class="bg-light rounded p-2 text-center me-3 border" style="min-width: 65px;">
                                                     <div class="fw-bold fs-4 text-primary lh-1">{{ $date->format('d') }}</div>
@@ -801,7 +801,7 @@
                                                 @endif
                                             </div>
                                         </label>
-                                        
+
                                         @if($isFull)
                                             <div class="position-absolute top-0 start-0 w-100 h-100 rounded-3" style="background: rgba(255,255,255,0.5); z-index: 1;"></div>
                                         @endif
@@ -870,9 +870,9 @@
                                     {{ __('Đặt Ngay Chuyến Đi') }}
                                 </button>
                             @else
-                                <a href="{{ route('login') }}"
-                                   class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
-                                   style="border: 2px solid var(--primary-color);">
+                                <a href="{{ route('login', ['redirect' => request()->fullUrl()]) }}"
+                                class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
+                                style="border: 2px solid var(--primary-color);">
                                     {{ __('Đăng nhập để Đặt') }}
                                 </a>
                             @endauth
@@ -1031,7 +1031,7 @@
                 const surcharge = parseFloat(selected.dataset.surcharge || 0);
                 basePriceVND = originalBasePrice * (1 + surcharge / 100);
                 childPriceVND = originalChildPrice * (1 + surcharge / 100);
-                
+
                 document.querySelector('.booking-price').innerHTML = formatCurrency(basePriceVND) + (surcharge > 0 ? ` <span class="badge bg-danger fs-6 align-middle ms-2">+${surcharge}% Lễ</span>` : '');
                 const childPriceElem = document.querySelector('.fs-5.fw-bold.text-info');
                 if(childPriceElem) childPriceElem.innerHTML = formatCurrency(childPriceVND) + (surcharge > 0 ? ` <span class="badge bg-danger ms-2" style="font-size:0.65rem">+${surcharge}% Lễ</span>` : '');
@@ -1047,7 +1047,7 @@
             const adults = parseInt(adultsInput.value) || 0;
             const children = parseInt(childrenInput.value) || 0;
             const totalVND = (basePriceVND * adults) + (childPriceVND * children);
-            
+
             totalPriceSpan.textContent = formatCurrency(totalVND);
         }
 
@@ -1065,11 +1065,11 @@
             adultsInput.addEventListener('change', function() { validateQty(this); });
             adultsInput.addEventListener('blur', function() { validateQty(this); });
             adultsInput.addEventListener('keyup', function() { updateTotalPrice(); });
-            
+
             childrenInput.addEventListener('change', function() { validateQty(this); });
             childrenInput.addEventListener('blur', function() { validateQty(this); });
             childrenInput.addEventListener('keyup', function() { updateTotalPrice(); });
-            
+
             // Handle plus/minus buttons
             document.querySelectorAll('.btn-qty-minus').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -1083,7 +1083,7 @@
                     }
                 });
             });
-            
+
             document.querySelectorAll('.btn-qty-plus').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const targetId = this.getAttribute('data-target');
@@ -1097,13 +1097,13 @@
                 });
             });
         }
-        
+
         if (scheduleRadios) {
             scheduleRadios.forEach(radio => radio.addEventListener('change', updatePriceWithSurcharge));
             // Trigger calculation for initially selected
             updatePriceWithSurcharge();
         }
-        
+
         const btnLoadMoreReviews = document.getElementById('btnLoadMoreReviews');
         if (btnLoadMoreReviews) {
             btnLoadMoreReviews.addEventListener('click', function() {
@@ -1114,26 +1114,26 @@
                     count++;
                     if (count === 3) break;
                 }
-                
+
                 const remainingHidden = document.querySelectorAll('.review-item.d-none');
                 if (remainingHidden.length === 0) {
                     btnLoadMoreReviews.style.display = 'none';
                 }
             });
         }
-        
+
         // Fetch AI Summary
         const aiSummaryLoader = document.getElementById('aiSummaryLoader');
         const aiSummaryContent = document.getElementById('aiSummaryContent');
         const aiSummaryText = document.getElementById('aiSummaryText');
-        
+
         if (aiSummaryLoader && aiSummaryContent && aiSummaryText) {
             fetch(`/tours/{{ $tour->id }}/ai-summary`)
                 .then(response => response.json())
                 .then(data => {
                     aiSummaryLoader.classList.add('d-none');
                     aiSummaryContent.classList.remove('d-none');
-                    
+
                     if (data.success && data.summary) {
                         aiSummaryText.innerHTML = data.summary.replace(/\n/g, '<br>');
                     } else {
