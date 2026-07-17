@@ -215,6 +215,6 @@ test('applying coupon with mismatched category fails validation', function () {
 
     $response->assertJson([
         'success' => false,
-        'message' => 'Mã không tồn tại, đã hết hạn hoặc không áp dụng cho tour này.',
+        'message' => 'Mã giảm giá không áp dụng cho loại tour này.',
     ]);
 });
