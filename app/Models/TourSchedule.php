@@ -36,6 +36,7 @@ class TourSchedule extends Model
         'return_date' => 'datetime',
         'capacity' => 'int',
         'available_seats' => 'int',
+        'reminder_sent' => 'boolean',
     ];
 
     protected $fillable = [
@@ -46,6 +47,7 @@ class TourSchedule extends Model
         'available_seats',
         'status',
         'checkin_location',
+        'reminder_sent',
     ];
 
     public function tour()

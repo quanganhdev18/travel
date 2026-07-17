@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Tự động chuyển trạng thái booking sang "Đang thực hiện" khi đến giờ khởi hành
 Schedule::command('tours:update-status')->everyMinute();
+
+// Tự động ẩn/đóng tour và gửi mail nhắc nhở khi còn 3 ngày trước khởi hành
+Schedule::command('tours:reminder-three-days')->daily();

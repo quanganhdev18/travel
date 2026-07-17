@@ -235,12 +235,18 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('tours/{tour}/itineraries', [TourItineraryController::class, 'store'])
         ->name('admin.tours.itineraries.store');
 
+    Route::put('itineraries/{itinerary}', [TourItineraryController::class, 'update'])
+        ->name('admin.itineraries.update');
+
     Route::delete('itineraries/{itinerary}', [TourItineraryController::class, 'destroy'])
         ->name('admin.itineraries.destroy');
 
     // Hoạt động Tour
     Route::post('itineraries/{itinerary}/activities', [TourActivityController::class, 'store'])
         ->name('admin.itineraries.activities.store');
+
+    Route::put('activities/{activity}', [TourActivityController::class, 'update'])
+        ->name('admin.activities.update');
 
     Route::delete('activities/{activity}', [TourActivityController::class, 'destroy'])
         ->name('admin.activities.destroy');
