@@ -169,6 +169,18 @@ class HomeController extends Controller
             };
         }
 
+        if ($request->filled('duration')) {
+            match ($request->duration) {
+                '2d1n' => $query->where('duration_days', 2)->where('duration_nights', 1),
+                '3d2n' => $query->where('duration_days', 3)->where('duration_nights', 2),
+                '4d3n' => $query->where('duration_days', 4)->where('duration_nights', 3),
+                '5d4n' => $query->where('duration_days', 5)->where('duration_nights', 4),
+                '6d5n' => $query->where('duration_days', 6)->where('duration_nights', 5),
+                '7d6n' => $query->where('duration_days', 7)->where('duration_nights', 6),
+                default => null,
+            };
+        }
+
         if ($request->filled('sort')) {
             if ($request->sort === 'price_asc') {
                 $query->orderBy('base_price', 'asc');
@@ -233,11 +245,8 @@ class HomeController extends Controller
         }
 
         if ($request->filled('destination_id')) {
-    $query->where(
-        'tours.destination_id',
-        (int) $request->input('destination_id')
-    );
-}
+            $query->where('destination_id', $request->destination_id);
+        }
 
         if ($request->filled('date')) {
             $date = $request->date;
@@ -256,6 +265,18 @@ class HomeController extends Controller
             };
         }
 
+        if ($request->filled('duration')) {
+            match ($request->duration) {
+                '2d1n' => $query->where('duration_days', 2)->where('duration_nights', 1),
+                '3d2n' => $query->where('duration_days', 3)->where('duration_nights', 2),
+                '4d3n' => $query->where('duration_days', 4)->where('duration_nights', 3),
+                '5d4n' => $query->where('duration_days', 5)->where('duration_nights', 4),
+                '6d5n' => $query->where('duration_days', 6)->where('duration_nights', 5),
+                '7d6n' => $query->where('duration_days', 7)->where('duration_nights', 6),
+                default => null,
+            };
+        }
+
         if ($request->sort === 'price_asc') {
             $query->orderBy('base_price', 'asc');
         } elseif ($request->sort === 'price_desc') {
@@ -264,7 +285,11 @@ class HomeController extends Controller
             $query->latest();
         }
 
-        $tours = $query->get();
+        $tours = $query->paginate(9)->withQueryString();
+
+        if ($request->ajax()) {
+            return view('frontend.tours._results', compact('tours'))->render();
+        }
 
         return view('frontend.tours.search', compact('tours', 'destinations', 'categories', 'banners'));
     }

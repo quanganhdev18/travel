@@ -11,7 +11,7 @@ test('profile page displays authenticated user details', function () {
     $user = User::factory()->create([
         'name' => 'John Doe',
         'email' => 'john@example.com',
-        'phone' => '123456789',
+        'phone' => '0123456789',
     ]);
 
     $response = $this
@@ -21,14 +21,14 @@ test('profile page displays authenticated user details', function () {
     $response->assertOk();
     $response->assertSee('John Doe');
     $response->assertSee('john@example.com');
-    $response->assertSee('123456789');
+    $response->assertSee('0123456789');
 });
 
 test('profile information can be updated through user controller', function () {
     $user = User::factory()->create([
         'name' => 'John Doe',
         'email' => 'john@example.com',
-        'phone' => '123456789',
+        'phone' => '0123456789',
     ]);
 
     $response = $this
@@ -36,7 +36,7 @@ test('profile information can be updated through user controller', function () {
         ->post('/user/profile', [
             'name' => 'Jane Doe',
             'email' => 'jane@example.com',
-            'phone' => '987654321',
+            'phone' => '0987654321',
         ]);
 
     $response->assertRedirect();
@@ -45,7 +45,7 @@ test('profile information can be updated through user controller', function () {
     $user->refresh();
     $this->assertSame('Jane Doe', $user->name);
     $this->assertSame('jane@example.com', $user->email);
-    $this->assertSame('987654321', $user->phone);
+    $this->assertSame('0987654321', $user->phone);
 });
 
 test('user password can be changed', function () {

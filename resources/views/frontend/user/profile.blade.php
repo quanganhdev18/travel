@@ -663,7 +663,7 @@
                         <i class="bi bi-folder2-open me-1"></i> Chọn ảnh
                         <input type="file" name="avatar" id="avatarFileInput" accept="image/*" class="d-none">
                     </label>
-                    <p class="text-muted small mt-2 mb-0">PNG, JPG, GIF tối đa 2MB</p>
+                    <p class="text-muted small mt-2 mb-0">PNG, JPG, GIF tối đa 10MB</p>
                 </div>
 
                 <div class="d-flex gap-3 justify-content-center">
@@ -844,7 +844,7 @@
                                     <label class="form-label-custom">Số điện thoại</label>
                                     <div class="input-with-icon">
                                         <i class="bi bi-phone field-icon"></i>
-                                        <input type="tel" name="phone" class="input-field"
+                                        <input type="tel" name="phone" class="input-field @error('phone') is-invalid @enderror"
                                             value="{{ old('phone', $user->phone) }}" placeholder="0912 345 678">
                                     </div>
                                 </div>
@@ -1684,15 +1684,21 @@
             fileInput.addEventListener('change', function () {
                 if (this.files && this.files[0]) {
                     const file = this.files[0];
-                    if (file.size > 2 * 1024 * 1024) {
-                        alert('Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.');
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('Ảnh quá lớn! Vui lòng chọn ảnh dưới 10MB.');
                         this.value = '';
                         return;
                     }
                     const reader = new FileReader();
                     reader.onload = function (e) {
                         const previewWrap = document.getElementById('previewWrap');
-                        previewWrap.innerHTML = '<img src="' + e.target.result + '" alt="Preview" style="width:100%;height:100%;object-fit:cover;">';
+                        // Xóa nội dung cũ (img hoặc div initials) và thay bằng ảnh preview
+                        previewWrap.innerHTML = '';
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Preview';
+                        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+                        previewWrap.appendChild(img);
                         updateUserAvatars(e.target.result);
                     };
                     reader.readAsDataURL(file);

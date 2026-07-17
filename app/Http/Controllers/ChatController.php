@@ -114,4 +114,44 @@ class ChatController extends Controller
         // but simple response is enough if UI updates optimistically.
         return response()->json(['success' => true, 'is_important' => $message->is_important]);
     }
+
+    public function getUnreadCount()
+    {
+        $user = Auth::user();
+
+        // Get user's open conversation
+        $conversation = Conversation::where('user_id', $user->id)
+            ->where('status', 'open')
+            ->first();
+
+        if (! $conversation) {
+            return response()->json(['count' => 0]);
+        }
+
+        // Count unread messages (messages sent by others and not read yet)
+        $count = $conversation->messages()
+            ->where('sender_id', '!=', $user->id)
+            ->whereNull('read_at')
+            ->count();
+
+        return response()->json(['count' => $count]);
+    }
+
+    public function markAsRead($id)
+    {
+        $conversation = Conversation::findOrFail($id);
+        $user = Auth::user();
+
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+            abort(403);
+        }
+
+        // Mark all messages in this conversation as read for current user
+        $conversation->messages()
+            ->where('sender_id', '!=', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
 }

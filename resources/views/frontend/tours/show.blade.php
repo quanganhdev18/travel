@@ -26,7 +26,7 @@
                                     seatBadge.textContent = e.availableSeats;
                                     seatBadge.className = e.availableSeats < 5 ? 'text-danger fw-bold' : 'text-success fw-bold';
                                 }
-
+                                
                                 const radio = document.getElementById(`schedule-${e.scheduleId}`);
                                 if (e.availableSeats <= 0 && radio) {
                                     radio.disabled = true;
@@ -375,7 +375,7 @@
 
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up">
                     <div class="accordion custom-accordion" id="masterAccordion">
-
+                        
                         <!-- Tổng Quan -->
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="heading-overview">
@@ -408,11 +408,11 @@
                                             @foreach($tour->tour_itineraries as $index => $itinerary)
                                                 <div class="mb-4 pb-4 border-bottom last-border-none">
                                                     <h5 class="fw-bold text-dark mb-3">
-                                                        <span class="badge bg-primary me-2">{{ __('Ngày') }} {{ $itinerary->day_number }}</span>
+                                                        <span class="badge bg-primary me-2">{{ __('Ngày') }} {{ $itinerary->day_number }}</span> 
                                                         {{ $itinerary->title }}
                                                     </h5>
                                                     <p class="mb-3 tour-content-text">{!! nl2br(e($itinerary->description ?? __('Đang cập nhật lịch trình.'))) !!}</p>
-
+                                                    
                                                     @if($itinerary->activities && $itinerary->activities->count())
                                                         <ul class="list-unstyled mb-0">
                                                             @foreach($itinerary->activities as $activity)
@@ -454,7 +454,7 @@
                                                 <h6 class="fw-bold text-dark text-uppercase mb-4" style="letter-spacing: 1px;">
                                                     {{ $type ?: __('Hoạt động') }}
                                                 </h6>
-
+                                                
                                                 @foreach($activities as $activity)
                                                     <div class="mb-3 d-flex align-items-start gap-3">
                                                         <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
@@ -723,15 +723,15 @@
         width: 6px;
     }
     .schedule-wrapper::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: #f1f1f1; 
         border-radius: 10px;
     }
     .schedule-wrapper::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
+        background: #c1c1c1; 
         border-radius: 10px;
     }
     .schedule-wrapper::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+        background: #a8a8a8; 
     }
 </style>
 
@@ -745,10 +745,10 @@
                                         $date = \Carbon\Carbon::parse($schedule->departure_date);
                                         $dayOfWeek = ucfirst($date->translatedFormat('l'));
                                         $formattedDate = $date->format('d/m/Y');
-
+                                        
                                         $isFull = $schedule->available_seats <= 0;
                                         $seatClass = $schedule->available_seats < 5 ? 'text-danger' : 'text-success';
-
+                                        
                                         if (!$isFull && !$hasAvailableSchedule) {
                                             $isChecked = true;
                                             $hasAvailableSchedule = true;
@@ -773,7 +773,7 @@
 
                                         <label class="schedule-card-label w-100 p-3 m-0 d-flex justify-content-between align-items-center"
                                                for="schedule-{{ $schedule->id }}">
-
+                                            
                                             <div class="d-flex align-items-center">
                                                 <div class="bg-light rounded p-2 text-center me-3 border" style="min-width: 65px;">
                                                     <div class="fw-bold fs-4 text-primary lh-1">{{ $date->format('d') }}</div>
@@ -802,7 +802,7 @@
                                                 @endif
                                             </div>
                                         </label>
-
+                                        
                                         @if($isFull)
                                             <div class="position-absolute top-0 start-0 w-100 h-100 rounded-3" style="background: rgba(255,255,255,0.5); z-index: 1;"></div>
                                         @endif
@@ -871,9 +871,9 @@
                                     {{ __('Đặt Ngay Chuyến Đi') }}
                                 </button>
                             @else
-                                <a href="{{ route('login', ['redirect' => request()->fullUrl()]) }}"
-                                class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
-                                style="border: 2px solid var(--primary-color);">
+                                <a href="{{ route('login') }}"
+                                   class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
+                                   style="border: 2px solid var(--primary-color);">
                                     {{ __('Đăng nhập để Đặt') }}
                                 </a>
                             @endauth
@@ -883,6 +883,92 @@
             </div>
         </div>
         </div> <!-- Close mb-5 reveal-up -->
+
+        @if(isset($relatedTours) && $relatedTours->count() > 0)
+        <div class="mt-5 pt-4 border-top reveal-up">
+            <h3 class="fw-bold text-dark mb-4">{{ __('Tour cùng danh mục') }}</h3>
+            <div class="row g-4">
+                @foreach($relatedTours as $relatedTour)
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="tour-preview-wrapper h-100" x-data="{ showPreview: false }"
+                             @mouseenter="showPreview = true" @mouseleave="showPreview = false">
+                            <a href="{{ route('frontend.tours.show', $relatedTour->slug) }}" class="text-decoration-none h-100 d-block" @mouseenter.stop>
+                                <div class="combo-card h-100">
+                                    <div class="combo-card-img-wrapper" style="height: 200px; position: relative;">
+                                        @if($relatedTour->duration_days)
+                                            <div class="tour-duration-badge">
+                                                {{ $relatedTour->duration_days }}N{{ $relatedTour->duration_nights > 0 ? $relatedTour->duration_nights . 'Đ' : '' }}
+                                            </div>
+                                        @endif
+
+                                        @auth
+                                            @php
+                                                $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+                                                    ->where('tour_id', $relatedTour->id)
+                                                    ->exists();
+                                            @endphp
+                                            <form action="{{ route('frontend.favorites.toggle', $relatedTour->id) }}" method="POST"
+                                                class="favorite-form" onclick="event.stopPropagation();">
+                                                @csrf
+                                                <button type="submit" class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+                                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-heart"></i>
+                                            </div>
+                                        @endauth
+
+                                        @php
+                                            $rPrimaryImage = $relatedTour->tour_images->where('is_primary', 1)->first()
+                                                         ?? $relatedTour->tour_images->first();
+                                            $rTourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                            if ($rPrimaryImage && !empty($rPrimaryImage->image_url)) {
+                                                if (\Illuminate\Support\Str::startsWith($rPrimaryImage->image_url, ['http://', 'https://'])) {
+                                                    $rTourImage = $rPrimaryImage->image_url;
+                                                } else {
+                                                    $rTourImage = asset(ltrim($rPrimaryImage->image_url, '/'));
+                                                }
+                                            }
+                                            $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
+                                            $rStars = $relatedTour->hotel_stars ?? 4;
+                                        @endphp
+                                        <img src="{{ $rTourImage }}"
+                                             alt="{{ $relatedTour->title }}"
+                                             class="w-100 h-100 object-fit-cover"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
+                                    </div>
+                                    <div class="combo-card-body">
+                                        <h3 class="combo-title">{{ $relatedTour->title }}</h3>
+                                        <div class="combo-stars">
+                                            @for($i = 1; $i <= $rStars; $i++)
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @endfor
+                                        </div>
+                                        <div class="combo-location">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>{{ $rDestinationName }}</span>
+                                        </div>
+                                        <div class="combo-footer">
+                                            <div>
+                                                <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                                <div class="combo-price-val">{{ format_currency($relatedTour->base_price ?? 0) }}</div>
+                                            </div>
+                                            <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Tour Preview Component -->
+                            <x-tour-preview :tour="$relatedTour" />
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
 
     </div>
 </div>
@@ -946,7 +1032,7 @@
                 const surcharge = parseFloat(selected.dataset.surcharge || 0);
                 basePriceVND = originalBasePrice * (1 + surcharge / 100);
                 childPriceVND = originalChildPrice * (1 + surcharge / 100);
-
+                
                 document.querySelector('.booking-price').innerHTML = formatCurrency(basePriceVND) + (surcharge > 0 ? ` <span class="badge bg-danger fs-6 align-middle ms-2">+${surcharge}% Lễ</span>` : '');
                 const childPriceElem = document.querySelector('.fs-5.fw-bold.text-info');
                 if(childPriceElem) childPriceElem.innerHTML = formatCurrency(childPriceVND) + (surcharge > 0 ? ` <span class="badge bg-danger ms-2" style="font-size:0.65rem">+${surcharge}% Lễ</span>` : '');
@@ -962,7 +1048,7 @@
             const adults = parseInt(adultsInput.value) || 0;
             const children = parseInt(childrenInput.value) || 0;
             const totalVND = (basePriceVND * adults) + (childPriceVND * children);
-
+            
             totalPriceSpan.textContent = formatCurrency(totalVND);
         }
 
@@ -980,11 +1066,11 @@
             adultsInput.addEventListener('change', function() { validateQty(this); });
             adultsInput.addEventListener('blur', function() { validateQty(this); });
             adultsInput.addEventListener('keyup', function() { updateTotalPrice(); });
-
+            
             childrenInput.addEventListener('change', function() { validateQty(this); });
             childrenInput.addEventListener('blur', function() { validateQty(this); });
             childrenInput.addEventListener('keyup', function() { updateTotalPrice(); });
-
+            
             // Handle plus/minus buttons
             document.querySelectorAll('.btn-qty-minus').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -998,7 +1084,7 @@
                     }
                 });
             });
-
+            
             document.querySelectorAll('.btn-qty-plus').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const targetId = this.getAttribute('data-target');
@@ -1012,7 +1098,7 @@
                 });
             });
         }
-
+        
         if (scheduleRadios) {
             scheduleRadios.forEach(radio => radio.addEventListener('change', updatePriceWithSurcharge));
             // Trigger calculation for initially selected
@@ -1063,4 +1149,14 @@
         }
     });
 </script>
+<style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .spin {
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+</style>
 @endsection

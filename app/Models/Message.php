@@ -6,11 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
 {
-    protected $fillable = ['conversation_id', 'sender_id', 'message', 'attachment_path', 'attachment_name', 'is_important'];
+    protected $fillable = ['conversation_id', 'sender_id', 'message', 'attachment_path', 'attachment_name', 'is_important', 'read_at'];
 
-    protected $casts = [
-        'is_important' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_important' => 'boolean',
+            'read_at' => 'datetime',
+        ];
+    }
 
     public function conversation()
     {
