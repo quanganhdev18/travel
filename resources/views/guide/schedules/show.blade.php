@@ -208,6 +208,14 @@
                         <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Vai trò của bạn:</span>
+                        @if($scheduleGuide->is_backup)
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill px-2 py-1">HDV Dự phòng</span>
+                        @else
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-1">HDV Chính</span>
+                        @endif
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Tổng khách:</span>
                         <strong>{{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
                     </li>

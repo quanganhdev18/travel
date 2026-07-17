@@ -61,9 +61,7 @@
                     <div class="vr mx-1 bg-secondary" style="width: 1px; opacity: 0.3; height: 16px; align-self: center;"></div>
 
                     @guest
-                    <li class="nav-item">
-                        <a class="nav-link py-1" href="{{ route('login') }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a>
-                    </li>
+                   <li class="nav-item"><a class="nav-link py-1" href="{{ route('login', ['redirect' => request()->fullUrl()]) }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a></li>
                     <li class="nav-item">
                         <a class="nav-link py-1" href="{{ route('register') }}" style="font-weight: 600;">{{ __('Đăng ký') }}</a>
                     </li>
@@ -145,7 +143,7 @@
                         <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-question-circle me-2"></i> {{ __('Hỗ trợ') }}</a></li>
 
                         @guest
-                        <li class="nav-item mt-2"><a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login') }}">{{ __('Đăng nhập') }}</a></li>
+                        <li class="nav-item mt-2"><a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login', ['redirect' => request()->fullUrl()]) }}">{{ __('Đăng nhập') }}</a></li>
                         <li class="nav-item"><a class="btn-register-premium text-decoration-none d-block text-center" href="{{ route('register') }}">{{ __('Đăng ký') }}</a></li>
                         @else
                         <li class="nav-item dropdown mt-2">

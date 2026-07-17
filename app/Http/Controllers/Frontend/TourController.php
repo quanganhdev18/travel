@@ -37,9 +37,15 @@ class TourController extends Controller
             ->flatMap->activities
             ->groupBy('activity_type');
 
+        $categoryIds = $tour->categories->pluck('id')->toArray();
+
         $relatedTours = Tour::with(['destination', 'tour_images'])
             ->where('id', '!=', $tour->id)
-            ->where('destination_id', $tour->destination_id)
+            ->when(!empty($categoryIds), function ($query) use ($categoryIds) {
+                $query->whereHas('categories', function ($q) use ($categoryIds) {
+                    $q->whereIn('categories.id', $categoryIds);
+                });
+            })
             ->whereHas('activeSchedules', function ($q) {
                 $q->whereDate('departure_date', '>=', Carbon::today());
             })
