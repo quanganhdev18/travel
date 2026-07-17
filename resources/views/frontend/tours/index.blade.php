@@ -45,7 +45,7 @@
                     @endif
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành từ') }}</label>
                     <input type="date" name="departure_date"
                         class="form-control search-form-control {{ isset($filterErrors['departure_date']) ? 'is-invalid' : '' }}"
@@ -55,7 +55,7 @@
                     @endif
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted small fw-bold">{{ __('Ngân sách') }}</label>
                     <select name="budget"
                         class="form-select search-form-control {{ isset($filterErrors['budget']) ? 'is-invalid' : '' }}">
@@ -74,16 +74,28 @@
                     @endif
                 </div>
 
+                <div class="col-md-2">
+                    <label class="form-label text-muted small fw-bold">{{ __('Thời gian') }}</label>
+                    <select name="duration"
+                        class="form-select search-form-control">
+                        <option value="">{{ __('Tất cả thời gian') }}</option>
+                        <option value="2d1n" {{ request('duration') == '2d1n' ? 'selected' : '' }}>2N1Đ</option>
+                        <option value="3d2n" {{ request('duration') == '3d2n' ? 'selected' : '' }}>3N2Đ</option>
+                        <option value="4d3n" {{ request('duration') == '4d3n' ? 'selected' : '' }}>4N3Đ</option>
+                        <option value="5d4n" {{ request('duration') == '5d4n' ? 'selected' : '' }}>5N4Đ</option>
+                        <option value="6d5n" {{ request('duration') == '6d5n' ? 'selected' : '' }}>6N5Đ</option>
+                        <option value="7d6n" {{ request('duration') == '7d6n' ? 'selected' : '' }}>7N6Đ</option>
+                    </select>
+                </div>
+
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-search-primary w-100">
                         <i class="bi bi-search me-2"></i>{{ __('Tìm kiếm') }}
                     </button>
                 </div>
-
-
             </form>
 
-            @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'keyword']))
+            @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'keyword', 'duration']))
                 <div class="d-flex align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
                     <small class="text-muted me-2">
                         <i class="bi bi-funnel me-1"></i>
@@ -112,8 +124,6 @@
                         </a>
                     @endif
 
-
-
                     @if(request('budget') && request('budget') !== 'all' && !isset($filterErrors['budget']))
                         @php
                             $budgetLabels = [
@@ -130,10 +140,28 @@
                         </a>
                     @endif
 
+                    @if(request('duration'))
+                        @php
+                            $durationLabels = [
+                                '2d1n' => '2N1Đ',
+                                '3d2n' => '3N2Đ',
+                                '4d3n' => '4N3Đ',
+                                '5d4n' => '5N4Đ',
+                                '6d5n' => '6N5Đ',
+                                '7d6n' => '7N6Đ',
+                            ];
+                        @endphp
+                        <a href="{{ request()->fullUrlWithQuery(['duration' => null]) }}"
+                            class="badge bg-warning bg-opacity-10 text-warning text-decoration-none p-2 rounded-pill hover-opacity">
+                            <i class="bi bi-clock me-1"></i>{{ $durationLabels[request('duration')] ?? '' }} <i
+                                class="bi bi-x"></i>
+                        </a>
+                    @endif
+
                     @if(request('keyword'))
                         <a href="{{ request()->fullUrlWithQuery(['keyword' => null]) }}"
                             class="badge bg-secondary bg-opacity-10 text-secondary text-decoration-none p-2 rounded-pill hover-opacity">
-                            <i class="bi bi-search me-1"></i>{{ request('keyword') }} <i class="bi bi-x"></i>
+                                <i class="bi bi-search me-1"></i>{{ request('keyword') }} <i class="bi bi-x"></i>
                         </a>
                     @endif
 
@@ -206,6 +234,10 @@
                                                         <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
                                                     </button>
                                                 </form>
+                                            @else
+                                                <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
+                                                    <i class="bi bi-heart"></i>
+                                                </div>
                                             @endauth
 
                                             @php

@@ -30,6 +30,46 @@
         border-radius: 12px;
         background: rgba(255, 255, 255, 0.95);
     }
+
+    /* Password checklist */
+    #password-checklist {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 14px;
+        border: 1px solid #e9ecef;
+    }
+    .pw-req {
+        font-size: 0.82rem;
+        color: #6c757d;
+        padding: 3px 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transition: color 0.25s;
+    }
+    .pw-req.valid {
+        color: #198754;
+        font-weight: 600;
+    }
+    .pw-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        font-weight: 700;
+        background: #dee2e6;
+        color: #6c757d;
+        flex-shrink: 0;
+        transition: background 0.25s, color 0.25s;
+    }
+    .pw-req.valid .pw-icon {
+        background: #198754;
+        color: #fff;
+        content: '\2713';
+    }
     </style>
 </head>
 
@@ -72,6 +112,21 @@
                                     id="password" name="password" required autocomplete="new-password">
                                 <div class="invalid-feedback" id="password-feedback">
                                     @error('password') {{ $message }} @enderror
+                                </div>
+                                <!-- Password requirement checklist -->
+                                <div id="password-checklist" class="mt-2" style="display:none;">
+                                    <div class="pw-req" id="req-length">
+                                        <span class="pw-icon">&#10005;</span> Ít nhất 8 ký tự
+                                    </div>
+                                    <div class="pw-req" id="req-upper">
+                                        <span class="pw-icon">&#10005;</span> Ít nhất 1 chữ hoa
+                                    </div>
+                                    <div class="pw-req" id="req-number">
+                                        <span class="pw-icon">&#10005;</span> Ít nhất 1 chữ số
+                                    </div>
+                                    <div class="pw-req" id="req-special">
+                                        <span class="pw-icon">&#10005;</span> Ít nhất 1 ký tự đặc biệt
+                                    </div>
                                 </div>
                             </div>
 
@@ -181,14 +236,54 @@
             }, 500);
         }
 
+        function updateChecklist(val) {
+            const checklist = document.getElementById('password-checklist');
+            checklist.style.display = val.length > 0 ? 'block' : 'none';
+
+            const checks = [
+                { id: 'req-length',  ok: val.length >= 8,              icon: '\u2713' },
+                { id: 'req-upper',   ok: /[A-Z]/.test(val),            icon: '\u2713' },
+                { id: 'req-number',  ok: /[0-9]/.test(val),            icon: '\u2713' },
+                { id: 'req-special', ok: /[^A-Za-z0-9]/.test(val),     icon: '\u2713' },
+            ];
+
+            checks.forEach(function (c) {
+                const el = document.getElementById(c.id);
+                const iconEl = el.querySelector('.pw-icon');
+                if (c.ok) {
+                    el.classList.add('valid');
+                    iconEl.innerHTML = '&#10003;';
+                } else {
+                    el.classList.remove('valid');
+                    iconEl.innerHTML = '&#10005;';
+                }
+            });
+        }
+
         function validatePassword() {
             const val = passwordInput.value;
             const feedback = document.getElementById('password-feedback');
+
+            const hasUppercase = /[A-Z]/.test(val);
+            const hasNumber = /[0-9]/.test(val);
+            const hasSpecial = /[^A-Za-z0-9]/.test(val);
+
+            updateChecklist(val);
+
             if (val === '') {
                 setValid(passwordInput, feedback, false, 'Vui lòng nhập mật khẩu.');
                 return false;
             } else if (val.length < 8) {
                 setValid(passwordInput, feedback, false, 'Mật khẩu phải dài ít nhất 8 ký tự.');
+                return false;
+            } else if (!hasUppercase) {
+                setValid(passwordInput, feedback, false, 'Mật khẩu phải chứa ít nhất 1 chữ in hoa.');
+                return false;
+            } else if (!hasNumber) {
+                setValid(passwordInput, feedback, false, 'Mật khẩu phải chứa ít nhất 1 chữ số.');
+                return false;
+            } else if (!hasSpecial) {
+                setValid(passwordInput, feedback, false, 'Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt.');
                 return false;
             } else {
                 setValid(passwordInput, feedback, true);
@@ -216,9 +311,14 @@
         }
 
         function checkFormValidity() {
+            const val = passwordInput.value;
+            const hasUppercase = /[A-Z]/.test(val);
+            const hasNumber = /[0-9]/.test(val);
+            const hasSpecial = /[^A-Za-z0-9]/.test(val);
+
             const nameOk = nameInput.value.trim().length >= 3;
-            const passOk = passwordInput.value.length >= 8;
-            const passConfirmOk = passwordConfirmInput.value === passwordInput.value && passwordConfirmInput.value !== '';
+            const passOk = val.length >= 8 && hasUppercase && hasNumber && hasSpecial;
+            const passConfirmOk = passwordConfirmInput.value === val && passwordConfirmInput.value !== '';
             
             const allOk = nameOk && isEmailValid && passOk && passConfirmOk;
             submitBtn.disabled = !allOk;

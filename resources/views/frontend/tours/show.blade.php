@@ -883,6 +883,92 @@
         </div>
         </div> <!-- Close mb-5 reveal-up -->
 
+        @if(isset($relatedTours) && $relatedTours->count() > 0)
+        <div class="mt-5 pt-4 border-top reveal-up">
+            <h3 class="fw-bold text-dark mb-4">{{ __('Tour cùng danh mục') }}</h3>
+            <div class="row g-4">
+                @foreach($relatedTours as $relatedTour)
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="tour-preview-wrapper h-100" x-data="{ showPreview: false }"
+                             @mouseenter="showPreview = true" @mouseleave="showPreview = false">
+                            <a href="{{ route('frontend.tours.show', $relatedTour->slug) }}" class="text-decoration-none h-100 d-block" @mouseenter.stop>
+                                <div class="combo-card h-100">
+                                    <div class="combo-card-img-wrapper" style="height: 200px; position: relative;">
+                                        @if($relatedTour->duration_days)
+                                            <div class="tour-duration-badge">
+                                                {{ $relatedTour->duration_days }}N{{ $relatedTour->duration_nights > 0 ? $relatedTour->duration_nights . 'Đ' : '' }}
+                                            </div>
+                                        @endif
+
+                                        @auth
+                                            @php
+                                                $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
+                                                    ->where('tour_id', $relatedTour->id)
+                                                    ->exists();
+                                            @endphp
+                                            <form action="{{ route('frontend.favorites.toggle', $relatedTour->id) }}" method="POST"
+                                                class="favorite-form" onclick="event.stopPropagation();">
+                                                @csrf
+                                                <button type="submit" class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
+                                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
+                                                <i class="bi bi-heart"></i>
+                                            </div>
+                                        @endauth
+
+                                        @php
+                                            $rPrimaryImage = $relatedTour->tour_images->where('is_primary', 1)->first()
+                                                         ?? $relatedTour->tour_images->first();
+                                            $rTourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
+                                            if ($rPrimaryImage && !empty($rPrimaryImage->image_url)) {
+                                                if (\Illuminate\Support\Str::startsWith($rPrimaryImage->image_url, ['http://', 'https://'])) {
+                                                    $rTourImage = $rPrimaryImage->image_url;
+                                                } else {
+                                                    $rTourImage = asset(ltrim($rPrimaryImage->image_url, '/'));
+                                                }
+                                            }
+                                            $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
+                                            $rStars = $relatedTour->hotel_stars ?? 4;
+                                        @endphp
+                                        <img src="{{ $rTourImage }}"
+                                             alt="{{ $relatedTour->title }}"
+                                             class="w-100 h-100 object-fit-cover"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
+                                    </div>
+                                    <div class="combo-card-body">
+                                        <h3 class="combo-title">{{ $relatedTour->title }}</h3>
+                                        <div class="combo-stars">
+                                            @for($i = 1; $i <= $rStars; $i++)
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @endfor
+                                        </div>
+                                        <div class="combo-location">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>{{ $rDestinationName }}</span>
+                                        </div>
+                                        <div class="combo-footer">
+                                            <div>
+                                                <div class="combo-price-label">{{ __('Giá từ:') }}</div>
+                                                <div class="combo-price-val">{{ format_currency($relatedTour->base_price ?? 0) }}</div>
+                                            </div>
+                                            <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- Tour Preview Component -->
+                            <x-tour-preview :tour="$relatedTour" />
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
     </div>
 </div>
 

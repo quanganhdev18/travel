@@ -156,11 +156,17 @@
                                 </td>
                                 <td>
                                     @if($schedule->schedule_guides->count() > 0)
-                                        <div class="d-flex flex-wrap gap-1">
+                                        <div class="d-flex flex-column gap-1">
                                             @foreach($schedule->schedule_guides as $sg)
-                                                <span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill px-2 py-1">
-                                                    <i class="bi bi-person-fill me-1"></i>{{ $sg->tour_guide->name ?? 'N/A' }}
-                                                </span>
+                                                @if($sg->is_backup)
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill px-2 py-1 text-start" style="font-size: 11px; width: fit-content;">
+                                                        <i class="bi bi-person-dash me-1"></i>Dự phòng: {{ $sg->tour_guide->name ?? 'N/A' }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-1 text-start" style="font-size: 11px; width: fit-content;">
+                                                        <i class="bi bi-person-check me-1"></i>Chính: {{ $sg->tour_guide->name ?? 'N/A' }}
+                                                    </span>
+                                                @endif
                                             @endforeach
                                         </div>
                                     @else

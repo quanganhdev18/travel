@@ -109,6 +109,7 @@
                                 'destination_id' => request('destination_id'),
                                 'date'           => request('date'),
                                 'budget'         => request('budget'),
+                                'duration'       => request('duration'),
                             ]);
                         @endphp
                         @if(count($activeFilters) > 0)
@@ -127,6 +128,12 @@
                                 @php $bl = ['under_5m'=>'< ₫5M','5m_to_10m'=>'₫5-10M','10m_to_20m'=>'₫10-20M','over_20m'=>'> ₫20M']; @endphp
                                 <span class="badge bg-success bg-opacity-10 text-success fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
                                     {{ $bl[request('budget')] ?? '' }}
+                                </span>
+                            @endif
+                            @if(request('duration'))
+                                @php $dl = ['2d1n'=>'2N1Đ','3d2n'=>'3N2Đ','4d3n'=>'4N3Đ','5d4n'=>'5N4Đ','6d5n'=>'6N5Đ','7d6n'=>'7N6Đ']; @endphp
+                                <span class="badge bg-warning bg-opacity-10 text-warning fw-normal py-1 px-2 rounded-pill" style="font-size:0.75rem;">
+                                    <i class="bi bi-clock me-1"></i>{{ $dl[request('duration')] ?? '' }}
                                 </span>
                             @endif
                         </div>
@@ -175,6 +182,33 @@
                             </div>
                         </div>
 
+                        <!-- Thời gian -->
+                        <div class="mb-4">
+                            <div class="filter-section-title">{{ __('Thời gian') }}</div>
+                            <div class="filter-btn-grid">
+                                <input type="radio" class="btn-check" name="duration" id="duration0" value="" {{ !request('duration') ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration0">{{ __('Tất cả') }}</label>
+
+                                <input type="radio" class="btn-check" name="duration" id="duration_2d1n" value="2d1n" {{ request('duration') == '2d1n' ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration_2d1n">{{ __('2N1Đ') }}</label>
+
+                                <input type="radio" class="btn-check" name="duration" id="duration_3d2n" value="3d2n" {{ request('duration') == '3d2n' ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration_3d2n">{{ __('3N2Đ') }}</label>
+
+                                <input type="radio" class="btn-check" name="duration" id="duration_4d3n" value="4d3n" {{ request('duration') == '4d3n' ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration_4d3n">{{ __('4N3Đ') }}</label>
+
+                                <input type="radio" class="btn-check" name="duration" id="duration_5d4n" value="5d4n" {{ request('duration') == '5d4n' ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration_5d4n">{{ __('5N4Đ') }}</label>
+
+                                <input type="radio" class="btn-check" name="duration" id="duration_6d5n" value="6d5n" {{ request('duration') == '6d5n' ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration_6d5n">{{ __('6N5Đ') }}</label>
+
+                                <input type="radio" class="btn-check" name="duration" id="duration_7d6n" value="7d6n" {{ request('duration') == '7d6n' ? 'checked' : '' }}>
+                                <label class="filter-btn" for="duration_7d6n">{{ __('7N6Đ') }}</label>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2">
                             <i class="bi bi-funnel me-2"></i>{{ __('Áp dụng bộ lọc') }}
                         </button>
@@ -183,86 +217,8 @@
 
                 <!-- Main Content Area -->
                 <div class="col-lg-9">
-                    <!-- Top Bar -->
-                    <div class="search-results-header">
-                        <div class="search-results-count">
-                            {{ __('Kết quả:') }} <span>{{ $tours->count() }} {{ __('gói combo') }}</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small text-nowrap">{{ __('Sắp xếp theo:') }}</span>
-                            <select class="form-select border-0 bg-transparent fw-medium" name="sort" style="width: auto;" onchange="document.getElementById('searchForm').submit()">
-                                <option value="latest" {{ request('sort') == 'latest' ? 'selected' : '' }}>{{ __('Mới nhất') }}</option>
-                                <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('Giá từ thấp đến cao') }}</option>
-                                <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('Giá từ cao đến thấp') }}</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Grid of Tours -->
-                    <div class="row g-4">
-                        @forelse($tours as $tour)
-                        <div class="col-12 col-md-4">
-                            <a href="{{ route('frontend.tours.show', $tour->slug) }}" class="text-decoration-none h-100 d-block">
-                                <div class="combo-card h-100">
-                                    <div class="combo-card-img-wrapper" style="height: 240px; position: relative;">
-                                        {{-- Duration Badge --}}
-                                        @if($tour->duration_days)
-                                        <div class="tour-duration-badge">
-                                            {{ $tour->duration_days }}N{{ $tour->duration_nights > 0 ? $tour->duration_nights . 'Đ' : '' }}
-                                        </div>
-                                        @endif
-                                      
-                                        @php
-                                            $primaryImage = $tour->tour_images->where('is_primary', 1)->first()
-                                                         ?? $tour->tour_images->first();
-                                            $tourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
-                                            if ($primaryImage && !empty($primaryImage->image_url)) {
-                                                if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
-                                                    $tourImage = $primaryImage->image_url;
-                                                } else {
-                                                    $tourImage = asset(ltrim($primaryImage->image_url, '/'));
-                                                }
-                                            }
-                                            $destinationName = optional($tour->destination)->name ?: 'Việt Nam';
-                                            $stars = $tour->hotel_stars ?? 4;
-                                        @endphp
-                                        <img src="{{ $tourImage }}"
-                                             alt="{{ $tour->title }}"
-                                             class="w-100 h-100 object-fit-cover"
-                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
-                                    </div>
-                                    <div class="combo-card-body">
-                                        <h3 class="combo-title">{{ $tour->title }}</h3>
-                                        <div class="combo-stars">
-                                            @for($i = 1; $i <= $stars; $i++)
-                                                <i class="bi bi-star-fill text-warning"></i>
-                                            @endfor
-                                        </div>
-                                        <div class="combo-location">
-                                            <i class="bi bi-geo-alt"></i>
-                                            <span>{{ $destinationName }}</span>
-                                        </div>
-                                        <div class="combo-footer">
-                                            <div>
-                                                <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
-                                            </div>
-                                            <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        @empty
-                        <div class="col-12">
-                            <div class="alert alert-info text-center py-5 rounded-4 bg-white border-0 shadow-sm">
-                                <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
-                                <h5 class="fw-bold">{{ __('Không tìm thấy kết quả nào') }}</h5>
-                                <p class="text-muted">{{ __('Vui lòng thử điều chỉnh lại bộ lọc tìm kiếm.') }}</p>
-                                <a href="{{ route('frontend.tours.search') }}" class="btn btn-outline-primary rounded-pill mt-2">{{ __('Xóa bộ lọc') }}</a>
-                            </div>
-                        </div>
-                        @endforelse
+                    <div id="results-container" class="position-relative">
+                        @include('frontend.tours._results')
                     </div>
                 </div>
             </div>
@@ -298,6 +254,47 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Favorite button styling copy-pasted from index.blade.php */
+    .favorite-form {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        z-index: 9999;
+        margin: 0;
+    }
+
+    .favorite-btn {
+        width: 46px;
+        height: 46px;
+        border: none;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .favorite-btn i {
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    .favorite-btn:hover {
+        transform: scale(1.08);
+    }
+
+    .favorite-btn.active {
+        color: #ff3366;
+    }
+
+    .favorite-btn.active i {
+        color: #ff3366;
     }
 </style>
 <script>

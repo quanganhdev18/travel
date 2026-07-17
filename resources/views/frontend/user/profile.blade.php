@@ -1260,11 +1260,18 @@
                                     border: 1px solid #bfdbfe;
                                 }
 
-                                .passenger-chip.child {
-                                    background: #fdf4ff;
-                                    color: #7c3aed;
-                                    border-color: #e9d5ff;
-                                }
+            <form method="POST" action="{{ route('user.avatar.update') }}" enctype="multipart/form-data"
+                id="avatarUploadForm">
+                @csrf
+                <div class="drop-zone mb-4" id="dropZone">
+                    <i class="bi bi-cloud-arrow-up fs-2 text-primary mb-2 d-block"></i>
+                    <p class="mb-1 fw-600">Kéo thả ảnh vào đây hoặc</p>
+                    <label class="btn btn-sm btn-outline-primary rounded-pill px-4 cursor-pointer mb-0">
+                        <i class="bi bi-folder2-open me-1"></i> Chọn ảnh
+                        <input type="file" name="avatar" id="avatarFileInput" accept="image/*" class="d-none">
+                    </label>
+                    <p class="text-muted small mt-2 mb-0">PNG, JPG, GIF tối đa 10MB</p>
+                </div>
 
                                 .status-dot {
                                     width: 8px;
@@ -2144,21 +2151,29 @@
                     });
                 });
 
-                // ===== Password Strength =====
-                const newPasswordInput = document.getElementById('newPassword');
-                const confirmPasswordInput = document.getElementById('confirmPassword');
-                const strengthBar = document.getElementById('strengthBar');
-                const strengthText = document.getElementById('strengthText');
-                const matchText = document.getElementById('matchText');
-
-                function checkPasswordStrength(password) {
-                    let strength = 0;
-                    if (password.length >= 8) strength++;
-                    if (password.length >= 12) strength++;
-                    if (/[A-Z]/.test(password)) strength++;
-                    if (/[0-9]/.test(password)) strength++;
-                    if (/[^A-Za-z0-9]/.test(password)) strength++;
-                    return strength;
+            // File input change
+            fileInput.addEventListener('change', function () {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('Ảnh quá lớn! Vui lòng chọn ảnh dưới 10MB.');
+                        this.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const previewWrap = document.getElementById('previewWrap');
+                        // Xóa nội dung cũ (img hoặc div initials) và thay bằng ảnh preview
+                        previewWrap.innerHTML = '';
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = 'Preview';
+                        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+                        previewWrap.appendChild(img);
+                        updateUserAvatars(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                    uploadBtn.disabled = false;
                 }
 
                 newPasswordInput.addEventListener('input', function () {
