@@ -542,19 +542,20 @@
 
                     </div>
                 </div>
-                
+
+
                 <!-- Nhận xét và đánh giá -->
                 @if(isset($tour->reviews) && $tour->reviews->isNotEmpty())
                 <div class="glass-panel p-4 p-md-5 mb-5 reveal-up mt-4">
                     <h3 class="fw-bold text-dark mb-4">
                         <i class="bi bi-star-fill text-warning me-2"></i> Đánh giá từ khách hàng
                     </h3>
-                    
+
                     @php
                         $avgRating = round($tour->reviews->avg('rating'), 1);
                         $totalReviews = $tour->reviews->count();
                     @endphp
-                    
+
                     <div class="d-flex align-items-center mb-4 pb-4 border-bottom">
                         <div class="display-4 fw-bold text-dark me-3">{{ $avgRating }}</div>
                         <div>
@@ -572,14 +573,14 @@
                             <div class="text-muted">{{ $totalReviews }} đánh giá</div>
                         </div>
                     </div>
-                    
+
                     <!-- Khối Tóm tắt bằng AI -->
                     <div class="ai-summary-block mb-4 p-4 rounded-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(0,124,232,0.05) 0%, rgba(138,43,226,0.05) 100%); border: 1px solid rgba(138,43,226,0.1);">
                         <div class="d-flex align-items-center mb-3">
                             <i class="bi bi-stars fs-4 me-2" style="color: #8a2be2;"></i>
                             <h5 class="fw-bold mb-0 text-dark" style="background: -webkit-linear-gradient(45deg, #007CE8, #8a2be2); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Tóm tắt đánh giá bởi AI</h5>
                         </div>
-                        
+
                         <!-- Skeleton Loader -->
                         <div id="aiSummaryLoader">
                             <div class="placeholder-glow">
@@ -591,7 +592,7 @@
                                 <i class="bi bi-arrow-repeat spin"></i> AI đang tổng hợp ý kiến từ {{ $totalReviews }} đánh giá...
                             </div>
                         </div>
-                        
+
                         <!-- Nội dung thực -->
                         <div id="aiSummaryContent" class="d-none">
                             <p class="tour-content-text mb-0 text-dark fw-500" style="line-height: 1.6;" id="aiSummaryText"></p>
@@ -601,7 +602,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="review-list" id="reviewList">
                         @foreach($tour->reviews as $index => $review)
                             <div class="review-item mb-4 pb-4 border-bottom last-border-none {{ $index >= 3 ? 'd-none' : '' }}">
@@ -631,7 +632,7 @@
                             </div>
                         @endforeach
                     </div>
-                    
+
                     @if($totalReviews > 3)
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-outline-primary rounded-pill px-4" id="btnLoadMoreReviews">
@@ -1103,7 +1104,7 @@
             // Trigger calculation for initially selected
             updatePriceWithSurcharge();
         }
-        
+
         const btnLoadMoreReviews = document.getElementById('btnLoadMoreReviews');
         if (btnLoadMoreReviews) {
             btnLoadMoreReviews.addEventListener('click', function() {
@@ -1114,26 +1115,26 @@
                     count++;
                     if (count === 3) break;
                 }
-                
+
                 const remainingHidden = document.querySelectorAll('.review-item.d-none');
                 if (remainingHidden.length === 0) {
                     btnLoadMoreReviews.style.display = 'none';
                 }
             });
         }
-        
+
         // Fetch AI Summary
         const aiSummaryLoader = document.getElementById('aiSummaryLoader');
         const aiSummaryContent = document.getElementById('aiSummaryContent');
         const aiSummaryText = document.getElementById('aiSummaryText');
-        
+
         if (aiSummaryLoader && aiSummaryContent && aiSummaryText) {
             fetch(`/tours/{{ $tour->id }}/ai-summary`)
                 .then(response => response.json())
                 .then(data => {
                     aiSummaryLoader.classList.add('d-none');
                     aiSummaryContent.classList.remove('d-none');
-                    
+
                     if (data.success && data.summary) {
                         aiSummaryText.innerHTML = data.summary.replace(/\n/g, '<br>');
                     } else {
