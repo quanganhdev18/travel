@@ -871,7 +871,7 @@
                                     {{ __('Đặt Ngay Chuyến Đi') }}
                                 </button>
                             @else
-                                <a href="{{ route('login') }}"
+                                <a href="{{ route('login', ['redirect' => url()->current()]) }}"
                                    class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
                                    style="border: 2px solid var(--primary-color);">
                                     {{ __('Đăng nhập để Đặt') }}

@@ -1071,3 +1071,21 @@ h1, h2, h3, h4, h5, h6 {
     color: #fff;
 }
 
+
+.tour-duration-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e3a5f;
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.4);
+}
+

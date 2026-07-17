@@ -64,8 +64,6 @@
 
                    <li class="nav-item"><a class="nav-link py-1" href="{{ route('login', ['redirect' => request()->fullUrl()]) }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a></li>
 
-                    <li class="nav-item"><a class="nav-link py-1" href="{{ route('login', ['redirect' => request()->fullUrl()]) }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a></li>
-
                     <li class="nav-item">
                         <a class="nav-link py-1" href="{{ route('register') }}" style="font-weight: 600;">{{ __('Đăng ký') }}</a>
                     </li>
