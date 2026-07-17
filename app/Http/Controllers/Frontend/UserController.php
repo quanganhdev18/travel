@@ -107,7 +107,9 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.Auth::id(),
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|regex:/^[0-9]{10}$/',
+        ], [
+            'phone.regex' => 'Số điện thoại phải chứa đúng 10 chữ số.',
         ]);
 
         Auth::user()->update([

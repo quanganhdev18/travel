@@ -844,7 +844,7 @@
                                     <label class="form-label-custom">Số điện thoại</label>
                                     <div class="input-with-icon">
                                         <i class="bi bi-phone field-icon"></i>
-                                        <input type="tel" name="phone" class="input-field"
+                                        <input type="tel" name="phone" class="input-field @error('phone') is-invalid @enderror"
                                             value="{{ old('phone', $user->phone) }}" placeholder="0912 345 678">
                                     </div>
                                 </div>
