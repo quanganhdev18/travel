@@ -53,6 +53,9 @@
 
                         <form method="POST" action="{{ route('login') }}">
                             @csrf
+                            @if(request()->filled('redirect'))
+                                <input type="hidden" name="redirect" value="{{ request('redirect') }}">
+                            @endif
                             <div class="mb-3">
                                 <label for="email" class="form-label">Địa chỉ Email</label>
                                 <input type="email" class="form-control @error('email') is-invalid @enderror" id="email"
