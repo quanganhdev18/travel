@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Destination;
+use App\Models\Province;
 use App\Models\Tour;
 use App\Models\User;
+use App\Models\Ward;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -16,6 +18,27 @@ beforeEach(function () {
         'name' => 'Hà Nội',
         'description' => 'Thủ đô Hà Nội',
     ]);
+
+    $this->province = Province::find(11);
+    if (! $this->province) {
+        $this->province = new Province;
+        $this->province->id = 11;
+        $this->province->name = 'Hà Nội';
+        $this->province->full_name = 'Thành phố Hà Nội';
+        $this->province->save();
+    }
+
+    $this->ward = Ward::find(12345);
+    if (! $this->ward) {
+        $this->ward = new Ward;
+        $this->ward->id = 12345;
+        $this->ward->province_id = 11;
+        $this->ward->name = 'Quốc Oai';
+        $this->ward->name_with_type = 'Thị trấn Quốc Oai';
+        $this->ward->path = 'Quốc Oai, Hà Nội';
+        $this->ward->path_with_type = 'Thị trấn Quốc Oai, Thành phố Hà Nội';
+        $this->ward->save();
+    }
 });
 
 test('admin can store tour with departure time', function () {
@@ -30,8 +53,10 @@ test('admin can store tour with departure time', function () {
                 'vi' => 'Chi tiết tour Hà Nội',
             ],
             'base_price' => 2000000,
-            'destination_id' => $this->destination->id,
-            'departure_location_id' => $this->destination->id,
+            'departure_province_id' => $this->province->id,
+            'departure_ward_id' => $this->ward->id,
+            'destination_province_id' => $this->province->id,
+            'destination_ward_id' => $this->ward->id,
             'duration_days' => 2,
             'duration_nights' => 1,
             'departure_hour' => 7,
@@ -47,8 +72,10 @@ test('admin can store tour with departure time', function () {
 
 test('admin can update tour with departure time', function () {
     $tour = Tour::create([
-        'destination_id' => $this->destination->id,
-        'departure_location_id' => $this->destination->id,
+        'destination_province_id' => $this->province->id,
+        'destination_ward_id' => $this->ward->id,
+        'departure_province_id' => $this->province->id,
+        'departure_ward_id' => $this->ward->id,
         'title' => ['vi' => 'Tour Cũ'],
         'slug' => 'tour-cu',
         'description' => ['vi' => 'Mô tả tour cũ'],
@@ -64,8 +91,10 @@ test('admin can update tour with departure time', function () {
                 'vi' => 'Tour Cũ Cập Nhật',
             ],
             'base_price' => 1200000,
-            'destination_id' => $this->destination->id,
-            'departure_location_id' => $this->destination->id,
+            'departure_province_id' => $this->province->id,
+            'departure_ward_id' => $this->ward->id,
+            'destination_province_id' => $this->province->id,
+            'destination_ward_id' => $this->ward->id,
             'duration_days' => 1,
             'duration_nights' => 0,
             'departure_hour' => 21,

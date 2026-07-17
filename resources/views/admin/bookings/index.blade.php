@@ -3,6 +3,7 @@
 @section('page-title', 'Quản lý Đơn đặt chỗ')
 
 @section('content')
+<div class="row g-4 mb-4">
     <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
