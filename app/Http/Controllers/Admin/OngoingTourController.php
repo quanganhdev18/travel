@@ -81,9 +81,10 @@ class OngoingTourController extends Controller
         $schedule->schedule_guides()->delete();
 
         if ($request->has('guide_ids') && is_array($request->guide_ids)) {
-            foreach ($request->guide_ids as $guideId) {
+            foreach ($request->guide_ids as $index => $guideId) {
                 $schedule->schedule_guides()->create([
                     'guide_id' => $guideId,
+                    'is_backup' => $index > 0,
                 ]);
             }
         }

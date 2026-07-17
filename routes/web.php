@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\OngoingTourController;
+use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
@@ -75,6 +76,10 @@ Route::get('/tours/vnpay-return', [TourBookingController::class, 'vnpayReturn'])
     ->name('frontend.tours.vnpay_return');
 Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
     ->name('frontend.tours.vnpay_ipn');
+
+// Tóm tắt AI
+Route::get('/tours/{id}/ai-summary', [FrontendTourController::class, 'aiSummary'])
+    ->name('frontend.tours.ai_summary');
 
 // Tìm chuyến bay
 Route::get('/flights', [FlightController::class, 'search'])
@@ -203,6 +208,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
         ->name('admin.users.toggle-status');
+
+    // Reviews
+    Route::get('/reviews', [ReviewController::class, 'index'])->name('admin.reviews.index');
+    Route::post('/reviews/{id}/toggle-hidden', [ReviewController::class, 'toggleHidden'])->name('admin.reviews.toggle-hidden');
 
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])

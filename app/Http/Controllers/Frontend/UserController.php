@@ -107,7 +107,9 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.Auth::id(),
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|regex:/^[0-9]{10}$/',
+        ], [
+            'phone.regex' => 'Số điện thoại phải chứa đúng 10 chữ số.',
         ]);
 
         Auth::user()->update([
@@ -122,7 +124,11 @@ class UserController extends Controller
     public function updateAvatar(Request $request): RedirectResponse
     {
         $request->validate([
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'avatar' => 'required|image|max:10240',
+        ], [
+            'avatar.required' => 'Vui lòng chọn một hình ảnh.',
+            'avatar.image' => 'Tệp được chọn phải là hình ảnh định dạng (jpg, png, jpeg, webp, gif...).',
+            'avatar.max' => 'Dung lượng ảnh đại diện không được vượt quá 10MB.',
         ]);
 
         $user = Auth::user();

@@ -61,7 +61,7 @@ test('authenticated user can access checkout with valid parameters', function ()
     $response->assertViewHas('totalPrice', 7000000);
 });
 
-test('booking stores successfully for flight transport', function () {
+test('booking stores successfully', function () {
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
@@ -72,7 +72,6 @@ test('booking stores successfully for flight transport', function () {
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
-        'transport_type' => 'flight',
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
         'issue_place' => 'Cục Cảnh sát',
@@ -99,99 +98,6 @@ test('booking stores successfully for flight transport', function () {
     $this->assertDatabaseHas('bookings', [
         'user_id' => $user->id,
         'tour_schedule_id' => $this->schedule->id,
-        'transport_type' => 'flight',
-    ]);
-
-    $booking = Booking::where('user_id', $user->id)->first();
-    $response->assertRedirect(route('frontend.tours.booking_success', $booking->id));
-    $response->assertSessionHas('success', 'Đặt tour và vé máy bay thành công. Vui lòng thanh toán sớm để giữ chỗ.');
-});
-
-test('booking stores successfully for bus transport', function () {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
-        'schedule_id' => $this->schedule->id,
-        'adults' => 2,
-        'children' => 0,
-        'customer_name' => 'Nguyễn Văn A',
-        'customer_phone' => '0987654321',
-        'customer_email' => 'customer@example.com',
-        'total_price' => 7000000,
-        'transport_type' => 'bus',
-        'issue_date' => '2021-05-18',
-        'expiry_date' => '2036-05-18',
-        'issue_place' => 'Cục Cảnh sát',
-        'passengers' => [
-            'adult' => [
-                [
-                    'full_name' => 'Nguyễn Văn A',
-                    'identity_number' => '036123456789',
-                    'date_of_birth' => '1996-05-18',
-                    'gender' => 'male',
-                ],
-                [
-                    'full_name' => 'Nguyễn Thị B',
-                    'identity_number' => '036123456790',
-                    'date_of_birth' => '1998-05-18',
-                    'gender' => 'female',
-                ],
-            ],
-        ],
-        'payment_type' => 'full',
-        'payment_method' => 'transfer',
-    ]);
-
-    $this->assertDatabaseHas('bookings', [
-        'user_id' => $user->id,
-        'tour_schedule_id' => $this->schedule->id,
-        'transport_type' => 'bus',
-    ]);
-
-    $booking = Booking::where('user_id', $user->id)->first();
-    $response->assertRedirect(route('frontend.tours.booking_success', $booking->id));
-    $response->assertSessionHas('success', 'Đặt tour thành công. Chúng tôi sẽ liên hệ sớm để xác nhận chuyến xe.');
-});
-
-test('booking stores successfully for self transport', function () {
-    $user = User::factory()->create();
-
-    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
-        'schedule_id' => $this->schedule->id,
-        'adults' => 2,
-        'children' => 0,
-        'customer_name' => 'Nguyễn Văn A',
-        'customer_phone' => '0987654321',
-        'customer_email' => 'customer@example.com',
-        'total_price' => 7000000,
-        'transport_type' => 'self',
-        'issue_date' => '2021-05-18',
-        'expiry_date' => '2036-05-18',
-        'issue_place' => 'Cục Cảnh sát',
-        'passengers' => [
-            'adult' => [
-                [
-                    'full_name' => 'Nguyễn Văn A',
-                    'identity_number' => '036123456789',
-                    'date_of_birth' => '1996-05-18',
-                    'gender' => 'male',
-                ],
-                [
-                    'full_name' => 'Nguyễn Thị B',
-                    'identity_number' => '036123456790',
-                    'date_of_birth' => '1998-05-18',
-                    'gender' => 'female',
-                ],
-            ],
-        ],
-        'payment_type' => 'full',
-        'payment_method' => 'transfer',
-    ]);
-
-    $this->assertDatabaseHas('bookings', [
-        'user_id' => $user->id,
-        'tour_schedule_id' => $this->schedule->id,
-        'transport_type' => 'self',
     ]);
 
     $booking = Booking::where('user_id', $user->id)->first();
@@ -210,7 +116,6 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
-        'transport_type' => 'self',
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
         'issue_place' => 'Cục Cảnh sát',
@@ -259,7 +164,6 @@ test('vnpay return handles successful payment correctly', function () {
         'total_price' => 7000000,
         'adults_count' => 2,
         'booking_status' => 'pending',
-        'transport_type' => 'self',
     ]);
 
     $txnRef = $booking->id.'_12345678';
@@ -321,7 +225,6 @@ test('vnpay ipn updates payment status correctly', function () {
         'total_price' => 7000000,
         'adults_count' => 2,
         'booking_status' => 'pending',
-        'transport_type' => 'self',
     ]);
 
     $txnRef = $booking->id.'_12345678';
@@ -421,7 +324,6 @@ test('booking store fails for schedule starting within 3 days', function () {
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
         'total_price' => 7000000,
-        'transport_type' => 'self',
         'passengers' => [
             'adult' => [
                 [

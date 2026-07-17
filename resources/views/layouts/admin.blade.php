@@ -423,7 +423,7 @@
         <div class="group-title">Tiện ích</div>
         <ul class="nav flex-column mb-4">
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" href="{{ route('admin.reviews.index') }}">
                     <i class="bi bi-star"></i> Đánh giá khách hàng
                 </a>
             </li>
