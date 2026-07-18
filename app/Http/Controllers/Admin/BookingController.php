@@ -119,7 +119,7 @@ class BookingController extends Controller
         }
 
         $booking->payment_status = $request->payment_status;
-        
+
         if ($booking->payment_status === Booking::PAYMENT_PAID_100) {
             $booking->paid_amount = $booking->total_price;
             if (in_array($booking->booking_status, ['pending', 'confirmed'])) {

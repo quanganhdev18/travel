@@ -9,6 +9,8 @@ use App\Models\Ticket;
 use App\Models\Tour;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class HomeController extends Controller
@@ -101,6 +103,10 @@ class HomeController extends Controller
             ->whereHas('activeSchedules', function ($q) {
                 $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
             });
+
+        if ($request->filled('ids') && is_array($request->ids)) {
+            $query->whereIn('id', $request->ids);
+        }
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
@@ -311,5 +317,71 @@ class HomeController extends Controller
             'id' => $d->id,
             'name' => $d->name,
         ]));
+    }
+
+    public function aiSuggest(Request $request)
+    {
+        $emotion = $request->input('emotion');
+        $health = $request->input('health');
+
+        if (! $emotion || ! $health) {
+            return redirect()->back()->with('error', 'Vui lòng nhập đầy đủ cảm xúc và tình hình sức khỏe.');
+        }
+
+        try {
+            $tours = Tour::select('id', 'title', 'description', 'ai_tags')
+                ->whereNull('deleted_at')
+                ->get()
+                ->map(function ($tour) {
+                    $title = is_array($tour->title) ? ($tour->title['vi'] ?? '') : $tour->title;
+
+                    return [
+                        'id' => $tour->id,
+                        'title' => $title,
+                        'ai_tags' => $tour->ai_tags,
+                    ];
+                })->toArray();
+
+            $prompt = "Bạn là một chuyên gia tư vấn du lịch. Dựa vào cảm xúc: '{$emotion}' và tình trạng sức khỏe: '{$health}' của khách hàng, hãy chọn ra tối đa 4 tour phù hợp nhất từ danh sách sau:\n".json_encode($tours, JSON_UNESCAPED_UNICODE)."\nTrả về MỘT mảng JSON chứa danh sách các ID của tour được chọn (ví dụ: [1, 2, 3]). Không kèm theo bất kỳ văn bản, markdown format (như ```json) hay giải thích nào khác ngoài mảng JSON.";
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key='.env('GEMINI_API_KEY'), [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'responseMimeType' => 'application/json',
+                ],
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $text = $data['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
+                $ids = json_decode(trim($text), true);
+
+                if (! is_array($ids)) {
+                    $ids = [];
+                }
+
+                if (count($ids) > 0) {
+                    return redirect()->route('frontend.tours.index', ['ids' => $ids, 'ai_suggest' => 1]);
+                } else {
+                    return redirect()->route('frontend.tours.index')->with('error', 'AI không tìm thấy tour nào phù hợp hoàn toàn, bạn có thể tham khảo các tour khác dưới đây.');
+                }
+            } else {
+                Log::error('Gemini API Error', ['response' => $response->body()]);
+
+                return redirect()->route('frontend.tours.index')->with('error', 'Có lỗi khi kết nối với AI. Vui lòng thử lại sau.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini Suggestion Error', ['error' => $e->getMessage()]);
+
+            return redirect()->route('frontend.tours.index')->with('error', 'Đã xảy ra lỗi hệ thống khi gọi AI.');
+        }
     }
 }

@@ -115,6 +115,7 @@ class DestinationController extends Controller
     public function trash()
     {
         $destinations = Destination::onlyTrashed()->latest()->paginate(10);
+
         return view('admin.destinations.trash', compact('destinations'));
     }
 

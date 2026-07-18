@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Province;
 use App\Models\Tour;
-use App\Models\Ward;
 use App\Models\TourImage;
 use App\Models\TourSchedule;
 use Illuminate\Http\Request;

@@ -45,6 +45,13 @@
                     <i class="bi bi-ticket-perforated-fill me-2"></i>{{ __('Vé Tham Quan') }}
                 </button>
             </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai"
+                    type="button" role="tab">
+                    <i class="bi bi-robot me-2 text-primary"></i>{{ __('Gợi ý AI') }}
+                </button>
+            </li>
         </ul>
 
         <div class="tab-content px-3 pb-3" id="searchTabsContent">
@@ -101,6 +108,34 @@
                         <button type="submit" class="btn btn-search-primary w-100">
                             {{ __('Tìm vé') }}
                         </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="ai" role="tabpanel">
+                <form action="{{ route('frontend.tours.ai_suggest') }}" method="GET" class="row g-3 align-items-end" onsubmit="document.getElementById('ai-loading').style.display='block';">
+                    <div class="col-md-5">
+                        <label class="form-label text-muted small fw-bold">{{ __('Cảm xúc hiện tại') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-emoji-smile"></i></span>
+                            <input type="text" name="emotion" class="form-control search-form-control border-start-0 ps-0" placeholder="{{ __('VD: Vui vẻ, buồn chán, muốn đi biển...') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label text-muted small fw-bold">{{ __('Tình hình sức khỏe') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-heart-pulse"></i></span>
+                            <input type="text" name="health" class="form-control search-form-control border-start-0 ps-0" placeholder="{{ __('VD: Tốt, hơi mệt, say xe...') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-search-primary w-100">
+                            <i class="bi bi-magic me-2"></i>{{ __('Gợi ý') }}
+                        </button>
+                    </div>
+                    <div id="ai-loading" class="col-12 text-center mt-3" style="display: none;">
+                        <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+                        <span class="text-muted ms-2">{{ __('AI đang phân tích và tìm tour phù hợp...') }}</span>
                     </div>
                 </form>
             </div>

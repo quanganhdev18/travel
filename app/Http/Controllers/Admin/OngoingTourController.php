@@ -48,13 +48,13 @@ class OngoingTourController extends Controller
     {
         $request->validate([
             'primary_guide_id' => 'nullable|exists:tour_guides,id',
-            'backup_guide_id'  => 'nullable|exists:tour_guides,id|different:primary_guide_id',
+            'backup_guide_id' => 'nullable|exists:tour_guides,id|different:primary_guide_id',
         ], [
             'backup_guide_id.different' => 'HDV dự bị không được trùng với HDV chính.',
         ]);
 
         $primaryId = $request->filled('primary_guide_id') ? $request->primary_guide_id : null;
-        $backupId  = $request->filled('backup_guide_id')  ? $request->backup_guide_id  : null;
+        $backupId = $request->filled('backup_guide_id') ? $request->backup_guide_id : null;
 
         // Kiểm tra trùng lịch
         foreach (array_filter([$primaryId, $backupId]) as $guideId) {
@@ -78,14 +78,14 @@ class OngoingTourController extends Controller
 
         if ($primaryId) {
             $schedule->schedule_guides()->create([
-                'guide_id'  => $primaryId,
+                'guide_id' => $primaryId,
                 'is_backup' => false,
             ]);
         }
 
         if ($backupId) {
             $schedule->schedule_guides()->create([
-                'guide_id'  => $backupId,
+                'guide_id' => $backupId,
                 'is_backup' => true,
             ]);
         }

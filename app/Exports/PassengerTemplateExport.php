@@ -25,7 +25,7 @@ class PassengerTemplateExport implements FromArray, WithHeadings, WithStyles
             'CCCD/Passport',
             'Ngày Sinh (YYYY-MM-DD)',
             'Giới tính (male/female/other)',
-            'Loại khách (adult/child)'
+            'Loại khách (adult/child)',
         ];
     }
 

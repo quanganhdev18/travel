@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('tours', function (Blueprint $table) {
             $table->string('departure_province_id', 50)->nullable();
             $table->unsignedBigInteger('departure_ward_id')->nullable();
-            
+
             $table->string('destination_province_id', 50)->nullable();
             $table->unsignedBigInteger('destination_ward_id')->nullable();
 
@@ -36,7 +36,7 @@ return new class extends Migration
                 'destination_province_id',
                 'destination_ward_id',
             ]);
-            
+
             // Revert changes (Warning: This might cause issues if they were null and now required)
             // It's safer to leave them nullable in down() or make sure there is data.
             // $table->unsignedBigInteger('destination_id')->nullable(false)->change();

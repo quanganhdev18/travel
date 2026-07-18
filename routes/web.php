@@ -16,6 +16,7 @@ Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.t
 Route::get('/tours/search', function (Request $request) {
     return redirect()->route('frontend.tours.index', $request->query());
 })->name('frontend.tours.search');
+Route::get('/tours/ai-suggest', [HomeController::class, 'aiSuggest'])->name('frontend.tours.ai_suggest');
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 Route::get('/api/provinces/{province}/wards', [LocationController::class, 'getWards'])->name('api.provinces.wards');
 

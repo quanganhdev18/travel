@@ -41,9 +41,9 @@ class ResetPasswordNotification extends Notification
         return (new MailMessage)
             ->subject('Yêu cầu đặt lại mật khẩu - Travel Wonder')
             ->view('emails.reset_password', [
-                'resetUrl'     => $resetUrl,
+                'resetUrl' => $resetUrl,
                 'customerName' => $notifiable->name,
-                'expireMinutes' => config('auth.passwords.' . config('auth.defaults.passwords') . '.expire', 60),
+                'expireMinutes' => config('auth.passwords.'.config('auth.defaults.passwords').'.expire', 60),
             ]);
     }
 }

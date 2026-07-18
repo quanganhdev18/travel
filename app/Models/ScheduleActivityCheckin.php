@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ScheduleActivityCheckin extends Model
 {
     protected $table = 'schedule_activity_checkins';
-    
+
     protected $fillable = [
         'tour_schedule_id',
         'tour_activity_id',

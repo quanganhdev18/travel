@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('guide_id')->constrained('tour_guides')->cascadeOnDelete();
             $table->timestamp('checked_in_at')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['tour_schedule_id', 'tour_activity_id'], 'chk_sched_act_unique');
         });
     }
