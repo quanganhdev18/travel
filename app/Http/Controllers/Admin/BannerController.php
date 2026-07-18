@@ -158,6 +158,7 @@ class BannerController extends Controller
     public function trash()
     {
         $banners = Banner::onlyTrashed()->orderBy('sort_order')->get();
+
         return view('admin.banners.trash', compact('banners'));
     }
 

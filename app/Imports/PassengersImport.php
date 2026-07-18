@@ -2,12 +2,12 @@
 
 namespace App\Imports;
 
-use App\Models\BookingPassenger;
 use App\Models\Booking;
+use App\Models\BookingPassenger;
+use Exception;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithStartRow;
-use Exception;
 
 class PassengersImport implements ToCollection, WithStartRow
 {
@@ -27,7 +27,7 @@ class PassengersImport implements ToCollection, WithStartRow
     {
         // filter out empty rows (checking the first column - Tên)
         $validRows = $rows->filter(function ($row) {
-            return !empty($row[0]);
+            return ! empty($row[0]);
         });
 
         // The expected count is the total tickets minus 1 (if the leader already exists)
@@ -42,7 +42,7 @@ class PassengersImport implements ToCollection, WithStartRow
         }
 
         if ($validRows->count() !== $expectedCount) {
-            throw new Exception("Số lượng hành khách trong file Excel (" . $validRows->count() . ") không khớp với số lượng cần bổ sung ($expectedCount).");
+            throw new Exception('Số lượng hành khách trong file Excel ('.$validRows->count().") không khớp với số lượng cần bổ sung ($expectedCount).");
         }
 
         // Only after validation passes, we remove existing passengers except the leader

@@ -101,6 +101,7 @@ class AddonController extends Controller
     public function trash()
     {
         $addons = Addon::onlyTrashed()->orderBy('id', 'desc')->paginate(10);
+
         return view('admin.addons.trash', compact('addons'));
     }
 
@@ -115,7 +116,7 @@ class AddonController extends Controller
     public function forceDelete($id)
     {
         $addon = Addon::onlyTrashed()->findOrFail($id);
-        
+
         $addon->tours()->detach();
         $addon->forceDelete();
 

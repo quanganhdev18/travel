@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasColumn('schedule_guides', 'is_backup')) {
+        if (! Schema::hasColumn('schedule_guides', 'is_backup')) {
             Schema::table('schedule_guides', function (Blueprint $table) {
                 $table->boolean('is_backup')->default(false);
             });
