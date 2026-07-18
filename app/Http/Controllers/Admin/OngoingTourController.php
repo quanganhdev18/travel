@@ -41,7 +41,24 @@ class OngoingTourController extends Controller
                 ->toArray();
         }
 
-        return view('admin.ongoing_tours.index', compact('schedules', 'tourGuides', 'status'));
+        $unassignedUpcomingSchedules = TourSchedule::with('tour')
+            ->where('departure_date', '>=', $today)
+            ->where('departure_date', '<=', $today->copy()->addDays(7))
+            ->doesntHave('schedule_guides')
+            ->orderBy('departure_date', 'asc')
+            ->get();
+
+        foreach ($unassignedUpcomingSchedules as $schedule) {
+            $schedule->busy_guide_ids = ScheduleGuide::where('tour_schedule_id', '!=', $schedule->id)
+                ->whereHas('tour_schedule', function ($q) use ($schedule) {
+                    $q->where('departure_date', '<=', $schedule->return_date)
+                        ->where('return_date', '>=', $schedule->departure_date);
+                })
+                ->pluck('guide_id')
+                ->toArray();
+        }
+
+        return view('admin.ongoing_tours.index', compact('schedules', 'tourGuides', 'status', 'unassignedUpcomingSchedules'));
     }
 
     public function assignGuides(Request $request, TourSchedule $schedule)

@@ -3,6 +3,40 @@
 @section('page-title', 'Quản lý Điều Hành Tour')
 
 @section('content')
+
+@if(isset($unassignedUpcomingSchedules) && $unassignedUpcomingSchedules->count() > 0)
+<div class="alert alert-warning alert-dismissible fade show border-warning border-start border-4" role="alert">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
+            <div>
+                <h6 class="alert-heading mb-1 fw-bold">Cảnh báo: Có {{ $unassignedUpcomingSchedules->count() }} tour sắp khởi hành nhưng chưa có HDV!</h6>
+                <p class="mb-0 small">Các tour khởi hành trong vòng 7 ngày tới cần được phân công Hướng dẫn viên sớm nhất có thể.</p>
+            </div>
+        </div>
+        <button class="btn btn-sm btn-outline-warning text-dark fw-500 me-4" type="button" data-bs-toggle="collapse" data-bs-target="#unassignedToursList" aria-expanded="false" aria-controls="unassignedToursList">
+            Xem danh sách <i class="bi bi-chevron-down ms-1"></i>
+        </button>
+    </div>
+    
+    <div class="collapse mt-2" id="unassignedToursList">
+        <hr class="my-2 border-warning opacity-25">
+        <div class="mb-0" style="max-height: 250px; overflow-y: auto;">
+            <ul class="mb-0 ps-3">
+                @foreach($unassignedUpcomingSchedules as $upcoming)
+                    <li class="mb-2">
+                        <strong>{{ $upcoming->tour->title ?? 'N/A' }}</strong> 
+                        <span class="text-muted">(Khởi hành: <span class="text-danger fw-500">{{ \Carbon\Carbon::parse($upcoming->departure_date)->format('d/m/Y') }}</span>)</span>
+                        - <a href="#" class="text-primary fw-medium text-decoration-underline ms-1" data-bs-toggle="modal" data-bs-target="#assignGuideModal{{ $upcoming->id }}"><i class="bi bi-person-plus me-1"></i>Phân công ngay</a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
+
 <div class="admin-card border-0 mb-4">
     <div class="admin-card-body">
         <form action="{{ route('admin.ongoing_tours.index') }}" method="GET" class="row g-3">
@@ -104,7 +138,10 @@
     </div>
 </div>
 
-@foreach($schedules as $schedule)
+@php
+    $allModalSchedules = collect($schedules->items())->merge($unassignedUpcomingSchedules ?? [])->unique('id');
+@endphp
+@foreach($allModalSchedules as $schedule)
 @php
     $primaryGuide = $schedule->schedule_guides->firstWhere('is_backup', false);
     $backupGuide  = $schedule->schedule_guides->firstWhere('is_backup', true);

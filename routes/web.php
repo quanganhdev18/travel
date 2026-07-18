@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
 use App\Http\Controllers\Admin\TourItineraryController;
+use App\Http\Controllers\Api\AiTranslationController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
@@ -201,6 +202,10 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
+
+    // AI Translation
+    Route::post('/ai-translate', [AiTranslationController::class, 'translate'])
+        ->name('admin.ai-translate');
 
     // User Management
     Route::get('/chat', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');

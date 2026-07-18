@@ -44,7 +44,12 @@
                         @enderror
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tiêu đề ngày</label>
+                        <label class="form-label d-flex align-items-center">
+                            <span>Tiêu đề ngày</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-3 py-0 px-2" onclick="translateField('title', '', this)" id="btn-translate-title">
+                                <i class="bi bi-robot me-1"></i>Dịch bằng AI
+                            </button>
+                        </label>
                         <div class="mb-2">
                             <span class="badge bg-secondary mb-1">Tiếng Việt</span>
                             <input type="text" name="title[vi]" class="form-control form-control-sm" placeholder="VD: Khám phá đảo ngọc" required>
@@ -59,7 +64,12 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mô tả tổng quan</label>
+                        <label class="form-label d-flex align-items-center">
+                            <span>Mô tả tổng quan</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-3 py-0 px-2" onclick="translateField('description', '', this)" id="btn-translate-description">
+                                <i class="bi bi-robot me-1"></i>Dịch bằng AI
+                            </button>
+                        </label>
                         <div class="mb-2">
                             <span class="badge bg-secondary mb-1">Tiếng Việt</span>
                             <textarea name="description[vi]" class="form-control form-control-sm" rows="2"></textarea>
@@ -289,7 +299,12 @@
                         <input type="number" name="day_number" id="edit_day_number" class="form-control form-control-sm" required min="1" max="{{ $tour->duration_days }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small">Tiêu đề ngày (VI)</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small mb-0">Tiêu đề ngày (VI)</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.7rem;" onclick="translateField('title', 'edit_day_', this)" id="btn-translate-edit_day_title">
+                                <i class="bi bi-robot"></i> Dịch
+                            </button>
+                        </div>
                         <input type="text" name="title[vi]" id="edit_day_title_vi" class="form-control form-control-sm" required>
                     </div>
                     <div class="mb-3">
@@ -301,7 +316,12 @@
                         <input type="text" name="title[zh]" id="edit_day_title_zh" class="form-control form-control-sm">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small">Mô tả tổng quan (VI)</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small mb-0">Mô tả tổng quan (VI)</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.7rem;" onclick="translateField('description', 'edit_day_desc_', this)" id="btn-translate-edit_day_desc">
+                                <i class="bi bi-robot"></i> Dịch
+                            </button>
+                        </div>
                         <textarea name="description[vi]" id="edit_day_desc_vi" class="form-control form-control-sm" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
@@ -457,6 +477,47 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+async function translateField(field, prefix = '', btn) {
+    const viInput = document.getElementById(`${prefix}${field}_vi`) || document.querySelector(`[name="${field}[vi]"]`);
+    const enInput = document.getElementById(`${prefix}${field}_en`) || document.querySelector(`[name="${field}[en]"]`);
+    const zhInput = document.getElementById(`${prefix}${field}_zh`) || document.querySelector(`[name="${field}[zh]"]`);
+    
+    if (!viInput || !viInput.value.trim()) {
+        alert('Vui lòng nhập nội dung Tiếng Việt trước khi dịch!');
+        return;
+    }
+
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('{{ route("admin.ai-translate") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ text: viInput.value.trim() })
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            if (enInput) enInput.value = result.data.en || '';
+            if (zhInput) zhInput.value = result.data.zh || '';
+        } else {
+            alert(result.message || 'Có lỗi xảy ra khi dịch.');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Có lỗi hệ thống khi kết nối tới AI.');
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+}
 </script>
 @endpush
 @endsection

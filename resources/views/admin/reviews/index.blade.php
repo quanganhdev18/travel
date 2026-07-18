@@ -4,8 +4,18 @@
 
 @section('content')
 <div class="admin-card">
-    <div class="admin-card-header">
-        <h3 class="admin-card-title">Danh sách Đánh giá từ Khách hàng</h3>
+    <div class="admin-card-header d-flex justify-content-between align-items-center">
+        <h3 class="admin-card-title m-0">Danh sách Đánh giá từ Khách hàng</h3>
+        <form action="{{ route('admin.reviews.index') }}" method="GET" class="d-flex align-items-center gap-2">
+            <select name="rating" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Tất cả số sao</option>
+                <option value="5" {{ request('rating') == '5' ? 'selected' : '' }}>5 Sao</option>
+                <option value="4" {{ request('rating') == '4' ? 'selected' : '' }}>4 Sao</option>
+                <option value="3" {{ request('rating') == '3' ? 'selected' : '' }}>3 Sao</option>
+                <option value="2" {{ request('rating') == '2' ? 'selected' : '' }}>2 Sao</option>
+                <option value="1" {{ request('rating') == '1' ? 'selected' : '' }}>1 Sao</option>
+            </select>
+        </form>
     </div>
     
     <div class="admin-card-body p-0">
@@ -67,6 +77,9 @@
                                 @endif
                             </td>
                             <td class="text-center">
+                                <button type="button" class="btn btn-action text-info" title="Xem chi tiết" data-bs-toggle="modal" data-bs-target="#reviewModal{{ $review->id }}">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
                                 <form action="{{ route('admin.reviews.toggle-hidden', $review->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-action {{ $review->is_hidden ? 'text-success' : 'text-danger' }}" 
@@ -77,6 +90,53 @@
                                 </form>
                             </td>
                         </tr>
+
+                        <!-- Modal Chi tiết đánh giá -->
+                        <div class="modal fade" id="reviewModal{{ $review->id }}" tabindex="-1" aria-labelledby="reviewModalLabel{{ $review->id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="reviewModalLabel{{ $review->id }}">Chi tiết đánh giá</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3 d-flex align-items-center gap-3">
+                                            @if($review->user && $review->user->avatar)
+                                                <img src="{{ asset($review->user->avatar) }}" alt="Avatar" class="rounded-circle object-fit-cover" width="48" height="48">
+                                            @else
+                                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 48px; height: 48px; font-size: 20px;">
+                                                    {{ strtoupper(substr($review->user->name ?? 'U', 0, 1)) }}
+                                                </div>
+                                            @endif
+                                            <div>
+                                                <h6 class="mb-1">{{ $review->user->name ?? 'Khách ẩn danh' }}</h6>
+                                                <div class="text-muted small">{{ $review->created_at->format('d/m/Y H:i:s') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Tour / Điểm đến:</strong> 
+                                            <span class="text-dark">{{ $review->tour->title ?? 'N/A' }}</span>
+                                        </div>
+                                        <div class="mb-3">
+                                            <strong>Đánh giá:</strong>
+                                            <span class="text-warning ms-1">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <i class="bi {{ $i <= $review->rating ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                                @endfor
+                                            </span>
+                                            ({{ $review->rating }} sao)
+                                        </div>
+                                        <div class="mb-0">
+                                            <strong>Nội dung chi tiết:</strong>
+                                            <p class="mt-2 text-dark" style="white-space: pre-wrap;">{{ $review->comment }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     @empty
                         <tr>
                             <td colspan="8" class="text-center py-4 text-muted">

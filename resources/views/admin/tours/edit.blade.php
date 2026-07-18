@@ -28,7 +28,12 @@
             <div class="row g-4">
                 <div class="col-md-8">
                     <div class="mb-3">
-                        <label class="form-label text-muted">Tên Tour <span class="text-danger">*</span></label>
+                        <label class="form-label text-muted d-flex align-items-center">
+                            <span>Tên Tour <span class="text-danger">*</span></span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-3" onclick="translateField('title')" id="btn-translate-title">
+                                <i class="bi bi-robot me-1"></i>Dịch bằng AI
+                            </button>
+                        </label>
                         <div class="input-group mb-2">
                             <span class="input-group-text" style="width: 100px;">Tiếng Việt</span>
                             <input type="text" name="title[vi]" value="{{ old('title.vi', $tour->getTranslation('title', 'vi', false)) }}" class="form-control" placeholder="Nhập tên tour hiển thị..." required>
@@ -44,7 +49,12 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label text-muted">Mô tả chi tiết</label>
+                        <label class="form-label text-muted d-flex align-items-center">
+                            <span>Mô tả chi tiết</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-3" onclick="translateField('description')" id="btn-translate-description">
+                                <i class="bi bi-robot me-1"></i>Dịch bằng AI
+                            </button>
+                        </label>
                         <div class="mb-2">
                             <span class="badge bg-secondary mb-1">Tiếng Việt</span>
                             <textarea name="description[vi]" class="form-control" rows="3" placeholder="Viết vài dòng mô tả về trải nghiệm của tour này...">{{ old('description.vi', $tour->getTranslation('description', 'vi', false)) }}</textarea>
@@ -220,6 +230,52 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    async function translateField(field) {
+        const viInput = document.querySelector(`[name="${field}[vi]"]`);
+        const enInput = document.querySelector(`[name="${field}[en]"]`);
+        const zhInput = document.querySelector(`[name="${field}[zh]"]`);
+        const btn = document.getElementById(`btn-translate-${field}`);
+        
+        if (!viInput || !viInput.value.trim()) {
+            alert('Vui lòng nhập nội dung Tiếng Việt trước khi dịch!');
+            return;
+        }
+
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Đang dịch...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('{{ route("admin.ai-translate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ text: viInput.value.trim() })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                if (enInput) enInput.value = result.data.en || '';
+                if (zhInput) zhInput.value = result.data.zh || '';
+            } else {
+                alert(result.message || 'Có lỗi xảy ra khi dịch.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Có lỗi hệ thống khi kết nối tới AI.');
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+</script>
+@endpush
 
 @push('scripts')
 <script>
