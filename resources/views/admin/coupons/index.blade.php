@@ -6,7 +6,7 @@
     <h2 class="mb-0">Quản lý mã giảm giá</h2>
 
     <div>
-        <a href="{{ route('admin.coupons.trash') }}" class="btn btn-secondary me-2">
+        <a href="{{ route('admin.coupons.trash') }}" class="btn btn-admin btn-light border text-danger me-2">
             <i class="bi bi-trash"></i> Thùng rác
         </a>
 

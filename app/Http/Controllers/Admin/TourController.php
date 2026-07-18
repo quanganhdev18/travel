@@ -37,7 +37,16 @@ class TourController extends Controller
     {
         // 1. Validate dữ liệu
         $request->validate([
-            'title.vi' => 'required|max:255',
+            'title.vi' => [
+                'required',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = Tour::whereRaw("JSON_EXTRACT(title, '$.vi') = ?", [$value])->exists();
+                    if ($exists) {
+                        $fail('Tên tour (Tiếng Việt) đã tồn tại. Vui lòng chọn tên khác.');
+                    }
+                },
+            ],
             'title.en' => 'nullable|max:255',
             'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
@@ -187,7 +196,18 @@ class TourController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'title.vi' => 'required|max:255',
+            'title.vi' => [
+                'required',
+                'max:255',
+                function ($attribute, $value, $fail) use ($id) {
+                    $exists = Tour::whereRaw("JSON_EXTRACT(title, '$.vi') = ?", [$value])
+                        ->where('id', '!=', $id)
+                        ->exists();
+                    if ($exists) {
+                        $fail('Tên tour (Tiếng Việt) đã tồn tại. Vui lòng chọn tên khác.');
+                    }
+                },
+            ],
             'title.en' => 'nullable|max:255',
             'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
