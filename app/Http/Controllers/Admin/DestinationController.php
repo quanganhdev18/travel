@@ -30,6 +30,14 @@ class DestinationController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
+        // Kiểm tra trùng lặp tên điểm đến (tiếng Việt)
+        $nameVi = $request->name['vi'];
+        $existingDestination = Destination::whereRaw("JSON_UNQUOTE(JSON_EXTRACT(name, '$.vi')) = ?", [$nameVi])->first();
+
+        if ($existingDestination) {
+            return back()->withErrors(['name.vi' => 'Tên điểm đến này đã tồn tại.'])->withInput();
+        }
+
         $data = [
             'name' => [
                 'vi' => $request->name['vi'],
@@ -66,6 +74,16 @@ class DestinationController extends Controller
             'name.zh' => 'nullable|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
+
+        // Kiểm tra trùng lặp tên điểm đến (tiếng Việt), trừ chính nó
+        $nameVi = $request->name['vi'];
+        $existingDestination = Destination::whereRaw("JSON_UNQUOTE(JSON_EXTRACT(name, '$.vi')) = ?", [$nameVi])
+            ->where('id', '!=', $destination->id)
+            ->first();
+
+        if ($existingDestination) {
+            return back()->withErrors(['name.vi' => 'Tên điểm đến này đã tồn tại.'])->withInput();
+        }
 
         $data = [
             'name' => [
