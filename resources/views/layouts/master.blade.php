@@ -13,6 +13,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('css/premium-theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/tour-preview.css') }}">
+    <style>
+    #mainHeader {
+        transition:
+            background-color 0.25s ease,
+            box-shadow 0.25s ease,
+            backdrop-filter 0.25s ease;
+    }
+
+    #mainHeader.navbar-solid {
+        background: #ffffff !important;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.12) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    #mainHeader.navbar-solid .nav-link,
+    #mainHeader.navbar-solid .navbar-brand,
+    #mainHeader.navbar-solid .dropdown-toggle {
+        color: #1f2937 !important;
+    }
+</style>
     @vite(['resources/js/app.js'])
     <style>
         /* Unify pagination styling to circular style */
@@ -70,7 +91,9 @@
         @endhasanyrole
     @endauth
 
-    <nav class="navbar navbar-expand-lg navbar-premium fixed-top {{ request()->is('/') ? '' : 'navbar-solid' }} flex-column p-0">
+    <nav id="mainHeader"
+     data-home-page="{{ request()->is('/') ? '1' : '0' }}"
+     class="navbar navbar-expand-lg navbar-premium fixed-top {{ request()->is('/') ? '' : 'navbar-solid' }} flex-column p-0">
         <!-- Top Row (Desktop Only) -->
         <div class="w-100 d-none d-lg-block border-bottom" style="border-color: rgba(128, 128, 128, 0.2) !important; background: rgba(0,0,0,0.03);">
             <div class="container d-flex justify-content-end py-1">
@@ -116,7 +139,6 @@
                     @guest
 
                    <li class="nav-item"><a class="nav-link py-1" href="{{ route('login', ['redirect' => request()->fullUrl()]) }}" style="font-weight: 600;">{{ __('Đăng nhập') }}</a></li>
-
                     <li class="nav-item">
                         <a class="nav-link py-1" href="{{ route('register') }}" style="font-weight: 600;">{{ __('Đăng ký') }}</a>
                     </li>
@@ -316,7 +338,52 @@
 
     <x-chatbox />
 
-    @stack('scripts')
+<script>
+    (function () {
+        const header = document.getElementById('mainHeader');
+
+        if (!header) {
+            return;
+        }
+
+        const isHomePage = header.dataset.homePage === '1';
+
+        function updateHeaderState() {
+            const shouldBeSolid = !isHomePage || window.scrollY > 20;
+
+            header.classList.toggle('navbar-solid', shouldBeSolid);
+        }
+
+        // Chạy ngay khi trình duyệt đọc tới đoạn script.
+        updateHeaderState();
+
+        // Chạy khi toàn bộ HTML đã tải.
+        document.addEventListener('DOMContentLoaded', updateHeaderState);
+
+        // Chạy khi ảnh, CSS và tài nguyên đã tải xong.
+        window.addEventListener('load', updateHeaderState);
+
+        // Xử lý khi tải lại trang tại vị trí đang cuộn.
+        window.addEventListener('pageshow', function () {
+            requestAnimationFrame(updateHeaderState);
+            setTimeout(updateHeaderState, 100);
+        });
+
+        // Cập nhật khi người dùng cuộn.
+        window.addEventListener('scroll', updateHeaderState, {
+            passive: true
+        });
+
+        window.addEventListener('resize', updateHeaderState, {
+            passive: true
+        });
+
+        requestAnimationFrame(updateHeaderState);
+    })();
+</script>
+
+@stack('scripts')
 </body>
+
 
 </html>
