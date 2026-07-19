@@ -96,55 +96,132 @@
             </div>
 
             {{-- Thông tin đặt chỗ --}}
-            <div class="detail-card reveal-up">
-                <div class="detail-card-header"><i class="bi bi-clipboard-check me-2 text-primary"></i>Chi tiết đặt chỗ</div>
-                <div class="detail-card-body">
-                    <div class="info-row">
-                        <span class="text-muted small"><i class="bi bi-people me-2"></i>Người lớn</span>
-                        <span class="fw-bold">{{ $booking->adults_count }} người</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="text-muted small"><i class="bi bi-person-badge me-2"></i>Trẻ em</span>
-                        <span class="fw-bold">{{ $booking->children_count }} người</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="text-muted small"><i class="bi bi-car-front me-2"></i>Phương tiện</span>
-                        <span class="fw-bold">
-                            @if($booking->transport_type === 'flight')
-                                <i class="bi bi-airplane-fill text-danger me-1"></i>Máy bay
-                                @if(!empty($booking->pnr_code))
-                                    &nbsp;<strong class="text-danger">({{ $booking->pnr_code }})</strong>
-                                @endif
-                                
-                                @if($booking->tour_schedule)
-                                    @php
-                                        $isTourStarted = \Carbon\Carbon::now()->startOfDay()->gte(\Carbon\Carbon::parse($booking->tour_schedule->departure_date)->startOfDay());
-                                    @endphp
-                                    @if($isTourStarted)
-                                        <span class="badge bg-success ms-2 fw-normal"><i class="bi bi-check-circle me-1"></i>Đã nhận</span>
-                                    @else
-                                        <span class="badge bg-warning text-dark ms-2 fw-normal"><i class="bi bi-clock me-1"></i>Chờ xuất vé</span>
-                                    @endif
-                                @endif
-                            @elseif($booking->transport_type === 'bus')
-                                <i class="bi bi-bus-front-fill text-info me-1"></i>Xe ô tô
-                            @else
-                                <i class="bi bi-car-front-fill text-muted me-1"></i>Di chuyển tự túc
-                            @endif
-                        </span>
-                    </div>
-                    @if($booking->discount_amount)
-                    <div class="info-row">
-                        <span class="text-muted small"><i class="bi bi-tags me-2"></i>Giảm giá</span>
-                        <span class="fw-bold text-success">-{{ number_format($booking->discount_amount,0,',','.') }}₫</span>
-                    </div>
+<div class="detail-card reveal-up">
+    <div class="detail-card-header">
+        <i class="bi bi-clipboard-check me-2 text-primary"></i>
+        Chi tiết đặt chỗ
+    </div>
+
+    <div class="detail-card-body">
+        {{-- Người lớn --}}
+        <div class="info-row">
+            <span class="text-muted small">
+                <i class="bi bi-people me-2"></i>
+                Người lớn
+            </span>
+
+            <span class="fw-bold">
+                {{ $booking->adults_count }} người
+            </span>
+        </div>
+
+        {{-- Trẻ em --}}
+        <div class="info-row">
+            <span class="text-muted small">
+                <i class="bi bi-person-badge me-2"></i>
+                Trẻ em
+            </span>
+
+            <span class="fw-bold">
+                {{ $booking->children_count }} người
+            </span>
+        </div>
+
+        {{-- Phương tiện --}}
+        <div class="info-row">
+            <span class="text-muted small">
+                <i class="bi bi-car-front me-2"></i>
+                Phương tiện
+            </span>
+
+            <span class="fw-bold text-end">
+                @if($booking->transport_type === 'flight')
+                    <i class="bi bi-airplane-fill text-danger me-1"></i>
+                    Máy bay
+
+                    @if(!empty($booking->pnr_code))
+                        <strong class="text-danger ms-1">
+                            ({{ $booking->pnr_code }})
+                        </strong>
                     @endif
-                    <div class="info-row">
-                        <span class="fw-bold text-dark fs-6"><i class="bi bi-wallet2 me-2"></i>Tổng thanh toán</span>
-                        <span class="fw-bold text-danger" style="font-size:1.3rem;">{{ number_format($booking->total_price,0,',','.') }}₫</span>
-                    </div>
-                </div>
+
+                    @if($booking->tour_schedule)
+                        @php
+                            $isTourStarted = \Carbon\Carbon::now()
+                                ->startOfDay()
+                                ->gte(
+                                    \Carbon\Carbon::parse(
+                                        $booking->tour_schedule->departure_date
+                                    )->startOfDay()
+                                );
+                        @endphp
+
+                        @if($isTourStarted)
+                            <span class="badge bg-success ms-2 fw-normal">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Đã nhận
+                            </span>
+                        @else
+                            <span class="badge bg-warning text-dark ms-2 fw-normal">
+                                <i class="bi bi-clock me-1"></i>
+                                Chờ xuất vé
+                            </span>
+                        @endif
+                    @endif
+
+                @elseif($booking->transport_type === 'bus')
+                    <i class="bi bi-bus-front-fill text-info me-1"></i>
+                    Xe ô tô
+
+                @else
+                    <i class="bi bi-car-front-fill text-muted me-1"></i>
+                    Di chuyển tự túc
+                @endif
+            </span>
+        </div>
+
+        {{-- Điểm tập kết --}}
+        <div class="info-row">
+            <span class="text-muted small">
+                <i class="bi bi-geo-alt-fill text-success me-2"></i>
+                Điểm tập kết
+            </span>
+
+            <span class="fw-bold text-end"
+                  style="max-width:65%; word-break:break-word;">
+                {{ $booking->meeting_point
+                    ?: ($booking->tour_schedule?->tour?->meeting_point ?? 'Chưa cập nhật') }}
+            </span>
+        </div>
+
+        {{-- Giảm giá --}}
+        @if($booking->discount_amount)
+            <div class="info-row">
+                <span class="text-muted small">
+                    <i class="bi bi-tags me-2"></i>
+                    Giảm giá
+                </span>
+
+                <span class="fw-bold text-success">
+                    -{{ number_format($booking->discount_amount, 0, ',', '.') }}₫
+                </span>
             </div>
+        @endif
+
+        {{-- Tổng thanh toán --}}
+        <div class="info-row">
+            <span class="fw-bold text-dark fs-6">
+                <i class="bi bi-wallet2 me-2"></i>
+                Tổng thanh toán
+            </span>
+
+            <span class="fw-bold text-danger"
+                  style="font-size:1.3rem;">
+                {{ number_format($booking->total_price, 0, ',', '.') }}₫
+            </span>
+        </div>
+    </div>
+</div>
 
             {{-- Hành khách --}}
             <div class="detail-card reveal-up">
