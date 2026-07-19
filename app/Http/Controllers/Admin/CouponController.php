@@ -81,7 +81,7 @@ class CouponController extends Controller
             'code' => 'required|unique:coupons,code,'.$coupon->id,
             'discount_type' => 'required',
             'discount_value' => 'required|numeric|min:0',
-            'valid_from' => 'required|date|after_or_equal:today',
+            'valid_from' => 'required|date',
             'valid_until' => [
                 'required',
                 'date',
@@ -90,7 +90,6 @@ class CouponController extends Controller
             ],
             'category_id' => 'nullable|exists:categories,id',
         ], [
-            'valid_from.after_or_equal' => 'Ngày bắt đầu không được nhỏ hơn thời gian hiện tại.',
             'valid_until.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu.',
             'valid_until.before_or_equal' => 'Hạn dùng mã giảm giá không được quá 1 năm kể từ ngày bắt đầu.',
         ]);

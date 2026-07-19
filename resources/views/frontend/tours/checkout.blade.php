@@ -800,7 +800,7 @@
         currentTransportPrice = transportPrice;
         currentTicketPrice = ticketPrice;
         
-        const finalPrice = baseTourPrice + transportPrice + ticketPrice + currentAddonPrice;
+        const finalPrice = Math.max(0, baseTourPrice + transportPrice + ticketPrice + currentAddonPrice - currentCouponDiscount);
         
         inputTransportPrice.value = transportPrice;
         inputTotalPrice.value = finalPrice;
@@ -1274,7 +1274,7 @@
         
         let buttonHtml = '';
         if (isEligible) {
-            buttonHtml = `<button type="button" class="btn btn-primary btn-sm px-3 fw-bold rounded-pill">${isSelected ? 'Đã chọn' : 'Áp dụng'}</button>`;
+            buttonHtml = `<button type="button" class="btn ${isSelected ? 'btn-danger' : 'btn-primary'} btn-sm px-3 fw-bold rounded-pill">${isSelected ? 'Hủy chọn' : 'Áp dụng'}</button>`;
         } else {
             const diffAmount = minOrderVal - subtotal;
             buttonHtml = `
@@ -1307,6 +1307,14 @@
         const displayCode = document.getElementById('selected_coupon_display_code');
         const displayDesc = document.getElementById('selected_coupon_display_desc');
         const msg = document.getElementById('coupon_message');
+        
+        if (input.value === code) {
+            resetCouponSelection();
+            const modalEl = document.getElementById('couponSelectModal');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.hide();
+            return;
+        }
         
         input.value = code;
         const subtotal = getSubtotal();
@@ -1380,6 +1388,7 @@
         msg.textContent = '';
         
         updateTotalDisplay();
+        renderCouponsList();
     };
 
     // Sự kiện mở modal -> render danh sách

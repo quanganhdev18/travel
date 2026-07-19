@@ -283,31 +283,47 @@
 
         /* Pagination */
         .pagination {
-            gap: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 0;
+            padding: 0;
+            list-style: none;
         }
         .pagination .page-link {
-            border-radius: 8px !important;
-            padding: 6px 12px;
-            font-size: 0.875rem;
-            color: var(--admin-primary);
-            border: 1px solid var(--admin-border);
-            background: #fff;
-            transition: all 0.2s;
-            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            background-color: #fff;
+            transition: all 0.2s ease-in-out;
+            text-decoration: none;
+            box-sizing: border-box;
         }
         .pagination .page-link:hover {
-            background: #dbeafe;
-            border-color: var(--admin-primary);
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+            color: var(--admin-primary);
         }
         .pagination .page-item.active .page-link {
-            background-color: var(--admin-primary);
-            border-color: var(--admin-primary);
-            color: #fff;
+            background-color: var(--admin-primary) !important;
+            border-color: var(--admin-primary) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 10px rgba(0, 124, 232, 0.3);
+            font-weight: 600;
         }
         .pagination .page-item.disabled .page-link {
-            color: #94a3b8;
-            background: #f8fafc;
+            color: #cbd5e1 !important;
+            background-color: #f8fafc !important;
+            border-color: #f1f5f9 !important;
+            cursor: not-allowed;
         }
     </style>
 </head>
