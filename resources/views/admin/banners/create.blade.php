@@ -45,7 +45,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-500">Đường dẫn đích (Tùy chọn)</label>
-                            <input type="url" name="target_url" class="form-control" value="{{ old('target_url') }}" placeholder="Khi click vào banner sẽ chuyển đến link này">
+                            <input type="text" name="target_url" class="form-control" value="{{ old('target_url') }}" placeholder="Khi click vào banner sẽ chuyển đến link này">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-500">Mã giảm giá (Tùy chọn)</label>
