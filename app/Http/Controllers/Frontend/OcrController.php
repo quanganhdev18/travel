@@ -26,7 +26,7 @@ class OcrController extends Controller
             if (empty($apiKey)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'FPT AI API key is not configured.',
+                    'message' => 'API key FPT AI chưa được cấu hình.',
                 ], 400);
             }
 
