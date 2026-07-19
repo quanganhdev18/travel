@@ -314,69 +314,10 @@
 
                         <input type="hidden" name="transport_type" id="transport_self" value="self">
 
-
-                        <div class="mb-5">
-                        <h4 class="form-section-title">
-                            <i class="bi bi-airplane"></i>
-                            {{ __('Di Chuyển Đến Điểm Khởi Hành') }}
-                        </h4>
-
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_flight" value="flight">
-                                <label class="transport-option w-100 p-3 text-start" for="transport_flight">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-airplane text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Vé Máy Bay') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_bus" value="bus">
-                                <label class="transport-option w-100 p-3 text-start" for="transport_bus">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-bus-front text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Xe Khách') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_self" value="self" checked>
-                                <label class="transport-option w-100 p-3 text-start" for="transport_self">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-car-front text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Tự Túc') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
                         <!-- Vùng hiển thị kết quả phương tiện (AJAX) -->
                         <div id="transport_options_container" style="display: none;" class="p-4 bg-light rounded border">
-                            <div class="mb-4 pb-3 border-bottom">
-                                <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ __('Chọn điểm xuất phát của bạn') }}</label>
-                                <select id="customer_origin_select" class="form-select form-select-lg border-primary shadow-sm" style="max-width: 400px;">
-                                    <option value="HAN">{{ __('Hà Nội (HAN)') }}</option>
-                                    <option value="SGN" selected>{{ __('TP. Hồ Chí Minh (SGN)') }}</option>
-                                    <option value="DAD">{{ __('Đà Nẵng (DAD)') }}</option>
-                                    <option value="HPH">{{ __('Hải Phòng (HPH)') }}</option>
-                                    <option value="VCA">{{ __('Cần Thơ (VCA)') }}</option>
-                                    <option value="PQC">{{ __('Phú Quốc (PQC)') }}</option>
-                                </select>
-                            </div>
-                            <div id="transport_loading" style="display: none;" class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <div class="mt-2 text-muted">{{ __('Đang tìm kiếm chuyến đi phù hợp nhất...') }}</div>
-                            </div>
                             <div id="transport_results"></div>
                         </div>
-                    </div>
 
 
                     @if($schedule->tour->tickets && $schedule->tour->tickets->isNotEmpty())
@@ -668,10 +609,6 @@
 
                 <!-- Total Price -->
                 <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="transport_fee_row" style="display: none !important;">
-                        <span class="text-muted fw-500">{{ __('Phí di chuyển:') }}</span>
-                        <strong class="text-dark" id="display_transport_price">0 đ</strong>
-                    </div>
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="ticket_fee_row" style="display: none !important;">
                         <span class="text-muted fw-500">{{ __('Vé tham quan:') }}</span>
                         <strong class="text-dark" id="display_ticket_price">0 đ</strong>
@@ -868,9 +805,7 @@
     const inputTransportData = document.getElementById('input_transport_data');
     const inputTotalPrice = document.getElementById('input_total_price');
 
-    const displayTransportPrice = document.getElementById('display_transport_price');
     const displayTotalPrice = document.getElementById('display_total_price');
-    const transportFeeRow = document.getElementById('transport_fee_row');
 
     const displayTicketPrice = document.getElementById('display_ticket_price');
     const ticketFeeRow = document.getElementById('ticket_fee_row');
@@ -911,12 +846,7 @@
         inputTransportPrice.value = transportPrice;
         inputTotalPrice.value = finalPrice;
 
-        if (transportPrice > 0) {
-            transportFeeRow.style.setProperty('display', 'flex', 'important');
-            displayTransportPrice.textContent = formatCurrencyDynamic(transportPrice);
-        } else {
-            transportFeeRow.style.setProperty('display', 'none', 'important');
-        }
+
 
         if (ticketPrice > 0) {
             ticketFeeRow.style.setProperty('display', 'flex', 'important');

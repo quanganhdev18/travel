@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Destination;
-use App\Models\District;
 use App\Models\Province;
 use App\Models\Tour;
 use App\Models\User;
@@ -23,11 +22,9 @@ beforeEach(function () {
 
 test('admin can store tour with departure time', function () {
     $province = Province::first() ?? Province::create(['name' => 'Test Province']);
-    $district = District::first() ?? District::create(['name' => 'Test District', 'province_id' => $province->id]);
     $ward = Ward::first() ?? Ward::create([
         'name' => 'Test Ward',
         'province_id' => $province->id,
-        'district_id' => $district->id,
     ]);
 
     $response = $this->actingAs($this->adminUser)
@@ -60,11 +57,9 @@ test('admin can store tour with departure time', function () {
 
 test('admin can update tour with departure time', function () {
     $province = Province::first() ?? Province::create(['name' => 'Test Province']);
-    $district = District::first() ?? District::create(['name' => 'Test District', 'province_id' => $province->id]);
     $ward = Ward::first() ?? Ward::create([
         'name' => 'Test Ward',
         'province_id' => $province->id,
-        'district_id' => $district->id,
     ]);
 
     $tour = Tour::create([

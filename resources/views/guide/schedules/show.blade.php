@@ -156,7 +156,7 @@
             </div>
             
             <div class="d-flex gap-2 align-items-center">
-                @if($groupStatus !== 'completed' && !in_array($groupStatus, ['cancelled_by_customer', 'cancelled_by_admin']))
+                @if($groupStatus !== 'upcoming' && $groupStatus !== 'completed' && !in_array($groupStatus, ['cancelled_by_customer', 'cancelled_by_admin']))
                     <button id="toggle-group-status-btn" class="btn btn-warning btn-sm fw-bold">
                         <i class="bi bi-gear-fill me-1"></i>Thay đổi trạng thái Tour
                     </button>

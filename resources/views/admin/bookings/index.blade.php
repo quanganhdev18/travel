@@ -111,7 +111,6 @@
                         <th class="ps-4">Mã Đơn / Ngày</th>
                         <th>Khách Hàng</th>
                         <th>Sản Phẩm</th>
-                        <th>Di Chuyển</th>
                         <th>Thanh Toán</th>
                         <th>TT Thanh Toán</th>
                         <th>TT Tour</th>
@@ -134,27 +133,6 @@
                                 {{ $booking->tour_schedule->tour->title ?? 'N/A' }}
                             </div>
                             <div class="small text-primary mt-1"><i class="bi bi-calendar3 me-1"></i>{{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }}</div>
-                        </td>
-                        <td>
-                            @if($booking->transport_type == 'flight')
-                                @if($booking->pnr_code)
-                                <span class="badge-soft badge-soft-danger px-2">
-                                    <i class="bi bi-airplane me-1"></i>{{ $booking->pnr_code }}
-                                </span>
-                                @else
-                                <span class="badge-soft badge-soft-warning px-2">
-                                    <i class="bi bi-airplane me-1"></i>Chờ vé
-                                </span>
-                                @endif
-                            @elseif($booking->transport_type == 'bus')
-                            <span class="badge-soft badge-soft-info px-2">
-                                <i class="bi bi-bus-front me-1"></i>Đi bằng xe
-                            </span>
-                            @else
-                            <span class="badge-soft badge-soft-secondary px-2">
-                                <i class="bi bi-car-front me-1"></i>Tự túc
-                            </span>
-                            @endif
                         </td>
                         <td>
                             <div class="fw-bold text-danger">{{ number_format($booking->total_price, 0, ',', '.') }} ₫</div>
