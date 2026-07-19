@@ -71,6 +71,7 @@ test('booking stores successfully', function () {
         'customer_name' => 'Nguyễn Văn A',
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
+        'meeting_point' => 'Sân bay',
         'total_price' => 7000000,
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
@@ -91,6 +92,7 @@ test('booking stores successfully', function () {
                 ],
             ],
         ],
+        'transport_type' => 'self',
         'payment_type' => 'full',
         'payment_method' => 'transfer',
     ]);
@@ -115,6 +117,7 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
         'customer_name' => 'Nguyễn Văn A',
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
+        'meeting_point' => 'Sân bay',
         'total_price' => 7000000,
         'issue_date' => '2021-05-18',
         'expiry_date' => '2036-05-18',
@@ -135,6 +138,7 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
                 ],
             ],
         ],
+        'transport_type' => 'self',
         'payment_type' => 'full',
         'payment_method' => 'vnpay',
     ]);
@@ -266,7 +270,7 @@ test('vnpay ipn updates payment status correctly', function () {
 
     $response->assertJson([
         'RspCode' => '00',
-        'Message' => 'Confirm success',
+        'Message' => 'Confirm Success',
     ]);
 
     $this->assertDatabaseHas('payments', [
@@ -323,6 +327,7 @@ test('booking store fails for schedule starting within 3 days', function () {
         'customer_name' => 'Nguyễn Văn A',
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
+        'meeting_point' => 'Sân bay',
         'total_price' => 7000000,
         'passengers' => [
             'adult' => [
@@ -340,6 +345,7 @@ test('booking store fails for schedule starting within 3 days', function () {
                 ],
             ],
         ],
+        'transport_type' => 'self',
         'payment_type' => 'full',
         'payment_method' => 'transfer',
     ]);
