@@ -175,13 +175,35 @@
                             </div>
 
 
-                            <div class="col-md-3">
+                          {{-- Số CCCD/Hộ chiếu --}}
+<div class="col-md-4">
+    <label for="identity_number"
+           class="form-label fw-600 text-dark">
+        {{ __('Số CCCD/Hộ Chiếu') }}
+        <span class="text-danger">*</span>
+    </label>
 
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="passengers[adult][0][identity_number]" id="identity_number" class="form-control search-form-control" required placeholder="Nhập số CCCD/Passport" value="{{ $identity->identity_number ?? '' }}">
-                            </div>
-                            <div class="col-md-4">
+    <input type="text"
+           name="passengers[adult][0][identity_number]"
+           id="identity_number"
+           class="form-control search-form-control
+                  @error('passengers.adult.0.identity_number') is-invalid @enderror"
+           value="{{ old(
+               'passengers.adult.0.identity_number',
+               $identity->identity_number ?? ''
+           ) }}"
+           placeholder="{{ __('Nhập số CCCD/Passport') }}"
+           required>
+
+    @error('passengers.adult.0.identity_number')
+        <div class="invalid-feedback">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
+
+{{-- Ngày sinh --}}
+<div class="col-md-4">
     <label for="date_of_birth"
            class="form-label fw-600 text-dark">
         {{ __('Ngày Sinh') }}
@@ -199,7 +221,6 @@
            ) }}"
            max="{{ \Carbon\Carbon::today()->subYears(18)->format('Y-m-d') }}"
            required
-
            oninvalid="
                if (this.validity.valueMissing) {
                    this.setCustomValidity('Vui lòng nhập ngày sinh.');
@@ -209,7 +230,6 @@
                    this.setCustomValidity('Ngày sinh không hợp lệ.');
                }
            "
-
            oninput="this.setCustomValidity('')">
 
     @error('passengers.adult.0.date_of_birth')
@@ -222,43 +242,56 @@
         Người đặt tour phải đủ 18 tuổi trở lên.
     </small>
 </div>
-                            <div class="col-md-4">
 
-                                <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
-                                <select name="passengers[adult][0][gender]" id="gender" class="form-select search-form-control" required>
-                                    <option value="">{{ __('-- Chọn --') }}</option>
-                                    <option value="male" {{ ($identity->gender ?? '') == 'male' ? 'selected' : '' }}>{{ __('Nam') }}</option>
-                                    <option value="female" {{ ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
-                                    <option value="other" {{ ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
-                                </select>
-                            </div>
+{{-- Giới tính --}}
+<div class="col-md-4">
+    <label for="gender"
+           class="form-label fw-600 text-dark">
+        {{ __('Giới Tính') }}
+        <span class="text-danger">*</span>
+    </label>
 
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="passengers[adult][0][identity_number]" id="identity_number" class="form-control search-form-control" required placeholder="Nhập số CCCD/Passport" value="{{ $identity->identity_number ?? '' }}">
-                            </div>
-                            <div class="col-md-5">
-                                <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                <div class="d-flex gap-2">
-                                    <select class="form-select search-form-control px-2 dob-day" required>
-                                        <option value="">{{ __('Ngày') }}</option>
-                                    </select>
-                                    <select class="form-select search-form-control px-2 dob-month" required>
-                                        <option value="">{{ __('Tháng') }}</option>
-                                    </select>
-                                    <select class="form-select search-form-control px-2 dob-year" required>
-                                        <option value="">{{ __('Năm') }}</option>
-                                    </select>
-                                </div>
-                                <input type="hidden" name="passengers[adult][0][date_of_birth]" id="date_of_birth" value="{{ $identity->date_of_birth ?? '' }}" required>
-                                <div class="text-danger small mt-1" id="dob-error" style="display: none;">
-                                    {{ __('Người đặt tour phải từ 18 tuổi trở lên.') }}
-                                </div>
-                            </div>
+    <select name="passengers[adult][0][gender]"
+            id="gender"
+            class="form-select search-form-control
+                   @error('passengers.adult.0.gender') is-invalid @enderror"
+            required>
 
-=======
+        <option value="">
+            {{ __('-- Chọn --') }}
+        </option>
 
->>>>>>> Stashed changes
+        <option value="male"
+            {{ old(
+                'passengers.adult.0.gender',
+                $identity->gender ?? ''
+            ) === 'male' ? 'selected' : '' }}>
+            {{ __('Nam') }}
+        </option>
+
+        <option value="female"
+            {{ old(
+                'passengers.adult.0.gender',
+                $identity->gender ?? ''
+            ) === 'female' ? 'selected' : '' }}>
+            {{ __('Nữ') }}
+        </option>
+
+        <option value="other"
+            {{ old(
+                'passengers.adult.0.gender',
+                $identity->gender ?? ''
+            ) === 'other' ? 'selected' : '' }}>
+            {{ __('Khác') }}
+        </option>
+    </select>
+
+    @error('passengers.adult.0.gender')
+        <div class="invalid-feedback">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
                             <!-- Hidden identity details -->
                             <input type="hidden" name="issue_date" id="issue_date" value="{{ $identity->issue_date ?? '2020-01-01' }}">
                             <input type="hidden" name="expiry_date" id="expiry_date" value="{{ $identity->expiry_date ?? '2040-01-01' }}">
