@@ -1164,20 +1164,47 @@
                                                     <span class="passenger-chip child"><i class="bi bi-person-fill"></i>{{ $booking->children_count }} trẻ em</span>
                                                     @endif
                                                 </div>
-                                                <div class="d-flex align-items-center gap-2 small">
-                                                    @if($booking->transport_type === 'flight')
-                                                        <i class="bi bi-airplane-fill text-danger fs-5"></i><span class="fw-600 text-dark">Máy bay</span>
-                                                    @elseif($booking->transport_type === 'bus')
-                                                        <i class="bi bi-bus-front-fill text-info fs-5"></i><span class="fw-600 text-dark">Xe ô tô</span>
-                                                    @else
-                                                        <i class="bi bi-car-front-fill text-muted fs-5"></i><span class="fw-600 text-dark">Tự túc</span>
-                                                    @endif
-                                                </div>
-                                                <div class="mt-2">
-                                                    <a href="{{ route('user.bookings.detail', $booking->id) }}" class="bk-btn bk-btn-outline" style="font-size:0.78rem;padding:6px 14px;">
-                                                        <i class="bi bi-eye"></i> Xem chi tiết
-                                                    </a>
-                                                </div>
+                                                {{-- Điểm tập kết --}}
+                                        <div class="d-flex align-items-start gap-2 mb-2 small">
+                                            <i class="bi bi-geo-alt-fill text-success fs-5"></i>
+
+                                            <div>
+                                                <span class="fw-600 text-dark">
+                                                    Điểm tập kết:
+                                                </span>
+
+                                                <span class="text-muted">
+                                                    {{ $booking->meeting_point
+                                                        ?: ($booking->tour_schedule?->tour?->meeting_point ?? 'Chưa cập nhật') }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {{-- Phương tiện --}}
+                                        <div class="d-flex align-items-center gap-2 small">
+                                            @if($booking->transport_type === 'flight')
+                                                <i class="bi bi-airplane-fill text-danger fs-5"></i>
+                                                <span class="fw-600 text-dark">Máy bay</span>
+
+                                            @elseif($booking->transport_type === 'bus')
+                                                <i class="bi bi-bus-front-fill text-info fs-5"></i>
+                                                <span class="fw-600 text-dark">Xe ô tô</span>
+
+                                            @else
+                                                <i class="bi bi-car-front-fill text-muted fs-5"></i>
+                                                <span class="fw-600 text-dark">Tự túc</span>
+                                            @endif
+                                        </div>
+
+                                        {{-- Nút xem chi tiết --}}
+                                        <div class="mt-2">
+                                            <a href="{{ route('user.bookings.detail', $booking->id) }}"
+                                            class="bk-btn bk-btn-outline"
+                                            style="font-size:0.78rem;padding:6px 14px;">
+                                                <i class="bi bi-eye"></i>
+                                                Xem chi tiết
+                                            </a>
+                                        </div>
                                             </div>
                                         </div>
                                     </div>

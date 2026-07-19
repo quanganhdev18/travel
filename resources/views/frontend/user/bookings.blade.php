@@ -513,29 +513,67 @@
                                     {{ $tour->title ?? __('Tour không tồn tại') }}
                                 </h5>
 
-                                {{-- Tour meta --}}
+                                                                {{-- Tour meta --}}
                                 <div class="d-flex flex-wrap gap-2 mb-3">
                                     @if($tour?->destination)
-                                    <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
-                                        <i class="bi bi-geo-alt-fill text-danger"></i>
-                                        {{ $tour->destination->name }}
-                                    </span>
+                                        <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
+                                            <i class="bi bi-geo-alt-fill text-danger"></i>
+                                            {{ $tour->destination->name }}
+                                        </span>
                                     @endif
+
                                     @if($schedule)
-                                    <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
-                                        <i class="bi bi-calendar-event-fill text-success"></i>
-                                        {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}
-                                        @if($tour && $tour->departure_time)
-                                            ({{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }})
+                                        <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
+                                            <i class="bi bi-calendar-event-fill text-success"></i>
+
+                                            {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}
+
+                                            @if($tour && $tour->departure_time)
+                                                ({{ \Carbon\Carbon::parse($tour->departure_time)->format('H\hi') }})
+                                            @endif
+                                        </span>
+
+                                        @if($schedule->return_date)
+                                            <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
+                                                <i class="bi bi-arrow-return-left text-warning"></i>
+                                                {{ \Carbon\Carbon::parse($schedule->return_date)->format('d/m/Y') }}
+                                            </span>
                                         @endif
-                                    </span>
-                                    @if($schedule->return_date)
-                                    <span style="font-size:0.8rem;color:#6b7280;display:flex;align-items:center;gap:4px;">
-                                        <i class="bi bi-arrow-return-left text-warning"></i>
-                                        {{ \Carbon\Carbon::parse($schedule->return_date)->format('d/m/Y') }}
-                                    </span>
                                     @endif
-                                    @endif
+                                </div>
+
+                                @php
+                                    $meetingPoint = $booking->meeting_point
+                                        ?: ($tour->meeting_point ?? null);
+                                @endphp
+
+                                {{-- Điểm tập kết --}}
+                                <div class="d-flex align-items-start gap-2 mb-3"
+                                    style="
+                                        background:#f0fdf4;
+                                        border:1px solid #bbf7d0;
+                                        border-radius:10px;
+                                        padding:9px 12px;
+                                    ">
+
+                                    <i class="bi bi-geo-alt-fill text-success mt-1"></i>
+
+                                    <div class="flex-grow-1">
+                                        <div class="text-muted"
+                                            style="
+                                                font-size:0.7rem;
+                                                font-weight:700;
+                                                text-transform:uppercase;
+                                                letter-spacing:0.5px;
+                                            ">
+                                            {{ __('Điểm tập kết') }}
+                                        </div>
+
+                                        <div class="fw-semibold text-dark"
+                                            style="font-size:0.84rem;word-break:break-word;">
+                                            {{ $meetingPoint ?: __('Chưa cập nhật') }}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {{-- Passengers --}}
@@ -544,14 +582,14 @@
                                         <i class="bi bi-person-fill"></i>
                                         {{ $booking->adults_count }} {{ __('người lớn') }}
                                     </span>
+
                                     @if($booking->children_count > 0)
-                                    <span class="passenger-chip child">
-                                        <i class="bi bi-person-fill"></i>
-                                        {{ $booking->children_count }} {{ __('trẻ em') }}
-                                    </span>
+                                        <span class="passenger-chip child">
+                                            <i class="bi bi-person-fill"></i>
+                                            {{ $booking->children_count }} {{ __('trẻ em') }}
+                                        </span>
                                     @endif
                                 </div>
-
                                 {{-- Transport --}}
                                 <div class="d-flex align-items-center gap-2 small">
                                     @if($booking->transport_type === 'flight')
