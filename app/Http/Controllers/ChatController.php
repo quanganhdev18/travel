@@ -67,7 +67,7 @@ class ChatController extends Controller
         }
 
         if (! $request->message && ! $path) {
-            return response()->json(['error' => 'Message or attachment is required'], 422);
+            return response()->json(['error' => 'Tin nhắn hoặc tệp đính kèm là bắt buộc.'], 422);
         }
 
         $message = $conversation->messages()->create([
