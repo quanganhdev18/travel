@@ -43,14 +43,14 @@ class TourGuideController extends Controller
         ]);
 
         $validated['is_blacklisted'] = $request->has('is_blacklisted');
-        
+
         $tourGuide = TourGuide::create($validated);
 
         // Tự động cấp quyền HDV cho User được liên kết
         if ($tourGuide->user_id) {
             $user = User::find($tourGuide->user_id);
             if ($user) {
-                if (!$user->hasRole('Guide')) {
+                if (! $user->hasRole('Guide')) {
                     $user->assignRole('Guide');
                 }
                 $user->update(['role' => 'guide']);
@@ -64,9 +64,9 @@ class TourGuideController extends Controller
     {
         // Lấy tất cả user chưa có hồ sơ HDV, hoặc là user đang được liên kết với HDV này
         $users = User::where(function ($query) use ($tourGuide) {
-                $query->doesntHave('tour_guide')
-                    ->orWhere('id', $tourGuide->user_id);
-            })->get();
+            $query->doesntHave('tour_guide')
+                ->orWhere('id', $tourGuide->user_id);
+        })->get();
 
         return view('admin.tour_guides.edit', compact('tourGuide', 'users'));
     }
@@ -98,7 +98,7 @@ class TourGuideController extends Controller
         if ($tourGuide->user_id && $tourGuide->user_id != $oldUserId) {
             $user = User::find($tourGuide->user_id);
             if ($user) {
-                if (!$user->hasRole('Guide')) {
+                if (! $user->hasRole('Guide')) {
                     $user->assignRole('Guide');
                 }
                 $user->update(['role' => 'guide']);

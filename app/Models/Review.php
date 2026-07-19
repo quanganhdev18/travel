@@ -38,7 +38,7 @@ class Review extends Model
         'rating',
         'comment',
         'guide_id',
-        'guide_rating'
+        'guide_rating',
     ];
 
     public function user()

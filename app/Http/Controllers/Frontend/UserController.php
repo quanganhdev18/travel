@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Favorite;
 use App\Models\Review;
 use App\Models\TicketBooking;
+use App\Models\TourGuide;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -238,7 +239,7 @@ class UserController extends Controller
         );
 
         if ($review->guide_id) {
-            $guide = \App\Models\TourGuide::find($review->guide_id);
+            $guide = TourGuide::find($review->guide_id);
             if ($guide) {
                 $guide->updateKpiScore();
             }

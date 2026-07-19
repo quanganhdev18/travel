@@ -145,5 +145,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MasterTourSeeder::class,
         ]);
+
+        // 7. Demo Seeder (Dữ liệu cố định cho demo ngày 21/07/2026)
+        $this->call([
+            DemoSeeder::class,
+        ]);
     }
 }

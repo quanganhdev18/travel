@@ -14,7 +14,7 @@ class TourReport extends Model
         'advance_amount',
         'actual_expense',
         'balance',
-        'status'
+        'status',
     ];
 
     public function tour_schedule()

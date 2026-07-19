@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\TourSchedule;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class UpdateTourLifecycle extends Command
 {
@@ -30,17 +30,17 @@ class UpdateTourLifecycle extends Command
         $today = Carbon::today();
 
         // 1. Pending -> Operating
-        $operatingCount = TourSchedule::where(function($q) {
-                $q->whereNull('status')->orWhere('status', 'pending');
-            })
+        $operatingCount = TourSchedule::where(function ($q) {
+            $q->whereNull('status')->orWhere('status', 'pending');
+        })
             ->where('departure_date', '<=', $today)
             ->where('return_date', '>=', $today)
             ->update(['status' => 'operating']);
 
         // 2. Operating -> Completed
-        $completedCount = TourSchedule::where(function($q) {
-                $q->whereNull('status')->orWhereIn('status', ['pending', 'operating']);
-            })
+        $completedCount = TourSchedule::where(function ($q) {
+            $q->whereNull('status')->orWhereIn('status', ['pending', 'operating']);
+        })
             ->where('return_date', '<', $today)
             ->update(['status' => 'completed']);
 

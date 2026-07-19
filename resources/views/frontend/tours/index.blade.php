@@ -29,7 +29,7 @@
     <!-- Search Widget -->
     <div class="container search-widget-wrapper">
         <div class="glass-panel search-glass px-4 py-3">
-            <form action="{{ route('frontend.tours.index') }}" method="GET" class="row g-3 align-items-end">
+            <form action="{{ route('frontend.tours.index') }}" id="searchForm" method="GET" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label text-muted small fw-bold">{{ __('Điểm đến') }}</label>
                     <select name="destination_id"
@@ -60,14 +60,14 @@
                     <select name="budget"
                         class="form-select search-form-control {{ isset($filterErrors['budget']) ? 'is-invalid' : '' }}">
                         <option value="all">{{ __('Tất cả mức giá') }}</option>
-                        <option value="under_5m" {{ request('budget') == 'under_5m' ? 'selected' : '' }}>
-                            {{ __('Dưới 5 triệu') }}</option>
-                        <option value="5m_10m" {{ request('budget') == '5m_10m' ? 'selected' : '' }}>{{ __('5 - 10 triệu') }}
-                        </option>
-                        <option value="10m_20m" {{ request('budget') == '10m_20m' ? 'selected' : '' }}>
-                            {{ __('10 - 20 triệu') }}</option>
-                        <option value="over_20m" {{ request('budget') == 'over_20m' ? 'selected' : '' }}>
-                            {{ __('Trên 20 triệu') }}</option>
+                        <option value="under_1m" {{ request('budget') == 'under_1m' ? 'selected' : '' }}>
+                            {{ __('Dưới 1 triệu') }}</option>
+                        <option value="1m_2m" {{ request('budget') == '1m_2m' ? 'selected' : '' }}>
+                            {{ __('1 - 2 triệu') }}</option>
+                        <option value="2m_4m" {{ request('budget') == '2m_4m' ? 'selected' : '' }}>
+                            {{ __('2 - 4 triệu') }}</option>
+                        <option value="over_4m" {{ request('budget') == 'over_4m' ? 'selected' : '' }}>
+                            {{ __('Trên 4 triệu') }}</option>
                     </select>
                     @if(isset($filterErrors['budget']))
                         <div class="text-danger small mt-1 position-absolute">{{ $filterErrors['budget'][0] }}</div>
@@ -94,87 +94,6 @@
                     </button>
                 </div>
             </form>
-
-            @if(request()->hasAny(['destination_id', 'departure_date', 'date', 'budget', 'keyword', 'duration']))
-                <div class="d-flex align-items-center flex-wrap gap-2 mt-4 pt-3 border-top">
-                    <small class="text-muted me-2">
-                        <i class="bi bi-funnel me-1"></i>
-                        {{ __('Tìm thấy') }} <strong class="text-primary">{{ $tours->total() }}</strong>
-                        {{ __('tour phù hợp') }}
-                    </small>
-
-                    @if(request('destination_id') && !isset($filterErrors['destination_id']))
-                        @php $dest = $allDestinations->firstWhere('id', request('destination_id')); @endphp
-                        @if($dest)
-                            <a href="{{ request()->fullUrlWithQuery(['destination_id' => null]) }}"
-                                class="badge bg-primary bg-opacity-10 text-primary text-decoration-none p-2 rounded-pill hover-opacity">
-                                <i class="bi bi-geo-alt me-1"></i>{{ $dest->name }} <i class="bi bi-x"></i>
-                            </a>
-                        @endif
-                    @endif
-
-                    @if((request('departure_date') || request('date')) && !isset($filterErrors['departure_date']))
-                        @php
-                            $selectedDate = request('departure_date') ?? request('date');
-                        @endphp
-                        <a href="{{ request()->fullUrlWithQuery(['departure_date' => null, 'date' => null]) }}"
-                            class="badge bg-info bg-opacity-10 text-info text-decoration-none p-2 rounded-pill hover-opacity">
-                            <i class="bi bi-calendar me-1"></i>Từ {{ \Carbon\Carbon::parse($selectedDate)->format('d/m/Y') }} <i
-                                class="bi bi-x"></i>
-                        </a>
-                    @endif
-
-                    @if(request('budget') && request('budget') !== 'all' && !isset($filterErrors['budget']))
-                        @php
-                            $budgetLabels = [
-                                'under_5m' => 'Dưới 5 triệu',
-                                '5m_10m' => '5 - 10 triệu',
-                                '10m_20m' => '10 - 20 triệu',
-                                'over_20m' => 'Trên 20 triệu',
-                            ];
-                        @endphp
-                        <a href="{{ request()->fullUrlWithQuery(['budget' => null]) }}"
-                            class="badge bg-success bg-opacity-10 text-success text-decoration-none p-2 rounded-pill hover-opacity">
-                            <i class="bi bi-currency-dollar me-1"></i>{{ $budgetLabels[request('budget')] ?? '' }} <i
-                                class="bi bi-x"></i>
-                        </a>
-                    @endif
-
-                    @if(request('duration'))
-                        @php
-                            $durationLabels = [
-                                '2d1n' => '2N1Đ',
-                                '3d2n' => '3N2Đ',
-                                '4d3n' => '4N3Đ',
-                                '5d4n' => '5N4Đ',
-                                '6d5n' => '6N5Đ',
-                                '7d6n' => '7N6Đ',
-                            ];
-                        @endphp
-                        <a href="{{ request()->fullUrlWithQuery(['duration' => null]) }}"
-                            class="badge bg-warning bg-opacity-10 text-warning text-decoration-none p-2 rounded-pill hover-opacity">
-                            <i class="bi bi-clock me-1"></i>{{ $durationLabels[request('duration')] ?? '' }} <i
-                                class="bi bi-x"></i>
-                        </a>
-                    @endif
-
-                    @if(request('keyword'))
-                        <a href="{{ request()->fullUrlWithQuery(['keyword' => null]) }}"
-                            class="badge bg-secondary bg-opacity-10 text-secondary text-decoration-none p-2 rounded-pill hover-opacity">
-                                <i class="bi bi-search me-1"></i>{{ request('keyword') }} <i class="bi bi-x"></i>
-                        </a>
-                    @endif
-
-                    <a href="{{ route('frontend.tours.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill ms-auto">
-                        {{ __('Xóa bộ lọc') }}
-                    </a>
-                </div>
-                <style>
-                    .hover-opacity:hover {
-                        opacity: 0.8;
-                    }
-                </style>
-            @endif
         </div>
     </div>
 
@@ -182,125 +101,8 @@
     <section class="container reveal-up mb-5">
         <div class="hot-deal-section">
             <div class="hot-deal-bg"></div>
-            <div class="container position-relative z-index-1">
-                <div class="text-center mb-5">
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 px-3">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="{{ route('frontend.tours.index', array_merge(request()->except('category_id', 'page'), [])) }}"
-                            class="filter-chip text-decoration-none {{ !request('category_id') || request('category_id') === 'all' ? 'active' : '' }}">
-                            {{ __('Tất cả') }}
-                        </a>
-                        @foreach($categories as $cat)
-                            <a href="{{ route('frontend.tours.index', array_merge(request()->except('category_id', 'page'), ['category_id' => $cat->id])) }}"
-                                class="filter-chip text-decoration-none {{ request('category_id') == $cat->id ? 'active' : '' }}">
-                                {{ $cat->name }}
-                            </a>
-                        @endforeach
-                    </div>
-                </div>
-
-                <div class="row g-4 px-3">
-                    @forelse($tours as $tour)
-                        <div class="col-12 col-md-6 col-lg-3">
-                            <div class="tour-preview-wrapper h-100" x-data="{ showPreview: false }"
-                                @mouseenter="showPreview = true" @mouseleave="showPreview = false">
-
-                                <a href="{{ route('frontend.tours.show', $tour->slug) }}"
-                                    class="text-decoration-none h-100 d-block" @mouseenter.stop>
-                                    <div class="combo-card h-100">
-                                        <div class="combo-card-img-wrapper">
-
-                                            @if($tour->duration_days)
-                                                <div class="tour-duration-badge">
-                                                    {{ $tour->duration_days }}N{{ $tour->duration_nights > 0 ? $tour->duration_nights . 'Đ' : '' }}
-                                                </div>
-                                            @endif
-
-                                            @auth
-                                                @php
-                                                    $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-                                                        ->where('tour_id', $tour->id)
-                                                        ->exists();
-                                                @endphp
-
-                                                <form action="{{ route('frontend.favorites.toggle', $tour->id) }}" method="POST"
-                                                    class="favorite-form" onclick="event.stopPropagation();">
-                                                    @csrf
-
-                                                    <button type="submit" class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-                                                        <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
-                                                    <i class="bi bi-heart"></i>
-                                                </div>
-                                            @endauth
-
-                                            @php
-                                                $primaryImage = $tour->tour_images->where('is_primary', 1)->first()
-                                                    ?? $tour->tour_images->first();
-                                                $tourImage = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';
-                                                if ($primaryImage && !empty($primaryImage->image_url)) {
-                                                    if (\Illuminate\Support\Str::startsWith($primaryImage->image_url, ['http://', 'https://'])) {
-                                                        $tourImage = $primaryImage->image_url;
-                                                    } else {
-                                                        $tourImage = asset(ltrim($primaryImage->image_url, '/'));
-                                                    }
-                                                }
-                                                $destinationName = optional($tour->destination)->name ?: 'Việt Nam';
-                                                $stars = $tour->hotel_stars ?? 4;
-                                            @endphp
-                                            <img src="{{ $tourImage }}" alt="{{ $tour->title }}"
-                                                onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
-                                        </div>
-                                        <div class="combo-card-body">
-                                            <h3 class="combo-title">{{ $tour->title }}</h3>
-                                            <div class="combo-stars">
-                                                @for($i = 1; $i <= $stars; $i++)
-                                                    <i class="bi bi-star-fill text-warning"></i>
-                                                @endfor
-                                            </div>
-                                            <div class="combo-location">
-                                                <i class="bi bi-geo-alt"></i>
-                                                <span>{{ $destinationName }}</span>
-                                            </div>
-                                            <div class="combo-footer">
-                                                <div>
-                                                    <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                    <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}
-                                                    </div>
-                                                </div>
-                                                <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </a>
-
-                                <!-- Tour Preview Component -->
-                                <x-tour-preview :tour="$tour" />
-                            </div>
-                        </div>
-                    @empty
-                        <div class="col-12 text-center py-5">
-                            <div class="mb-3 text-muted">
-                                <i class="bi bi-search" style="font-size: 3rem;"></i>
-                            </div>
-                            <h5 class="text-muted">{{ __('Không tìm thấy tour phù hợp với bộ lọc của bạn') }}</h5>
-                            <p class="text-muted">{{ __('Gợi ý: Thử bỏ bớt điều kiện lọc để xem thêm tour.') }}</p>
-                            <a href="{{ route('frontend.tours.index') }}" class="btn btn-primary rounded-pill mt-2">
-                                <i class="bi bi-arrow-repeat me-1"></i>{{ __('Xem tất cả tour') }}
-                            </a>
-                        </div>
-                    @endforelse
-                </div>
-
-                <div class="d-flex justify-content-center mt-5">
-                    {{ $tours->appends(request()->query())->links('pagination::bootstrap-5') }}
-                </div>
-
+            <div class="container position-relative z-index-1" id="results-container">
+                @include('frontend.tours._results_list')
             </div>
         </div>
     </section>
@@ -587,4 +389,129 @@
             }
         }
     </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('searchForm');
+        const container = document.getElementById('results-container');
+
+        if (!form || !container) return;
+
+        function fetchResults(url) {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) overlay.classList.remove('d-none');
+
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Network response was not ok');
+                return res.text();
+            })
+            .then(html => {
+                container.innerHTML = html;
+                window.history.pushState({}, '', url);
+            })
+            .catch(err => {
+                console.error('AJAX search error:', err);
+                if (overlay) overlay.classList.add('d-none');
+            });
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            
+            // Remove empty keys
+            for (let [key, val] of formData.entries()) {
+                if (!val || val === 'all') {
+                    formData.delete(key);
+                }
+            }
+
+            const params = new URLSearchParams(formData);
+            const url = form.action + '?' + params.toString();
+            fetchResults(url);
+        });
+
+        // Trigger submit on field changes
+        form.addEventListener('change', function(e) {
+            if (e.target.tagName === 'SELECT' || e.target.type === 'date') {
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        });
+
+        // Category chips filtering
+        document.addEventListener('click', function(e) {
+            const catBtn = e.target.closest('[data-category-btn]');
+            if (catBtn) {
+                e.preventDefault();
+                const catId = catBtn.getAttribute('data-category-btn');
+
+                let catInput = form.querySelector('input[name="category_id"]');
+                if (!catInput) {
+                    catInput = document.createElement('input');
+                    catInput.type = 'hidden';
+                    catInput.name = 'category_id';
+                    form.appendChild(catInput);
+                }
+                catInput.value = catId;
+
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        });
+
+        // Remove filter badges
+        document.addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('[data-remove-filter]');
+            if (removeBtn) {
+                e.preventDefault();
+                const filterName = removeBtn.getAttribute('data-remove-filter');
+
+                if (filterName === 'category_id') {
+                    const catInput = form.querySelector('input[name="category_id"]');
+                    if (catInput) catInput.value = 'all';
+                } else {
+                    const input = form.querySelector(`[name="${filterName}"]`);
+                    if (input) {
+                        if (input.tagName === 'SELECT') {
+                            input.value = filterName === 'budget' ? 'all' : '';
+                        } else {
+                            input.value = '';
+                        }
+                    }
+                }
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        });
+
+        // Clear all filters
+        document.addEventListener('click', function(e) {
+            const clearBtn = e.target.closest('#clear-all-filters') || e.target.closest('#view-all-tours-btn');
+            if (clearBtn) {
+                e.preventDefault();
+                form.reset();
+                const catInput = form.querySelector('input[name="category_id"]');
+                if (catInput) catInput.value = 'all';
+
+                form.querySelectorAll('select').forEach(sel => sel.value = sel.name === 'budget' ? 'all' : '');
+                form.querySelectorAll('input[type="date"]').forEach(inp => inp.value = '');
+
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        });
+
+        // AJAX Pagination
+        document.addEventListener('click', function(e) {
+            const pageLink = e.target.closest('.ajax-pagination a');
+            if (pageLink) {
+                e.preventDefault();
+                fetchResults(pageLink.href);
+                container.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+</script>
+
 @endsection

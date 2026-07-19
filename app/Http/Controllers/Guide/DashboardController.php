@@ -17,35 +17,35 @@ class DashboardController extends Controller
             'ongoing_schedules' => 0,
             'completed_schedules' => 0,
         ];
-        
+
         $recentSchedules = collect();
 
         if ($tourGuide) {
             $stats['total_schedules'] = $tourGuide->schedule_guides()->count();
-            
+
             $stats['upcoming_schedules'] = $tourGuide->schedule_guides()
                 ->whereHas('tour_schedule', function ($q) {
                     $q->where('departure_date', '>', now());
                 })->count();
-                
+
             $stats['ongoing_schedules'] = $tourGuide->schedule_guides()
                 ->whereHas('tour_schedule', function ($q) {
                     $q->where('departure_date', '<=', now())
-                      ->where('return_date', '>=', now()->startOfDay());
+                        ->where('return_date', '>=', now()->startOfDay());
                 })->count();
-                
+
             $stats['completed_schedules'] = $tourGuide->schedule_guides()
                 ->whereHas('tour_schedule', function ($q) {
                     $q->where('return_date', '<', now()->startOfDay());
                 })->count();
-                
+
             $recentSchedules = $tourGuide->schedule_guides()
                 ->with('tour_schedule.tour')
                 ->whereHas('tour_schedule', function ($q) {
                     $q->where('return_date', '>=', now()->startOfDay());
                 })
                 ->get()
-                ->sortBy(function($sg) {
+                ->sortBy(function ($sg) {
                     return $sg->tour_schedule->departure_date;
                 })
                 ->take(5);

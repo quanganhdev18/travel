@@ -56,18 +56,40 @@
         <h5 class="admin-card-title"><i class="bi bi-geo-alt me-2 text-primary"></i>Danh sách Lịch trình Tour</h5>
     </div>
     <div class="admin-card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4">Tên Tour</th>
-                        <th>Ngày Khởi Hành</th>
-                        <th>Số Khách / Sức Chứa</th>
-                        <th>Hướng Dẫn Viên</th>
-                        <th class="text-end pe-4">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <form action="{{ route('admin.ongoing_tours.index') }}" method="GET">
+            <input type="hidden" name="status" value="{{ request('status', 'all') }}">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Tên Tour</th>
+                            <th>Ngày Khởi Hành</th>
+                            <th>Số Khách / Sức Chứa</th>
+                            <th>Hướng Dẫn Viên</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                        <tr>
+                            <th class="ps-4">
+                                <input type="text" name="search_tour" class="form-control form-control-sm" placeholder="Tìm tên/Mã Tour..." value="{{ request('search_tour') }}">
+                            </th>
+                            <th>
+                                <input type="date" name="search_date" class="form-control form-control-sm" value="{{ request('search_date') }}">
+                            </th>
+                            <th>
+                                <input type="number" name="search_guests" class="form-control form-control-sm" placeholder="Khách tối thiểu..." value="{{ request('search_guests') }}">
+                            </th>
+                            <th>
+                                <input type="text" name="search_guide" class="form-control form-control-sm" placeholder="Tìm tên HDV..." value="{{ request('search_guide') }}">
+                            </th>
+                            <th class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <button type="submit" class="btn btn-sm btn-primary" title="Tìm kiếm"><i class="bi bi-search"></i></button>
+                                    <a href="{{ route('admin.ongoing_tours.index', ['status' => request('status', 'all')]) }}" class="btn btn-sm btn-secondary" title="Xóa lọc"><i class="bi bi-x-circle"></i></a>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
                     @forelse($schedules as $schedule)
                     <tr>
                         <td class="ps-4">
@@ -138,6 +160,7 @@
                 </tbody>
             </table>
         </div>
+        </form>
     </div>
     <div class="admin-card-body border-top py-3">
         {{ $schedules->appends(request()->query())->links('pagination::bootstrap-5') }}
@@ -188,7 +211,7 @@
                         </div>
 
                         <div class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
-                            <div class="form-check p-0">
+                            <div>
                                 <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
                                     :class="primaryGuide === '' ? 'border-success bg-success bg-opacity-10' : 'border-dashed text-muted'"
                                     style="cursor: pointer; border-style: dashed !important;">
@@ -203,7 +226,7 @@
                                 </label>
                             </div>
                             @foreach($tourGuides as $guide)
-                            <div class="form-check p-0">
+                            <div>
                                 <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
                                     :class="{
                                         'border-success bg-success bg-opacity-10': primaryGuide === '{{ $guide->id }}',
@@ -248,7 +271,7 @@
                         </div>
 
                         <div class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
-                            <div class="form-check p-0">
+                            <div>
                                 <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
                                     :class="backupGuide === '' ? 'border-secondary bg-secondary bg-opacity-10' : 'border-dashed text-muted'"
                                     style="cursor: pointer; border-style: dashed !important;">
@@ -263,7 +286,7 @@
                                 </label>
                             </div>
                             @foreach($tourGuides as $guide)
-                            <div class="form-check p-0">
+                            <div>
                                 <label class="d-flex align-items-center gap-3 p-2 rounded-2 border guide-option-label"
                                     :class="{
                                         'border-secondary bg-secondary bg-opacity-10': backupGuide === '{{ $guide->id }}',
