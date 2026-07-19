@@ -411,6 +411,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/tour-reports*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
+                    <i class="bi bi-file-earmark-check"></i> Báo cáo & Quyết toán
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/tour-guides*') ? 'active' : '' }}" href="{{ route('admin.tour_guides.index') }}">
                     <i class="bi bi-person-badge"></i> Hướng dẫn viên
                 </a>

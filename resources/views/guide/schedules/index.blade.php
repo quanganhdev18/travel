@@ -107,10 +107,13 @@
                             $statusClass = 'secondary';
                             $statusText = 'Chưa xác định';
                             
-                            if ($departureDateTime > now()) {
+                            if ($tourSchedule->status === 'closed') {
+                                $statusClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary';
+                                $statusText = 'Đã đóng';
+                            } elseif ($departureDateTime > now()) {
                                 $statusClass = 'primary';
                                 $statusText = 'Sắp tới';
-                            } elseif ($departureDateTime <= now() && \Carbon\Carbon::parse($tourSchedule->return_date) >= now()) {
+                            } elseif ($departureDateTime <= now() && \Carbon\Carbon::parse($tourSchedule->return_date)->endOfDay() >= now()) {
                                 $statusClass = 'success';
                                 $statusText = 'Đang diễn ra';
                             } else {
@@ -121,8 +124,8 @@
                         <tr>
                             <td data-label="ID">#{{ $tourSchedule->id }}</td>
                             <td data-label="Tên Tour">
-                                <strong class="text-md-start d-block">{{ $tour->name }}</strong>
-                                <div class="text-muted small mt-1 text-md-start">Mã: {{ $tour->tour_code }}</div>
+                                <strong class="text-md-start d-block">{{ $tour->title }}</strong>
+                                <div class="text-muted small mt-1 text-md-start">Mã: #{{ str_pad($tour->id, 4, '0', STR_PAD_LEFT) }}</div>
                             </td>
                             <td data-label="Khởi hành">{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
                             <td data-label="Kết thúc">{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
@@ -130,7 +133,11 @@
                                 {{ $tourSchedule->bookings->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}
                             </td>
                             <td data-label="Trạng thái">
-                                <span class="badge badge-soft-{{ $statusClass }}">{{ $statusText }}</span>
+                                @if($tourSchedule->status === 'closed')
+                                    <span class="badge {{ $statusClass }}">{{ $statusText }}</span>
+                                @else
+                                    <span class="badge badge-soft-{{ $statusClass }}">{{ $statusText }}</span>
+                                @endif
                             </td>
                             <td data-label="Hành động" class="text-end">
                                 <a href="{{ route('guide.schedules.show', $tourSchedule->id) }}" class="btn btn-sm btn-admin-primary">

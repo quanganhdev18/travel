@@ -118,7 +118,7 @@
                                             <span class="text-dark">{{ $review->tour->title ?? 'N/A' }}</span>
                                         </div>
                                         <div class="mb-3">
-                                            <strong>Đánh giá:</strong>
+                                            <strong>Đánh giá chung:</strong>
                                             <span class="text-warning ms-1">
                                                 @for($i = 1; $i <= 5; $i++)
                                                     <i class="bi {{ $i <= $review->rating ? 'bi-star-fill' : 'bi-star' }}"></i>
@@ -126,6 +126,17 @@
                                             </span>
                                             ({{ $review->rating }} sao)
                                         </div>
+                                        @if($review->guide_rating)
+                                        <div class="mb-3">
+                                            <strong>Đánh giá HDV ({{ $review->tour_guide->name ?? 'HDV' }}):</strong>
+                                            <span class="text-primary ms-1">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <i class="bi {{ $i <= $review->guide_rating ? 'bi-star-fill' : 'bi-star' }}"></i>
+                                                @endfor
+                                            </span>
+                                            ({{ $review->guide_rating }} sao)
+                                        </div>
+                                        @endif
                                         <div class="mb-0">
                                             <strong>Nội dung chi tiết:</strong>
                                             <p class="mt-2 text-dark" style="white-space: pre-wrap;">{{ $review->comment }}</p>

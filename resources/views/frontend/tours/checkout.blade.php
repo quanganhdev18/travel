@@ -153,15 +153,7 @@
                                     value="{{ $user->email }}" required placeholder="email@example.com">
                             </div>
 
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
-                                <input type="text" name="passengers[adult][0][identity_number]" id="identity_number" class="form-control search-form-control" required placeholder="Nhập số CCCD/Passport" value="{{ $identity->identity_number ?? '' }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
-                                <input type="date" name="passengers[adult][0][date_of_birth]" id="date_of_birth" class="form-control search-form-control" required value="{{ $identity->date_of_birth ?? '' }}" max="{{ date('Y-m-d') }}">
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label fw-600 text-dark">{{ __('Giới Tính') }} <span class="text-danger">*</span></label>
                                 <select name="passengers[adult][0][gender]" id="gender" class="form-select search-form-control" required>
                                     <option value="">{{ __('-- Chọn --') }}</option>
@@ -169,6 +161,28 @@
                                     <option value="female" {{ ($identity->gender ?? '') == 'female' ? 'selected' : '' }}>{{ __('Nữ') }}</option>
                                     <option value="other" {{ ($identity->gender ?? '') == 'other' ? 'selected' : '' }}>{{ __('Khác') }}</option>
                                 </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-600 text-dark">{{ __('Số CCCD/Hộ Chiếu') }} <span class="text-danger">*</span></label>
+                                <input type="text" name="passengers[adult][0][identity_number]" id="identity_number" class="form-control search-form-control" required placeholder="Nhập số CCCD/Passport" value="{{ $identity->identity_number ?? '' }}">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-600 text-dark">{{ __('Ngày Sinh') }} <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select search-form-control px-2 dob-day" required>
+                                        <option value="">{{ __('Ngày') }}</option>
+                                    </select>
+                                    <select class="form-select search-form-control px-2 dob-month" required>
+                                        <option value="">{{ __('Tháng') }}</option>
+                                    </select>
+                                    <select class="form-select search-form-control px-2 dob-year" required>
+                                        <option value="">{{ __('Năm') }}</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" name="passengers[adult][0][date_of_birth]" id="date_of_birth" value="{{ $identity->date_of_birth ?? '' }}" required>
+                                <div class="text-danger small mt-1" id="dob-error" style="display: none;">
+                                    {{ __('Người đặt tour phải từ 18 tuổi trở lên.') }}
+                                </div>
                             </div>
                             
                             <!-- Hidden identity details -->
@@ -210,68 +224,7 @@
                     <!-- WIZARD STEP 2 -->
                     <div class="wizard-panel" id="step-panel-2">
                         <!-- Section 3: Phương Thức Vận Chuyển -->
-                        <div class="mb-5">
-                        <h4 class="form-section-title">
-                            <i class="bi bi-airplane"></i>
-                            {{ __('Di Chuyển Đến Điểm Khởi Hành') }}
-                        </h4>
-
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_flight" value="flight">
-                                <label class="transport-option w-100 p-3 text-start" for="transport_flight">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-airplane text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Vé Máy Bay') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_bus" value="bus">
-                                <label class="transport-option w-100 p-3 text-start" for="transport_bus">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-bus-front text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Xe Khách') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_self" value="self" checked>
-                                <label class="transport-option w-100 p-3 text-start" for="transport_self">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-car-front text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Tự Túc') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <!-- Vùng hiển thị kết quả phương tiện (AJAX) -->
-                        <div id="transport_options_container" style="display: none;" class="p-4 bg-light rounded border">
-                            <div class="mb-4 pb-3 border-bottom">
-                                <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ __('Chọn điểm xuất phát của bạn') }}</label>
-                                <select id="customer_origin_select" class="form-select form-select-lg border-primary shadow-sm" style="max-width: 400px;">
-                                    <option value="HAN">{{ __('Hà Nội (HAN)') }}</option>
-                                    <option value="SGN" selected>{{ __('TP. Hồ Chí Minh (SGN)') }}</option>
-                                    <option value="DAD">{{ __('Đà Nẵng (DAD)') }}</option>
-                                    <option value="HPH">{{ __('Hải Phòng (HPH)') }}</option>
-                                    <option value="VCA">{{ __('Cần Thơ (VCA)') }}</option>
-                                    <option value="PQC">{{ __('Phú Quốc (PQC)') }}</option>
-                                </select>
-                            </div>
-                            <div id="transport_loading" style="display: none;" class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <div class="mt-2 text-muted">{{ __('Đang tìm kiếm chuyến đi phù hợp nhất...') }}</div>
-                            </div>
-                            <div id="transport_results"></div>
-                        </div>
-                    </div>
+                        <input type="hidden" name="transport_type" id="transport_self" value="self">
                     
                     @if($schedule->tour->tickets && $schedule->tour->tickets->isNotEmpty())
                     <!-- Section: Vé Tham Quan -->
@@ -752,10 +705,7 @@
         $departureDate = \Carbon\Carbon::parse($schedule->departure_date)->format('Y-m-d');
     @endphp
 
-    const transportRadios = document.querySelectorAll('input[name="transport_type"]');
-    const transportContainer = document.getElementById('transport_options_container');
-    const transportLoading = document.getElementById('transport_loading');
-    const transportResults = document.getElementById('transport_results');
+
     
     const inputTransportPrice = document.getElementById('input_transport_price');
     const inputTransportData = document.getElementById('input_transport_data');
@@ -983,198 +933,93 @@
         });
     });
 
-    window.selectTransportOption = function(price, dataStr) {
-        // Parse data
-        let data = JSON.parse(decodeURIComponent(dataStr));
-        inputTransportData.value = JSON.stringify(data);
-        
-        // Highlight selected
-        document.querySelectorAll('.transport-item-card').forEach(el => {
-            el.classList.remove('border-primary', 'bg-primary', 'bg-opacity-10');
-            const icon = el.querySelector('.selected-icon');
-            if(icon) icon.style.display = 'none';
-        });
-        
-        event.currentTarget.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
-        const icon = event.currentTarget.querySelector('.selected-icon');
-        if(icon) icon.style.display = 'block';
-        
-        // Update price
-        updateTotalDisplay(parseFloat(price));
-    };
 
-    function loadTransportOptions() {
-        const selectedRadio = document.querySelector('input[name="transport_type"]:checked');
-        if (!selectedRadio || selectedRadio.value === 'self') {
-            transportContainer.style.display = 'none';
-            return;
+
+    // DOB Dropdowns Logic
+    const dobDay = document.querySelector('.dob-day');
+    const dobMonth = document.querySelector('.dob-month');
+    const dobYear = document.querySelector('.dob-year');
+    const dobHidden = document.getElementById('date_of_birth');
+    
+    if (dobDay && dobMonth && dobYear) {
+        // Populate days
+        for (let i = 1; i <= 31; i++) {
+            let option = document.createElement('option');
+            option.value = i.toString().padStart(2, '0');
+            option.text = i;
+            dobDay.appendChild(option);
+        }
+        // Populate months
+        for (let i = 1; i <= 12; i++) {
+            let option = document.createElement('option');
+            option.value = i.toString().padStart(2, '0');
+            option.text = i;
+            dobMonth.appendChild(option);
+        }
+        // Populate years
+        const currentYear = new Date().getFullYear();
+        const defaultYear = currentYear - 18;
+        for (let i = currentYear; i >= currentYear - 100; i--) {
+            let option = document.createElement('option');
+            option.value = i;
+            option.text = i;
+            dobYear.appendChild(option);
         }
 
-        transportContainer.style.display = 'block';
-        transportLoading.style.display = 'block';
-        transportResults.innerHTML = '';
-        
-        const customerOrigin = document.getElementById('customer_origin_select').value;
-        const flightDestination = '{{ $tourDepartureCode }}';
-        
-        if (selectedRadio.value === 'flight') {
-            // Fetch Flight
-            fetch(`/api/flights/search?passengers=${totalPersonsCount}&origin=${customerOrigin}&destination=${flightDestination}&departure_date={{ $departureDate }}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        transportLoading.style.display = 'none';
-                        let tourDepartureTimeStr = '{{ $schedule->tour->departure_time }}';
-                        let tourDepartureDateStr = '{{ \Carbon\Carbon::parse($schedule->departure_date)->format("Y-m-d") }}';
-                        let tourDepartureDateTime = tourDepartureTimeStr ? new Date(`${tourDepartureDateStr}T${tourDepartureTimeStr}`) : null;
-
-                        let validOffers = (data.data || []).filter(offer => {
-                            let slice = offer.slices[0];
-                            if (!slice) return false;
-                            let segmentLast = slice.segments[slice.segments.length - 1];
-                            let arrivingAt = new Date(segmentLast.arriving_at);
-                            
-                            if (tourDepartureDateTime) {
-                                let diffHours = (tourDepartureDateTime.getTime() - arrivingAt.getTime()) / (1000 * 60 * 60);
-                                if (diffHours < 2) return false;
-                            }
-                            return true;
-                        });
-                        
-                        if(data.success && validOffers.length > 0) {
-                            let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Bay") }}</h5>';
-                            validOffers.forEach(offer => {
-                                let priceVND = parseFloat(offer.total_amount) * 25000;
-                                if (offer.total_currency === 'VND') {
-                                    priceVND = parseFloat(offer.total_amount);
-                                }
-                                
-                                let slice = offer.slices[0];
-                                let segmentFirst = slice.segments[0];
-                                let segmentLast = slice.segments[slice.segments.length - 1];
-                                
-                                let departTime = new Date(segmentFirst.departing_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                                let arriveTime = new Date(segmentLast.arriving_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                                let departDate = new Date(segmentFirst.departing_at).toLocaleDateString('vi-VN');
-                                let arriveDate = new Date(segmentLast.arriving_at).toLocaleDateString('vi-VN');
-                                
-                                let flightNumber = segmentFirst.operating_carrier_flight_number || segmentFirst.marketing_carrier_flight_number || '';
-                                let carrierCode = (segmentFirst.operating_carrier && segmentFirst.operating_carrier.iata_code) || 
-                                                  (segmentFirst.marketing_carrier && segmentFirst.marketing_carrier.iata_code) || '';
-                                let flightCode = carrierCode ? (carrierCode + ' ' + flightNumber).trim() : flightNumber;
-                                if (!flightCode) flightCode = offer.owner.name;
-                                
-                                let dur = slice.duration || '';
-                                let hMatch = dur.match(/(\d+)H/);
-                                let mMatch = dur.match(/(\d+)M/);
-                                let durationStr = (hMatch ? hMatch[1] + 'h ' : '') + (mMatch ? mMatch[1] + 'm' : '0m');
-                                
-                                let originCode = slice.origin.iata_code || '';
-                                let destCode = slice.destination.iata_code || '';
-
-                                let dataStr = encodeURIComponent(JSON.stringify({
-                                    offer_id: offer.id,
-                                    provider: offer.owner.name,
-                                    price: priceVND
-                                }));
-                                
-                                html += `
-                                <div class="card mb-3 transport-item-card position-relative transition-all" style="cursor:pointer; border-width: 2px;" onclick="selectTransportOption(${priceVND}, '${dataStr}')">
-                                    <div class="selected-icon position-absolute top-0 end-0 mt-2 me-2 text-primary" style="display:none; font-size: 1.5rem;">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div class="fw-bold text-primary">
-                                                <i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}
-                                                <span class="badge bg-light text-dark ms-2 border">${flightCode}</span>
-                                            </div>
-                                            <div class="fw-bold text-danger fs-5">+ ${formatCurrencyDynamic(priceVND)}</div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3">
-                                            <div class="text-center">
-                                                <div class="fw-bold fs-4 text-dark lh-1 mb-1">${departTime}</div>
-                                                <div class="small fw-500 text-muted">${originCode}</div>
-                                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">${departDate}</div>
-                                            </div>
-                                            <div class="text-center flex-grow-1 px-4">
-                                                <div class="small text-muted mb-2 fw-500">${durationStr}</div>
-                                                <div class="position-relative w-100" style="height: 2px; background-color: #dee2e6;">
-                                                    <i class="bi bi-airplane-fill text-primary position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f8f9fa; padding: 0 5px;"></i>
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="fw-bold fs-4 text-dark lh-1 mb-1">${arriveTime}</div>
-                                                <div class="small fw-500 text-muted">${destCode}</div>
-                                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">${arriveDate}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                `;
-                            });
-                            transportResults.innerHTML = html;
-                        } else {
-                            const errorMsg = data.message ? data.message : '{{ __("Không tìm thấy chuyến bay mẫu phù hợp.") }}';
-                            transportResults.innerHTML = `<div class="alert alert-warning">${errorMsg}</div>`;
-                        }
-                    })
-                    .catch(err => {
-                        transportLoading.style.display = 'none';
-                        transportResults.innerHTML = '<div class="alert alert-danger">{{ __("Lỗi kết nối khi tìm chuyến bay.") }}</div>';
-                    });
-            } else if (selectedRadio.value === 'bus') {
-                // Mock Bus Data
-                setTimeout(() => {
-                    transportLoading.style.display = 'none';
-                    let buses = [
-                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', basePrice: 400000, price: 400000 * totalPersonsCount },
-                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', basePrice: 350000, price: 350000 * totalPersonsCount }
-                    ];
-                    
-                    let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Xe") }}</h5>';
-                    buses.forEach(bus => {
-                        let dataStr = encodeURIComponent(JSON.stringify({
-                            bus_id: bus.id,
-                            provider: bus.name,
-                            time: bus.time,
-                            price: bus.price
-                        }));
-                        
-                        html += `
-                        <div class="card mb-3 transport-item-card position-relative transition-all" style="cursor:pointer; border-width: 2px;" onclick="selectTransportOption(${bus.price}, '${dataStr}')">
-                            <div class="selected-icon position-absolute top-0 end-0 mt-2 me-2 text-primary" style="display:none; font-size: 1.5rem;">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </div>
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
-                                    <div class="small text-muted">{{ __("Khởi hành:") }} ${bus.time}</div>
-                                </div>
-                                <div class="fw-bold text-danger fs-5 text-end">
-                                    + ${formatCurrencyDynamic(bus.basePrice)} <span class="fs-6 text-muted fw-normal">/người</span>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                    });
-                    transportResults.innerHTML = html;
-                }, 800);
+        // Initialize from hidden input
+        if (dobHidden.value) {
+            const parts = dobHidden.value.split('-');
+            if (parts.length === 3) {
+                dobYear.value = parts[0];
+                dobMonth.value = parts[1];
+                dobDay.value = parts[2];
             }
+        } else {
+            // Default to youngest 18-year-old
+            dobYear.value = defaultYear;
+        }
+
+        const updateHiddenDob = () => {
+            if (dobYear.value && dobMonth.value && dobDay.value) {
+                dobHidden.value = `${dobYear.value}-${dobMonth.value}-${dobDay.value}`;
+            } else {
+                dobHidden.value = '';
+            }
+            document.getElementById('dob-error').style.display = 'none';
+        };
+
+        dobDay.addEventListener('change', updateHiddenDob);
+        dobMonth.addEventListener('change', updateHiddenDob);
+        dobYear.addEventListener('change', updateHiddenDob);
+
+        // Sync back when restored from localstorage
+        dobHidden.addEventListener('change', function() {
+            if (this.value) {
+                const parts = this.value.split('-');
+                if (parts.length === 3) {
+                    dobYear.value = parts[0];
+                    dobMonth.value = parts[1];
+                    dobDay.value = parts[2];
+                }
+            }
+        });
+        
+        // Override formatDob in CCCD scan to populate dropdowns
+        const originalFormatDob = window.formatDob;
+        window.formatDob = function(dobStr) {
+            if (!dobStr) return '';
+            const parts = dobStr.split('/');
+            if (parts.length === 3) {
+                dobDay.value = parts[0];
+                dobMonth.value = parts[1];
+                dobYear.value = parts[2];
+                updateHiddenDob();
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dobStr;
+        };
     }
 
-    transportRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            updateTotalDisplay(0, currentTicketPrice);
-            inputTransportData.value = '';
-            loadTransportOptions();
-        });
-    });
-
-    document.getElementById('customer_origin_select').addEventListener('change', function() {
-        updateTotalDisplay(0, currentTicketPrice);
-        inputTransportData.value = '';
-        loadTransportOptions();
-    });
     // WIZARD LOGIC
     document.querySelectorAll('.btn-next').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1190,16 +1035,39 @@
             });
             
             if(isValid) {
-                const nextId = this.dataset.next;
-                
-                // Add validation for Transport selection in Step 2
-                if (currentStep.id === 'step-panel-2') {
-                    const selectedTransport = document.querySelector('input[name="transport_type"]:checked').value;
-                    if ((selectedTransport === 'flight' || selectedTransport === 'bus') && !inputTransportData.value) {
-                        alert('Vui lòng click chọn một chuyến bay/xe khách cụ thể hoặc chọn phương thức Tự Túc trước khi tiếp tục.');
-                        return;
+                // Add validation for age >= 18 in Step 1
+                if (currentStep.id === 'step-panel-1') {
+                    const dobVal = document.getElementById('date_of_birth').value;
+                    const dobError = document.getElementById('dob-error');
+                    if (dobVal) {
+                        const dobDate = new Date(dobVal);
+                        const today = new Date();
+                        let age = today.getFullYear() - dobDate.getFullYear();
+                        const m = today.getMonth() - dobDate.getMonth();
+                        if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+                            age--;
+                        }
+                        if (age < 18) {
+                            dobError.style.display = 'block';
+                            return;
+                        } else {
+                            dobError.style.display = 'none';
+                        }
+                    } else {
+                        return; // Let HTML5 validation handle empty
                     }
                 }
+
+                const nextId = this.dataset.next;
+                
+                // Remove transport validation as it is hidden now
+                // if (currentStep.id === 'step-panel-2') {
+                //     const selectedTransport = document.querySelector('input[name="transport_type"]').value;
+                //     if ((selectedTransport === 'flight' || selectedTransport === 'bus') && !inputTransportData.value) {
+                //         alert('Vui lòng click chọn một chuyến bay/xe khách cụ thể hoặc chọn phương thức Tự Túc trước khi tiếp tục.');
+                //         return;
+                //     }
+                // }
                 document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
                 document.getElementById('step-panel-' + nextId).classList.add('active');
                 document.querySelectorAll('.wizard-step').forEach(s => {

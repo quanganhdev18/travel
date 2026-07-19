@@ -22,6 +22,7 @@
                         <th>Số điện thoại</th>
                         <th>Email</th>
                         <th>Số Tour Đã Dẫn</th>
+                        <th>KPI</th>
                         <th class="text-end pe-4">Thao tác</th>
                     </tr>
                 </thead>
@@ -30,7 +31,12 @@
                     <tr>
                         <td class="ps-4">#{{ $guide->id }}</td>
                         <td>
-                            <div class="fw-bold text-dark">{{ $guide->name }}</div>
+                            <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                {{ $guide->name }}
+                                @if($guide->is_blacklisted)
+                                    <span class="badge bg-danger rounded-pill" style="font-size: 0.65rem;">Blacklisted</span>
+                                @endif
+                            </div>
                         </td>
                         <td>{{ $guide->phone }}</td>
                         <td>{{ $guide->email ?? 'N/A' }}</td>
@@ -38,6 +44,9 @@
                             <span class="badge-soft badge-soft-primary px-3">
                                 <i class="bi bi-briefcase me-1"></i>{{ $guide->schedule_guides_count }}
                             </span>
+                        </td>
+                        <td>
+                            <span class="badge-soft badge-soft-warning px-2"><i class="bi bi-star-fill text-warning me-1"></i>{{ $guide->kpi_score }}</span>
                         </td>
                         <td class="text-end pe-4">
                             <div class="d-inline-flex gap-1">

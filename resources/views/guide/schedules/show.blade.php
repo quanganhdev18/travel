@@ -85,10 +85,19 @@
         'in_progress' => ['badge-soft-warning', 'Đang thực hiện'],
         'checking_in' => ['badge-soft-info', 'Đang check-in'],
         'completed' => ['badge-soft-success', 'Hoàn thành'],
+        'closed' => ['badge-soft-dark', 'Đã đóng'],
         'cancelled_by_customer' => ['badge-soft-danger', 'Hủy (Khách)'],
         'cancelled_by_admin' => ['badge-soft-danger', 'Hủy (Admin)']
     ];
     $ts = $tourStatusMap[$groupStatus] ?? ['badge-soft-secondary', 'N/A'];
+
+    $scheduleStatusMap = [
+        'pending' => ['badge-soft-primary', 'Sắp bắt đầu'],
+        'operating' => ['badge-soft-warning', 'Đang vận hành'],
+        'completed' => ['badge-soft-success', 'Đã kết thúc'],
+        'closed' => ['bg-secondary bg-opacity-10 text-secondary border border-secondary', 'Đã đóng']
+    ];
+    $ss = $scheduleStatusMap[$tourSchedule->status ?? 'pending'] ?? ['badge-soft-secondary', 'N/A'];
 
     $allPassengers = $tourSchedule->bookings
         ->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])
@@ -97,12 +106,29 @@
         ->flatMap(fn($b) => $b->booking_passengers);
     $checkedInCount = $allPassengers->where('checked_in', true)->count();
     $totalCount = $allPassengers->count();
+
+    $isLocked = ($groupStatus === 'completed' || $tourSchedule->status === 'closed');
 @endphp
 
-<div class="mb-3">
+<div class="mb-3 d-flex justify-content-between align-items-center">
     <a href="{{ route('guide.schedules.index') }}" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Quay lại
     </a>
+    
+    @if($tourSchedule->status === 'completed' || $groupStatus === 'completed')
+        @php
+            $report = \App\Models\TourReport::where('tour_schedule_id', $tourSchedule->id)->first();
+        @endphp
+        @if(!$report)
+            <a href="{{ route('guide.reports.create', $tourSchedule->id) }}" class="btn btn-sm btn-primary fw-bold">
+                <i class="bi bi-file-earmark-text"></i> Viết Báo Cáo & Quyết Toán
+            </a>
+        @else
+            <span class="badge bg-success bg-opacity-10 text-success border border-success p-2">
+                <i class="bi bi-check-circle-fill me-1"></i>Đã nộp báo cáo
+            </span>
+        @endif
+    @endif
 </div>
 
 <!-- Card điều hành trạng thái Tour của Nhóm -->
@@ -189,10 +215,10 @@
             </div>
             <div class="card-body">
                 @if($tour->primary_image)
-                    <img src="{{ Storage::url($tour->primary_image) }}" alt="{{ $tour->name }}" class="img-fluid rounded mb-3 w-100" style="object-fit: cover; height: 180px;">
+                    <img src="{{ Storage::url($tour->primary_image) }}" alt="{{ $tour->title }}" class="img-fluid rounded mb-3 w-100" style="object-fit: cover; height: 180px;">
                 @endif
-                <h5 class="fw-bold">{{ $tour->name }}</h5>
-                <p class="text-muted small mb-3">Mã Tour: {{ $tour->tour_code }}</p>
+                <h5 class="fw-bold">{{ $tour->title }}</h5>
+                <p class="text-muted small mb-3">Mã Tour: #{{ str_pad($tour->id, 4, '0', STR_PAD_LEFT) }}</p>
 
                 <ul class="list-group list-group-flush border-top pt-3">
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
@@ -204,8 +230,8 @@
                         <strong>{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</strong>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Trạng thái:</span>
-                        <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
+                        <span class="text-muted">Trạng thái Tour:</span>
+                        <span class="badge {{ $ss[0] }}">{{ $ss[1] }}</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Vai trò của bạn:</span>
@@ -272,9 +298,11 @@
                                 <span class="fw-semibold text-dark" id="attendance-selected-counter" style="font-size: 0.9rem;">
                                     Đã chọn: <span class="text-success selected-count-val" id="selected-count-val">{{ $checkedInCount }}</span> / <span class="total-count-val" id="total-count-val">{{ $totalCount }}</span> khách
                                 </span>
+                                @if(!$isLocked)
                                 <button type="submit" class="btn btn-success btn-sm fw-bold px-3">
                                     <i class="bi bi-floppy me-1"></i>Lưu điểm danh
                                 </button>
+                                @endif
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -318,7 +346,7 @@
                                                         <span class="text-primary fw-bold">#{{ $booking->id }}</span>
                                                         @if($loop->first)
                                                         <div class="mt-1">
-                                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 text-end" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#addPassengerModal-{{ $booking->id }}" title="Quản lý danh sách khách">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 text-end" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#addPassengerModal-{{ $booking->id }}" title="Quản lý danh sách khách" {{ $isLocked ? 'disabled' : '' }}>
                                                                 <i class="bi bi-people-fill"></i> Sửa
                                                             </button>
                                                         </div>
@@ -426,17 +454,18 @@
                                                                 data-id="{{ $passenger->id }}"
                                                                 data-url="{{ route('guide.passengers.toggle_checkin', $passenger) }}"
                                                                 {{ $passenger->checked_in ? 'checked' : '' }}
+                                                                {{ $isLocked ? 'disabled' : '' }}
                                                                 style="width: 1.3em; height: 1.3em; cursor: pointer;"
                                                             >
                                                         </div>
                                                     </td>
                                                     <td data-label="Tách đoàn" class="text-center">
                                                         @if($passenger->is_free_time)
-                                                        <button type="button" class="btn btn-sm btn-success py-0 px-2 free-time-btn" style="font-size: 0.75rem;" data-id="{{ $passenger->id }}" data-start="{{ $passenger->free_time_start ? \Carbon\Carbon::parse($passenger->free_time_start)->format('Y-m-d\TH:i') : '' }}" data-end="{{ $passenger->free_time_end ? \Carbon\Carbon::parse($passenger->free_time_end)->format('Y-m-d\TH:i') : '' }}" data-url="{{ route('guide.passengers.free_time', [$tourSchedule->id, $passenger->id]) }}">
+                                                        <button type="button" class="btn btn-sm btn-success py-0 px-2 free-time-btn" style="font-size: 0.75rem;" data-id="{{ $passenger->id }}" data-start="{{ $passenger->free_time_start ? \Carbon\Carbon::parse($passenger->free_time_start)->format('Y-m-d\TH:i') : '' }}" data-end="{{ $passenger->free_time_end ? \Carbon\Carbon::parse($passenger->free_time_end)->format('Y-m-d\TH:i') : '' }}" data-url="{{ route('guide.passengers.free_time', [$tourSchedule->id, $passenger->id]) }}" {{ $isLocked ? 'disabled' : '' }}>
                                                             <i class="bi bi-clock-history"></i> Đang tách
                                                         </button>
                                                         @else
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 free-time-btn" style="font-size: 0.75rem;" data-id="{{ $passenger->id }}" data-start="" data-end="" data-url="{{ route('guide.passengers.free_time', [$tourSchedule->id, $passenger->id]) }}">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 free-time-btn" style="font-size: 0.75rem;" data-id="{{ $passenger->id }}" data-start="" data-end="" data-url="{{ route('guide.passengers.free_time', [$tourSchedule->id, $passenger->id]) }}" {{ $isLocked ? 'disabled' : '' }}>
                                                             <i class="bi bi-clock"></i> Tách đoàn
                                                         </button>
                                                         @endif
@@ -450,6 +479,7 @@
                                                             data-note="{{ $passenger->special_note ?? '' }}"
                                                             data-url="{{ route('guide.passengers.update_note', $passenger) }}"
                                                             title="Ghi chú đặc biệt"
+                                                            {{ $isLocked ? 'disabled' : '' }}
                                                         >
                                                             @if($passenger->special_note)
                                                                 <i class="bi bi-sticky-fill text-warning"></i>
@@ -479,9 +509,11 @@
                             <span class="fw-semibold text-dark" style="font-size: 0.9rem;">
                                 Đã chọn: <span class="text-success selected-count-val">{{ $checkedInCount }}</span> / <span class="total-count-val">{{ $totalCount }}</span> khách
                             </span>
+                            @if(!$isLocked)
                             <button type="submit" class="btn btn-success btn-sm fw-bold px-3">
                                 <i class="bi bi-floppy me-1"></i>Lưu điểm danh
                             </button>
+                            @endif
                         </div>
                     </div>
                     </form>
@@ -526,7 +558,8 @@
                                                             <button class="btn btn-sm btn-{{ $isChecked ? 'outline-secondary' : 'success' }} fw-bold px-3 btn-checkin-activity" 
                                                                 data-id="{{ $activity->id }}" 
                                                                 data-url="{{ route('guide.activities.toggle_checkin', [$tourSchedule->id, $activity->id]) }}"
-                                                                id="btn-act-{{ $activity->id }}">
+                                                                id="btn-act-{{ $activity->id }}"
+                                                                {{ $isLocked ? 'disabled' : '' }}>
                                                                 @if($isChecked)
                                                                     <i class="bi bi-arrow-counterclockwise me-1"></i>Hủy
                                                                 @else

@@ -18,18 +18,23 @@ class TourGuideController extends Controller
 
     public function create()
     {
-        $users = User::where('role', 'guide')->doesntHave('tour_guide')->get();
+        // Lấy tất cả user chưa có hồ sơ HDV (không bắt buộc phải có role guide từ trước)
+        $users = User::doesntHave('tour_guide')->get();
 
         return view('admin.tour_guides.create', compact('users'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
             'phone' => 'required|digits:10|unique:tour_guides,phone',
             'email' => 'nullable|email|max:255|unique:tour_guides,email',
+            'guide_card_type' => 'nullable|string|max:100',
+            'languages' => 'nullable|array',
+            'status' => 'required|in:active,inactive',
+            'is_blacklisted' => 'boolean',
             'bio' => 'nullable|string',
         ], [
             'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
@@ -37,15 +42,28 @@ class TourGuideController extends Controller
             'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
 
-        TourGuide::create($request->all());
+        $validated['is_blacklisted'] = $request->has('is_blacklisted');
+        
+        $tourGuide = TourGuide::create($validated);
 
-        return redirect()->route('admin.tour_guides.index')->with('success', 'Đã thêm Hướng dẫn viên mới!');
+        // Tự động cấp quyền HDV cho User được liên kết
+        if ($tourGuide->user_id) {
+            $user = User::find($tourGuide->user_id);
+            if ($user) {
+                if (!$user->hasRole('Guide')) {
+                    $user->assignRole('Guide');
+                }
+                $user->update(['role' => 'guide']);
+            }
+        }
+
+        return redirect()->route('admin.tour_guides.index')->with('success', 'Đã thêm Hướng dẫn viên mới và đồng bộ quyền tài khoản!');
     }
 
     public function edit(TourGuide $tourGuide)
     {
-        $users = User::where('role', 'guide')
-            ->where(function ($query) use ($tourGuide) {
+        // Lấy tất cả user chưa có hồ sơ HDV, hoặc là user đang được liên kết với HDV này
+        $users = User::where(function ($query) use ($tourGuide) {
                 $query->doesntHave('tour_guide')
                     ->orWhere('id', $tourGuide->user_id);
             })->get();
@@ -55,11 +73,15 @@ class TourGuideController extends Controller
 
     public function update(Request $request, TourGuide $tourGuide)
     {
-        $request->validate([
+        $validated = $request->validate([
             'user_id' => 'nullable|exists:users,id',
             'name' => 'required|max:255',
             'phone' => 'required|digits:10|unique:tour_guides,phone,'.$tourGuide->id,
             'email' => 'nullable|email|max:255|unique:tour_guides,email,'.$tourGuide->id,
+            'guide_card_type' => 'nullable|string|max:100',
+            'languages' => 'nullable|array',
+            'status' => 'required|in:active,inactive',
+            'is_blacklisted' => 'boolean',
             'bio' => 'nullable|string',
         ], [
             'phone.digits' => 'Số điện thoại phải đúng 10 chữ số.',
@@ -67,7 +89,21 @@ class TourGuideController extends Controller
             'email.unique' => 'Email này đã tồn tại, vui lòng nhập email khác.',
         ]);
 
-        $tourGuide->update($request->all());
+        $oldUserId = $tourGuide->user_id;
+
+        $validated['is_blacklisted'] = $request->has('is_blacklisted');
+        $tourGuide->update($validated);
+
+        // Nếu có thay đổi tài khoản liên kết, cấp quyền cho tài khoản mới
+        if ($tourGuide->user_id && $tourGuide->user_id != $oldUserId) {
+            $user = User::find($tourGuide->user_id);
+            if ($user) {
+                if (!$user->hasRole('Guide')) {
+                    $user->assignRole('Guide');
+                }
+                $user->update(['role' => 'guide']);
+            }
+        }
 
         return redirect()->route('admin.tour_guides.index')->with('success', 'Cập nhật Hướng dẫn viên thành công!');
     }

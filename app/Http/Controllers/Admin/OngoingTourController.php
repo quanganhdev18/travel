@@ -70,6 +70,10 @@ class OngoingTourController extends Controller
             'backup_guide_id.different' => 'HDV dự bị không được trùng với HDV chính.',
         ]);
 
+        if (in_array($schedule->status, ['completed', 'closed']) || \Carbon\Carbon::parse($schedule->return_date)->endOfDay()->isPast()) {
+            return redirect()->back()->with('error', 'Tour đã kết thúc hoặc đã qua ngày về, không thể thay đổi hướng dẫn viên.');
+        }
+
         $primaryId = $request->filled('primary_guide_id') ? $request->primary_guide_id : null;
         $backupId = $request->filled('backup_guide_id') ? $request->backup_guide_id : null;
 
@@ -87,6 +91,11 @@ class OngoingTourController extends Controller
                 $guideName = TourGuide::find($guideId)?->name ?? 'Hướng dẫn viên';
 
                 return redirect()->back()->with('error', "Hướng dẫn viên {$guideName} đã được phân công cho một lịch trình khác trùng thời gian này.");
+            }
+            
+            $guide = TourGuide::find($guideId);
+            if ($guide && $guide->is_blacklisted) {
+                return redirect()->back()->with('error', "Hướng dẫn viên {$guide->name} đang trong danh sách đen (Blacklist). Không thể phân công!");
             }
         }
 

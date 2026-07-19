@@ -13,3 +13,6 @@ Schedule::command('tours:update-status')->everyMinute();
 
 // Tự động ẩn/đóng tour và gửi mail nhắc nhở khi còn 3 ngày trước khởi hành
 Schedule::command('tours:reminder-three-days')->daily();
+
+// Tự động cập nhật vòng đời của Tour (đang chạy, đã kết thúc)
+Schedule::command('tours:update-lifecycle')->daily();

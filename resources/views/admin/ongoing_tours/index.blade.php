@@ -115,10 +115,16 @@
                             @endif
                         </td>
                         <td class="text-end pe-4">
-                            <button type="button" class="btn btn-action text-primary bg-primary bg-opacity-10" 
-                                data-bs-toggle="modal" data-bs-target="#assignGuideModal{{ $schedule->id }}" title="Phân công HDV">
-                                <i class="bi bi-person-plus"></i>
-                            </button>
+                            @if(in_array($schedule->status, ['completed', 'closed']) || \Carbon\Carbon::parse($schedule->return_date)->endOfDay()->isPast())
+                                <button type="button" class="btn btn-action text-secondary bg-secondary bg-opacity-10" disabled title="Tour đã kết thúc/đóng">
+                                    <i class="bi bi-lock-fill"></i>
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-action text-primary bg-primary bg-opacity-10" 
+                                    data-bs-toggle="modal" data-bs-target="#assignGuideModal{{ $schedule->id }}" title="Phân công HDV">
+                                    <i class="bi bi-person-plus"></i>
+                                </button>
+                            @endif
                         </td>
                     </tr>
                     @empty

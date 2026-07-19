@@ -220,9 +220,11 @@ class UserController extends Controller
             'tour_id' => 'required|exists:tours,id',
             'rating' => 'required|integer|between:1,5',
             'comment' => 'nullable|string',
+            'guide_id' => 'nullable|exists:tour_guides,id',
+            'guide_rating' => 'nullable|integer|between:1,5',
         ]);
 
-        Review::updateOrCreate(
+        $review = Review::updateOrCreate(
             [
                 'user_id' => Auth::id(),
                 'tour_id' => $request->tour_id,
@@ -230,8 +232,17 @@ class UserController extends Controller
             [
                 'rating' => $request->rating,
                 'comment' => $request->comment,
+                'guide_id' => $request->guide_id,
+                'guide_rating' => $request->guide_rating,
             ]
         );
+
+        if ($review->guide_id) {
+            $guide = \App\Models\TourGuide::find($review->guide_id);
+            if ($guide) {
+                $guide->updateKpiScore();
+            }
+        }
 
         return redirect()->back()->with('success', 'Gửi đánh giá chuyến đi thành công.');
     }

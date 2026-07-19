@@ -37,6 +37,8 @@ class Review extends Model
         'tour_id',
         'rating',
         'comment',
+        'guide_id',
+        'guide_rating'
     ];
 
     public function user()
@@ -47,5 +49,10 @@ class Review extends Model
     public function tour()
     {
         return $this->belongsTo(Tour::class);
+    }
+
+    public function tour_guide()
+    {
+        return $this->belongsTo(TourGuide::class, 'guide_id');
     }
 }

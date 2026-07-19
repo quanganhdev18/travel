@@ -190,9 +190,17 @@
                         <div class="p-4 rounded-4" style="background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);">
                             <div class="d-flex align-items-center mb-2 gap-1">
                                 @for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$existingReview->rating?'-fill':'' }} text-warning" style="font-size:1.2rem;"></i>@endfor
-                                <span class="ms-2 text-muted small">Đánh giá của bạn</span>
+                                <span class="ms-2 text-muted small">Đánh giá chung của bạn</span>
                             </div>
-                            @if($existingReview->comment)<p class="text-dark lh-lg mb-1">{{ $existingReview->comment }}</p>@endif
+                            
+                            @if($existingReview->guide_rating)
+                            <div class="d-flex align-items-center mb-2 gap-1 mt-2 border-top pt-2">
+                                @for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$existingReview->guide_rating?'-fill':'' }} text-primary" style="font-size:1.2rem;"></i>@endfor
+                                <span class="ms-2 text-muted small">Đánh giá Hướng dẫn viên ({{ $existingReview->tour_guide->name ?? 'HDV' }})</span>
+                            </div>
+                            @endif
+
+                            @if($existingReview->comment)<p class="text-dark lh-lg mb-1 mt-3">{{ $existingReview->comment }}</p>@endif
                             <span class="text-muted small">{{ $existingReview->created_at->format('d/m/Y H:i') }}</span>
                         </div>
                     @else
@@ -200,19 +208,37 @@
                             @csrf
                             <input type="hidden" name="tour_id" value="{{ $tour->id }}">
                             <div class="mb-3">
-                                <label class="form-label fw-600 text-dark mb-2">Xếp hạng của bạn</label>
-                                <div class="d-flex gap-1" id="starRow">
+                                <label class="form-label fw-600 text-dark mb-2">Đánh giá chuyến đi</label>
+                                <div class="d-flex gap-1 starRow" data-input="ratingVal">
                                     @for($i=1;$i<=5;$i++)
                                     <button type="button" class="star-btn" data-v="{{ $i }}"><i class="bi bi-star-fill"></i></button>
                                     @endfor
                                 </div>
                                 <input type="hidden" name="rating" id="ratingVal" value="0" required>
                             </div>
+
+                            @if($booking->tour_schedule && $booking->tour_schedule->schedule_guides->count() > 0)
+                            <div class="mb-3 p-3 bg-light rounded border">
+                                @php
+                                    $mainGuide = $booking->tour_schedule->schedule_guides->where('is_backup', false)->first();
+                                    $guide = $mainGuide ? $mainGuide->tour_guide : $booking->tour_schedule->schedule_guides->first()->tour_guide;
+                                @endphp
+                                <label class="form-label fw-600 text-dark mb-2">Đánh giá Hướng dẫn viên ({{ $guide->name }})</label>
+                                <input type="hidden" name="guide_id" value="{{ $guide->id }}">
+                                <div class="d-flex gap-1 starRow text-primary" data-input="guideRatingVal">
+                                    @for($i=1;$i<=5;$i++)
+                                    <button type="button" class="star-btn" data-v="{{ $i }}"><i class="bi bi-star-fill"></i></button>
+                                    @endfor
+                                </div>
+                                <input type="hidden" name="guide_rating" id="guideRatingVal" value="0">
+                            </div>
+                            @endif
+
                             <div class="mb-3">
-                                <label class="form-label fw-600 text-dark">Nhận xét <span class="text-muted fw-normal">(không bắt buộc)</span></label>
+                                <label class="form-label fw-600 text-dark">Nhận xét chi tiết <span class="text-muted fw-normal">(không bắt buộc)</span></label>
                                 <textarea class="form-control" name="comment" rows="3"
                                     style="border-radius:12px;resize:none;"
-                                    placeholder="Chia sẻ trải nghiệm chuyến đi..."></textarea>
+                                    placeholder="Chia sẻ trải nghiệm chuyến đi, nhận xét về HDV..."></textarea>
                             </div>
                             <button type="submit" class="btn btn-register-premium px-4 py-2">
                                 <i class="bi bi-send me-2"></i>Gửi đánh giá
@@ -276,20 +302,27 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var stars = document.querySelectorAll('.star-btn');
-    var inp   = document.getElementById('ratingVal');
-    if (!stars.length) return;
+    var starRows = document.querySelectorAll('.starRow');
+    
+    starRows.forEach(function(row) {
+        var stars = row.querySelectorAll('.star-btn');
+        var inputId = row.dataset.input;
+        var inp = document.getElementById(inputId);
+        
+        if (!stars.length) return;
 
-    function paint(val) {
-        stars.forEach(function(b){ b.classList.toggle('lit', parseInt(b.dataset.v) <= val); });
-        if (inp) inp.value = val;
-    }
-    stars.forEach(function(b){
-        b.addEventListener('click',    function(){ paint(parseInt(b.dataset.v)); });
-        b.addEventListener('mouseover',function(){ paint(parseInt(b.dataset.v)); });
+        function paint(val) {
+            stars.forEach(function(b){ b.classList.toggle('lit', parseInt(b.dataset.v) <= val); });
+            if (inp) inp.value = val;
+        }
+        
+        stars.forEach(function(b){
+            b.addEventListener('click',    function(){ paint(parseInt(b.dataset.v)); });
+            b.addEventListener('mouseover',function(){ paint(parseInt(b.dataset.v)); });
+        });
+        
+        row.addEventListener('mouseleave', function(){ paint(parseInt(inp.value)||0); });
     });
-    var row = document.getElementById('starRow');
-    if (row) row.addEventListener('mouseleave', function(){ paint(parseInt(inp.value)||0); });
 });
 </script>
 @endsection

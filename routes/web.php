@@ -408,6 +408,17 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/manual', [ScheduleController::class, 'storeManualPassengers'])->name('guide.passengers.manual');
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
     Route::post('/schedules/{schedule}/passengers/{passenger}/free-time', [ScheduleController::class, 'updateFreeTime'])->name('guide.passengers.free_time');
+
+    // Guide Reports
+    Route::get('/schedules/{schedule}/report', [\App\Http\Controllers\Guide\TourReportController::class, 'create'])->name('guide.reports.create');
+    Route::post('/schedules/{schedule}/report', [\App\Http\Controllers\Guide\TourReportController::class, 'store'])->name('guide.reports.store');
+});
+
+// Thêm Admin TourReport
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/tour-reports', [\App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('/tour-reports/{report}', [\App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
+    Route::post('/tour-reports/{report}/approve', [\App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

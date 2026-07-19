@@ -32,14 +32,15 @@ class StoreTourBookingRequest extends FormRequest
             'customer_email' => 'required|email|max:255',
             'passengers' => 'required|array',
             'passengers.adult.*.full_name' => 'required|string|max:255',
-            'passengers.adult.*.identity_number' => 'required|string|max:50',
+            'passengers.adult.0.date_of_birth' => 'required|date|before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
             'passengers.adult.*.date_of_birth' => 'required|date',
+            'passengers.adult.*.identity_number' => 'required|string|max:50',
             'passengers.adult.*.gender' => 'required|in:male,female,other',
             'passengers.child.*.full_name' => 'nullable|string|max:255',
             'passengers.child.*.date_of_birth' => 'nullable|date',
             'passengers.child.*.gender' => 'nullable|in:male,female,other',
             'total_price' => 'required|numeric',
-            'transport_type' => 'required|in:flight,bus,self',
+            'transport_type' => 'required|in:self',
             'issue_date' => 'nullable|date',
             'expiry_date' => 'nullable|date',
             'issue_place' => 'nullable|string|max:255',
@@ -52,6 +53,13 @@ class StoreTourBookingRequest extends FormRequest
             'tickets' => 'nullable|array',
             'addons' => 'nullable|array',
             'coupon_code' => 'nullable|string',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'passengers.adult.0.date_of_birth.before_or_equal' => 'Người đặt tour (hành khách đầu tiên) phải từ đủ 18 tuổi trở lên.',
         ];
     }
 }

@@ -32,6 +32,17 @@ class TourGuide extends Model
         'phone',
         'email',
         'bio',
+        'guide_card_type',
+        'languages',
+        'is_blacklisted',
+        'kpi_score',
+        'status',
+    ];
+
+    protected $casts = [
+        'languages' => 'array',
+        'is_blacklisted' => 'boolean',
+        'kpi_score' => 'decimal:1',
     ];
 
     public function schedule_guides()
@@ -42,5 +53,14 @@ class TourGuide extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function updateKpiScore()
+    {
+        $avgRating = \App\Models\Review::where('guide_id', $this->id)
+            ->whereNotNull('guide_rating')
+            ->avg('guide_rating');
+            
+        $this->update(['kpi_score' => $avgRating ? round($avgRating, 1) : 0]);
     }
 }
