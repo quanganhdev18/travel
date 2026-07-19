@@ -313,6 +313,26 @@
 </head>
 
 <body>
+@php
+    $unreadChatCount = 0;
+    if(Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff'])) {
+        $unreadChatCount = \App\Models\Message::whereNull('read_at')
+            ->where('sender_id', '!=', Auth::id())
+            ->whereHas('sender', function($q) {
+                $q->whereDoesntHave('roles', function($r) {
+                    $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                });
+            })->count();
+    }
+
+    $unassignedToursCount = 0;
+    if(Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'Staff'])) {
+        $unassignedToursCount = \App\Models\TourSchedule::where('departure_date', '>=', now()->startOfDay())
+            ->where('departure_date', '<=', now()->startOfDay()->addDays(7))
+            ->doesntHave('schedule_guides')
+            ->count();
+    }
+@endphp
 
     <div class="sidebar">
         <a href="{{ url('/') }}" class="admin-brand">
@@ -331,8 +351,13 @@
             @endhasanyrole
             @hasanyrole('Super Admin|Admin|cskh')
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
-                    <i class="bi bi-chat-dots"></i> Live Chat
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
+                    <div><i class="bi bi-chat-dots"></i> Live Chat</div>
+                    @if(isset($unreadChatCount) && $unreadChatCount > 0)
+                        <span id="admin-chat-badge" class="badge bg-danger rounded-pill">{{ $unreadChatCount }}</span>
+                    @else
+                        <span id="admin-chat-badge" class="badge bg-danger rounded-pill" style="display: none;">0</span>
+                    @endif
                 </a>
             </li>
             @endhasanyrole
@@ -362,8 +387,11 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
-                    <i class="bi bi-compass"></i> Điều hành Tour
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->is('admin/ongoing-tours*') ? 'active' : '' }}" href="{{ route('admin.ongoing_tours.index') }}">
+                    <div><i class="bi bi-compass"></i> Điều hành Tour</div>
+                    @if(isset($unassignedToursCount) && $unassignedToursCount > 0)
+                        <span class="badge bg-warning text-dark rounded-pill" title="Sắp khởi hành chưa có HDV">{{ $unassignedToursCount }}</span>
+                    @endif
                 </a>
             </li>
             <li class="nav-item">
@@ -521,6 +549,33 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/pjax-navigation.js') }}"></script>
+
+    @hasanyrole('Super Admin|Admin|cskh|Staff')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lắng nghe realtime tin nhắn mới để cập nhật badge
+            setTimeout(() => {
+                if (window.Echo) {
+                    window.Echo.private('admin.chat')
+                        .listen('MessageSent', (e) => {
+                            // Nếu người gửi không phải là admin/staff
+                            if (e.message && !e.message.is_admin_sender) {
+                                const badge = document.getElementById('admin-chat-badge');
+                                if (badge) {
+                                    badge.style.display = 'inline-block';
+                                    let currentCount = parseInt(badge.innerText) || 0;
+                                    // Nếu đang không ở trang chat thì mới tăng (trang chat sẽ tự reset count)
+                                    if (!window.location.href.includes('/admin/chat')) {
+                                        badge.innerText = currentCount + 1;
+                                    }
+                                }
+                            }
+                        });
+                }
+            }, 1000); // Đợi Echo init
+        });
+    </script>
+    @endhasanyrole
 </body>
 
 </html>

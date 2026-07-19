@@ -16,3 +16,8 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
     // Allow if user is the customer OR if user has 'cskh' or 'admin' role
     return $user->id === $conversation->user_id || $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']);
 });
+
+Broadcast::channel('admin.chat', function ($user) {
+    return $user->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff']);
+});
+

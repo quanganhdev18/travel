@@ -1505,5 +1505,99 @@
 
     document.querySelector('input[name="payment_type"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
     document.querySelector('input[name="payment_method"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
+
+    // === SAVE / RESTORE DRAFT BOOKING PROGRESS ===
+    const DRAFT_KEY = 'tour_draft_booking_{{ $schedule->id }}';
+    const checkoutForm = document.getElementById('checkout-form');
+    let isRestoring = false;
+
+    function saveProgress() {
+        if (isRestoring) return;
+        const formData = new FormData(checkoutForm);
+        const dataToSave = {};
+        formData.forEach((value, key) => {
+            if (key === '_token' || key.includes('image')) return;
+            if (dataToSave[key]) {
+                if (!Array.isArray(dataToSave[key])) {
+                    dataToSave[key] = [dataToSave[key]];
+                }
+                dataToSave[key].push(value);
+            } else {
+                dataToSave[key] = value;
+            }
+        });
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(dataToSave));
+    }
+
+    function restoreProgress() {
+        const savedData = localStorage.getItem(DRAFT_KEY);
+        if (!savedData) return;
+
+        try {
+            isRestoring = true;
+            const data = JSON.parse(savedData);
+            let restoredCount = 0;
+
+            for (const key in data) {
+                const value = data[key];
+                const inputs = checkoutForm.querySelectorAll(`[name="${key}"]`);
+                if (!inputs.length) continue;
+
+                const type = inputs[0].type;
+                if (type === 'radio') {
+                    const el = checkoutForm.querySelector(`[name="${key}"][value="${value}"]`);
+                    if (el && !el.checked) { 
+                        el.checked = true; 
+                        el.dispatchEvent(new Event('change', {bubbles:true})); 
+                        restoredCount++; 
+                    }
+                } else if (type === 'checkbox') {
+                    // Xử lý nếu có checkbox (hiện tại form ít dùng checkbox mảng)
+                } else {
+                    if (inputs[0].value !== value) {
+                        inputs[0].value = value;
+                        inputs[0].dispatchEvent(new Event('input', {bubbles:true}));
+                        inputs[0].dispatchEvent(new Event('change', {bubbles:true}));
+                        restoredCount++;
+                    }
+                }
+            }
+            
+            isRestoring = false;
+            
+            if (restoredCount > 0) {
+                if (typeof updateTotalDisplay === 'function') updateTotalDisplay();
+                
+                if (typeof toastr !== 'undefined') {
+                    toastr.info('Tiến trình đặt chỗ của bạn đã được khôi phục tự động.', 'Thông báo');
+                } else {
+                    const toastDiv = document.createElement('div');
+                    toastDiv.className = 'alert alert-info position-fixed bottom-0 end-0 m-3 shadow-lg';
+                    toastDiv.style.zIndex = 9999;
+                    toastDiv.innerHTML = '<i class="bi bi-info-circle me-2"></i>Tiến trình đặt chỗ của bạn đã được khôi phục.';
+                    document.body.appendChild(toastDiv);
+                    setTimeout(() => toastDiv.remove(), 4000);
+                }
+            }
+        } catch (e) {
+            console.error('Lỗi khi khôi phục tiến trình:', e);
+            isRestoring = false;
+        }
+    }
+
+    checkoutForm.addEventListener('input', saveProgress);
+    checkoutForm.addEventListener('change', saveProgress);
+    checkoutForm.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-ticket-qty-minus') || e.target.closest('.btn-ticket-qty-plus') ||
+            e.target.closest('.btn-addon-qty-minus') || e.target.closest('.btn-addon-qty-plus')) {
+            setTimeout(saveProgress, 100);
+        }
+    });
+
+    checkoutForm.addEventListener('submit', function() {
+        localStorage.removeItem(DRAFT_KEY);
+    });
+
+    restoreProgress();
 </script>
 @endsection

@@ -33,6 +33,7 @@ class MessageSent implements ShouldBroadcastNow
     {
         return [
             new PrivateChannel('conversation.'.$this->message->conversation_id),
+            new PrivateChannel('admin.chat'),
         ];
     }
 
@@ -52,6 +53,7 @@ class MessageSent implements ShouldBroadcastNow
                 'attachment_path' => $this->message->attachment_path,
                 'attachment_name' => $this->message->attachment_name,
                 'created_at' => $this->message->created_at->toISOString(),
+                'is_admin_sender' => $this->message->sender ? $this->message->sender->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff']) : false,
             ],
         ];
     }
