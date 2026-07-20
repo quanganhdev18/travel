@@ -16,3 +16,6 @@ Schedule::command('tours:reminder-three-days')->daily();
 
 // Tự động cập nhật vòng đời của Tour (đang chạy, đã kết thúc)
 Schedule::command('tours:update-lifecycle')->daily();
+
+// Tự động phân phối lại cuộc trò chuyện nếu nhân viên phụ trách đã offline hoặc ngưng hoạt động
+Schedule::command('chat:re-route-offline')->everyMinute();
