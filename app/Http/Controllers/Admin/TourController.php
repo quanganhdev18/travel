@@ -134,7 +134,7 @@ class TourController extends Controller
     {
         $request->validate([
             'departure_date' => 'required|date',
-            'return_date' => 'required|date|after:departure_date',
+            'return_date' => 'required|date|after_or_equal:departure_date',
             'capacity' => 'required|integer|min:1',
         ]);
 

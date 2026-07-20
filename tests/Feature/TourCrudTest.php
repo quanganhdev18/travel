@@ -97,3 +97,42 @@ test('admin can update tour with departure time', function () {
     $tour->refresh();
     expect($tour->departure_time)->toBe('21:15:00');
 });
+
+test('admin can store schedule for a one day tour with same departure and return date', function () {
+    $province = Province::first() ?? Province::create(['name' => 'Test Province']);
+    $ward = Ward::first() ?? Ward::create([
+        'name' => 'Test Ward',
+        'province_id' => $province->id,
+    ]);
+
+    $tour = Tour::create([
+        'departure_province_id' => $province->id,
+        'departure_ward_id' => $ward->id,
+        'destination_province_id' => $province->id,
+        'destination_ward_id' => $ward->id,
+        'title' => ['vi' => 'Tour 1 Ngày'],
+        'slug' => 'tour-1-ngay',
+        'description' => ['vi' => 'Mô tả tour 1 ngày'],
+        'duration_days' => 1,
+        'duration_nights' => 0,
+        'base_price' => 500000,
+        'departure_time' => '08:00:00',
+    ]);
+
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.tours.schedules.store', $tour->id), [
+            'departure_date' => '2026-08-01',
+            'return_date' => '2026-08-01',
+            'capacity' => 20,
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tour_schedules', [
+        'tour_id' => $tour->id,
+        'departure_date' => '2026-08-01 00:00:00',
+        'return_date' => '2026-08-01 00:00:00',
+        'capacity' => 20,
+    ]);
+});
