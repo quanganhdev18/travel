@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Category;
+use App\Models\Destination;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\Tour;
@@ -15,6 +16,11 @@ beforeEach(function () {
     $this->admin = User::factory()->create(['role' => 'admin']);
     $this->admin->assignRole('Super Admin');
     $this->actingAs($this->admin);
+
+    $this->destination = Destination::create([
+        'name' => 'Đà Nẵng',
+        'description' => 'Thành phố Đà Nẵng',
+    ]);
 });
 
 test('admin can create a tour with unique name', function () {
@@ -42,10 +48,8 @@ test('admin can create a tour with unique name', function () {
         ],
         'base_price' => 1000000,
         'child_price' => 500000,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
         'duration_days' => 3,
         'duration_nights' => 2,
         'departure_hour' => 8,
@@ -81,10 +85,8 @@ test('admin cannot create tour with duplicate Vietnamese name', function () {
         'base_price' => 1000000,
         'duration_days' => 3,
         'duration_nights' => 2,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
     ]);
 
     // Try to create second tour with same Vietnamese name
@@ -101,10 +103,8 @@ test('admin cannot create tour with duplicate Vietnamese name', function () {
         ],
         'base_price' => 1000000,
         'child_price' => 500000,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
         'duration_days' => 3,
         'duration_nights' => 2,
         'departure_hour' => 8,
@@ -137,10 +137,8 @@ test('admin can update tour while keeping same name', function () {
         'base_price' => 1000000,
         'duration_days' => 3,
         'duration_nights' => 2,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
     ]);
 
     $updateData = [
@@ -156,10 +154,8 @@ test('admin can update tour while keeping same name', function () {
         ],
         'base_price' => 1500000,
         'child_price' => 750000,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất Cập Nhật',
+        'destination_id' => $this->destination->id,
         'duration_days' => 3,
         'duration_nights' => 2,
         'departure_hour' => 8,
@@ -196,10 +192,8 @@ test('admin cannot update tour to duplicate name', function () {
         'base_price' => 1000000,
         'duration_days' => 3,
         'duration_nights' => 2,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
     ]);
 
     // Create second tour
@@ -214,10 +208,8 @@ test('admin cannot update tour to duplicate name', function () {
         'base_price' => 1000000,
         'duration_days' => 3,
         'duration_nights' => 2,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
     ]);
 
     // Try to update second tour to have same name as first tour
@@ -234,10 +226,8 @@ test('admin cannot update tour to duplicate name', function () {
         ],
         'base_price' => 1000000,
         'child_price' => 500000,
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên Thống Nhất',
+        'destination_id' => $this->destination->id,
         'duration_days' => 3,
         'duration_nights' => 2,
         'departure_hour' => 8,

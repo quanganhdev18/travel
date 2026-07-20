@@ -90,6 +90,20 @@ class HomeController extends Controller
         $allDestinations = Destination::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
 
+        $filterErrors = [];
+        $date = $request->input('date') ?? $request->input('departure_date');
+        if ($date) {
+            try {
+                $parsedDate = Carbon::parse($date);
+                $threeDaysLater = Carbon::today()->addDays(3);
+                if ($parsedDate->lt($threeDaysLater)) {
+                    $filterErrors['departure_date'] = [__('Ngày khởi hành phải cách ngày hiện tại ít nhất 3 ngày.')];
+                }
+            } catch (\Exception $e) {
+                // Ignore parse errors
+            }
+        }
+
         $query = Tour::with([
             'destination',
             'tour_images',
@@ -99,10 +113,15 @@ class HomeController extends Controller
                 $q->orderBy('departure_date', 'asc')->limit(1);
             },
         ])
-            ->whereNull('deleted_at')
-            ->whereHas('activeSchedules', function ($q) {
+            ->whereNull('deleted_at');
+
+        if (! empty($filterErrors)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->whereHas('activeSchedules', function ($q) {
                 $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
             });
+        }
 
         if ($request->filled('ids') && is_array($request->ids)) {
             $query->whereIn('id', $request->ids);
@@ -110,12 +129,18 @@ class HomeController extends Controller
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
-            $query->where(function ($q) use ($keyword) {
-                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
-                    ->orWhereHas('destination', function ($q2) use ($keyword) {
-                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%']);
-                    });
-            });
+            $matchedDest = Destination::whereRaw('LOWER(name) = ?', [$keyword])->first();
+            if ($matchedDest) {
+                $request->merge(['destination_id' => $matchedDest->id]);
+                $request->offsetUnset('keyword');
+            } else {
+                $query->where(function ($q) use ($keyword) {
+                    $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
+                        ->orWhereHas('destination', function ($q2) use ($keyword) {
+                            $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%']);
+                        });
+                });
+            }
         }
 
         if ($request->filled('transport')) {
@@ -152,11 +177,17 @@ class HomeController extends Controller
             });
         }
 
-        $date = $request->input('date') ?? $request->input('departure_date');
-        if ($date) {
-            $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
-            });
+        if ($date && empty($filterErrors['departure_date'])) {
+            try {
+                $formattedDate = Carbon::parse($date)->toDateString();
+            } catch (\Exception $e) {
+                $formattedDate = null;
+            }
+            if ($formattedDate) {
+                $query->whereHas('activeSchedules', function ($q) use ($formattedDate) {
+                    $q->whereDate('departure_date', '=', $formattedDate);
+                });
+            }
         }
 
         if ($request->filled('stars')) {
@@ -167,10 +198,10 @@ class HomeController extends Controller
 
         if ($request->filled('budget')) {
             match ($request->budget) {
-                'under_5m' => $query->where('base_price', '<', 5000000),
-                '5m_10m', '5m_to_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
-                '10m_20m', '10m_to_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
-                'over_20m' => $query->where('base_price', '>', 20000000),
+                'under_1m' => $query->where('base_price', '<', 1000000),
+                '1m_2m', '1m_to_2m' => $query->whereBetween('base_price', [1000000, 2000000]),
+                '2m_4m', '2m_to_4m' => $query->whereBetween('base_price', [2000000, 4000000]),
+                'over_4m' => $query->where('base_price', '>', 4000000),
                 default => null,
             };
         }
@@ -201,7 +232,11 @@ class HomeController extends Controller
 
         $tours = $query->paginate(12)->withQueryString();
 
-        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'categories'));
+        if ($request->ajax()) {
+            return view('frontend.tours._results_list', compact('tours', 'categories', 'allDestinations', 'filterErrors'))->render();
+        }
+
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'categories', 'filterErrors'));
     }
 
     public function searchTours(Request $request)
@@ -256,9 +291,16 @@ class HomeController extends Controller
 
         if ($request->filled('date')) {
             $date = $request->date;
-            $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
-            });
+            try {
+                $formattedDate = Carbon::parse($date)->toDateString();
+            } catch (\Exception $e) {
+                $formattedDate = null;
+            }
+            if ($formattedDate) {
+                $query->whereHas('activeSchedules', function ($q) use ($formattedDate) {
+                    $q->whereDate('departure_date', '=', $formattedDate);
+                });
+            }
         }
 
         if ($request->filled('budget')) {

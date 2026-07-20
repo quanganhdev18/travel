@@ -44,7 +44,8 @@ class UserController extends Controller
             $validated['role'] = 'customer'; // default role if staff creates
         }
 
-        User::create($validated);
+        $user = User::create($validated);
+        $this->syncSpatieRole($user);
 
         return redirect()->route('admin.users.index')->with('success', 'Tạo tài khoản thành công.');
     }
@@ -84,6 +85,7 @@ class UserController extends Controller
         }
 
         $user->update($validated);
+        $this->syncSpatieRole($user);
 
         return redirect()->route('admin.users.index')->with('success', 'Cập nhật tài khoản thành công.');
     }
@@ -98,5 +100,22 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'Xóa tài khoản thành công.');
+    }
+
+    protected function syncSpatieRole(User $user)
+    {
+        $roleMap = [
+            'admin' => 'Super Admin',
+            'staff' => 'Staff',
+            'guide' => 'Guide',
+            'cskh' => 'cskh',
+        ];
+
+        // Clear existing Spatie roles
+        $user->syncRoles([]);
+
+        if (isset($roleMap[$user->role])) {
+            $user->assignRole($roleMap[$user->role]);
+        }
     }
 }

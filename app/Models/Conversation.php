@@ -6,7 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Conversation extends Model
 {
-    protected $fillable = ['user_id', 'cskh_id', 'booking_id', 'status'];
+    protected $fillable = ['user_id', 'cskh_id', 'booking_id', 'status', 'assigned_at', 'routing_status'];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'assigned_at' => 'datetime',
+        ];
+    }
 
     public function user()
     {

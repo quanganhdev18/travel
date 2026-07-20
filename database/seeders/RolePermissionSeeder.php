@@ -63,6 +63,8 @@ class RolePermissionSeeder extends Seeder
                 $user->assignRole('Staff');
             } elseif ($user->role == 'guide') {
                 $user->assignRole('Guide');
+            } elseif ($user->role == 'cskh') {
+                $user->assignRole('cskh');
             }
         }
     }

@@ -32,7 +32,7 @@ class StoreTourBookingRequest extends FormRequest
             'customer_email' => 'required|email|max:255',
             'passengers' => 'required|array',
             'passengers.adult.*.full_name' => 'required|string|max:255',
-            'passengers.adult.0.date_of_birth' => 'required|date|before_or_equal:' . now()->subYears(18)->format('Y-m-d'),
+            'passengers.adult.0.date_of_birth' => 'required|date|before_or_equal:'.now()->subYears(18)->format('Y-m-d'),
             'passengers.adult.*.date_of_birth' => 'required|date',
             'passengers.adult.*.identity_number' => 'required|string|max:50',
             'passengers.adult.*.gender' => 'required|in:male,female,other',

@@ -65,13 +65,13 @@
             </div>
             @endif
 
-            <!-- Departure Location -->
-            @if($tour->departure_location)
+            <!-- Departure Location / Meeting Point -->
+            @if($tour->meeting_point)
             <div class="preview-item">
                 <i class="bi bi-pin-map-fill"></i>
                 <div>
-                    <small class="d-block">Khởi hành</small>
-                    <strong>{{ $tour->departure_location->name }}</strong>
+                    <small class="d-block">Tập kết</small>
+                    <strong>{{ \Illuminate\Support\Str::limit($tour->meeting_point, 20) }}</strong>
                 </div>
             </div>
             @endif

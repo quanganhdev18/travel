@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ScheduleGuide;
 use App\Models\TourGuide;
 use App\Models\TourSchedule;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class OngoingTourController extends Controller
@@ -25,6 +26,32 @@ class OngoingTourController extends Controller
         } elseif ($status === 'ongoing') {
             $query->where('departure_date', '<=', $today)
                 ->where('return_date', '>=', $today);
+        }
+
+        // Search filters
+        if ($request->filled('search_tour')) {
+            $searchTour = $request->input('search_tour');
+            $query->where(function ($q) use ($searchTour) {
+                $q->whereHas('tour', function ($sq) use ($searchTour) {
+                    $sq->where('title', 'like', "%{$searchTour}%");
+                })->orWhere('id', 'like', "%{$searchTour}%");
+            });
+        }
+
+        if ($request->filled('search_date')) {
+            $query->whereDate('departure_date', $request->input('search_date'));
+        }
+
+        if ($request->filled('search_guests')) {
+            $searchGuests = $request->input('search_guests');
+            $query->whereRaw('(SELECT COALESCE(SUM(adults_count + children_count), 0) FROM bookings WHERE bookings.tour_schedule_id = tour_schedules.id) >= ?', [$searchGuests]);
+        }
+
+        if ($request->filled('search_guide')) {
+            $searchGuide = $request->input('search_guide');
+            $query->whereHas('schedule_guides.tour_guide', function ($q) use ($searchGuide) {
+                $q->where('name', 'like', "%{$searchGuide}%");
+            });
         }
 
         $schedules = $query->orderBy('departure_date', 'asc')->paginate(15);
@@ -70,7 +97,7 @@ class OngoingTourController extends Controller
             'backup_guide_id.different' => 'HDV dự bị không được trùng với HDV chính.',
         ]);
 
-        if (in_array($schedule->status, ['completed', 'closed']) || \Carbon\Carbon::parse($schedule->return_date)->endOfDay()->isPast()) {
+        if (in_array($schedule->status, ['completed', 'closed']) || Carbon::parse($schedule->return_date)->endOfDay()->isPast()) {
             return redirect()->back()->with('error', 'Tour đã kết thúc hoặc đã qua ngày về, không thể thay đổi hướng dẫn viên.');
         }
 
@@ -92,7 +119,7 @@ class OngoingTourController extends Controller
 
                 return redirect()->back()->with('error', "Hướng dẫn viên {$guideName} đã được phân công cho một lịch trình khác trùng thời gian này.");
             }
-            
+
             $guide = TourGuide::find($guideId);
             if ($guide && $guide->is_blacklisted) {
                 return redirect()->back()->with('error', "Hướng dẫn viên {$guide->name} đang trong danh sách đen (Blacklist). Không thể phân công!");

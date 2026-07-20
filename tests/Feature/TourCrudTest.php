@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Destination;
+use App\Models\Province;
 use App\Models\Tour;
 use App\Models\User;
+use App\Models\Ward;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -19,6 +21,12 @@ beforeEach(function () {
 });
 
 test('admin can store tour with departure time', function () {
+    $province = Province::first() ?? Province::create(['name' => 'Test Province']);
+    $ward = Ward::first() ?? Ward::create([
+        'name' => 'Test Ward',
+        'province_id' => $province->id,
+    ]);
+
     $response = $this->actingAs($this->adminUser)
         ->post(route('admin.tours.store'), [
             'title' => [
@@ -30,8 +38,8 @@ test('admin can store tour with departure time', function () {
                 'vi' => 'Chi tiết tour Hà Nội',
             ],
             'base_price' => 2000000,
+            'meeting_point' => 'Cổng phụ công viên Thống Nhất',
             'destination_id' => $this->destination->id,
-            'departure_location_id' => $this->destination->id,
             'duration_days' => 2,
             'duration_nights' => 1,
             'departure_hour' => 7,
@@ -46,9 +54,15 @@ test('admin can store tour with departure time', function () {
 });
 
 test('admin can update tour with departure time', function () {
+    $province = Province::first() ?? Province::create(['name' => 'Test Province']);
+    $ward = Ward::first() ?? Ward::create([
+        'name' => 'Test Ward',
+        'province_id' => $province->id,
+    ]);
+
     $tour = Tour::create([
+        'meeting_point' => 'Cổng công viên',
         'destination_id' => $this->destination->id,
-        'departure_location_id' => $this->destination->id,
         'title' => ['vi' => 'Tour Cũ'],
         'slug' => 'tour-cu',
         'description' => ['vi' => 'Mô tả tour cũ'],
@@ -64,8 +78,8 @@ test('admin can update tour with departure time', function () {
                 'vi' => 'Tour Cũ Cập Nhật',
             ],
             'base_price' => 1200000,
+            'meeting_point' => 'Cổng phụ công viên Thống Nhất Cập Nhật',
             'destination_id' => $this->destination->id,
-            'departure_location_id' => $this->destination->id,
             'duration_days' => 1,
             'duration_nights' => 0,
             'departure_hour' => 21,
@@ -76,4 +90,41 @@ test('admin can update tour with departure time', function () {
 
     $tour->refresh();
     expect($tour->departure_time)->toBe('21:15:00');
+});
+
+test('admin can store schedule for a one day tour with same departure and return date', function () {
+    $province = Province::first() ?? Province::create(['name' => 'Test Province']);
+    $ward = Ward::first() ?? Ward::create([
+        'name' => 'Test Ward',
+        'province_id' => $province->id,
+    ]);
+
+    $tour = Tour::create([
+        'meeting_point' => 'Cổng công viên',
+        'destination_id' => $this->destination->id,
+        'title' => ['vi' => 'Tour 1 Ngày'],
+        'slug' => 'tour-1-ngay',
+        'description' => ['vi' => 'Mô tả tour 1 ngày'],
+        'duration_days' => 1,
+        'duration_nights' => 0,
+        'base_price' => 500000,
+        'departure_time' => '08:00:00',
+    ]);
+
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.tours.schedules.store', $tour->id), [
+            'departure_date' => '2026-08-01',
+            'return_date' => '2026-08-01',
+            'capacity' => 20,
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('tour_schedules', [
+        'tour_id' => $tour->id,
+        'departure_date' => '2026-08-01 00:00:00',
+        'return_date' => '2026-08-01 00:00:00',
+        'capacity' => 20,
+    ]);
 });

@@ -57,6 +57,13 @@
                                             <i class="bi" :class="msg.is_important ? 'bi-star-fill text-warning' : 'bi-star text-muted'"></i>
                                         </div>
                                         
+                                        <!-- Nhãn nguồn gốc tin nhắn -->
+                                        <div class="small fw-bold mb-1" 
+                                             style="font-size: 0.75rem;"
+                                             :class="msg.sender_id == adminId ? 'text-white-50 text-end' : (msg.sender && msg.sender.role !== 'customer' ? 'text-info' : 'text-muted')"
+                                             x-text="getSenderLabel(msg)">
+                                        </div>
+                                        
                                         <div x-text="msg.message" x-show="msg.message"></div>
                                         <template x-if="msg.attachment_path">
                                             <div class="mt-2">
@@ -147,6 +154,7 @@
                     this.currentConv = conv;
                     this.loadMessages(conv.id);
                     this.listenToConversation(conv.id);
+                    this.markAsRead(conv.id);
                 },
 
                 loadMessages(id) {
@@ -215,9 +223,38 @@
                                     this.messages.push(e.message);
                                     this.scrollToBottom();
                                     this.loadConversations();
+                                    this.markAsRead(id);
                                 }
                             });
                     }
+                },
+
+                markAsRead(id) {
+                    fetch('/chat/' + id + '/mark-as-read', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        this.updateSidebarBadge();
+                    });
+                },
+
+                updateSidebarBadge() {
+                    fetch('/chat/unread-count')
+                    .then(r => r.json())
+                    .then(data => {
+                        const badge = document.getElementById('admin-chat-badge');
+                        if (badge) {
+                            if (data.count > 0) {
+                                badge.textContent = data.count;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.textContent = '0';
+                                badge.style.display = 'none';
+                            }
+                        }
+                    });
                 },
 
                 scrollToBottom() {
@@ -231,6 +268,26 @@
                     if(!dateString) return '';
                     const date = new Date(dateString);
                     return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + date.toLocaleDateString();
+                },
+
+                getSenderLabel(msg) {
+                    if (msg.sender_id == this.adminId) {
+                        return 'Tôi';
+                    }
+                    if (msg.sender) {
+                        if (msg.sender.role === 'customer') {
+                            return msg.sender.name + ' (Khách hàng)';
+                        }
+                        if (msg.sender.role === 'cskh' || msg.sender.role === 'admin' || msg.sender.role === 'staff') {
+                            return msg.sender.name + ' (NV CSKH khác)';
+                        }
+                        return msg.sender.name;
+                    }
+                    // Fallback using is_admin_sender from broadcast
+                    if (msg.is_admin_sender) {
+                        return 'NV CSKH khác';
+                    }
+                    return 'Khách hàng';
                 }
             }));
         }

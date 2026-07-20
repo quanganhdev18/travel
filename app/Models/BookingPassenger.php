@@ -48,10 +48,16 @@ class BookingPassenger extends Model
         'is_free_time',
         'free_time_start',
         'free_time_end',
+        'free_time_location',
     ];
 
     public function booking()
     {
         return $this->belongsTo(Booking::class);
+    }
+
+    public function activity_checkins()
+    {
+        return $this->hasMany(ActivityPassengerCheckin::class);
     }
 }

@@ -641,14 +641,6 @@
                             </div>
 
                             {{-- Price rows --}}
-                            @if($booking->transport_price > 0)
-                            <div class="payment-row">
-                                <span class="label">
-                                    <i class="bi bi-airplane me-1 text-danger"></i>{{ __('Phí di chuyển') }}
-                                </span>
-                                <span class="value">{!! format_currency($booking->transport_price) !!}</span>
-                            </div>
-                            @endif
 
                             @if($booking->discount_amount > 0)
                             <div class="payment-row">
@@ -700,7 +692,7 @@
                                     {{ __('Đã thanh toán 30% (Cọc)') }}
                                 </div>
                                 @if(!$isCancelled)
-                                <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
+                                <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section" class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
                                     <i class="bi bi-credit-card-fill"></i>
                                     {{ __('Thanh toán 70% còn lại') }}
                                     <span style="opacity:0.8;font-size:0.78rem;">({!! format_currency($remainAmt) !!})</span>

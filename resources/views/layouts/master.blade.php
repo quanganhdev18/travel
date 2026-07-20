@@ -296,20 +296,26 @@
 
                 <div class="col-lg-2 col-md-6">
                     <h5 class="footer-title">{{ __('Về Travel') }}</h5>
-                    <a href="#" class="footer-link">{{ __('Cách đặt chỗ') }}</a>
-                    <a href="#" class="footer-link">{{ __('Liên hệ chúng tôi') }}</a>
-                    <a href="#" class="footer-link">{{ __('Trợ giúp') }}</a>
+                    <a href="{{ url('/') }}" class="footer-link">{{ __('Trang chủ') }}</a>
+                    <a href="{{ route('frontend.destinations.index') }}" class="footer-link">{{ __('Điểm đến') }}</a>
                     <a href="#" class="footer-link">{{ __('Tuyển dụng') }}</a>
-                    <a href="#" class="footer-link">{{ __('Về chúng tôi') }}</a>
+                    <a href="#" class="footer-link">{{ __('Liên hệ') }}</a>
+                    @auth
+                        <a href="{{ route('user.profile') }}" class="footer-link">{{ __('Hồ sơ của tôi') }}</a>
+                    @else
+                        <a href="{{ route('login') }}" class="footer-link">{{ __('Đăng nhập') }}</a>
+                    @endauth
                 </div>
 
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-title">{{ __('Sản phẩm') }}</h5>
-                    <a href="#" class="footer-link">{{ __('Vé máy bay') }}</a>
-                    <a href="#" class="footer-link">{{ __('Khách sạn') }}</a>
-                    <a href="#" class="footer-link">{{ __('Tour du lịch') }}</a>
-                    <a href="#" class="footer-link">{{ __('Vé tham quan & vui chơi') }}</a>
-                    <a href="#" class="footer-link">{{ __('Dịch vụ đưa đón sân bay') }}</a>
+                    <a href="{{ route('frontend.tours.index') }}" class="footer-link">{{ __('Tour trọn gói') }}</a>
+                    <a href="{{ route('frontend.tickets.index') }}" class="footer-link">{{ __('Vé tham quan') }}</a>
+                    @auth
+                        <a href="{{ route('user.profile') }}?tab=wishlists" class="footer-link">{{ __('Tour đã lưu') }}</a>
+                    @else
+                        <a href="{{ route('login') }}" class="footer-link">{{ __('Tour đã lưu') }}</a>
+                    @endauth
                 </div>
 
                 <div class="col-lg-3 col-md-6">

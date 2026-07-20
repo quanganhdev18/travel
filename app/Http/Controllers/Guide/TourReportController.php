@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Guide;
 
 use App\Http\Controllers\Controller;
-use App\Models\TourSchedule;
+use App\Models\Booking;
 use App\Models\TourReport;
+use App\Models\TourSchedule;
 use Illuminate\Http\Request;
 
 class TourReportController extends Controller
@@ -13,9 +14,11 @@ class TourReportController extends Controller
     {
         // Kiểm tra quyền (có phải HDV của tour này không)
         $isAssigned = $schedule->schedule_guides()->where('guide_id', auth()->user()->tour_guide->id ?? 0)->exists();
-        if (!$isAssigned) abort(403);
+        if (! $isAssigned) {
+            abort(403);
+        }
 
-        $firstBooking = $schedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->first();
+        $firstBooking = $schedule->bookings->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])->first();
         $groupStatus = $firstBooking ? $firstBooking->tour_status : 'upcoming';
 
         if ($schedule->status !== 'completed' && $groupStatus !== 'completed') {
@@ -33,7 +36,9 @@ class TourReportController extends Controller
     public function store(Request $request, TourSchedule $schedule)
     {
         $isAssigned = $schedule->schedule_guides()->where('guide_id', auth()->user()->tour_guide->id ?? 0)->exists();
-        if (!$isAssigned) abort(403);
+        if (! $isAssigned) {
+            abort(403);
+        }
 
         $request->validate([
             'actual_guests' => 'required|integer|min:0',
@@ -52,7 +57,7 @@ class TourReportController extends Controller
             'advance_amount' => $request->advance_amount,
             'actual_expense' => $request->actual_expense,
             'balance' => $balance,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         return redirect()->route('guide.schedules.show', $schedule->id)->with('success', 'Đã nộp báo cáo và quyết toán thành công. Chờ Kế toán duyệt.');

@@ -605,24 +605,6 @@
                                 </div>
                                 @endif
 
-                                @auth
-                                @php
-                                    $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-                                        ->where('tour_id', $tour->id)
-                                        ->exists();
-                                @endphp
-                                <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-                                      method="POST"
-                                      class="favorite-form"
-                                      onclick="event.stopPropagation();">
-                                    @csrf
-                                    <button type="submit"
-                                            class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-                                        <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-                                    </button>
-                                </form>
-                                @endauth
-
                                 <img src="{{ $tourImage }}"
                                      alt="{{ $tourTitle }}"
                                      onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">

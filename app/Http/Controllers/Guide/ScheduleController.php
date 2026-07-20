@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Guide;
 
 use App\Http\Controllers\Controller;
 use App\Imports\PassengersImport;
+use App\Models\ActivityPassengerCheckin;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\ScheduleActivityCheckin;
 use App\Models\TourActivity;
 use App\Models\TourSchedule;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -48,7 +50,7 @@ class ScheduleController extends Controller
         }
 
         $scheduleGuide = $tourGuide->schedule_guides()
-            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers', 'tour_schedule.bookings.user'])
+            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers.activity_checkins', 'tour_schedule.bookings.user'])
             ->where('tour_schedule_id', $id)
             ->firstOrFail();
 
@@ -125,6 +127,30 @@ class ScheduleController extends Controller
                     'tour_status' => Booking::TOUR_IN_PROGRESS,
                 ]);
         } else {
+            // Check if all passengers are accounted for (checked-in or free time filled)
+            $allPassengers = $schedule->bookings()
+                ->whereIn('payment_status', ['paid_30', 'paid_100'])
+                ->where('booking_status', '!=', 'cancelled')
+                ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+                ->get()
+                ->flatMap(fn ($b) => $b->booking_passengers);
+
+            $checkedInPassengerIds = ActivityPassengerCheckin::where('tour_schedule_id', $schedule->id)
+                ->where('tour_activity_id', $activity->id)
+                ->pluck('booking_passenger_id')
+                ->toArray();
+
+            foreach ($allPassengers as $p) {
+                $isCheckedIn = in_array($p->id, $checkedInPassengerIds);
+                $isFreeTimeFilled = $p->is_free_time && ! empty($p->free_time_location) && ! empty($p->free_time_start) && ! empty($p->free_time_end);
+
+                if (! $isCheckedIn && ! $isFreeTimeFilled) {
+                    return response()->json([
+                        'message' => "Không thể check-in. Vui lòng điểm danh hoặc điền thông tin tách đoàn cho tất cả hành khách trước! (Khách chưa hoàn thành: {$p->full_name})",
+                    ], 400);
+                }
+            }
+
             ScheduleActivityCheckin::create([
                 'tour_schedule_id' => $schedule->id,
                 'tour_activity_id' => $activity->id,
@@ -176,6 +202,22 @@ class ScheduleController extends Controller
 
         $assigned = $tourGuide->schedule_guides()
             ->where('tour_schedule_id', $tourScheduleId)
+            ->exists();
+
+        abort_unless($assigned, 403);
+    }
+
+    /**
+     * Ensure the authenticated guide is assigned to this tour schedule.
+     */
+    private function authorizeSchedule(TourSchedule $schedule): void
+    {
+        $tourGuide = auth()->user()->tour_guide;
+
+        abort_unless($tourGuide, 403);
+
+        $assigned = $tourGuide->schedule_guides()
+            ->where('tour_schedule_id', $schedule->id)
             ->exists();
 
         abort_unless($assigned, 403);
@@ -395,14 +437,61 @@ class ScheduleController extends Controller
             'is_free_time' => 'required|boolean',
             'free_time_start' => 'nullable|date',
             'free_time_end' => 'nullable|date|after_or_equal:free_time_start',
+            'free_time_location' => 'nullable|string|max:255',
         ]);
 
         $passenger->update([
             'is_free_time' => $request->is_free_time,
             'free_time_start' => $request->free_time_start,
             'free_time_end' => $request->free_time_end,
+            'free_time_location' => $request->free_time_location,
         ]);
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật thời gian tách đoàn thành công.',
+                'passenger' => [
+                    'id' => $passenger->id,
+                    'is_free_time' => (bool) $passenger->is_free_time,
+                    'free_time_start' => $passenger->free_time_start ? Carbon::parse($passenger->free_time_start)->format('Y-m-d\TH:i') : null,
+                    'free_time_end' => $passenger->free_time_end ? Carbon::parse($passenger->free_time_end)->format('Y-m-d\TH:i') : null,
+                    'free_time_location' => $passenger->free_time_location,
+                ],
+            ]);
+        }
+
         return back()->with('success', 'Cập nhật thời gian tách đoàn thành công.');
+    }
+
+    public function togglePassengerActivityCheckin(Request $request, TourSchedule $schedule, TourActivity $activity, BookingPassenger $passenger)
+    {
+        $this->authorizeSchedule($schedule);
+
+        if ($passenger->booking->tour_schedule_id !== $schedule->id) {
+            abort(404);
+        }
+
+        $checkin = ActivityPassengerCheckin::where('tour_schedule_id', $schedule->id)
+            ->where('tour_activity_id', $activity->id)
+            ->where('booking_passenger_id', $passenger->id)
+            ->first();
+
+        if ($checkin) {
+            $checkin->delete();
+            $status = false;
+        } else {
+            ActivityPassengerCheckin::create([
+                'tour_schedule_id' => $schedule->id,
+                'tour_activity_id' => $activity->id,
+                'booking_passenger_id' => $passenger->id,
+            ]);
+            $status = true;
+        }
+
+        return response()->json([
+            'checked_in' => $status,
+            'message' => $status ? 'Đã điểm danh' : 'Đã bỏ điểm danh',
+        ]);
     }
 }

@@ -118,8 +118,16 @@
             </tr>
         </table>
     </div>
-    <h1 style="font-size: 24px; color: #0f172a; margin: 0 0 6px 0; font-weight: 600; letter-spacing: -0.5px;">Xác Nhận Đặt Tour</h1>
-    <p style="font-size: 14.5px; color: #64748b; margin: 0;">Cảm ơn Quý khách đã tin tưởng và đồng hành cùng chúng tôi.</p>
+    @if($booking->payment_status === 'paid_30')
+        <h1 style="font-size: 24px; color: #0f172a; margin: 0 0 6px 0; font-weight: 600; letter-spacing: -0.5px;">Xác Nhận Cọc 30% Tour Thành Công</h1>
+        <p style="font-size: 14.5px; color: #16a34a; margin: 0; font-weight: 500;">Cảm ơn Quý khách đã hoàn tất khoản cọc 30%. Chỗ của Quý khách đã được giữ thành công!</p>
+    @elseif(in_array($booking->payment_status, ['paid_100', 'paid']))
+        <h1 style="font-size: 24px; color: #0f172a; margin: 0 0 6px 0; font-weight: 600; letter-spacing: -0.5px;">Xác Nhận Thanh Toán 100% Tour</h1>
+        <p style="font-size: 14.5px; color: #16a34a; margin: 0; font-weight: 500;">Cảm ơn Quý khách đã hoàn tất 100% giá trị tour. Chúc Quý khách có chuyến đi vui vẻ!</p>
+    @else
+        <h1 style="font-size: 24px; color: #0f172a; margin: 0 0 6px 0; font-weight: 600; letter-spacing: -0.5px;">Xác Nhận Đặt Tour</h1>
+        <p style="font-size: 14.5px; color: #64748b; margin: 0;">Vui lòng thanh toán trong vòng 30 phút để bảo lưu chỗ của Quý khách.</p>
+    @endif
 </div>
 
 {{-- ===== BODY ===== --}}
@@ -127,8 +135,13 @@
 
     <p class="greeting">Kính gửi Quý khách <strong>{{ $customerName }}</strong>,</p>
     <p class="intro">
-        Travel Wonder xin trân trọng cảm ơn Quý khách đã lựa chọn dịch vụ của chúng tôi. 
-        Đơn đặt tour đã được hệ thống ghi nhận thành công. Vui lòng kiểm tra kỹ các thông tin bên dưới.
+        @if($booking->payment_status === 'paid_30')
+            Travel Wonder đã nhận được khoản đặt cọc 30% cho đơn tour <strong>#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</strong>. Vị trí trên chuyến đi của Quý khách đã được bảo lưu an toàn.
+        @elseif(in_array($booking->payment_status, ['paid_100', 'paid']))
+            Travel Wonder xác nhận đơn tour <strong>#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</strong> của Quý khách đã được thanh toán toàn bộ 100%. Toàn bộ dịch vụ đã được chuẩn bị sẵn sàng.
+        @else
+            Travel Wonder xin trân trọng cảm ơn Quý khách đã lựa chọn dịch vụ của chúng tôi. Đơn đặt tour đã được hệ thống ghi nhận. Vui lòng hoàn tất thanh toán để giữ chỗ.
+        @endif
     </p>
 
     {{-- ===== MÃ ĐƠN + TRẠNG THÁI + NÚT THANH TOÁN ===== --}}
@@ -140,29 +153,44 @@
             </div>
             <div style="text-align: right;">
                 @if($booking->payment_status == 'pending')
-                    <span class="badge badge-warning">Chờ thanh toán</span>
+                    <span class="badge badge-warning">Chờ thanh toán (30 phút)</span>
                 @elseif($booking->payment_status == 'paid_30')
                     <span class="badge badge-info">Đã cọc 30%</span>
                 @else
-                    <span class="badge badge-success">Đã thanh toán đủ</span>
+                    <span class="badge badge-success">Đã thanh toán 100%</span>
                 @endif
                 <div style="margin-top: 8px; font-size: 13px; color: #475569;">
-                    Hình thức: <strong>{{ $booking->payment_method == 'vnpay' ? 'VNPay' : ($booking->payment_method == 'transfer' ? 'Chuyển khoản' : 'Tiền mặt') }} ({{ $booking->payment_type == 'deposit' ? 'Đặt cọc 30%' : 'Thanh toán 100%' }})</strong>
+                    Hình thức: <strong>{{ $booking->payment_method == 'vnpay' ? 'VNPay' : ($booking->payment_method == 'transfer' ? 'Chuyển khoản QR' : 'Tiền mặt') }} ({{ $booking->payment_type == 'deposit' ? 'Đặt cọc 30%' : 'Thanh toán 100%' }})</strong>
                 </div>
             </div>
         </div>
 
-
-        {{-- NÚT THANH TOÁN NGAY GẦN TRẠNG THÁI --}}
-        @if($booking->total_price > ($booking->paid_amount ?? 0))
+        {{-- NÚT THANH TOÁN KÈM THÔNG BÁO --}}
+        @if($booking->payment_status === 'pending')
         <div class="order-meta-pay-row">
-            <p style="margin-bottom: 16px;">Quý khách vui lòng hoàn tất quá trình thanh toán trong vòng <strong>24 giờ</strong> để chúng tôi xác nhận giữ chỗ và xuất vé (nếu có). Quá thời hạn này, hệ thống sẽ tự động hủy đơn đặt tour của Quý khách.</p>
+            <p style="margin-bottom: 16px; color: #b45309;">
+                ⚠️ Quý khách vui lòng hoàn tất quá trình thanh toán trong vòng <strong>30 phút</strong> kể từ khi đặt tour để hệ thống xác nhận giữ chỗ. Sau 30 phút chưa thanh toán, đơn hàng sẽ <strong>tự động bị hủy</strong>.
+            </p>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <a href="{{ route('user.bookings.detail', $booking->id) }}" style="display: inline-block; background: #f1f5f9; color: #0f172a; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1;">
                     Xem Chi Tiết Đơn
                 </a>
                 <a href="{{ route('frontend.tours.booking_success', $booking->id) }}" class="btn-pay-inline">
-                    Hoàn Tất Thanh Toán
+                    Thanh Toán Ngay
+                </a>
+            </div>
+        </div>
+        @elseif($booking->payment_status === 'paid_30')
+        <div class="order-meta-pay-row">
+            <p style="margin-bottom: 16px; color: #0369a1;">
+                ✅ Đơn hàng đã được xác nhận cọc 30% (<strong>{{ number_format($booking->paid_amount, 0, ',', '.') }}₫</strong>). Số tiền 70% còn lại là <strong>{{ number_format($booking->total_price - $booking->paid_amount, 0, ',', '.') }}₫</strong>. Vui lòng thanh toán trước ngày khởi hành.
+            </p>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <a href="{{ route('user.bookings.detail', $booking->id) }}" style="display: inline-block; background: #f1f5f9; color: #0f172a; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1;">
+                    Xem Chi Tiết Đơn
+                </a>
+                <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section" class="btn-pay-inline">
+                    Thanh Toán 70% Còn Lại
                 </a>
             </div>
         </div>
@@ -171,7 +199,7 @@
             <a href="{{ route('user.bookings.detail', $booking->id) }}" style="display: inline-block; background: #f1f5f9; color: #0f172a; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1;">
                 Xem Chi Tiết Đơn
             </a>
-            <span style="color: #15803d; font-weight: 500; font-size: 13px;">Đơn hàng đã thanh toán đầy đủ. Chúc Quý khách có chuyến đi vui vẻ!</span>
+            <span style="color: #15803d; font-weight: 500; font-size: 13px;">Đơn hàng đã thanh toán đầy đủ 100%. Chúc Quý khách có chuyến đi tuyệt vời!</span>
         </div>
         @endif
     </div>
@@ -207,8 +235,8 @@
                 </td>
             </tr>
             <tr>
-                <td class="t-label">Điểm khởi hành</td>
-                <td class="t-value">{{ $tour->departure_location->name ?? $schedule->checkin_location ?? $tour->meeting_point ?? 'Theo lịch trình' }}</td>
+                <td class="t-label">Điểm tập kết</td>
+                <td class="t-value">{{ $tour->meeting_point ?? $schedule->checkin_location ?? 'Theo lịch trình' }}</td>
             </tr>
             <tr>
                 <td class="t-label">Phương tiện</td>

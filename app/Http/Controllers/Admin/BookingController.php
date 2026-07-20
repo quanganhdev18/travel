@@ -151,4 +151,30 @@ class BookingController extends Controller
 
         return back()->with('success', 'Cập nhật mã PNR thành công.');
     }
+
+    public function liveStatuses(Request $request)
+    {
+        $ids = array_filter(explode(',', $request->input('ids', '')));
+
+        if (empty($ids)) {
+            return response()->json([]);
+        }
+
+        $bookings = Booking::whereIn('id', $ids)->get(['id', 'payment_status', 'booking_status', 'tour_status', 'paid_amount', 'total_price', 'cancel_reason']);
+
+        $data = [];
+        foreach ($bookings as $b) {
+            $data[$b->id] = [
+                'id' => $b->id,
+                'payment_status' => $b->payment_status,
+                'booking_status' => $b->booking_status,
+                'tour_status' => $b->tour_status,
+                'paid_amount' => (float) $b->paid_amount,
+                'total_price' => (float) $b->total_price,
+                'cancel_reason' => $b->cancel_reason,
+            ];
+        }
+
+        return response()->json($data);
+    }
 }

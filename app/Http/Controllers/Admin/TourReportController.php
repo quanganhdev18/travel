@@ -3,20 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\TourReport;
-use Illuminate\Http\Request;
 
 class TourReportController extends Controller
 {
     public function index()
     {
         $reports = TourReport::with(['tour_schedule.tour', 'tour_guide'])->latest()->paginate(15);
+
         return view('admin.tour_reports.index', compact('reports'));
     }
 
     public function show(TourReport $report)
     {
         $report->load(['tour_schedule.tour', 'tour_guide']);
+
         return view('admin.tour_reports.show', compact('report'));
     }
 
@@ -27,14 +29,14 @@ class TourReportController extends Controller
         }
 
         $report->update(['status' => 'approved']);
-        
+
         // Cập nhật trạng thái schedule sang closed
         if ($report->tour_schedule) {
             $report->tour_schedule->update(['status' => 'closed']);
-            
+
             // Cập nhật trạng thái của tất cả các booking không bị hủy sang closed
             $report->tour_schedule->bookings()
-                ->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])
+                ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
                 ->update(['tour_status' => 'closed']);
         }
 

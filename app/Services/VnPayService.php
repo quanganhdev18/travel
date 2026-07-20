@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Mail\TourBookingMail;
 use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class VnPayService
 {
@@ -153,6 +155,15 @@ class VnPayService
                 'paid_amount' => $newPaidAmount,
                 'booking_status' => 'confirmed',
             ]);
+
+            $bookingFresh = $booking->fresh();
+            if ($bookingFresh->user && $bookingFresh->user->email) {
+                try {
+                    Mail::to($bookingFresh->user->email)->send(new TourBookingMail($bookingFresh));
+                } catch (\Exception $me) {
+                    Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
+                }
+            }
         }
 
         return [

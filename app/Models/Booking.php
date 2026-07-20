@@ -51,6 +51,8 @@ class Booking extends Model
 
     public const PAYMENT_PENDING = 'pending';
 
+    public const PAYMENT_PAID = 'paid';
+
     public const PAYMENT_PAID_30 = 'paid_30';
 
     public const PAYMENT_PAID_100 = 'paid_100';
@@ -91,6 +93,7 @@ class Booking extends Model
         'paid_amount',
         'payment_step',
         'meeting_point',
+        'cancel_reason',
     ];
 
     public function user()
@@ -199,22 +202,18 @@ class Booking extends Model
         return match ($currentStatus) {
             self::TOUR_UPCOMING => [
                 self::TOUR_UPCOMING,
-                self::TOUR_IN_PROGRESS,
-                self::TOUR_CANCELLED_CUSTOMER,
                 self::TOUR_CANCELLED_ADMIN,
             ],
             self::TOUR_IN_PROGRESS => [
                 self::TOUR_IN_PROGRESS,
                 self::TOUR_CHECKING_IN,
                 self::TOUR_COMPLETED,
-                self::TOUR_CANCELLED_CUSTOMER,
                 self::TOUR_CANCELLED_ADMIN,
             ],
             self::TOUR_CHECKING_IN => [
                 self::TOUR_CHECKING_IN,
                 self::TOUR_IN_PROGRESS,
                 self::TOUR_COMPLETED,
-                self::TOUR_CANCELLED_CUSTOMER,
                 self::TOUR_CANCELLED_ADMIN,
             ],
             default => [

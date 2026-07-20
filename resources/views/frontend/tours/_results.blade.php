@@ -33,27 +33,6 @@
                         {{ $tour->duration_days }}N{{ $tour->duration_nights > 0 ? $tour->duration_nights . 'Đ' : '' }}
                     </div>
                     @endif
-                    @auth
-                        @php
-                            $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-                                ->where('tour_id', $tour->id)
-                                ->exists();
-                        @endphp
-                        <form action="{{ route('frontend.favorites.toggle', $tour->id) }}"
-                              method="POST"
-                              class="favorite-form"
-                              onclick="event.stopPropagation();">
-                            @csrf
-                            <button type="submit"
-                                    class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-                                <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-                            </button>
-                        </form>
-                    @else
-                        <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-heart"></i>
-                        </div>
-                    @endauth
 
                     @php
                         $primaryImage = $tour->tour_images->where('is_primary', 1)->first()

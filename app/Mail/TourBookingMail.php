@@ -20,28 +20,42 @@ class TourBookingMail extends Mailable
 
     public $customerPhone;
 
-    public function __construct($booking, $schedule, $customerName, $customerPhone)
+    public function __construct($booking, $schedule = null, $customerName = null, $customerPhone = null)
     {
         // Eager load tất cả các quan hệ cần thiết để render email
         $this->booking = $booking->loadMissing([
             'booking_passengers',
             'addons',
+            'user',
+            'tour_schedule.tour',
         ]);
 
-        $this->schedule = $schedule->loadMissing([
+        $schedule = $schedule ?? $this->booking->tour_schedule;
+
+        $this->schedule = $schedule ? $schedule->loadMissing([
             'tour.tour_itineraries',
             'tour.departure_location',
             'schedule_guides.guide',
-        ]);
+        ]) : null;
 
-        $this->customerName = $customerName;
-        $this->customerPhone = $customerPhone;
+        $this->customerName = $customerName ?? ($this->booking->user->name ?? ($this->booking->booking_passengers->first()?->full_name ?? 'Quý khách'));
+        $this->customerPhone = $customerPhone ?? ($this->booking->user->phone ?? '—');
     }
 
     public function envelope(): Envelope
     {
+        $code = str_pad((string) $this->booking->id, 6, '0', STR_PAD_LEFT);
+
+        if ($this->booking->payment_status === 'paid_30') {
+            $subject = "Xác nhận cọc 30% tour thành công - Mã đơn #{$code}";
+        } elseif (in_array($this->booking->payment_status, ['paid_100', 'paid'])) {
+            $subject = "Xác nhận thanh toán 100% tour thành công - Mã đơn #{$code}";
+        } else {
+            $subject = "Xác nhận đặt tour thành công - Mã đơn #{$code}";
+        }
+
         return new Envelope(
-            subject: 'Xác nhận đặt tour thành công - Mã đơn #'.str_pad($this->booking->id, 6, '0', STR_PAD_LEFT),
+            subject: $subject,
         );
     }
 

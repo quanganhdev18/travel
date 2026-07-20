@@ -152,27 +152,7 @@
                                 <input type="email" name="customer_email" class="form-control search-form-control"
                                     value="{{ $user->email }}" required placeholder="email@example.com">
                             </div>
-                            <div class="col-12">
-                                <label for="meeting_point" class="form-label fw-600 text-dark">
-                                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                                    {{ __('Điểm Tập Kết') }}
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <input type="text"
-                                    name="meeting_point"
-                                    id="meeting_point"
-                                    class="form-control search-form-control @error('meeting_point') is-invalid @enderror"
-                                    value="{{ old('meeting_point', $schedule->tour->meeting_point ?? '') }}"
-                                    placeholder="{{ __('Ví dụ: Cổng chính Bến xe Mỹ Đình') }}"
-                                    required>
-
-                                @error('meeting_point')
-                                    <div class="invalid-feedback">
-                                        {{ $message }}
-                                    </div>
-                                @enderror
-                            </div>
+                            <input type="hidden" name="meeting_point" id="meeting_point" value="{{ old('meeting_point', $schedule->tour->meeting_point ?? 'Theo thông báo') }}">
 
 
                           {{-- Số CCCD/Hộ chiếu --}}
@@ -217,7 +197,7 @@
                   @error('passengers.adult.0.date_of_birth') is-invalid @enderror"
            value="{{ old(
                'passengers.adult.0.date_of_birth',
-               $identity->date_of_birth ?? ''
+               isset($identity->date_of_birth) ? \Carbon\Carbon::parse($identity->date_of_birth)->format('Y-m-d') : ''
            ) }}"
            max="{{ \Carbon\Carbon::today()->subYears(18)->format('Y-m-d') }}"
            required
@@ -334,69 +314,10 @@
 
                         <input type="hidden" name="transport_type" id="transport_self" value="self">
 
-
-                        <div class="mb-5">
-                        <h4 class="form-section-title">
-                            <i class="bi bi-airplane"></i>
-                            {{ __('Di Chuyển Đến Điểm Khởi Hành') }}
-                        </h4>
-
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_flight" value="flight">
-                                <label class="transport-option w-100 p-3 text-start" for="transport_flight">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-airplane text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Vé Máy Bay') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_bus" value="bus">
-                                <label class="transport-option w-100 p-3 text-start" for="transport_bus">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-bus-front text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Xe Khách') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <input type="radio" class="btn-check" name="transport_type" id="transport_self" value="self" checked>
-                                <label class="transport-option w-100 p-3 text-start" for="transport_self">
-                                    <div class="d-flex align-items-center">
-                                        <i class="bi bi-car-front text-muted" style="font-size: 28px;"></i>
-                                        <div class="ms-3">
-                                            <div class="fw-bold fs-6 text-dark">{{ __('Tự Túc') }}</div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
                         <!-- Vùng hiển thị kết quả phương tiện (AJAX) -->
                         <div id="transport_options_container" style="display: none;" class="p-4 bg-light rounded border">
-                            <div class="mb-4 pb-3 border-bottom">
-                                <label class="form-label fw-bold"><i class="bi bi-geo-alt-fill text-danger me-2"></i>{{ __('Chọn điểm xuất phát của bạn') }}</label>
-                                <select id="customer_origin_select" class="form-select form-select-lg border-primary shadow-sm" style="max-width: 400px;">
-                                    <option value="HAN">{{ __('Hà Nội (HAN)') }}</option>
-                                    <option value="SGN" selected>{{ __('TP. Hồ Chí Minh (SGN)') }}</option>
-                                    <option value="DAD">{{ __('Đà Nẵng (DAD)') }}</option>
-                                    <option value="HPH">{{ __('Hải Phòng (HPH)') }}</option>
-                                    <option value="VCA">{{ __('Cần Thơ (VCA)') }}</option>
-                                    <option value="PQC">{{ __('Phú Quốc (PQC)') }}</option>
-                                </select>
-                            </div>
-                            <div id="transport_loading" style="display: none;" class="text-center py-4">
-                                <div class="spinner-border text-primary" role="status"></div>
-                                <div class="mt-2 text-muted">{{ __('Đang tìm kiếm chuyến đi phù hợp nhất...') }}</div>
-                            </div>
                             <div id="transport_results"></div>
                         </div>
-                    </div>
 
 
                     @if($schedule->tour->tickets && $schedule->tour->tickets->isNotEmpty())
@@ -688,10 +609,6 @@
 
                 <!-- Total Price -->
                 <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="transport_fee_row" style="display: none !important;">
-                        <span class="text-muted fw-500">{{ __('Phí di chuyển:') }}</span>
-                        <strong class="text-dark" id="display_transport_price">0 đ</strong>
-                    </div>
                     <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" id="ticket_fee_row" style="display: none !important;">
                         <span class="text-muted fw-500">{{ __('Vé tham quan:') }}</span>
                         <strong class="text-dark" id="display_ticket_price">0 đ</strong>
@@ -878,10 +795,6 @@
         $departureDate = \Carbon\Carbon::parse($schedule->departure_date)->format('Y-m-d');
     @endphp
 
-
-
-
-=======
     const transportRadios = document.querySelectorAll('input[name="transport_type"]');
     const transportContainer = document.getElementById('transport_options_container');
     const transportLoading = document.getElementById('transport_loading');
@@ -892,9 +805,7 @@
     const inputTransportData = document.getElementById('input_transport_data');
     const inputTotalPrice = document.getElementById('input_total_price');
 
-    const displayTransportPrice = document.getElementById('display_transport_price');
     const displayTotalPrice = document.getElementById('display_total_price');
-    const transportFeeRow = document.getElementById('transport_fee_row');
 
     const displayTicketPrice = document.getElementById('display_ticket_price');
     const ticketFeeRow = document.getElementById('ticket_fee_row');
@@ -930,23 +841,12 @@
     function updateTotalDisplay(transportPrice = currentTransportPrice, ticketPrice = currentTicketPrice) {
         currentTransportPrice = transportPrice;
         currentTicketPrice = ticketPrice;
-
-
         const finalPrice = Math.max(0, baseTourPrice + transportPrice + ticketPrice + currentAddonPrice - currentCouponDiscount);
-
-
-
-        const finalPrice = baseTourPrice + transportPrice + ticketPrice + currentAddonPrice;
 
         inputTransportPrice.value = transportPrice;
         inputTotalPrice.value = finalPrice;
 
-        if (transportPrice > 0) {
-            transportFeeRow.style.setProperty('display', 'flex', 'important');
-            displayTransportPrice.textContent = formatCurrencyDynamic(transportPrice);
-        } else {
-            transportFeeRow.style.setProperty('display', 'none', 'important');
-        }
+
 
         if (ticketPrice > 0) {
             ticketFeeRow.style.setProperty('display', 'flex', 'important');
@@ -1172,7 +1072,6 @@
             dobYear.appendChild(option);
         }
 
-
         // Initialize from hidden input
         if (dobHidden.value) {
             const parts = dobHidden.value.split('-');
@@ -1180,157 +1079,6 @@
                 dobYear.value = parts[0];
                 dobMonth.value = parts[1];
                 dobDay.value = parts[2];
-=======
-        transportContainer.style.display = 'block';
-        transportLoading.style.display = 'block';
-        transportResults.innerHTML = '';
-
-        const customerOrigin = document.getElementById('customer_origin_select').value;
-        const flightDestination = '{{ $tourDepartureCode }}';
-
-        if (selectedRadio.value === 'flight') {
-            // Fetch Flight
-            fetch(`/api/flights/search?passengers=${totalPersonsCount}&origin=${customerOrigin}&destination=${flightDestination}&departure_date={{ $departureDate }}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        transportLoading.style.display = 'none';
-                        let tourDepartureTimeStr = '{{ $schedule->tour->departure_time }}';
-                        let tourDepartureDateStr = '{{ \Carbon\Carbon::parse($schedule->departure_date)->format("Y-m-d") }}';
-                        let tourDepartureDateTime = tourDepartureTimeStr ? new Date(`${tourDepartureDateStr}T${tourDepartureTimeStr}`) : null;
-
-                        let validOffers = (data.data || []).filter(offer => {
-                            let slice = offer.slices[0];
-                            if (!slice) return false;
-                            let segmentLast = slice.segments[slice.segments.length - 1];
-                            let arrivingAt = new Date(segmentLast.arriving_at);
-
-                            if (tourDepartureDateTime) {
-                                let diffHours = (tourDepartureDateTime.getTime() - arrivingAt.getTime()) / (1000 * 60 * 60);
-                                if (diffHours < 2) return false;
-                            }
-                            return true;
-                        });
-
-                        if(data.success && validOffers.length > 0) {
-                            let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Bay") }}</h5>';
-                            validOffers.forEach(offer => {
-                                let priceVND = parseFloat(offer.total_amount) * 25000;
-                                if (offer.total_currency === 'VND') {
-                                    priceVND = parseFloat(offer.total_amount);
-                                }
-
-                                let slice = offer.slices[0];
-                                let segmentFirst = slice.segments[0];
-                                let segmentLast = slice.segments[slice.segments.length - 1];
-
-                                let departTime = new Date(segmentFirst.departing_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                                let arriveTime = new Date(segmentLast.arriving_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                                let departDate = new Date(segmentFirst.departing_at).toLocaleDateString('vi-VN');
-                                let arriveDate = new Date(segmentLast.arriving_at).toLocaleDateString('vi-VN');
-
-                                let flightNumber = segmentFirst.operating_carrier_flight_number || segmentFirst.marketing_carrier_flight_number || '';
-                                let carrierCode = (segmentFirst.operating_carrier && segmentFirst.operating_carrier.iata_code) ||
-                                                  (segmentFirst.marketing_carrier && segmentFirst.marketing_carrier.iata_code) || '';
-                                let flightCode = carrierCode ? (carrierCode + ' ' + flightNumber).trim() : flightNumber;
-                                if (!flightCode) flightCode = offer.owner.name;
-
-                                let dur = slice.duration || '';
-                                let hMatch = dur.match(/(\d+)H/);
-                                let mMatch = dur.match(/(\d+)M/);
-                                let durationStr = (hMatch ? hMatch[1] + 'h ' : '') + (mMatch ? mMatch[1] + 'm' : '0m');
-
-                                let originCode = slice.origin.iata_code || '';
-                                let destCode = slice.destination.iata_code || '';
-
-                                let dataStr = encodeURIComponent(JSON.stringify({
-                                    offer_id: offer.id,
-                                    provider: offer.owner.name,
-                                    price: priceVND
-                                }));
-
-                                html += `
-                                <div class="card mb-3 transport-item-card position-relative transition-all" style="cursor:pointer; border-width: 2px;" onclick="selectTransportOption(${priceVND}, '${dataStr}')">
-                                    <div class="selected-icon position-absolute top-0 end-0 mt-2 me-2 text-primary" style="display:none; font-size: 1.5rem;">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div class="fw-bold text-primary">
-                                                <i class="bi bi-airplane-engines me-2"></i>${offer.owner.name}
-                                                <span class="badge bg-light text-dark ms-2 border">${flightCode}</span>
-                                            </div>
-                                            <div class="fw-bold text-danger fs-5">+ ${formatCurrencyDynamic(priceVND)}</div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3">
-                                            <div class="text-center">
-                                                <div class="fw-bold fs-4 text-dark lh-1 mb-1">${departTime}</div>
-                                                <div class="small fw-500 text-muted">${originCode}</div>
-                                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">${departDate}</div>
-                                            </div>
-                                            <div class="text-center flex-grow-1 px-4">
-                                                <div class="small text-muted mb-2 fw-500">${durationStr}</div>
-                                                <div class="position-relative w-100" style="height: 2px; background-color: #dee2e6;">
-                                                    <i class="bi bi-airplane-fill text-primary position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f8f9fa; padding: 0 5px;"></i>
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="fw-bold fs-4 text-dark lh-1 mb-1">${arriveTime}</div>
-                                                <div class="small fw-500 text-muted">${destCode}</div>
-                                                <div class="small text-muted mt-1" style="font-size: 0.75rem;">${arriveDate}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                `;
-                            });
-                            transportResults.innerHTML = html;
-                        } else {
-                            const errorMsg = data.message ? data.message : '{{ __("Không tìm thấy chuyến bay mẫu phù hợp.") }}';
-                            transportResults.innerHTML = `<div class="alert alert-warning">${errorMsg}</div>`;
-                        }
-                    })
-                    .catch(err => {
-                        transportLoading.style.display = 'none';
-                        transportResults.innerHTML = '<div class="alert alert-danger">{{ __("Lỗi kết nối khi tìm chuyến bay.") }}</div>';
-                    });
-            } else if (selectedRadio.value === 'bus') {
-                // Mock Bus Data
-                setTimeout(() => {
-                    transportLoading.style.display = 'none';
-                    let buses = [
-                        { id: 'b1', name: 'Nhà Xe Phương Trang', time: '20:00', basePrice: 400000, price: 400000 * totalPersonsCount },
-                        { id: 'b2', name: 'Nhà Xe Hải Vân', time: '21:30', basePrice: 350000, price: 350000 * totalPersonsCount }
-                    ];
-
-                    let html = '<h5 class="fw-bold mb-3">{{ __("Chọn Chuyến Xe") }}</h5>';
-                    buses.forEach(bus => {
-                        let dataStr = encodeURIComponent(JSON.stringify({
-                            bus_id: bus.id,
-                            provider: bus.name,
-                            time: bus.time,
-                            price: bus.price
-                        }));
-
-                        html += `
-                        <div class="card mb-3 transport-item-card position-relative transition-all" style="cursor:pointer; border-width: 2px;" onclick="selectTransportOption(${bus.price}, '${dataStr}')">
-                            <div class="selected-icon position-absolute top-0 end-0 mt-2 me-2 text-primary" style="display:none; font-size: 1.5rem;">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </div>
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <div>
-                                    <div class="fw-bold text-primary"><i class="bi bi-bus-front"></i> ${bus.name}</div>
-                                    <div class="small text-muted">{{ __("Khởi hành:") }} ${bus.time}</div>
-                                </div>
-                                <div class="fw-bold text-danger fs-5 text-end">
-                                    + ${formatCurrencyDynamic(bus.basePrice)} <span class="fs-6 text-muted fw-normal">/người</span>
-                                </div>
-                            </div>
-                        </div>
-                        `;
-                    });
-                    transportResults.innerHTML = html;
-                }, 800);
-
             }
         } else {
             // Default to youngest 18-year-old
@@ -1343,7 +1091,8 @@
             } else {
                 dobHidden.value = '';
             }
-            document.getElementById('dob-error').style.display = 'none';
+            const dobError = document.getElementById('dob-error');
+            if (dobError) dobError.style.display = 'none';
         };
 
         dobDay.addEventListener('change', updateHiddenDob);
@@ -1393,13 +1142,11 @@
             });
 
             if(isValid) {
-
                 // Add validation for age >= 18 in Step 1
                 if (currentStep.id === 'step-panel-1') {
-                    const dobVal = document.getElementById('date_of_birth').value;
-                    const dobError = document.getElementById('dob-error');
-                    if (dobVal) {
-                        const dobDate = new Date(dobVal);
+                    const dobInput = document.getElementById('date_of_birth');
+                    if (dobInput && dobInput.value) {
+                        const dobDate = new Date(dobInput.value);
                         const today = new Date();
                         let age = today.getFullYear() - dobDate.getFullYear();
                         const m = today.getMonth() - dobDate.getMonth();
@@ -1407,36 +1154,27 @@
                             age--;
                         }
                         if (age < 18) {
-                            dobError.style.display = 'block';
+                            dobInput.setCustomValidity('Bạn phải đủ 18 tuổi mới được đặt tour.');
+                            dobInput.reportValidity();
                             return;
                         } else {
-                            dobError.style.display = 'none';
+                            dobInput.setCustomValidity('');
                         }
-                    } else {
-                        return; // Let HTML5 validation handle empty
-
-                const nextId = this.dataset.next;
-
-                // Add validation for Transport selection in Step 2
-                if (currentStep.id === 'step-panel-2') {
-                    const selectedTransport = document.querySelector('input[name="transport_type"]:checked').value;
-                    if ((selectedTransport === 'flight' || selectedTransport === 'bus') && !inputTransportData.value) {
-                        alert('Vui lòng click chọn một chuyến bay/xe khách cụ thể hoặc chọn phương thức Tự Túc trước khi tiếp tục.');
-                        return;
-
                     }
                 }
 
                 const nextId = this.dataset.next;
 
-                // Remove transport validation as it is hidden now
-                // if (currentStep.id === 'step-panel-2') {
-                //     const selectedTransport = document.querySelector('input[name="transport_type"]').value;
-                //     if ((selectedTransport === 'flight' || selectedTransport === 'bus') && !inputTransportData.value) {
-                //         alert('Vui lòng click chọn một chuyến bay/xe khách cụ thể hoặc chọn phương thức Tự Túc trước khi tiếp tục.');
-                //         return;
-                //     }
-                // }
+                // Add validation for Transport selection in Step 2 if flight/bus options exist and are selected
+                if (currentStep.id === 'step-panel-2') {
+                    const checkedTransport = document.querySelector('input[name="transport_type"]:checked');
+                    const selectedTransport = checkedTransport ? checkedTransport.value : 'self';
+                    if ((selectedTransport === 'flight' || selectedTransport === 'bus') && typeof inputTransportData !== 'undefined' && !inputTransportData.value) {
+                        alert('Vui lòng click chọn một chuyến bay/xe khách cụ thể hoặc chọn phương thức Tự Túc trước khi tiếp tục.');
+                        return;
+                    }
+                }
+
                 document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
                 document.getElementById('step-panel-' + nextId).classList.add('active');
                 document.querySelectorAll('.wizard-step').forEach(s => {
@@ -1801,8 +1539,19 @@
                 } else if (type === 'checkbox') {
                     // Xử lý nếu có checkbox (hiện tại form ít dùng checkbox mảng)
                 } else {
-                    if (inputs[0].value !== value) {
-                        inputs[0].value = value;
+                    let valToRestore = value;
+                    if (inputs[0].type === 'date') {
+                        const minVal = inputs[0].getAttribute('min');
+                        const maxVal = inputs[0].getAttribute('max');
+                        if (minVal && valToRestore < minVal) {
+                            valToRestore = minVal;
+                        }
+                        if (maxVal && valToRestore > maxVal) {
+                            valToRestore = maxVal;
+                        }
+                    }
+                    if (inputs[0].value !== valToRestore) {
+                        inputs[0].value = valToRestore;
                         inputs[0].dispatchEvent(new Event('input', {bubbles:true}));
                         inputs[0].dispatchEvent(new Event('change', {bubbles:true}));
                         restoredCount++;
@@ -1841,7 +1590,40 @@
         }
     });
 
-    checkoutForm.addEventListener('submit', function() {
+    checkoutForm.addEventListener('submit', function(e) {
+        const allInputs = checkoutForm.querySelectorAll('input, select, textarea');
+        let firstInvalid = null;
+        for (const input of allInputs) {
+            if (input.checkValidity && !input.checkValidity()) {
+                if (!firstInvalid) {
+                    firstInvalid = input;
+                }
+            }
+        }
+
+        if (firstInvalid) {
+            e.preventDefault();
+            const panel = firstInvalid.closest('.wizard-panel');
+            if (panel) {
+                const panelId = panel.id.replace('step-panel-', '');
+                document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+                panel.classList.add('active');
+                document.querySelectorAll('.wizard-step').forEach(s => {
+                    const stepNum = parseInt(s.id.replace('step-nav-', ''));
+                    s.classList.remove('active');
+                    if(stepNum < panelId) s.classList.add('completed');
+                    if(stepNum == panelId) s.classList.add('active');
+                });
+            }
+            setTimeout(() => {
+                firstInvalid.focus();
+                if (typeof firstInvalid.reportValidity === 'function') {
+                    firstInvalid.reportValidity();
+                }
+            }, 100);
+            return false;
+        }
+
         localStorage.removeItem(DRAFT_KEY);
     });
 

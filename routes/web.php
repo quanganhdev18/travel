@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\AiTranslationController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
 use App\Http\Controllers\Guide\ScheduleController;
+use App\Http\Controllers\Guide\TourReportController;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 
@@ -143,6 +145,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
         ->name('frontend.tours.booking_success');
 
+    Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
+        ->name('frontend.tours.booking_status');
+
+    // Demo Bar Routes
+    Route::post('/demo/bookings/{id}/simulate-payment', [DemoController::class, 'simulatePayment'])
+        ->name('demo.bookings.simulate_payment');
+
+    Route::post('/demo/bookings/{id}/fast-forward-cancel', [DemoController::class, 'fastForwardCancel'])
+        ->name('demo.bookings.fast_forward_cancel');
+
     // Đặt vé máy bay
     Route::get('/flights/checkout', [FlightController::class, 'checkout'])
         ->name('frontend.flights.checkout');
@@ -222,6 +234,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
         ->name('admin.bookings.index');
+
+    Route::get('/bookings/live-statuses', [BookingController::class, 'liveStatuses'])
+        ->name('admin.bookings.live_statuses');
 
     // Quản lý tài khoản (Users)
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
@@ -389,6 +404,9 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/schedules/{schedule}/activities/{activity}/toggle-checkin', [ScheduleController::class, 'toggleActivityCheckin'])
         ->name('guide.activities.toggle_checkin');
 
+    Route::post('/schedules/{schedule}/activities/{activity}/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'togglePassengerActivityCheckin'])
+        ->name('guide.activities.passengers.toggle_checkin');
+
     Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
         ->name('guide.passengers.update_note');
 
@@ -410,15 +428,15 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/schedules/{schedule}/passengers/{passenger}/free-time', [ScheduleController::class, 'updateFreeTime'])->name('guide.passengers.free_time');
 
     // Guide Reports
-    Route::get('/schedules/{schedule}/report', [\App\Http\Controllers\Guide\TourReportController::class, 'create'])->name('guide.reports.create');
-    Route::post('/schedules/{schedule}/report', [\App\Http\Controllers\Guide\TourReportController::class, 'store'])->name('guide.reports.store');
+    Route::get('/schedules/{schedule}/report', [TourReportController::class, 'create'])->name('guide.reports.create');
+    Route::post('/schedules/{schedule}/report', [TourReportController::class, 'store'])->name('guide.reports.store');
 });
 
 // Thêm Admin TourReport
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/tour-reports', [\App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
-    Route::get('/tour-reports/{report}', [\App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
-    Route::post('/tour-reports/{report}/approve', [\App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
+    Route::get('/tour-reports', [App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
+    Route::get('/tour-reports/{report}', [App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
+    Route::post('/tour-reports/{report}/approve', [App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

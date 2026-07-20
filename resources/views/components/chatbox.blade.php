@@ -334,7 +334,21 @@
         let starClass = msg.is_important ? 'bi-star-fill text-warning' : 'bi-star text-muted';
         let starHtml = '<div class="msg-star-btn" onclick="toggleImportantUser('+msg.id+', this)"><i class="bi '+starClass+'"></i></div>';
 
-        div.innerHTML = '<div class="msg-bubble shadow-sm">' + starHtml + contentHtml + '</div><div class="msg-time">' + timeStr + '</div>';
+        let senderLabel = '';
+        if (isSent) {
+            senderLabel = 'Tôi';
+        } else {
+            if (msg.sender) {
+                senderLabel = msg.sender.name + ' (NV Hỗ trợ)';
+            } else if (msg.is_admin_sender) {
+                senderLabel = 'NV Hỗ trợ';
+            } else {
+                senderLabel = 'Khách hàng';
+            }
+        }
+        let labelHtml = '<div class="small fw-bold mb-1 opacity-75 ' + (isSent ? 'text-white-50 text-end' : 'text-primary') + '" style="font-size: 0.7rem;">' + senderLabel + '</div>';
+
+        div.innerHTML = '<div class="msg-bubble shadow-sm">' + starHtml + labelHtml + contentHtml + '</div><div class="msg-time">' + timeStr + '</div>';
         container.appendChild(div);
         
         // Clear float
