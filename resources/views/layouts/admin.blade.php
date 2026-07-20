@@ -332,13 +332,31 @@
 @php
     $unreadChatCount = 0;
     if(Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff'])) {
-        $unreadChatCount = \App\Models\Message::whereNull('read_at')
-            ->where('sender_id', '!=', Auth::id())
-            ->whereHas('sender', function($q) {
-                $q->whereDoesntHave('roles', function($r) {
-                    $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
-                });
-            })->count();
+        $user = Auth::user();
+        if ($user->hasAnyRole(['Super Admin', 'Admin', 'Staff'])) {
+            $unreadChatCount = \App\Models\Message::whereNull('read_at')
+                ->where('sender_id', '!=', $user->id)
+                ->whereHas('sender', function($q) {
+                    $q->whereDoesntHave('roles', function($r) {
+                        $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                    });
+                })->count();
+        } elseif ($user->hasAnyRole(['cskh'])) {
+            $unreadChatCount = \App\Models\Message::whereNull('read_at')
+                ->where('sender_id', '!=', $user->id)
+                ->whereHas('sender', function($q) {
+                    $q->whereDoesntHave('roles', function($r) {
+                        $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                    });
+                })
+                ->whereHas('conversation', function($q) use ($user) {
+                    $q->where('status', 'open')
+                      ->where(function($sq) use ($user) {
+                          $sq->where('cskh_id', $user->id)
+                            ->orWhereNull('cskh_id');
+                      });
+                })->count();
+        }
     }
 
     $unassignedToursCount = 0;

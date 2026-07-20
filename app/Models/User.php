@@ -115,4 +115,17 @@ class User extends Authenticatable
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'last_seen_at' => 'datetime',
+            'is_active' => 'boolean',
+        ];
+    }
 }

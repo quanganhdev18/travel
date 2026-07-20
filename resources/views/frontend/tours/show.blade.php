@@ -127,7 +127,51 @@
 
     .booking-sidebar {
         position: sticky;
-        top: 100px;
+        top: 85px;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: calc(100vh - 110px);
+        overflow-y: auto;
+    }
+
+    .floating-booking-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.05);
+        padding: 14px 24px;
+        z-index: 1040;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    @media (max-height: 780px), (max-width: 991.98px) {
+        .booking-sidebar {
+            position: static !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+            box-shadow: none !important;
+            border: 1px solid #e2e8f0 !important;
+            margin-top: 30px;
+        }
+        
+        .floating-booking-bar {
+            display: flex;
+        }
+        
+        .live-chatbox {
+            bottom: 95px !important;
+        }
+        
+        body {
+            padding-bottom: 85px;
+        }
     }
 
     .booking-price {
@@ -646,7 +690,7 @@
             </div>
 
             <div class="col-lg-4">
-                <div class="premium-card booking-sidebar p-4 p-md-5 reveal-up">
+                <div class="premium-card booking-sidebar p-4 reveal-up">
                     <div class="d-flex flex-column mb-4 pb-3 border-bottom">
                         <div class="d-flex align-items-end mb-2">
                             <div class="booking-price">
@@ -901,25 +945,6 @@
                                             </div>
                                         @endif
 
-                                        @auth
-                                            @php
-                                                $isFavorite = \App\Models\Favorite::where('user_id', auth()->id())
-                                                    ->where('tour_id', $relatedTour->id)
-                                                    ->exists();
-                                            @endphp
-                                            <form action="{{ route('frontend.favorites.toggle', $relatedTour->id) }}" method="POST"
-                                                class="favorite-form" onclick="event.stopPropagation();">
-                                                @csrf
-                                                <button type="submit" class="favorite-btn {{ $isFavorite ? 'active' : '' }}">
-                                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
-                                                </button>
-                                            </form>
-                                        @else
-                                            <div onclick="event.stopPropagation(); event.preventDefault(); window.location.href='{{ route('login') }}';" class="favorite-form favorite-btn" style="display: flex; align-items: center; justify-content: center;">
-                                                <i class="bi bi-heart"></i>
-                                            </div>
-                                        @endauth
-
                                         @php
                                             $rPrimaryImage = $relatedTour->tour_images->where('is_primary', 1)->first()
                                                          ?? $relatedTour->tour_images->first();
@@ -1159,4 +1184,40 @@
         animation: spin 1s linear infinite;
     }
 </style>
+
+<div class="floating-booking-bar" id="floatingBookingBar">
+    <div class="d-flex flex-column">
+        <div class="small text-muted mb-1" style="font-size: 0.75rem;">{{ __('Giá từ:') }}</div>
+        <div class="d-flex align-items-baseline gap-1">
+            <strong class="fs-4 text-primary" style="font-weight: 800;">{{ format_currency($tour->base_price ?? 0) }}</strong>
+            <span class="small text-muted" style="font-size: 0.75rem;">/ {{ __('người lớn') }}</span>
+        </div>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary px-4 py-2 rounded-pill fw-bold d-flex align-items-center gap-2 shadow-sm" onclick="scrollToBookingSection()">
+            <i class="bi bi-calendar-check"></i> {{ __('Chọn lịch trình & Đặt') }}
+        </button>
+    </div>
+</div>
+
+<script>
+    function scrollToBookingSection() {
+        const sidebar = document.querySelector('.booking-sidebar');
+        if (sidebar) {
+            sidebar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Flash/highlight the booking sidebar card to draw attention
+            sidebar.style.transition = 'all 0.5s ease';
+            sidebar.style.transform = 'scale(1.03)';
+            sidebar.style.boxShadow = '0 10px 30px rgba(0, 124, 232, 0.25)';
+            sidebar.style.borderColor = 'var(--primary-color)';
+            
+            setTimeout(() => {
+                sidebar.style.transform = 'scale(1)';
+                sidebar.style.boxShadow = '';
+                sidebar.style.borderColor = '';
+            }, 800);
+        }
+    }
+</script>
 @endsection

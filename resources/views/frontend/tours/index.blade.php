@@ -46,7 +46,7 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành từ') }}</label>
+                    <label class="form-label text-muted small fw-bold">{{ __('Ngày khởi hành vào') }}</label>
                     <input type="date" name="departure_date"
                         class="form-control search-form-control {{ isset($filterErrors['departure_date']) ? 'is-invalid' : '' }}"
                         value="{{ request('departure_date') ?? request('date') }}" min="{{ date('Y-m-d') }}">
