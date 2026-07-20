@@ -29,8 +29,9 @@ class TourController extends Controller
     {
         $provinces = Province::all();
         $categories = Category::all();
+        $destinations = Destination::all();
 
-        return view('admin.tours.create', compact('provinces', 'categories'));
+        return view('admin.tours.create', compact('provinces', 'categories', 'destinations'));
     }
 
     public function store(Request $request)
@@ -51,10 +52,8 @@ class TourController extends Controller
             'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
             'child_price' => 'nullable|numeric',
-            'departure_province_id' => 'required|exists:provinces,id',
-            'departure_ward_id' => 'required|exists:wards,id',
-            'destination_province_id' => 'required|exists:provinces,id',
-            'destination_ward_id' => 'required|exists:wards,id',
+            'meeting_point' => 'required|string|max:255',
+            'destination_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
@@ -76,10 +75,12 @@ class TourController extends Controller
         ];
         $tour->base_price = $request->base_price;
         $tour->child_price = $request->child_price;
-        $tour->departure_province_id = $request->departure_province_id;
-        $tour->departure_ward_id = $request->departure_ward_id;
-        $tour->destination_province_id = $request->destination_province_id;
-        $tour->destination_ward_id = $request->destination_ward_id;
+        $tour->meeting_point = $request->meeting_point;
+        $tour->departure_province_id = null;
+        $tour->departure_ward_id = null;
+        $tour->destination_id = $request->destination_id;
+        $tour->destination_province_id = null;
+        $tour->destination_ward_id = null;
         if ($request->filled('departure_hour') && $request->filled('departure_minute')) {
             $tour->departure_time = sprintf('%02d:%02d:00', $request->departure_hour, $request->departure_minute);
         } else {
@@ -186,11 +187,12 @@ class TourController extends Controller
         $tour = Tour::with('categories')->findOrFail($id);
         $provinces = Province::all();
         $categories = Category::all();
+        $destinations = Destination::all();
 
         // Lấy danh sách ID danh mục mà tour đang có để check vào checkbox
         $tourCategoryIds = $tour->categories->pluck('id')->toArray();
 
-        return view('admin.tours.edit', compact('tour', 'provinces', 'categories', 'tourCategoryIds'));
+        return view('admin.tours.edit', compact('tour', 'provinces', 'categories', 'tourCategoryIds', 'destinations'));
     }
 
     public function update(Request $request, $id)
@@ -212,10 +214,8 @@ class TourController extends Controller
             'title.zh' => 'nullable|max:255',
             'base_price' => 'required|numeric',
             'child_price' => 'nullable|numeric',
-            'departure_province_id' => 'required|exists:provinces,id',
-            'departure_ward_id' => 'required|exists:wards,id',
-            'destination_province_id' => 'required|exists:provinces,id',
-            'destination_ward_id' => 'required|exists:wards,id',
+            'meeting_point' => 'required|string|max:255',
+            'destination_id' => 'required|exists:destinations,id',
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
@@ -235,10 +235,12 @@ class TourController extends Controller
         ];
         $tour->base_price = $request->base_price;
         $tour->child_price = $request->child_price;
-        $tour->departure_province_id = $request->departure_province_id;
-        $tour->departure_ward_id = $request->departure_ward_id;
-        $tour->destination_province_id = $request->destination_province_id;
-        $tour->destination_ward_id = $request->destination_ward_id;
+        $tour->meeting_point = $request->meeting_point;
+        $tour->departure_province_id = null;
+        $tour->departure_ward_id = null;
+        $tour->destination_id = $request->destination_id;
+        $tour->destination_province_id = null;
+        $tour->destination_ward_id = null;
         if ($request->filled('departure_hour') && $request->filled('departure_minute')) {
             $tour->departure_time = sprintf('%02d:%02d:00', $request->departure_hour, $request->departure_minute);
         } else {

@@ -19,3 +19,6 @@ Schedule::command('tours:update-lifecycle')->daily();
 
 // Tự động phân phối lại cuộc trò chuyện nếu nhân viên phụ trách đã offline hoặc ngưng hoạt động
 Schedule::command('chat:re-route-offline')->everyMinute();
+
+// Tự động hủy đơn hàng chưa thanh toán quá 30 phút
+Schedule::command('bookings:cancel-unpaid')->everyMinute();

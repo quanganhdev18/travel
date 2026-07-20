@@ -207,8 +207,8 @@
                 </td>
             </tr>
             <tr>
-                <td class="t-label">Điểm khởi hành</td>
-                <td class="t-value">{{ $tour->departure_location->name ?? $schedule->checkin_location ?? $tour->meeting_point ?? 'Theo lịch trình' }}</td>
+                <td class="t-label">Điểm tập kết</td>
+                <td class="t-value">{{ $tour->meeting_point ?? $schedule->checkin_location ?? 'Theo lịch trình' }}</td>
             </tr>
             <tr>
                 <td class="t-label">Phương tiện</td>

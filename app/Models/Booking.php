@@ -91,6 +91,7 @@ class Booking extends Model
         'paid_amount',
         'payment_step',
         'meeting_point',
+        'cancel_reason',
     ];
 
     public function user()
