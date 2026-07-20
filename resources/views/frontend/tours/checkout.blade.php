@@ -197,7 +197,7 @@
                   @error('passengers.adult.0.date_of_birth') is-invalid @enderror"
            value="{{ old(
                'passengers.adult.0.date_of_birth',
-               $identity->date_of_birth ?? ''
+               isset($identity->date_of_birth) ? \Carbon\Carbon::parse($identity->date_of_birth)->format('Y-m-d') : ''
            ) }}"
            max="{{ \Carbon\Carbon::today()->subYears(18)->format('Y-m-d') }}"
            required
@@ -1539,8 +1539,19 @@
                 } else if (type === 'checkbox') {
                     // Xử lý nếu có checkbox (hiện tại form ít dùng checkbox mảng)
                 } else {
-                    if (inputs[0].value !== value) {
-                        inputs[0].value = value;
+                    let valToRestore = value;
+                    if (inputs[0].type === 'date') {
+                        const minVal = inputs[0].getAttribute('min');
+                        const maxVal = inputs[0].getAttribute('max');
+                        if (minVal && valToRestore < minVal) {
+                            valToRestore = minVal;
+                        }
+                        if (maxVal && valToRestore > maxVal) {
+                            valToRestore = maxVal;
+                        }
+                    }
+                    if (inputs[0].value !== valToRestore) {
+                        inputs[0].value = valToRestore;
                         inputs[0].dispatchEvent(new Event('input', {bubbles:true}));
                         inputs[0].dispatchEvent(new Event('change', {bubbles:true}));
                         restoredCount++;
@@ -1579,7 +1590,40 @@
         }
     });
 
-    checkoutForm.addEventListener('submit', function() {
+    checkoutForm.addEventListener('submit', function(e) {
+        const allInputs = checkoutForm.querySelectorAll('input, select, textarea');
+        let firstInvalid = null;
+        for (const input of allInputs) {
+            if (input.checkValidity && !input.checkValidity()) {
+                if (!firstInvalid) {
+                    firstInvalid = input;
+                }
+            }
+        }
+
+        if (firstInvalid) {
+            e.preventDefault();
+            const panel = firstInvalid.closest('.wizard-panel');
+            if (panel) {
+                const panelId = panel.id.replace('step-panel-', '');
+                document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+                panel.classList.add('active');
+                document.querySelectorAll('.wizard-step').forEach(s => {
+                    const stepNum = parseInt(s.id.replace('step-nav-', ''));
+                    s.classList.remove('active');
+                    if(stepNum < panelId) s.classList.add('completed');
+                    if(stepNum == panelId) s.classList.add('active');
+                });
+            }
+            setTimeout(() => {
+                firstInvalid.focus();
+                if (typeof firstInvalid.reportValidity === 'function') {
+                    firstInvalid.reportValidity();
+                }
+            }, 100);
+            return false;
+        }
+
         localStorage.removeItem(DRAFT_KEY);
     });
 
