@@ -51,6 +51,8 @@ class Booking extends Model
 
     public const PAYMENT_PENDING = 'pending';
 
+    public const PAYMENT_PAID = 'paid';
+
     public const PAYMENT_PAID_30 = 'paid_30';
 
     public const PAYMENT_PAID_100 = 'paid_100';

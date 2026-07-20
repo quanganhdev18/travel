@@ -3,10 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Events\SeatAvailabilityUpdated;
+use App\Mail\TourBookingCancelledMail;
 use App\Models\Booking;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class CancelUnpaidBookingsCommand extends Command
 {
@@ -32,7 +34,7 @@ class CancelUnpaidBookingsCommand extends Command
         $cutoffTime = now()->subMinutes(30);
 
         // Lấy danh sách booking chưa thanh toán quá 30 phút
-        $bookings = Booking::with('tour_schedule')
+        $bookings = Booking::with(['tour_schedule.tour', 'user', 'booking_passengers'])
             ->where('payment_status', Booking::PAYMENT_PENDING)
             ->where('booking_status', '!=', 'cancelled')
             ->where('created_at', '<=', $cutoffTime)
@@ -65,6 +67,16 @@ class CancelUnpaidBookingsCommand extends Command
                         broadcast(new SeatAvailabilityUpdated($booking->tour_schedule->id, $booking->tour_schedule->available_seats))->toOthers();
                     }
                 });
+
+                // Gửi email thông báo hủy đơn kèm link đặt lại
+                $email = $booking->user->email ?? null;
+                if ($email) {
+                    try {
+                        Mail::to($email)->send(new TourBookingCancelledMail($booking));
+                    } catch (\Exception $me) {
+                        Log::warning('[bookings:cancel-unpaid] Không thể gửi email hủy đơn #'.$booking->id.': '.$me->getMessage());
+                    }
+                }
 
                 $cancelledCount++;
                 $message = "Đã tự động hủy đơn hàng ID #{$booking->id} do quá hạn thanh toán 30 phút.";

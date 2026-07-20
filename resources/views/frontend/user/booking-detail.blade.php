@@ -53,7 +53,6 @@
             <span class="text-muted small">Mã: <strong>#{{ str_pad($booking->id,6,'0',STR_PAD_LEFT) }}</strong> · {{ $booking->created_at->format('H:i d/m/Y') }}</span>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
-            <span class="status-badge {{ $si['cls'] }}"><i class="bi {{ $si['icon'] }}"></i>{{ $si['label'] }}</span>
             @if(in_array($status,['pending','confirmed']))
             <form method="POST" action="{{ route('user.bookings.cancel',$booking->id) }}"
                 onsubmit="return confirm('Hủy đơn này?')">
@@ -159,16 +158,120 @@
         <div class="info-row">
             <span class="fw-bold text-dark fs-6">
                 <i class="bi bi-wallet2 me-2"></i>
-                Tổng thanh toán
+                Tổng giá trị tour
             </span>
 
-            <span class="fw-bold text-danger"
-                  style="font-size:1.3rem;">
+            <span class="fw-bold text-danger" style="font-size:1.3rem;">
                 {{ number_format($booking->total_price, 0, ',', '.') }}₫
             </span>
         </div>
+
+        @if($booking->payment_status === 'paid_30')
+            <div class="info-row border-top pt-2">
+                <span class="text-success small fw-bold">
+                    <i class="bi bi-check-circle me-1"></i> Đã cọc 30%
+                </span>
+                <span class="fw-bold text-success">
+                    -{{ number_format($booking->paid_amount, 0, ',', '.') }}₫
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="text-danger small fw-bold">
+                    <i class="bi bi-exclamation-circle me-1"></i> Còn lại cần thanh toán (70%)
+                </span>
+                <span class="fw-bold text-danger fs-6">
+                    {{ number_format($booking->total_price - $booking->paid_amount, 0, ',', '.') }}₫
+                </span>
+            </div>
+        @endif
     </div>
 </div>
+
+            {{-- Khối Thanh Toán 70% Còn Lại --}}
+            @if($booking->payment_status === 'paid_30' && !in_array($booking->booking_status, ['cancelled', 'completed']))
+                @php
+                    $remainingAmount = $booking->total_price - $booking->paid_amount;
+                    $bankId = 'BIDV';
+                    $accountNo = '0818802032';
+                    $template = 'compact2';
+                    $accountName = 'TRavelWondel';
+                    $description = "TW{$booking->id}";
+                    $qrUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-{$template}.png?amount=".round($remainingAmount)."&addInfo=".urlencode($description)."&accountName=".urlencode($accountName);
+                @endphp
+
+                <div id="pay70Section" class="detail-card reveal-up border border-primary border-2 shadow-sm">
+                    <div class="detail-card-header bg-primary text-white d-flex align-items-center justify-content-between">
+                        <div class="fw-bold">
+                            <i class="bi bi-credit-card-2-front me-2"></i>Thanh Toán 70% Còn Lại ({{ number_format($remainingAmount, 0, ',', '.') }}₫)
+                        </div>
+                        <span class="badge bg-warning text-dark">Đã cọc 30%</span>
+                    </div>
+                    <div class="detail-card-body">
+                        <p class="text-muted small mb-3">Vui lòng chọn hình thức thanh toán 70% còn lại trước ngày khởi hành để hoàn tất đơn tour của bạn:</p>
+                        
+                        <ul class="nav nav-pills nav-justified mb-3 gap-2" id="pay70Tab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active rounded-pill py-2 fw-bold" id="qr70-tab" data-bs-toggle="pill" data-bs-target="#qr70-pane" type="button" role="tab">
+                                    <i class="bi bi-qr-code-scan me-1"></i> Quét mã VietQR
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-pill py-2 fw-bold" id="vnpay70-tab" data-bs-toggle="pill" data-bs-target="#vnpay70-pane" type="button" role="tab">
+                                    <i class="bi bi-credit-card me-1"></i> Thanh toán Cổng VNPay
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="pay70TabContent">
+                            <!-- VIETQR TAB -->
+                            <div class="tab-pane fade show active text-center" id="qr70-pane" role="tabpanel">
+                                <div class="bg-light p-3 rounded-4 mx-auto" style="max-width: 420px;">
+                                    <h6 class="fw-bold text-primary mb-2"><i class="bi bi-qr-code-scan me-1"></i>Chuyển khoản VietQR Tự Động</h6>
+                                    <img src="{{ $qrUrl }}" alt="VietQR 70%" class="img-fluid rounded border bg-white p-2 mb-3 shadow-sm" style="max-width: 230px;">
+                                    
+                                    <div class="text-start bg-white p-3 rounded border small shadow-sm">
+                                        <div class="d-flex justify-content-between mb-2 border-bottom pb-1">
+                                            <span class="text-muted">Ngân hàng:</span>
+                                            <strong>{{ $bankId }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2 border-bottom pb-1">
+                                            <span class="text-muted">Số tài khoản:</span>
+                                            <strong>{{ $accountNo }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2 border-bottom pb-1">
+                                            <span class="text-muted">Chủ tài khoản:</span>
+                                            <strong>{{ $accountName }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2 border-bottom pb-1">
+                                            <span class="text-muted">Số tiền 70% còn lại:</span>
+                                            <strong class="text-danger fs-6">{{ number_format($remainingAmount, 0, ',', '.') }}₫</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center pt-1">
+                                            <span class="text-muted">Nội dung chuyển khoản:</span>
+                                            <strong class="text-primary font-monospace bg-light px-2 py-1 rounded border">{{ $description }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info small text-start mt-2 mb-0">
+                                        <i class="bi bi-info-circle me-1"></i> Giữ nguyên nội dung <code>{{ $description }}</code> để hệ thống tự động duyệt ngay sau khi nhận được tiền.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- VNPAY TAB -->
+                            <div class="tab-pane fade text-center py-4" id="vnpay70-pane" role="tabpanel">
+                                <div class="bg-light p-4 rounded-4 mx-auto" style="max-width: 420px;">
+                                    <i class="bi bi-shield-check text-success" style="font-size:3rem;"></i>
+                                    <h6 class="fw-bold mt-2 mb-3">Thanh toán an toàn qua Cổng VNPAY</h6>
+                                    <p class="text-muted small mb-3">Chấp nhận thẻ ATM nội địa, QR Banking của tất cả các ngân hàng, Visa/Mastercard.</p>
+                                    <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="btn btn-primary rounded-pill px-4 py-2 w-100 fw-bold">
+                                        <i class="bi bi-box-arrow-up-right me-2"></i>Thanh toán {{ number_format($remainingAmount, 0, ',', '.') }}₫ qua VNPAY
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             {{-- Hành khách --}}
             <div class="detail-card reveal-up">
@@ -275,49 +378,136 @@
 
         </div>
 
-        {{-- Sidebar trạng thái --}}
+        {{-- Sidebar Tiến trình đơn hàng --}}
         <div class="col-lg-4">
             <div class="detail-card reveal-up" style="position:sticky;top:100px;">
-                <div class="detail-card-header">Tiến trình đơn hàng</div>
+                <div class="detail-card-header d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-diagram-3-fill me-2 text-primary"></i>Tiến trình đơn hàng</span>
+                    <span class="badge bg-light text-primary border rounded-pill small">
+                        <span class="spinner-grow spinner-grow-sm text-primary me-1" style="width:0.45rem;height:0.45rem;" role="status"></span> Realtime
+                    </span>
+                </div>
                 <div class="detail-card-body">
                     @php
-                        $steps = [
-                            ['key'=>'pending',  'label'=>'Chờ xác nhận'],
-                            ['key'=>'confirmed','label'=>'Đã xác nhận'],
-                            ['key'=>'paid',     'label'=>'Đã thanh toán'],
-                            ['key'=>'completed','label'=>'Hoàn thành'],
-                        ];
-                        $order = ['pending'=>0,'confirmed'=>1,'paid'=>2,'completed'=>3,'cancelled'=>-1];
-                        $cur   = $order[$status] ?? 0;
+                        $pStatus = $booking->payment_status;
+                        $bStatus = $booking->booking_status;
+                        $tStatus = $booking->tour_status;
+
+                        $isCancelled = in_array($bStatus, ['cancelled']) || in_array($tStatus, ['cancelled_by_customer', 'cancelled_by_admin']) || $pStatus === 'failed';
+
+                        $step1Done = true; // Tạo đơn thành công
+                        
+                        $step2Done = in_array($pStatus, ['paid_30', 'paid_100', 'paid']);
+                        $step2Label = $pStatus === 'paid_30' ? 'Đã cọc 30%' : ($pStatus === 'paid_100' || $pStatus === 'paid' ? 'Đã thanh toán 100%' : 'Chờ thanh toán');
+                        
+                        $step3Done = $step2Done || in_array($bStatus, ['confirmed', 'paid', 'completed']);
+                        
+                        $step4Done = in_array($tStatus, ['checking_in', 'in_progress', 'completed']);
+                        $step4Label = $tStatus === 'checking_in' ? 'Đang check-in' : ($tStatus === 'in_progress' ? 'Đang đi tour' : 'Chuyến đi tour');
+                        
+                        $step5Done = $tStatus === 'completed' || $bStatus === 'completed';
+
+                        if ($step5Done) { $currentStep = 5; }
+                        elseif ($step4Done) { $currentStep = 4; }
+                        elseif ($step3Done) { $currentStep = 3; }
+                        elseif ($step2Done) { $currentStep = 2; }
+                        else { $currentStep = 1; }
                     @endphp
 
-                    @if($status === 'cancelled')
-                        <div class="text-center py-3">
-                            <i class="bi bi-x-circle-fill text-danger" style="font-size:2.5rem;"></i>
-                            <div class="fw-bold text-danger mt-2">Đơn đã bị hủy</div>
-                            @if($booking->cancel_reason)
-                                <div class="text-muted small mt-2">Lý do: {{ $booking->cancel_reason }}</div>
-                            @endif
+                    @if($isCancelled)
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="bi bi-x-circle-fill text-danger" style="font-size:3.5rem;"></i>
+                            </div>
+                            <h5 class="fw-bold text-danger mb-1">Đơn hàng đã bị hủy</h5>
+                            <p class="text-muted small mb-0">{{ $booking->cancel_reason ?? 'Đơn hàng đã quá hạn thanh toán hoặc bị hủy bởi hệ thống.' }}</p>
                         </div>
                     @else
-                        @foreach($steps as $idx => $step)
-                        <div class="d-flex align-items-center gap-3 py-2 {{ !$loop->last?'border-bottom':'' }}">
-                            <div class="step-dot" style="background:{{ $idx<=$cur?'var(--primary-color)':'#e5e7eb' }};">
-                                <i class="bi bi-check text-white" style="font-size:0.85rem;"></i>
+                        <div class="order-steps-vertical">
+                            {{-- Bước 1 --}}
+                            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                <div class="step-dot rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 text-white bg-primary" style="width:30px;height:30px;">
+                                    <i class="bi bi-check-lg fw-bold" style="font-size:0.85rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">Đặt tour thành công</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">{{ $booking->created_at->format('H:i d/m/Y') }}</div>
+                                </div>
+                                @if($currentStep == 1)<span class="ms-auto badge bg-primary text-white rounded-pill px-2 py-1 small">Hiện tại</span>@endif
                             </div>
-                            <span class="{{ $idx<=$cur?'fw-600 text-dark':'text-muted' }}">{{ $step['label'] }}</span>
-                            @if($idx===$cur)<span class="ms-auto badge bg-primary-subtle text-primary rounded-pill small">Hiện tại</span>@endif
+
+                            {{-- Bước 2 --}}
+                            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                <div class="step-dot rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $step2Done ? 'bg-primary text-white' : ($currentStep == 2 ? 'bg-warning text-dark' : 'bg-light text-muted border') }}" style="width:30px;height:30px;">
+                                    @if($step2Done)<i class="bi bi-check-lg fw-bold" style="font-size:0.85rem;"></i>
+                                    @elseif($currentStep == 2)<i class="bi bi-clock-history" style="font-size:0.85rem;"></i>
+                                    @else<i class="bi bi-circle" style="font-size:0.75rem;"></i>@endif
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ $step2Label }}</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">
+                                        @if($pStatus === 'paid_30') Đã cọc 30%, còn 70%
+                                        @elseif($pStatus === 'paid_100' || $pStatus === 'paid') Đã nhận 100% tiền tour
+                                        @else Vui lòng hoàn tất cọc/tiền @endif
+                                    </div>
+                                </div>
+                                @if($currentStep == 2)<span class="ms-auto badge bg-warning text-dark rounded-pill px-2 py-1 small fw-bold">Hiện tại</span>@endif
+                            </div>
+
+                            {{-- Bước 3 --}}
+                            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                <div class="step-dot rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $step3Done ? 'bg-primary text-white' : ($currentStep == 3 ? 'bg-warning text-dark' : 'bg-light text-muted border') }}" style="width:30px;height:30px;">
+                                    @if($step3Done)<i class="bi bi-check-lg fw-bold" style="font-size:0.85rem;"></i>
+                                    @elseif($currentStep == 3)<i class="bi bi-clock-history" style="font-size:0.85rem;"></i>
+                                    @else<i class="bi bi-circle" style="font-size:0.75rem;"></i>@endif
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">Xác nhận giữ chỗ</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">Đã bảo lưu vị trí trên tour</div>
+                                </div>
+                                @if($currentStep == 3)<span class="ms-auto badge bg-primary text-white rounded-pill px-2 py-1 small">Hiện tại</span>@endif
+                            </div>
+
+                            {{-- Bước 4 --}}
+                            <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                <div class="step-dot rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $step4Done ? 'bg-primary text-white' : ($currentStep == 4 ? 'bg-info text-white' : 'bg-light text-muted border') }}" style="width:30px;height:30px;">
+                                    @if($step4Done)<i class="bi bi-check-lg fw-bold" style="font-size:0.85rem;"></i>
+                                    @elseif($currentStep == 4)<i class="bi bi-geo-alt-fill" style="font-size:0.85rem;"></i>
+                                    @else<i class="bi bi-circle" style="font-size:0.75rem;"></i>@endif
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">{{ $step4Label }}</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">
+                                        @if($tStatus === 'checking_in') HDV đang mở Check-in
+                                        @elseif($tStatus === 'in_progress') Đoàn đang tham quan
+                                        @else Ngày đi: {{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }} @endif
+                                    </div>
+                                </div>
+                                @if($currentStep == 4)<span class="ms-auto badge bg-info text-dark rounded-pill px-2 py-1 small fw-bold">Hiện tại</span>@endif
+                            </div>
+
+                            {{-- Bước 5 --}}
+                            <div class="d-flex align-items-center gap-3 py-2">
+                                <div class="step-dot rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 {{ $step5Done ? 'bg-success text-white' : 'bg-light text-muted border' }}" style="width:30px;height:30px;">
+                                    @if($step5Done)<i class="bi bi-trophy-fill" style="font-size:0.85rem;"></i>
+                                    @else<i class="bi bi-circle" style="font-size:0.75rem;"></i>@endif
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark small">Hoàn thành chuyến đi</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">Chuyến đi đã kết thúc tốt đẹp</div>
+                                </div>
+                                @if($currentStep == 5)<span class="ms-auto badge bg-success text-white rounded-pill px-2 py-1 small">Hoàn tất</span>@endif
+                            </div>
                         </div>
-                        @endforeach
                     @endif
 
                     <div class="mt-3 d-grid gap-2">
-                        <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary rounded-3">
+                        <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary rounded-pill">
                             <i class="bi bi-arrow-left me-2"></i>Danh sách đơn
                         </a>
                         @if($tour)
-                        <a href="{{ route('frontend.tours.show',$tour->slug) }}" class="btn btn-outline-primary rounded-3">
-                            <i class="bi bi-eye me-2"></i>Xem tour
+                        <a href="{{ route('frontend.tours.show',$tour->slug) }}" class="btn btn-outline-primary rounded-pill">
+                            <i class="bi bi-eye me-2"></i>Xem thông tin tour
                         </a>
                         @endif
                     </div>
@@ -327,8 +517,49 @@
     </div>
 </div>
 
+<!-- FLOATING ADMIN DEMO TOOLBAR -->
+@if(Auth::check() || config('app.debug'))
+<div id="adminDemoBar" class="position-fixed bottom-0 start-50 translate-middle-x mb-3 z-3 bg-dark text-white p-3 rounded-4 shadow-lg border border-secondary d-flex align-items-center gap-3" style="max-width: 90vw;">
+    <div class="d-flex align-items-center me-2 text-warning fw-bold small">
+        <i class="bi bi-sliders me-1 fs-5"></i> DEMO TOOLBAR
+    </div>
+    <button type="button" id="btnSimulatePay" class="btn btn-sm btn-success rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
+        <i class="bi bi-lightning-charge-fill"></i>
+        <span>⚡ Demo: Giả lập Tiền về (Pay Now)</span>
+    </button>
+    <button type="button" id="btnFastForwardCancel" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
+        <i class="bi bi-fast-forward-fill"></i>
+        <span>⏩ Demo: Tua nhanh 30p & Tự Hủy</span>
+    </button>
+</div>
+@endif
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const bookingId = {{ $booking->id }};
+    const initialPaymentStatus = "{{ $booking->payment_status }}";
+    const initialBookingStatus = "{{ $booking->booking_status }}";
+    const initialTourStatus = "{{ $booking->tour_status }}";
+    const csrfToken = "{{ csrf_token() }}";
+
+    // Realtime Status Polling (Checks payment, booking & tour status)
+    function checkStatus() {
+        fetch(`/tours/booking-status/${bookingId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (
+                    data.payment_status !== initialPaymentStatus ||
+                    data.booking_status !== initialBookingStatus ||
+                    data.tour_status !== initialTourStatus
+                ) {
+                    location.reload();
+                }
+            })
+            .catch(err => console.log('Polling status error', err));
+    }
+
+    setInterval(checkStatus, 3000);
+
     var starRows = document.querySelectorAll('.starRow');
     
     starRows.forEach(function(row) {
@@ -350,6 +581,58 @@ document.addEventListener('DOMContentLoaded', function () {
         
         row.addEventListener('mouseleave', function(){ paint(parseInt(inp.value)||0); });
     });
+
+    // Demo Toolbar Event Listeners
+    const btnPay = document.getElementById('btnSimulatePay');
+    const btnCancel = document.getElementById('btnFastForwardCancel');
+
+    if (btnPay) {
+        btnPay.addEventListener('click', function () {
+            btnPay.disabled = true;
+            btnPay.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
+            
+            fetch(`/demo/bookings/${bookingId}/simulate-payment`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                location.reload();
+            })
+            .catch(err => {
+                alert('Lỗi giả lập thanh toán: ' + err);
+                btnPay.disabled = false;
+            });
+        });
+    }
+
+    if (btnCancel) {
+        btnCancel.addEventListener('click', function () {
+            btnCancel.disabled = true;
+            btnCancel.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang tua nhanh...';
+
+            fetch(`/demo/bookings/${bookingId}/fast-forward-cancel`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                location.reload();
+            })
+            .catch(err => {
+                alert('Lỗi tua nhanh tự hủy: ' + err);
+                btnCancel.disabled = false;
+            });
+        });
+    }
 });
 </script>
 @endsection

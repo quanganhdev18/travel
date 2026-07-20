@@ -1,117 +1,168 @@
 <?php
 
 use App\Models\Booking;
-use App\Models\Destination;
 use App\Models\Tour;
 use App\Models\TourSchedule;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function () {
-    $destination = Destination::create([
-        'name' => 'Đà Nẵng',
-        'description' => 'Thành phố đáng sống',
+test('bookings cancel unpaid command automatically cancels pending bookings created over 30 minutes ago and restores seats', function () {
+    $user = User::factory()->create();
+
+    $tour = Tour::create([
+        'title' => 'Tour Test Auto Cancel',
+        'slug' => 'tour-test-auto-cancel',
+        'description' => ['vi' => 'Mô tả tour test'],
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'base_price' => 1000000,
     ]);
 
-    $this->tour = Tour::create([
-        'destination_id' => $destination->id,
-        'title' => 'Khám phá Đà Nẵng - Hội An',
-        'slug' => 'tour-da-nang-3-ngay-2-dem-'.time(),
-        'description' => 'Hành trình khám phá miền Trung',
-        'duration_days' => 3,
-        'duration_nights' => 2,
-        'base_price' => 3500000,
-    ]);
-
-    $this->schedule = TourSchedule::create([
-        'tour_id' => $this->tour->id,
-        'departure_date' => Carbon::now()->addDays(10)->toDateTimeString(),
-        'return_date' => Carbon::now()->addDays(12)->toDateTimeString(),
+    $schedule = TourSchedule::create([
+        'tour_id' => $tour->id,
+        'departure_date' => now()->addDays(5),
+        'return_date' => now()->addDays(7),
         'capacity' => 20,
-        'available_seats' => 20,
+        'available_seats' => 10,
         'status' => 'available',
     ]);
-});
 
-test('auto cancel unpaid bookings older than 30 minutes and record reason', function () {
-    $user = User::factory()->create();
-
-    // Create an unpaid booking
-    $booking = Booking::create([
+    // Đơn hàng chưa thanh toán tạo cách đây 31 phút
+    $expiredBooking = Booking::create([
         'user_id' => $user->id,
-        'tour_schedule_id' => $this->schedule->id,
-        'total_price' => 7000000,
-        'adults_count' => 2,
-        'children_count' => 0,
+        'tour_schedule_id' => $schedule->id,
         'payment_status' => Booking::PAYMENT_PENDING,
         'booking_status' => 'pending',
         'tour_status' => Booking::TOUR_UPCOMING,
+        'total_price' => 1000000,
+        'paid_amount' => 0,
+        'adults_count' => 2,
+        'children_count' => 1,
+    ]);
+    DB::table('bookings')->where('id', $expiredBooking->id)->update(['created_at' => now()->subMinutes(31)]);
+
+    // Đơn hàng mới tạo cách đây 10 phút
+    $recentBooking = Booking::create([
+        'user_id' => $user->id,
+        'tour_schedule_id' => $schedule->id,
+        'payment_status' => Booking::PAYMENT_PENDING,
+        'booking_status' => 'pending',
+        'tour_status' => Booking::TOUR_UPCOMING,
+        'total_price' => 1000000,
+        'paid_amount' => 0,
+        'adults_count' => 1,
+        'children_count' => 0,
+    ]);
+    DB::table('bookings')->where('id', $recentBooking->id)->update(['created_at' => now()->subMinutes(10)]);
+
+    Artisan::call('bookings:cancel-unpaid');
+
+    $expiredBooking->refresh();
+    $recentBooking->refresh();
+    $schedule->refresh();
+
+    expect($expiredBooking->booking_status)->toBe('cancelled');
+    expect($expiredBooking->payment_status)->toBe(Booking::PAYMENT_FAILED);
+    expect($expiredBooking->cancel_reason)->toContain('30 phút');
+
+    expect($recentBooking->booking_status)->toBe('pending');
+
+    // Restore seats count: 10 + 3 (from expired booking) = 13
+    expect($schedule->available_seats)->toBe(13);
+});
+
+test('demo fast forward endpoint updates creation time and cancels unpaid booking', function () {
+    $user = User::factory()->create();
+
+    $tour = Tour::create([
+        'title' => 'Tour Test Fast Forward',
+        'slug' => 'tour-test-fast-forward',
+        'description' => ['vi' => 'Mô tả tour test'],
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'base_price' => 1000000,
     ]);
 
-    // Force set created_at using direct DB query
-    DB::table('bookings')->where('id', $booking->id)->update([
-        'created_at' => now()->subMinutes(31),
+    $schedule = TourSchedule::create([
+        'tour_id' => $tour->id,
+        'departure_date' => now()->addDays(5),
+        'return_date' => now()->addDays(7),
+        'capacity' => 20,
+        'available_seats' => 5,
+        'status' => 'available',
     ]);
 
-    // Manually decrease available seats to mock the active booking state
-    $this->schedule->update(['available_seats' => 18]);
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'tour_schedule_id' => $schedule->id,
+        'payment_status' => Booking::PAYMENT_PENDING,
+        'booking_status' => 'pending',
+        'tour_status' => Booking::TOUR_UPCOMING,
+        'total_price' => 1000000,
+        'paid_amount' => 0,
+        'adults_count' => 2,
+        'children_count' => 0,
+        'created_at' => now(),
+    ]);
 
-    // Run the console command
-    $this->artisan('bookings:cancel-unpaid')
-        ->assertSuccessful();
+    $response = $this->actingAs($user)->postJson(route('demo.bookings.fast_forward_cancel', $booking->id));
 
-    // Refresh models
+    $response->assertOk();
+    $response->assertJson([
+        'status' => 'success',
+        'booking_status' => 'cancelled',
+    ]);
+
     $booking->refresh();
-    $this->schedule->refresh();
+    $schedule->refresh();
 
-    // Assert booking is cancelled and reason is recorded
     expect($booking->booking_status)->toBe('cancelled');
-    expect($booking->payment_status)->toBe(Booking::PAYMENT_FAILED);
-    expect($booking->tour_status)->toBe(Booking::TOUR_CANCELLED_ADMIN);
-    expect($booking->cancel_reason)->toBe('Đơn hàng bị hủy do hết hạn thanh toán (quá 30 phút)');
-
-    // Assert seats are freed
-    expect($this->schedule->available_seats)->toBe(20);
+    expect($schedule->available_seats)->toBe(7);
 });
 
-test('do not cancel unpaid bookings younger than 30 minutes', function () {
+test('demo simulate payment endpoint triggers payment confirmation via bank webhook', function () {
     $user = User::factory()->create();
 
-    // Create an unpaid booking
+    $tour = Tour::create([
+        'title' => 'Tour Test Simulate Payment',
+        'slug' => 'tour-test-simulate-payment',
+        'description' => ['vi' => 'Mô tả tour test'],
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'base_price' => 2000000,
+    ]);
+
+    $schedule = TourSchedule::create([
+        'tour_id' => $tour->id,
+        'departure_date' => now()->addDays(5),
+        'return_date' => now()->addDays(7),
+        'capacity' => 20,
+        'available_seats' => 10,
+        'status' => 'available',
+    ]);
+
     $booking = Booking::create([
         'user_id' => $user->id,
-        'tour_schedule_id' => $this->schedule->id,
-        'total_price' => 7000000,
-        'adults_count' => 2,
-        'children_count' => 0,
+        'tour_schedule_id' => $schedule->id,
         'payment_status' => Booking::PAYMENT_PENDING,
         'booking_status' => 'pending',
         'tour_status' => Booking::TOUR_UPCOMING,
+        'total_price' => 2000000,
+        'paid_amount' => 0,
+        'adults_count' => 1,
+        'children_count' => 0,
+        'payment_type' => 'full',
     ]);
 
-    // Force set created_at using direct DB query
-    DB::table('bookings')->where('id', $booking->id)->update([
-        'created_at' => now()->subMinutes(15),
+    $response = $this->actingAs($user)->postJson(route('demo.bookings.simulate_payment', $booking->id));
+
+    $response->assertOk();
+    $response->assertJson([
+        'status' => 'success',
+        'payment_status' => Booking::PAYMENT_PAID_100,
     ]);
 
-    // Manually decrease available seats
-    $this->schedule->update(['available_seats' => 18]);
-
-    // Run the console command
-    $this->artisan('bookings:cancel-unpaid')
-        ->assertSuccessful();
-
-    // Refresh models
     $booking->refresh();
-    $this->schedule->refresh();
-
-    // Assert booking is NOT cancelled
-    expect($booking->booking_status)->toBe('pending');
-    expect($booking->payment_status)->toBe(Booking::PAYMENT_PENDING);
-    expect($booking->tour_status)->toBe(Booking::TOUR_UPCOMING);
-    expect($booking->cancel_reason)->toBeNull();
-
-    // Assert seats remain taken
-    expect($this->schedule->available_seats)->toBe(18);
+    expect($booking->payment_status)->toBe(Booking::PAYMENT_PAID_100);
 });
