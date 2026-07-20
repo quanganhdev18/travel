@@ -15,16 +15,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tour_schedule_id')->constrained('tour_schedules')->cascadeOnDelete();
             $table->foreignId('guide_id')->constrained('tour_guides')->cascadeOnDelete();
-            
+
             // Báo cáo
             $table->integer('actual_guests')->default(0);
             $table->text('incident_notes')->nullable();
-            
+
             // Quyết toán
             $table->decimal('advance_amount', 12, 2)->default(0);
             $table->decimal('actual_expense', 12, 2)->default(0);
             $table->decimal('balance', 12, 2)->default(0);
-            
+
             $table->enum('status', ['pending', 'approved'])->default('pending');
             $table->timestamps();
         });

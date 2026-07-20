@@ -641,14 +641,6 @@
                             </div>
 
                             {{-- Price rows --}}
-                            @if($booking->transport_price > 0)
-                            <div class="payment-row">
-                                <span class="label">
-                                    <i class="bi bi-airplane me-1 text-danger"></i>{{ __('Phí di chuyển') }}
-                                </span>
-                                <span class="value">{!! format_currency($booking->transport_price) !!}</span>
-                            </div>
-                            @endif
 
                             @if($booking->discount_amount > 0)
                             <div class="payment-row">

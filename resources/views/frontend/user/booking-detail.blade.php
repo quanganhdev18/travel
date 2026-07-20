@@ -127,59 +127,6 @@
             </span>
         </div>
 
-        {{-- Phương tiện --}}
-        <div class="info-row">
-            <span class="text-muted small">
-                <i class="bi bi-car-front me-2"></i>
-                Phương tiện
-            </span>
-
-            <span class="fw-bold text-end">
-                @if($booking->transport_type === 'flight')
-                    <i class="bi bi-airplane-fill text-danger me-1"></i>
-                    Máy bay
-
-                    @if(!empty($booking->pnr_code))
-                        <strong class="text-danger ms-1">
-                            ({{ $booking->pnr_code }})
-                        </strong>
-                    @endif
-
-                    @if($booking->tour_schedule)
-                        @php
-                            $isTourStarted = \Carbon\Carbon::now()
-                                ->startOfDay()
-                                ->gte(
-                                    \Carbon\Carbon::parse(
-                                        $booking->tour_schedule->departure_date
-                                    )->startOfDay()
-                                );
-                        @endphp
-
-                        @if($isTourStarted)
-                            <span class="badge bg-success ms-2 fw-normal">
-                                <i class="bi bi-check-circle me-1"></i>
-                                Đã nhận
-                            </span>
-                        @else
-                            <span class="badge bg-warning text-dark ms-2 fw-normal">
-                                <i class="bi bi-clock me-1"></i>
-                                Chờ xuất vé
-                            </span>
-                        @endif
-                    @endif
-
-                @elseif($booking->transport_type === 'bus')
-                    <i class="bi bi-bus-front-fill text-info me-1"></i>
-                    Xe ô tô
-
-                @else
-                    <i class="bi bi-car-front-fill text-muted me-1"></i>
-                    Di chuyển tự túc
-                @endif
-            </span>
-        </div>
-
         {{-- Điểm tập kết --}}
         <div class="info-row">
             <span class="text-muted small">

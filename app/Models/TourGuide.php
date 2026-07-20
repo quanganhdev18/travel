@@ -57,10 +57,10 @@ class TourGuide extends Model
 
     public function updateKpiScore()
     {
-        $avgRating = \App\Models\Review::where('guide_id', $this->id)
+        $avgRating = Review::where('guide_id', $this->id)
             ->whereNotNull('guide_rating')
             ->avg('guide_rating');
-            
+
         $this->update(['kpi_score' => $avgRating ? round($avgRating, 1) : 0]);
     }
 }

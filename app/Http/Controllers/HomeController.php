@@ -110,12 +110,18 @@ class HomeController extends Controller
 
         if ($request->filled('keyword')) {
             $keyword = mb_strtolower($request->keyword, 'UTF-8');
-            $query->where(function ($q) use ($keyword) {
-                $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
-                    ->orWhereHas('destination', function ($q2) use ($keyword) {
-                        $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%']);
-                    });
-            });
+            $matchedDest = Destination::whereRaw('LOWER(name) = ?', [$keyword])->first();
+            if ($matchedDest) {
+                $request->merge(['destination_id' => $matchedDest->id]);
+                $request->offsetUnset('keyword');
+            } else {
+                $query->where(function ($q) use ($keyword) {
+                    $q->whereRaw('LOWER(CAST(title AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%'])
+                        ->orWhereHas('destination', function ($q2) use ($keyword) {
+                            $q2->whereRaw('LOWER(CAST(name AS CHAR)) LIKE BINARY ?', ['%'.$keyword.'%']);
+                        });
+                });
+            }
         }
 
         if ($request->filled('transport')) {
@@ -167,10 +173,10 @@ class HomeController extends Controller
 
         if ($request->filled('budget')) {
             match ($request->budget) {
-                'under_5m' => $query->where('base_price', '<', 5000000),
-                '5m_10m', '5m_to_10m' => $query->whereBetween('base_price', [5000000, 10000000]),
-                '10m_20m', '10m_to_20m' => $query->whereBetween('base_price', [10000000, 20000000]),
-                'over_20m' => $query->where('base_price', '>', 20000000),
+                'under_1m' => $query->where('base_price', '<', 1000000),
+                '1m_2m', '1m_to_2m' => $query->whereBetween('base_price', [1000000, 2000000]),
+                '2m_4m', '2m_to_4m' => $query->whereBetween('base_price', [2000000, 4000000]),
+                'over_4m' => $query->where('base_price', '>', 4000000),
                 default => null,
             };
         }
@@ -200,6 +206,10 @@ class HomeController extends Controller
         }
 
         $tours = $query->paginate(12)->withQueryString();
+
+        if ($request->ajax()) {
+            return view('frontend.tours._results_list', compact('tours', 'categories', 'allDestinations'))->render();
+        }
 
         return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'categories'));
     }

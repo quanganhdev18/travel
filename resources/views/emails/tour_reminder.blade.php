@@ -160,14 +160,7 @@
                     <td class="t-label">Điểm đón / tập trung</td>
                     <td class="t-value"><span class="em" style="color: #1e3a8a;">{{ $schedule->checkin_location ?? ($tour->meeting_point ?? 'Theo thông báo của hướng dẫn viên') }}</span></td>
                 </tr>
-                <tr>
-                    <td class="t-label">Phương tiện di chuyển</td>
-                    <td class="t-value">
-                        @if($booking->transport_type == 'flight') Máy bay khứ hồi
-                        @elseif($booking->transport_type == 'bus') Xe du lịch đời mới
-                        @else Ô tô / Tự túc di chuyển @endif
-                    </td>
-                </tr>
+
                 @if($schedule->schedule_guides && $schedule->schedule_guides->count() > 0)
                 <tr>
                     <td class="t-label">Hướng dẫn viên phụ trách</td>

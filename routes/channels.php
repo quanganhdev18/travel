@@ -20,4 +20,3 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
 Broadcast::channel('admin.chat', function ($user) {
     return $user->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff']);
 });
-
