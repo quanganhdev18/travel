@@ -90,7 +90,7 @@ class TourBookingController extends Controller
             $totalPersons = $request->adults + $request->children;
             $schedule = TourSchedule::with('tour')->lockForUpdate()->find($request->schedule_id);
 
-            if (! $schedule || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+            if (! $schedule || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(4))) {
                 DB::rollBack();
 
                 return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
@@ -391,7 +391,7 @@ class TourBookingController extends Controller
 
         $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons'])->findOrFail($request->schedule_id);
 
-        if ($schedule->status !== 'available' || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
+        if ($schedule->status !== 'available' || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(4))) {
             return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
         }
         $totalPersons = $request->adults + $request->children;

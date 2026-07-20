@@ -47,7 +47,7 @@ class HomeController extends Controller
         }])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(4));
             })
             ->latest()
             ->take(8)
@@ -248,7 +248,7 @@ class HomeController extends Controller
         $query = Tour::with(['destination', 'departure_location', 'tour_images'])
             ->whereNull('deleted_at')
             ->whereHas('activeSchedules', function ($q) {
-                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
+                $q->whereDate('departure_date', '>=', Carbon::today()->addDays(4));
             });
 
         if ($request->filled('keyword')) {
