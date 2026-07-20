@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\AiTranslationController;
 use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
@@ -144,6 +145,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
         ->name('frontend.tours.booking_success');
 
+    Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
+        ->name('frontend.tours.booking_status');
+
+    // Demo Bar Routes
+    Route::post('/demo/bookings/{id}/simulate-payment', [DemoController::class, 'simulatePayment'])
+        ->name('demo.bookings.simulate_payment');
+
+    Route::post('/demo/bookings/{id}/fast-forward-cancel', [DemoController::class, 'fastForwardCancel'])
+        ->name('demo.bookings.fast_forward_cancel');
+
     // Đặt vé máy bay
     Route::get('/flights/checkout', [FlightController::class, 'checkout'])
         ->name('frontend.flights.checkout');
@@ -223,6 +234,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Booking
     Route::get('/bookings', [BookingController::class, 'index'])
         ->name('admin.bookings.index');
+
+    Route::get('/bookings/live-statuses', [BookingController::class, 'liveStatuses'])
+        ->name('admin.bookings.live_statuses');
 
     // Quản lý tài khoản (Users)
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)

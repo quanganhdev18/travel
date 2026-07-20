@@ -381,6 +381,23 @@ class TourBookingController extends Controller
         return view('frontend.tours.booking_success', compact('booking'));
     }
 
+    public function checkStatus($id)
+    {
+        $booking = Booking::with('tour_schedule')->findOrFail($id);
+
+        if ($booking->user_id !== Auth::id() && ! (Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'Staff', 'cskh']))) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'booking_status' => $booking->booking_status,
+            'payment_status' => $booking->payment_status,
+            'tour_status' => $booking->tour_status,
+            'cancel_reason' => $booking->cancel_reason,
+            'available_seats' => $booking->tour_schedule ? $booking->tour_schedule->available_seats : 0,
+        ]);
+    }
+
     public function checkout(Request $request)
     {
         $request->validate([

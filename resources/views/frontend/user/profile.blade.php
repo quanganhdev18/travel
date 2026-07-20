@@ -1237,7 +1237,7 @@
                                             @elseif($paymentStatus === 'paid_30')
                                                 <div class="ps-badge ps-paid30"><i class="bi bi-pie-chart-fill"></i>Đã thanh toán 30% (Cọc)</div>
                                                 @if(!$isCancelled)
-                                                <a href="{{ route('frontend.bookings.pay_vnpay', $booking->id) }}" class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
+                                                <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section" class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
                                                     <i class="bi bi-credit-card-fill"></i>Thanh toán 70% còn lại
                                                 </a>
                                                 @endif

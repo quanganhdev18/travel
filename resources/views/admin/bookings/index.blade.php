@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -17,7 +17,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -30,7 +30,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -39,19 +39,6 @@
                 <div>
                     <div class="text-muted small fw-500 text-uppercase mb-1">Doanh thu tạm tính</div>
                     <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['revenue'], 0, ',', '.') }} ₫</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="admin-card border-0 mb-0">
-            <div class="admin-card-body d-flex align-items-center">
-                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                    <i class="bi bi-airplane-engines text-danger fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Cần xuất vé MB</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['flight_ticket_needed']) }}</div>
                 </div>
             </div>
         </div>
@@ -119,7 +106,7 @@
                 </thead>
                 <tbody>
                     @forelse($bookings as $booking)
-                    <tr>
+                    <tr class="booking-row" id="booking-row-{{ $booking->id }}" data-booking-id="{{ $booking->id }}" data-payment-status="{{ $booking->payment_status }}" data-tour-status="{{ $booking->tour_status }}">
                         <td class="ps-4">
                             <div class="fw-bold text-dark">#{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</div>
                             <div class="small text-muted">{{ $booking->created_at->format('H:i d/m/Y') }}</div>
@@ -138,7 +125,7 @@
                             <div class="fw-bold text-danger">{{ number_format($booking->total_price, 0, ',', '.') }} ₫</div>
                             <div class="small text-muted mt-1">{{ $booking->adults_count + $booking->children_count }} khách</div>
                         </td>
-                        <td>
+                        <td id="payment-status-badge-{{ $booking->id }}">
                             @php
                             $paymentStatusMap = [
                                 'pending' => ['badge-soft-warning', 'Chờ thanh toán'],
@@ -152,7 +139,7 @@
                                 {{ $ps[1] }}
                             </span>
                         </td>
-                        <td>
+                        <td id="tour-status-badge-{{ $booking->id }}">
                             @php
                             $tourStatusMap = [
                                 'upcoming' => ['badge-soft-primary', 'Sắp bắt đầu'],
@@ -230,6 +217,9 @@
                         <div class="mb-2"><span class="text-muted me-2">SĐT:</span> <strong class="text-dark">{{ $booking->user->phone ?? 'N/A' }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Email:</span> <strong class="text-dark">{{ $booking->user->email ?? 'N/A' }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Ngày đặt:</span> <strong class="text-dark">{{ $booking->created_at->format('H:i d/m/Y') }}</strong></div>
+                        @if($booking->cancel_reason)
+                            <div class="mb-2"><span class="text-danger me-2">Lý do hủy:</span> <strong class="text-danger">{{ $booking->cancel_reason }}</strong></div>
+                        @endif
                     </div>
 
                     <div class="col-md-6 ps-md-4">
@@ -408,6 +398,76 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Real-time Status Polling for Admin
+    const paymentStatusMap = {
+        'pending': ['badge-soft-warning', 'Chờ thanh toán'],
+        'paid_30': ['badge-soft-info', 'Đã thanh toán 30% (Cọc)'],
+        'paid_100': ['badge-soft-success', 'Đã thanh toán 100%'],
+        'failed': ['badge-soft-danger', 'Thất bại']
+    };
+
+    const tourStatusMap = {
+        'upcoming': ['badge-soft-primary', 'Sắp bắt đầu'],
+        'in_progress': ['badge-soft-warning', 'Đang thực hiện'],
+        'checking_in': ['badge-soft-info', 'Đang check-in'],
+        'completed': ['badge-soft-success', 'Hoàn thành'],
+        'cancelled_by_customer': ['badge-soft-danger', 'Hủy (Khách)'],
+        'cancelled_by_admin': ['badge-soft-danger', 'Hủy (Admin)']
+    };
+
+    function pollAdminStatuses() {
+        const rows = document.querySelectorAll('.booking-row');
+        if (!rows.length) return;
+
+        const ids = Array.from(rows).map(r => r.dataset.bookingId).join(',');
+
+        fetch(`/admin/bookings/live-statuses?ids=${ids}`)
+            .then(res => res.json())
+            .then(data => {
+                Object.keys(data).forEach(id => {
+                    const row = document.getElementById(`booking-row-${id}`);
+                    if (!row) return;
+
+                    const info = data[id];
+                    const currentPayment = row.dataset.paymentStatus;
+                    const currentTour = row.dataset.tourStatus;
+
+                    if (currentPayment !== info.payment_status || currentTour !== info.tour_status) {
+                        row.dataset.paymentStatus = info.payment_status;
+                        row.dataset.tourStatus = info.tour_status;
+
+                        // Update Payment Badge
+                        const pCell = document.getElementById(`payment-status-badge-${id}`);
+                        if (pCell) {
+                            const ps = paymentStatusMap[info.payment_status] || ['badge-soft-secondary', 'N/A'];
+                            pCell.innerHTML = `<span class="badge-soft ${ps[0]}">${ps[1]}</span>`;
+                        }
+
+                        // Update Tour Badge
+                        const tCell = document.getElementById(`tour-status-badge-${id}`);
+                        if (tCell) {
+                            const ts = tourStatusMap[info.tour_status] || ['badge-soft-secondary', 'N/A'];
+                            let extra = '';
+                            if (info.tour_status === 'checking_in' && info.current_checkin_step) {
+                                extra = `<div class="small mt-1 text-info"><i class="bi bi-geo-alt-fill me-1"></i> Điểm: ${info.current_checkin_step}</div>`;
+                            }
+                            tCell.innerHTML = `<span class="badge-soft ${ts[0]}">${ts[1]}</span>` + extra;
+                        }
+
+                        // Highlight row
+                        row.style.transition = 'background-color 0.5s ease';
+                        row.style.backgroundColor = '#d1e7dd';
+                        setTimeout(() => {
+                            row.style.backgroundColor = '';
+                        }, 2500);
+                    }
+                });
+            })
+            .catch(err => console.log('Admin live polling error', err));
+    }
+
+    setInterval(pollAdminStatuses, 3000);
 });
 </script>
 

@@ -357,9 +357,9 @@
             <div class="d-flex flex-wrap gap-4 tour-info-line mb-4">
                 <span class="d-flex align-items-center">
                     <i class="bi bi-geo-alt fs-5 me-2 text-danger"></i>
-                    {{ __('Khởi hành từ:') }}
+                    {{ __('Điểm tập kết:') }}
                     <strong class="ms-1 text-dark">
-                        {{ $departureName }}
+                        {{ $tour->meeting_point ?? __('Đang cập nhật') }}
                     </strong>
                 </span>
 
@@ -378,15 +378,7 @@
                 </span>
                 @endif
 
-                @if($tour->meeting_point)
-                <span class="d-flex align-items-center">
-                    <i class="bi bi-geo fs-5 me-2 text-primary"></i>
-                    {{ __('Điểm tập kết:') }}
-                    <strong class="ms-1 text-dark">
-                        {{ $tour->meeting_point }}
-                    </strong>
-                </span>
-                @endif
+
             </div>
 
         <div class="row g-4">
