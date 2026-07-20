@@ -90,6 +90,20 @@ class HomeController extends Controller
         $allDestinations = Destination::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
 
+        $filterErrors = [];
+        $date = $request->input('date') ?? $request->input('departure_date');
+        if ($date) {
+            try {
+                $parsedDate = Carbon::parse($date);
+                $threeDaysLater = Carbon::today()->addDays(3);
+                if ($parsedDate->lt($threeDaysLater)) {
+                    $filterErrors['departure_date'] = [__('Ngày khởi hành phải cách ngày hiện tại ít nhất 3 ngày.')];
+                }
+            } catch (\Exception $e) {
+                // Ignore parse errors
+            }
+        }
+
         $query = Tour::with([
             'destination',
             'tour_images',
@@ -99,10 +113,15 @@ class HomeController extends Controller
                 $q->orderBy('departure_date', 'asc')->limit(1);
             },
         ])
-            ->whereNull('deleted_at')
-            ->whereHas('activeSchedules', function ($q) {
+            ->whereNull('deleted_at');
+
+        if (! empty($filterErrors)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->whereHas('activeSchedules', function ($q) {
                 $q->whereDate('departure_date', '>=', Carbon::today()->addDays(3));
             });
+        }
 
         if ($request->filled('ids') && is_array($request->ids)) {
             $query->whereIn('id', $request->ids);
@@ -158,11 +177,17 @@ class HomeController extends Controller
             });
         }
 
-        $date = $request->input('date') ?? $request->input('departure_date');
-        if ($date) {
-            $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
-            });
+        if ($date && empty($filterErrors['departure_date'])) {
+            try {
+                $formattedDate = Carbon::parse($date)->toDateString();
+            } catch (\Exception $e) {
+                $formattedDate = null;
+            }
+            if ($formattedDate) {
+                $query->whereHas('activeSchedules', function ($q) use ($formattedDate) {
+                    $q->whereDate('departure_date', '=', $formattedDate);
+                });
+            }
         }
 
         if ($request->filled('stars')) {
@@ -208,10 +233,10 @@ class HomeController extends Controller
         $tours = $query->paginate(12)->withQueryString();
 
         if ($request->ajax()) {
-            return view('frontend.tours._results_list', compact('tours', 'categories', 'allDestinations'))->render();
+            return view('frontend.tours._results_list', compact('tours', 'categories', 'allDestinations', 'filterErrors'))->render();
         }
 
-        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'categories'));
+        return view('frontend.tours.index', compact('banners', 'tours', 'adBanners', 'allDestinations', 'categories', 'filterErrors'));
     }
 
     public function searchTours(Request $request)
@@ -266,9 +291,16 @@ class HomeController extends Controller
 
         if ($request->filled('date')) {
             $date = $request->date;
-            $query->whereHas('activeSchedules', function ($q) use ($date) {
-                $q->whereDate('departure_date', '>=', max($date, Carbon::today()->addDays(3)->toDateString()));
-            });
+            try {
+                $formattedDate = Carbon::parse($date)->toDateString();
+            } catch (\Exception $e) {
+                $formattedDate = null;
+            }
+            if ($formattedDate) {
+                $query->whereHas('activeSchedules', function ($q) use ($formattedDate) {
+                    $q->whereDate('departure_date', '=', $formattedDate);
+                });
+            }
         }
 
         if ($request->filled('budget')) {
