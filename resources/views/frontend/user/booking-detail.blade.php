@@ -295,6 +295,9 @@
                         <div class="text-center py-3">
                             <i class="bi bi-x-circle-fill text-danger" style="font-size:2.5rem;"></i>
                             <div class="fw-bold text-danger mt-2">Đơn đã bị hủy</div>
+                            @if($booking->cancel_reason)
+                                <div class="text-muted small mt-2">Lý do: {{ $booking->cancel_reason }}</div>
+                            @endif
                         </div>
                     @else
                         @foreach($steps as $idx => $step)

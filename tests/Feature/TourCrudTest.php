@@ -38,10 +38,8 @@ test('admin can store tour with departure time', function () {
                 'vi' => 'Chi tiết tour Hà Nội',
             ],
             'base_price' => 2000000,
-            'departure_province_id' => $province->id,
-            'departure_ward_id' => $ward->id,
-            'destination_province_id' => $province->id,
-            'destination_ward_id' => $ward->id,
+            'meeting_point' => 'Cổng phụ công viên Thống Nhất',
+            'destination_id' => $this->destination->id,
             'duration_days' => 2,
             'duration_nights' => 1,
             'departure_hour' => 7,
@@ -63,10 +61,8 @@ test('admin can update tour with departure time', function () {
     ]);
 
     $tour = Tour::create([
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên',
+        'destination_id' => $this->destination->id,
         'title' => ['vi' => 'Tour Cũ'],
         'slug' => 'tour-cu',
         'description' => ['vi' => 'Mô tả tour cũ'],
@@ -82,10 +78,8 @@ test('admin can update tour with departure time', function () {
                 'vi' => 'Tour Cũ Cập Nhật',
             ],
             'base_price' => 1200000,
-            'departure_province_id' => $province->id,
-            'departure_ward_id' => $ward->id,
-            'destination_province_id' => $province->id,
-            'destination_ward_id' => $ward->id,
+            'meeting_point' => 'Cổng phụ công viên Thống Nhất Cập Nhật',
+            'destination_id' => $this->destination->id,
             'duration_days' => 1,
             'duration_nights' => 0,
             'departure_hour' => 21,
@@ -106,10 +100,8 @@ test('admin can store schedule for a one day tour with same departure and return
     ]);
 
     $tour = Tour::create([
-        'departure_province_id' => $province->id,
-        'departure_ward_id' => $ward->id,
-        'destination_province_id' => $province->id,
-        'destination_ward_id' => $ward->id,
+        'meeting_point' => 'Cổng công viên',
+        'destination_id' => $this->destination->id,
         'title' => ['vi' => 'Tour 1 Ngày'],
         'slug' => 'tour-1-ngay',
         'description' => ['vi' => 'Mô tả tour 1 ngày'],

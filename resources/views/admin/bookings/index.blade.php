@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -17,7 +17,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -30,7 +30,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="admin-card border-0 mb-0">
             <div class="admin-card-body d-flex align-items-center">
                 <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
@@ -39,19 +39,6 @@
                 <div>
                     <div class="text-muted small fw-500 text-uppercase mb-1">Doanh thu tạm tính</div>
                     <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['revenue'], 0, ',', '.') }} ₫</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="admin-card border-0 mb-0">
-            <div class="admin-card-body d-flex align-items-center">
-                <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                    <i class="bi bi-airplane-engines text-danger fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Cần xuất vé MB</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['flight_ticket_needed']) }}</div>
                 </div>
             </div>
         </div>
@@ -230,6 +217,9 @@
                         <div class="mb-2"><span class="text-muted me-2">SĐT:</span> <strong class="text-dark">{{ $booking->user->phone ?? 'N/A' }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Email:</span> <strong class="text-dark">{{ $booking->user->email ?? 'N/A' }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Ngày đặt:</span> <strong class="text-dark">{{ $booking->created_at->format('H:i d/m/Y') }}</strong></div>
+                        @if($booking->cancel_reason)
+                            <div class="mb-2"><span class="text-danger me-2">Lý do hủy:</span> <strong class="text-danger">{{ $booking->cancel_reason }}</strong></div>
+                        @endif
                     </div>
 
                     <div class="col-md-6 ps-md-4">
