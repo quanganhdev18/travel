@@ -287,10 +287,10 @@ test('vnpay ipn updates payment status correctly', function () {
 test('authenticated user cannot access checkout for schedule starting within 3 days', function () {
     $user = User::factory()->create();
 
-    // Create a schedule starting 3 days from now
+    // Create a schedule starting 2 days from now
     $closeSchedule = TourSchedule::create([
         'tour_id' => $this->tour->id,
-        'departure_date' => Carbon::now()->addDays(3)->toDateTimeString(),
+        'departure_date' => Carbon::now()->addDays(2)->toDateTimeString(),
         'return_date' => Carbon::now()->addDays(4)->toDateTimeString(),
         'capacity' => 20,
         'available_seats' => 20,
@@ -310,10 +310,10 @@ test('authenticated user cannot access checkout for schedule starting within 3 d
 test('booking store fails for schedule starting within 3 days', function () {
     $user = User::factory()->create();
 
-    // Create a schedule starting 3 days from now
+    // Create a schedule starting 2 days from now
     $closeSchedule = TourSchedule::create([
         'tour_id' => $this->tour->id,
-        'departure_date' => Carbon::now()->addDays(3)->toDateTimeString(),
+        'departure_date' => Carbon::now()->addDays(2)->toDateTimeString(),
         'return_date' => Carbon::now()->addDays(4)->toDateTimeString(),
         'capacity' => 20,
         'available_seats' => 20,
