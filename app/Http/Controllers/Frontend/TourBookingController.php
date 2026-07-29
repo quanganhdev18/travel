@@ -325,7 +325,12 @@ class TourBookingController extends Controller
             $userId = Auth::id() ?? session()->getId();
             if (isset($currentHolds[$userId])) {
                 unset($currentHolds[$userId]);
-                Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
+                if (empty($currentHolds)) {
+                    Cache::forget($holdKey);
+                } else {
+                    $maxExpiresAt = max(array_column($currentHolds, 'expires_at'));
+                    Cache::put($holdKey, $currentHolds, \Carbon\Carbon::createFromTimestamp($maxExpiresAt));
+                }
             }
 
             DB::commit();
@@ -423,6 +428,9 @@ class TourBookingController extends Controller
         });
 
         // Tính tổng chỗ đang bị giữ bởi những người khác
+        if (!Auth::check()) {
+            session()->put('seat_hold_active', true); // Force session save to persist session ID for guests across F5
+        }
         $userId = Auth::id() ?? session()->getId();
         $otherHolds = array_filter($currentHolds, function ($h, $k) use ($userId) {
             return $k !== $userId;
@@ -435,11 +443,22 @@ class TourBookingController extends Controller
         }
 
         // Đăng ký giữ chỗ cho user hiện tại
-        $currentHolds[$userId] = [
-            'seats' => $totalPersons,
-            'expires_at' => now()->addMinutes(15)->timestamp,
-        ];
-        Cache::put($holdKey, $currentHolds, now()->addMinutes(15));
+        $existingHold = $currentHolds[$userId] ?? null;
+
+        if ($existingHold && $existingHold['expires_at'] > now()->timestamp) {
+            $currentHolds[$userId] = [
+                'seats' => $totalPersons,
+                'expires_at' => $existingHold['expires_at'], // Giữ nguyên thời gian hết hạn cũ để tránh F5 gia hạn
+            ];
+        } else {
+            $currentHolds[$userId] = [
+                'seats' => $totalPersons,
+                'expires_at' => now()->addMinutes(5)->timestamp,
+            ];
+        }
+
+        $maxExpiresAt = max(array_column($currentHolds, 'expires_at'));
+        Cache::put($holdKey, $currentHolds, \Carbon\Carbon::createFromTimestamp($maxExpiresAt));
 
         // Nếu available_seats thực tế (ko tính hold) không đủ thì cũng báo lỗi
         if ($schedule->available_seats < $totalPersons) {
@@ -480,6 +499,8 @@ class TourBookingController extends Controller
             })
             ->get();
 
+        $remainingSeconds = max(0, $currentHolds[$userId]['expires_at'] - now()->timestamp);
+
         return view('frontend.tours.checkout', [
             'schedule' => $schedule,
             'adults' => $request->adults,
@@ -493,6 +514,7 @@ class TourBookingController extends Controller
             'childPrice' => $childPrice,
             'holidays' => $holidays,
             'coupons' => $coupons,
+            'remainingSeconds' => $remainingSeconds,
         ]);
     }
 
@@ -650,3 +672,4 @@ class TourBookingController extends Controller
         ]);
     }
 }
+

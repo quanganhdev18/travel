@@ -162,7 +162,8 @@ class Booking extends Model
         $bookings = self::where('tour_status', self::TOUR_UPCOMING)
             ->whereHas('tour_schedule', function ($q) use ($todayDate) {
                 $q->whereDate('departure_date', '<=', $todayDate)
-                    ->whereDate('return_date', '>=', $todayDate);
+                    ->whereDate('return_date', '>=', $todayDate)
+                    ->has('schedule_guides');
             })
             ->with(['tour_schedule.tour'])
             ->get();

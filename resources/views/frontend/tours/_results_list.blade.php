@@ -134,7 +134,7 @@
                                     }
                                 }
                                 $destinationName = optional($tour->destination)->name ?: 'Việt Nam';
-                                $stars = $tour->hotel_stars ?? 4;
+                                $stars = $tour->reviews()->avg('rating') ? round($tour->reviews()->avg('rating')) : 0;
                             @endphp
                             <img src="{{ $tourImage }}" alt="{{ $tour->title }}"
                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
@@ -142,8 +142,8 @@
                         <div class="combo-card-body">
                             <h3 class="combo-title">{{ $tour->title }}</h3>
                             <div class="combo-stars">
-                                @for($i = 1; $i <= $stars; $i++)
-                                    <i class="bi bi-star-fill text-warning"></i>
+                                @for($i = 1; $i <= 5; $i++)
+                                    <i class="bi {{ $i <= $stars ? 'bi-star-fill' : 'bi-star' }} text-warning"></i>
                                 @endfor
                             </div>
                             <div class="combo-location">

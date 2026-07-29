@@ -24,16 +24,16 @@ class CancelUnpaidBookingsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Tự động hủy các đơn đặt tour chưa thanh toán sau 30 phút và ghi lý do';
+    protected $description = 'Tự động hủy đơn đặt tour chưa thanh toán sau 15 phút và ghi lý do';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $cutoffTime = now()->subMinutes(30);
+        $cutoffTime = now()->subMinutes(15);
 
-        // Lấy danh sách booking chưa thanh toán quá 30 phút
+        // Lấy danh sách booking chưa thanh toán quá 15 phút
         $bookings = Booking::with(['tour_schedule.tour', 'user', 'booking_passengers'])
             ->where('payment_status', Booking::PAYMENT_PENDING)
             ->where('booking_status', '!=', 'cancelled')
@@ -57,7 +57,7 @@ class CancelUnpaidBookingsCommand extends Command
                         'booking_status' => 'cancelled',
                         'payment_status' => Booking::PAYMENT_FAILED,
                         'tour_status' => Booking::TOUR_CANCELLED_ADMIN,
-                        'cancel_reason' => 'Đơn hàng bị hủy do hết hạn thanh toán (quá 30 phút)',
+                        'cancel_reason' => 'Đơn hàng bị hủy do hết hạn thanh toán (quá 15 phút)',
                     ]);
 
                     if (! $isCurrentlyCancelled && $booking->tour_schedule) {
@@ -79,7 +79,7 @@ class CancelUnpaidBookingsCommand extends Command
                 }
 
                 $cancelledCount++;
-                $message = "Đã tự động hủy đơn hàng ID #{$booking->id} do quá hạn thanh toán 30 phút.";
+                $message = "Đã tự động hủy đơn hàng ID #{$booking->id} do quá hạn thanh toán 15 phút.";
                 $this->info($message);
                 Log::info('[bookings:cancel-unpaid] '.$message);
             } catch (\Exception $e) {

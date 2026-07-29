@@ -949,7 +949,7 @@
                                                 }
                                             }
                                             $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
-                                            $rStars = $relatedTour->hotel_stars ?? 4;
+                                            $rStars = $relatedTour->reviews()->avg('rating') ? round($relatedTour->reviews()->avg('rating')) : 0;
                                         @endphp
                                         <img src="{{ $rTourImage }}"
                                              alt="{{ $relatedTour->title }}"
@@ -959,8 +959,8 @@
                                     <div class="combo-card-body">
                                         <h3 class="combo-title">{{ $relatedTour->title }}</h3>
                                         <div class="combo-stars">
-                                            @for($i = 1; $i <= $rStars; $i++)
-                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <i class="bi {{ $i <= $rStars ? 'bi-star-fill' : 'bi-star' }} text-warning"></i>
                                             @endfor
                                         </div>
                                         <div class="combo-location">
@@ -1146,23 +1146,38 @@
         const aiSummaryText = document.getElementById('aiSummaryText');
 
         if (aiSummaryLoader && aiSummaryContent && aiSummaryText) {
-            fetch(`/tours/{{ $tour->id }}/ai-summary`)
-                .then(response => response.json())
-                .then(data => {
-                    aiSummaryLoader.classList.add('d-none');
-                    aiSummaryContent.classList.remove('d-none');
+            window.fetchAISummary = function() {
+                aiSummaryLoader.classList.remove('d-none');
+                aiSummaryContent.classList.add('d-none');
+                aiSummaryText.innerHTML = '';
+                
+                fetch(`/tours/{{ $tour->id }}/ai-summary`)
+                    .then(response => response.json())
+                    .then(data => {
+                        aiSummaryLoader.classList.add('d-none');
+                        aiSummaryContent.classList.remove('d-none');
 
-                    if (data.success && data.summary) {
-                        aiSummaryText.innerHTML = data.summary.replace(/\n/g, '<br>');
-                    } else {
-                        aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Không thể tạo tóm tắt vào lúc này. Vui lòng thử lại sau.</span>';
-                    }
-                })
-                .catch(error => {
-                    aiSummaryLoader.classList.add('d-none');
-                    aiSummaryContent.classList.remove('d-none');
-                    aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Lỗi kết nối khi tải tóm tắt AI.</span>';
-                });
+                        if (data.success && data.summary) {
+                            let summaryHtml = data.summary.replace(/\n/g, '<br>');
+                            
+                            // Check if the summary returned is actually an error message from the controller
+                            if (data.summary.includes('Không thể kết nối đến dịch vụ AI') || data.summary.includes('Không thể tạo tóm tắt vào lúc này')) {
+                                summaryHtml += ' <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2 rounded-pill" onclick="window.fetchAISummary()" style="font-size: 0.8rem;"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>';
+                            }
+                            
+                            aiSummaryText.innerHTML = summaryHtml;
+                        } else {
+                            aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Không thể tạo tóm tắt vào lúc này. Vui lòng thử lại sau.</span> <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2 rounded-pill" onclick="window.fetchAISummary()" style="font-size: 0.8rem;"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>';
+                        }
+                    })
+                    .catch(error => {
+                        aiSummaryLoader.classList.add('d-none');
+                        aiSummaryContent.classList.remove('d-none');
+                        aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Lỗi kết nối khi tải tóm tắt AI.</span> <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2 rounded-pill" onclick="window.fetchAISummary()" style="font-size: 0.8rem;"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>';
+                    });
+            };
+            
+            window.fetchAISummary();
         }
     });
 </script>

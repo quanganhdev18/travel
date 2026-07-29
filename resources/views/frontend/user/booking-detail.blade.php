@@ -529,7 +529,7 @@
     </button>
     <button type="button" id="btnFastForwardCancel" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
         <i class="bi bi-fast-forward-fill"></i>
-        <span>⏩ Demo: Tua nhanh 30p & Tự Hủy</span>
+        <span>⏩ Demo: Tua nhanh (Hết hạn & Tự Hủy)</span>
     </button>
 </div>
 @endif

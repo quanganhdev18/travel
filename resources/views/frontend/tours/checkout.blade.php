@@ -97,6 +97,12 @@
                             </div>
                         </div>
                     @endif
+                    <div class="alert alert-info mt-3 mb-0 d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="bi bi-stopwatch fs-4 me-2 text-info"></i>
+                            <strong>Thời gian giữ chỗ:</strong> Vui lòng hoàn tất biểu mẫu trong <span id="seatHoldTimer" class="fw-bold text-danger fs-5 ms-1">05:00</span>
+                        </div>
+                    </div>
                 </div>
 
                 <form action="{{ route('frontend.tours.store') }}" method="POST" id="checkout-form" enctype="multipart/form-data">
@@ -1628,5 +1634,37 @@
     });
 
     restoreProgress();
+
+    // Seat hold countdown timer
+    let remainingSeconds = {{ $remainingSeconds ?? 300 }};
+    const timerEl = document.getElementById('seatHoldTimer');
+    const updateTimer = () => {
+        if (remainingSeconds <= 0) {
+            timerEl.textContent = "00:00";
+            alert('Phiên giữ chỗ của bạn đã hết hạn do quá thời gian quy định (5 phút). Vui lòng đặt lại.');
+            window.location.href = "{{ route('frontend.tours.show', $schedule->tour->slug) }}";
+            return;
+        }
+
+        const m = Math.floor(remainingSeconds / 60).toString().padStart(2, '0');
+        const s = (remainingSeconds % 60).toString().padStart(2, '0');
+        timerEl.textContent = m + ':' + s;
+
+        if (remainingSeconds < 60) {
+            timerEl.classList.remove('text-danger');
+            timerEl.classList.add('text-warning', 'blink_me'); // Option to add blink effect if desired
+        }
+        remainingSeconds--;
+        setTimeout(updateTimer, 1000);
+    };
+    updateTimer();
 </script>
+<style>
+.blink_me {
+  animation: blinker 1s linear infinite;
+}
+@keyframes blinker {
+  50% { opacity: 0; }
+}
+</style>
 @endsection
