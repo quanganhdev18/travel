@@ -308,6 +308,35 @@
                 </div>
             </div>
 
+            {{-- Dịch vụ đính kèm & Vé tham quan --}}
+            @if($booking->ticket_bookings->count() > 0 || $booking->addons->count() > 0)
+            <div class="detail-card reveal-up">
+                <div class="detail-card-header"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Dịch vụ đính kèm & Vé tham quan</div>
+                <div class="detail-card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        @foreach($booking->ticket_bookings as $tb)
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-4">
+                                <div>
+                                    <div class="fw-bold">{{ $tb->ticket_option->ticket->title ?? '' }} - {{ $tb->ticket_option->name ?? 'Vé tham quan' }}</div>
+                                    <div class="text-muted small">Số lượng: {{ $tb->quantity }}</div>
+                                </div>
+                                <div class="fw-bold text-dark">{{ number_format($tb->total_price, 0, ',', '.') }}₫</div>
+                            </li>
+                        @endforeach
+                        @foreach($booking->addons as $addon)
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3 px-4">
+                                <div>
+                                    <div class="fw-bold">{{ $addon->pivot->addon_name }}</div>
+                                    <div class="text-muted small">Số lượng: {{ $addon->pivot->quantity }}</div>
+                                </div>
+                                <div class="fw-bold text-dark">{{ number_format($addon->pivot->price * $addon->pivot->quantity, 0, ',', '.') }}₫</div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+            @endif
+
             {{-- Đánh giá --}}
             @if(in_array($status,['completed','confirmed','paid']) && $tour)
             <div class="detail-card reveal-up">

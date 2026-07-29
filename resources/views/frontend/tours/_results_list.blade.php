@@ -134,7 +134,7 @@
                                     }
                                 }
                                 $destinationName = optional($tour->destination)->name ?: 'Việt Nam';
-                                $stars = $tour->reviews()->avg('rating') ? round($tour->reviews()->avg('rating')) : 0;
+                                $stars = $tour->reviews()->where('is_hidden', false)->avg('rating') ? round($tour->reviews()->where('is_hidden', false)->avg('rating')) : 0;
                             @endphp
                             <img src="{{ $tourImage }}" alt="{{ $tour->title }}"
                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">

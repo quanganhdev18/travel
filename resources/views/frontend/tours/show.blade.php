@@ -949,7 +949,7 @@
                                                 }
                                             }
                                             $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
-                                            $rStars = $relatedTour->reviews()->avg('rating') ? round($relatedTour->reviews()->avg('rating')) : 0;
+                                            $rStars = $relatedTour->reviews()->where('is_hidden', false)->avg('rating') ? round($relatedTour->reviews()->where('is_hidden', false)->avg('rating')) : 0;
                                         @endphp
                                         <img src="{{ $rTourImage }}"
                                              alt="{{ $relatedTour->title }}"

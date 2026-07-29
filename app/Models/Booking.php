@@ -150,6 +150,11 @@ class Booking extends Model
         return $this->hasMany(Refund::class);
     }
 
+    public function ticket_bookings()
+    {
+        return $this->hasMany(TicketBooking::class);
+    }
+
     /**
      * Tự động cập nhật các booking sắp khởi hành (upcoming) sang đang diễn ra (in_progress)
      * nếu thời gian hiện tại đã vượt qua ngày và giờ khởi hành của tour.

@@ -1498,7 +1498,7 @@
     document.querySelector('input[name="payment_method"]:checked').nextElementSibling.classList.add('border-primary', 'bg-primary', 'bg-opacity-10');
 
     // === SAVE / RESTORE DRAFT BOOKING PROGRESS ===
-    const DRAFT_KEY = 'tour_draft_booking_{{ $schedule->id }}';
+    const DRAFT_KEY = 'tour_draft_booking_{{ $schedule->id }}_{{ $adults }}_{{ $children }}';
     const checkoutForm = document.getElementById('checkout-form');
     let isRestoring = false;
 
@@ -1507,7 +1507,7 @@
         const formData = new FormData(checkoutForm);
         const dataToSave = {};
         formData.forEach((value, key) => {
-            if (key === '_token' || key.includes('image')) return;
+            if (key === '_token' || key.includes('image') || ['schedule_id', 'adults', 'children', 'total_price'].includes(key)) return;
             if (dataToSave[key]) {
                 if (!Array.isArray(dataToSave[key])) {
                     dataToSave[key] = [dataToSave[key]];
