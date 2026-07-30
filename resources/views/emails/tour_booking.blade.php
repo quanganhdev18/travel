@@ -126,7 +126,7 @@
         <p style="font-size: 14.5px; color: #16a34a; margin: 0; font-weight: 500;">Cảm ơn Quý khách đã hoàn tất 100% giá trị tour. Chúc Quý khách có chuyến đi vui vẻ!</p>
     @else
         <h1 style="font-size: 24px; color: #0f172a; margin: 0 0 6px 0; font-weight: 600; letter-spacing: -0.5px;">Xác Nhận Đặt Tour</h1>
-        <p style="font-size: 14.5px; color: #64748b; margin: 0;">Vui lòng thanh toán trong vòng 30 phút để bảo lưu chỗ của Quý khách.</p>
+        <p style="font-size: 14.5px; color: #64748b; margin: 0;">Vui lòng thanh toán trong vòng 15 phút để bảo lưu chỗ của Quý khách.</p>
     @endif
 </div>
 
@@ -153,7 +153,7 @@
             </div>
             <div style="text-align: right;">
                 @if($booking->payment_status == 'pending')
-                    <span class="badge badge-warning">Chờ thanh toán (30 phút)</span>
+                    <span class="badge badge-warning">Chờ thanh toán (15 phút)</span>
                 @elseif($booking->payment_status == 'paid_30')
                     <span class="badge badge-info">Đã cọc 30%</span>
                 @else
@@ -169,7 +169,7 @@
         @if($booking->payment_status === 'pending')
         <div class="order-meta-pay-row">
             <p style="margin-bottom: 16px; color: #b45309;">
-                ⚠️ Quý khách vui lòng hoàn tất quá trình thanh toán trong vòng <strong>30 phút</strong> kể từ khi đặt tour để hệ thống xác nhận giữ chỗ. Sau 30 phút chưa thanh toán, đơn hàng sẽ <strong>tự động bị hủy</strong>.
+                ⚠️ Quý khách vui lòng hoàn tất quá trình thanh toán trong vòng <strong>15 phút</strong> kể từ khi đặt tour để hệ thống xác nhận giữ chỗ. Sau 15 phút chưa thanh toán, đơn hàng sẽ <strong>tự động bị hủy</strong>.
             </p>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <a href="{{ route('user.bookings.detail', $booking->id) }}" style="display: inline-block; background: #f1f5f9; color: #0f172a; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1;">
@@ -365,10 +365,10 @@
         </table>
     </div>
 
-    {{-- ===== DỊCH VỤ GIA TĂNG ===== --}}
-    @if($booking->addons && $booking->addons->count() > 0)
+    {{-- ===== DỊCH VỤ GIA TĂNG & VÉ THAM QUAN ===== --}}
+    @if(($booking->addons && $booking->addons->count() > 0) || ($booking->ticket_bookings && $booking->ticket_bookings->count() > 0))
     <div class="section">
-        <span class="section-title">Dịch Vụ Gia Tăng Đã Chọn</span>
+        <span class="section-title">Dịch Vụ Gia Tăng & Vé Tham Quan</span>
         <table class="table">
             <thead>
                 <tr>
@@ -379,6 +379,14 @@
                 </tr>
             </thead>
             <tbody>
+                @foreach($booking->ticket_bookings as $tb)
+                <tr>
+                    <td>{{ $tb->ticket_option->ticket->title ?? '' }} - {{ $tb->ticket_option->name ?? 'Vé tham quan' }}</td>
+                    <td style="text-align: center;">{{ $tb->quantity }}</td>
+                    <td style="text-align: right;">{!! format_currency($tb->total_price / $tb->quantity) !!}</td>
+                    <td style="text-align: right;"><strong>{!! format_currency($tb->total_price) !!}</strong></td>
+                </tr>
+                @endforeach
                 @foreach($booking->addons as $addon)
                 <tr>
                     <td>{{ $addon->pivot->addon_name ?? $addon->name }}</td>

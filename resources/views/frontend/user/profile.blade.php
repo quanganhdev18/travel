@@ -1395,7 +1395,7 @@
                             }
                             $destinationName = optional($t?->destination)->name ?: 'Việt Nam';
                             $tourSlug = $t?->slug ?? $t?->id;
-                            $stars = $t?->hotel_stars ?? 4;
+                            $stars = ($t && $t->reviews()->avg('rating')) ? round($t->reviews()->avg('rating')) : 0;
                         @endphp
                         <div class="col-12 col-md-6 col-lg-4 wishlist-card-item">
                             {{-- Wrap link for card navigation --}}
@@ -1427,8 +1427,8 @@
                                     <div class="combo-card-body">
                                         <h3 class="combo-title">{{ $tourTitle }}</h3>
                                         <div class="combo-stars">
-                                            @for($i = 1; $i <= $stars; $i++)
-                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <i class="bi {{ $i <= $stars ? 'bi-star-fill' : 'bi-star' }} text-warning"></i>
                                             @endfor
                                         </div>
                                         <div class="combo-location">

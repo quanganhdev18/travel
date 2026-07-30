@@ -18,7 +18,8 @@ class OngoingTourController extends Controller
 
         $query = TourSchedule::with(['tour', 'schedule_guides.tour_guide'])
             ->withCount(['bookings as total_guests' => function ($q) {
-                $q->select(\DB::raw('SUM(adults_count + children_count)'));
+                $q->select(\DB::raw('SUM(adults_count + children_count)'))
+                  ->whereNotIn('booking_status', ['cancelled', 'failed']);
             }]);
 
         if ($status === 'upcoming') {
@@ -44,7 +45,7 @@ class OngoingTourController extends Controller
 
         if ($request->filled('search_guests')) {
             $searchGuests = $request->input('search_guests');
-            $query->whereRaw('(SELECT COALESCE(SUM(adults_count + children_count), 0) FROM bookings WHERE bookings.tour_schedule_id = tour_schedules.id) >= ?', [$searchGuests]);
+            $query->whereRaw('(SELECT COALESCE(SUM(adults_count + children_count), 0) FROM bookings WHERE bookings.tour_schedule_id = tour_schedules.id AND booking_status NOT IN (\'cancelled\', \'failed\')) >= ?', [$searchGuests]);
         }
 
         if ($request->filled('search_guide')) {

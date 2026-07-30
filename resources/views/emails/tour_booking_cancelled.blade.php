@@ -36,7 +36,7 @@
             </span>
         </div>
         <h1 style="font-size: 22px; color: #dc2626; margin: 0 0 6px 0; font-weight: 600;">Thông Báo Tự Động Hủy Đơn Đặt Tour</h1>
-        <p style="font-size: 14px; color: #64748b; margin: 0;">Đơn hàng #{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }} đã bị hủy do hết thời hạn thanh toán 30 phút.</p>
+        <p style="font-size: 14px; color: #64748b; margin: 0;">Đơn hàng #{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }} đã bị hủy do hết thời hạn thanh toán 15 phút.</p>
     </div>
 
     {{-- BODY --}}
@@ -48,7 +48,7 @@
 
         <div class="cancel-box">
             <h4>⚠️ Lý do hủy đơn:</h4>
-            <p>Đơn hàng quá hạn thanh toán (vượt quá 30 phút mà chưa hoàn tất cọc/thanh toán). Số ghế đã giữ đã được trả lại tự động cho hệ thống để phục vụ khách hàng khác.</p>
+            <p>Đơn hàng quá hạn thanh toán (vượt quá 15 phút mà chưa hoàn tất cọc/thanh toán). Số ghế đã giữ đã được trả lại tự động cho hệ thống để phục vụ khách hàng khác.</p>
         </div>
 
         <div class="section">
