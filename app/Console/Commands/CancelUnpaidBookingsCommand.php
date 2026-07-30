@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Events\SeatAvailabilityUpdated;
 use App\Mail\TourBookingCancelledMail;
 use App\Models\Booking;
+use App\Notifications\User\BookingStatusUpdatedNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -76,6 +77,10 @@ class CancelUnpaidBookingsCommand extends Command
                     } catch (\Exception $me) {
                         Log::warning('[bookings:cancel-unpaid] Không thể gửi email hủy đơn #'.$booking->id.': '.$me->getMessage());
                     }
+                }
+                
+                if ($booking->user) {
+                    $booking->user->notify(new BookingStatusUpdatedNotification($booking, "Đơn hàng của bạn đã bị huỷ do quá hạn thanh toán."));
                 }
 
                 $cancelledCount++;

@@ -162,6 +162,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/flights/book', [FlightController::class, 'book'])
         ->name('frontend.flights.book');
 
+    // Thông báo
+    Route::get('/notifications', [\App\Http\Controllers\User\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-all-as-read', [\App\Http\Controllers\User\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_as_read');
+    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\User\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\User\NotificationController::class, 'unreadCount'])->name('notifications.unread_count');
+
+    // Broadcast Auth cho Guest
+    Route::post('/broadcasting/guest-auth', [\App\Http\Controllers\GuestBroadcastingController::class, 'auth'])->withoutMiddleware(['auth']);
+
     // Tài khoản user
     Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
     Route::post('/user/profile', [UserController::class, 'updateProfile'])->name('user.profile.update');

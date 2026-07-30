@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Notifications\User\PaymentSuccessNotification;
 
 class BankWebhookController extends Controller
 {
@@ -66,6 +67,10 @@ class BankWebhookController extends Controller
                     } catch (\Exception $me) {
                         Log::warning("BankWebhook: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
                     }
+                }
+                
+                if ($bookingFresh->user) {
+                    $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $amountIn));
                 }
 
                 return response()->json([
