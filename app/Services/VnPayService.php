@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\TourBookingMail;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Notifications\User\PaymentSuccessNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -134,6 +135,8 @@ class VnPayService
 
         $isSuccess = ($requestData['vnp_ResponseCode'] ?? '') === '00';
 
+        $wasPending = $payment && $payment->payment_status === 'pending';
+
         if ($payment) {
             $payment->update([
                 'payment_status' => $isSuccess ? 'success' : 'failed',
@@ -141,7 +144,7 @@ class VnPayService
             ]);
         }
 
-        if ($isSuccess && $booking) {
+        if ($isSuccess && $booking && $wasPending) {
             $newPaidAmount = $booking->paid_amount + ($payment ? $payment->amount : 0);
 
             if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PENDING) {
@@ -157,12 +160,17 @@ class VnPayService
             ]);
 
             $bookingFresh = $booking->fresh();
-            if ($bookingFresh->user && $bookingFresh->user->email) {
-                try {
-                    Mail::to($bookingFresh->user->email)->send(new TourBookingMail($bookingFresh));
-                } catch (\Exception $me) {
-                    Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
+            if ($bookingFresh->user) {
+                if ($bookingFresh->user->email) {
+                    try {
+                        Mail::to($bookingFresh->user->email)->send(new TourBookingMail($bookingFresh));
+                    } catch (\Exception $me) {
+                        Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
+                    }
                 }
+                
+                // Send notification
+                $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
             }
         }
 

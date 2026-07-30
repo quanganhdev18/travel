@@ -43,8 +43,41 @@
             }
         });
     </script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('socialProof', (tourId) => ({
+                viewers: 0,
+                init() {
+                    // Start listening when initialized
+                    if (window.Echo) {
+                        // Override authEndpoint to support guests
+                        const originalAuthEndpoint = window.Echo.connector.options.authEndpoint;
+                        window.Echo.connector.options.authEndpoint = '/broadcasting/guest-auth';
+                        
+                        window.Echo.join(`tour.${tourId}`)
+                            .here((users) => {
+                                this.viewers = users.length;
+                            })
+                            .joining((user) => {
+                                this.viewers++;
+                            })
+                            .leaving((user) => {
+                                this.viewers--;
+                            })
+                            .error((error) => {
+                                console.error(error);
+                            });
+                            
+                        // Reset authEndpoint for other potential connections
+                        setTimeout(() => {
+                            window.Echo.connector.options.authEndpoint = originalAuthEndpoint;
+                        }, 1000);
+                    }
+                }
+            }));
+        });
+    </script>
 @endpush
-
 @section('content')
 <style>
     .gallery-main {
@@ -384,7 +417,28 @@
         <div class="row g-4">
             <div class="col-lg-8">
                 <!-- Image Slider -->
-                <div id="tourImageCarousel" class="carousel slide mb-5 overflow-hidden-rounded shadow-sm" data-bs-ride="carousel">
+                <div id="tourImageCarousel" class="carousel slide mb-5 overflow-hidden-rounded shadow-sm position-relative" data-bs-ride="carousel">
+                    
+                    <!-- Social Proof Floating Bar -->
+                    <div x-data="socialProof({{ $tour->id }})" 
+                         x-init="init()"
+                         class="position-absolute top-0 start-0 m-3 z-3" 
+                         style="pointer-events: none;" x-cloak>
+                        
+                        <div x-show="viewers > 0" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 transform -translate-y-2"
+                             x-transition:enter-end="opacity-100 transform translate-y-0"
+                             class="bg-dark bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2"
+                             style="backdrop-filter: blur(4px); font-size: 0.85rem;">
+                            <span class="position-relative d-flex h-2 w-2 align-items-center justify-content-center me-1">
+                                <span class="animate-ping position-absolute h-100 w-100 rounded-circle bg-danger opacity-75"></span>
+                                <span class="position-relative rounded-circle bg-danger" style="width: 8px; height: 8px;"></span>
+                            </span>
+                            <span x-text="viewers + ' người đang xem tour này'"></span>
+                        </div>
+                    </div>
+
                     <div class="carousel-indicators">
                         @foreach($allImages as $index => $img)
                             <button type="button" data-bs-target="#tourImageCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index == 0 ? 'active' : '' }}" aria-current="{{ $index == 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>

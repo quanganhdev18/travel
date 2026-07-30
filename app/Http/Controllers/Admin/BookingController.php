@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Notifications\User\BookingStatusUpdatedNotification;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -134,9 +135,46 @@ class BookingController extends Controller
             $booking->paid_amount = 0;
         }
 
+        $oldTourStatus = $booking->getOriginal('tour_status');
+        $oldPaymentStatus = $booking->getOriginal('payment_status');
+
         $booking->save();
 
+        if ($booking->user) {
+            if ($oldTourStatus !== $booking->tour_status) {
+                $statusName = $this->getTourStatusName($booking->tour_status);
+                $booking->user->notify(new BookingStatusUpdatedNotification($booking, "Trạng thái tour của bạn đã được cập nhật thành: " . $statusName));
+            } elseif ($oldPaymentStatus !== $booking->payment_status) {
+                $paymentStatusName = $this->getPaymentStatusName($booking->payment_status);
+                $booking->user->notify(new BookingStatusUpdatedNotification($booking, "Trạng thái thanh toán của bạn đã được cập nhật thành: " . $paymentStatusName));
+            }
+        }
+
         return back()->with('success', 'Cập nhật trạng thái đơn hàng thành công.');
+    }
+
+    private function getTourStatusName($status)
+    {
+        return match($status) {
+            Booking::TOUR_UPCOMING => 'Sắp khởi hành',
+            Booking::TOUR_IN_PROGRESS => 'Đang diễn ra',
+            Booking::TOUR_CHECKING_IN => 'Đang điểm danh',
+            Booking::TOUR_COMPLETED => 'Đã hoàn thành',
+            Booking::TOUR_CANCELLED_ADMIN => 'Đã huỷ bởi Admin',
+            Booking::TOUR_CANCELLED_CUSTOMER => 'Đã huỷ bởi Khách',
+            default => $status
+        };
+    }
+
+    private function getPaymentStatusName($status)
+    {
+        return match($status) {
+            Booking::PAYMENT_PENDING => 'Chờ thanh toán',
+            Booking::PAYMENT_PAID_30 => 'Đã cọc 30%',
+            Booking::PAYMENT_PAID_100 => 'Đã thanh toán 100%',
+            Booking::PAYMENT_FAILED => 'Thanh toán thất bại',
+            default => $status
+        };
     }
 
     public function updatePnr(Request $request, $id)

@@ -120,6 +120,19 @@ class Tour extends Model
         return $this->hasMany(Wishlist::class, 'tour_id');
     }
 
+    public function getCanBeDeletedAttribute()
+    {
+        return $this->bookings()->count() === 0;
+    }
+
+    public function getRecentBookingsCountAttribute()
+    {
+        return $this->bookings()
+            ->whereIn('status', ['paid', 'confirmed', 'completed'])
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+    }
+
     public function categories()
     {
         return $this->belongsToMany(
