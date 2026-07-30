@@ -150,5 +150,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DemoSeeder::class,
         ]);
+
+        // 8. Vietnam Holiday Seeder
+        $this->call([
+            VietnamHolidaySeeder::class,
+        ]);
     }
 }
