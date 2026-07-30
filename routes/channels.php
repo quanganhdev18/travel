@@ -20,3 +20,12 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
 Broadcast::channel('admin.chat', function ($user) {
     return $user->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff']);
 });
+
+Broadcast::channel('tour.{id}', function (?App\Models\User $user, $id) {
+    // If we want a presence channel, we need to return an array of user data.
+    // If not authenticated (handled by custom auth endpoint), they get a fake user.
+    return [
+        'id' => $user->id ?? session()->getId(),
+        'name' => $user->name ?? 'Guest'
+    ];
+});

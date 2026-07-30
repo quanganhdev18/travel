@@ -143,6 +143,7 @@
                         <a class="nav-link py-1" href="{{ route('register') }}" style="font-weight: 600;">{{ __('Đăng ký') }}</a>
                     </li>
                     @else
+                    <x-notification-bell />
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle d-flex align-items-center py-1" href="#" id="userDropdownTop" role="button" data-bs-toggle="dropdown">
                             @if(Auth::user()->avatar)
@@ -223,6 +224,7 @@
                         <li class="nav-item mt-2"><a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login') }}">{{ __('Đăng nhập') }}</a></li>
                         <li class="nav-item"><a class="btn-register-premium text-decoration-none d-block text-center" href="{{ route('register') }}">{{ __('Đăng ký') }}</a></li>
                         @else
+                        <x-notification-bell />
                         <li class="nav-item dropdown mt-2">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdownMobile" role="button" data-bs-toggle="dropdown">
                                 @if(Auth::user()->avatar)

@@ -312,13 +312,6 @@
             border-color: #cbd5e1;
             color: var(--admin-primary);
         }
-        .pagination .page-item.active .page-link {
-            background-color: var(--admin-primary) !important;
-            border-color: var(--admin-primary) !important;
-            color: #fff !important;
-            box-shadow: 0 4px 10px rgba(0, 124, 232, 0.3);
-            font-weight: 600;
-        }
         .pagination .page-item.disabled .page-link {
             color: #cbd5e1 !important;
             background-color: #f8fafc !important;
@@ -326,6 +319,7 @@
             cursor: not-allowed;
         }
     </style>
+    @stack('styles')
 </head>
 
 <body>

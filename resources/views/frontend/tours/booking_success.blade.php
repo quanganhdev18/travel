@@ -36,7 +36,7 @@
                             <!-- Timer Countdown Banner -->
                             <div class="alert alert-info d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill mb-4 border-0 shadow-sm" id="countdownBanner">
                                 <i class="bi bi-hourglass-split text-info fs-5"></i>
-                                <span>Thời gian giữ chỗ còn lại: <strong class="fs-5 text-danger font-monospace" id="countdownTimer">30:00</strong></span>
+                                <span>Thời gian giữ chỗ còn lại: <strong class="fs-5 text-danger font-monospace" id="countdownTimer">15:00</strong></span>
                             </div>
                         @endif
                     </div>
@@ -113,7 +113,7 @@
     </button>
     <button type="button" id="btnFastForwardCancel" class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm d-flex align-items-center gap-1">
         <i class="bi bi-fast-forward-fill"></i>
-        <span>⏩ Demo: Tua nhanh 30p & Tự Hủy</span>
+        <span>⏩ Demo: Tua nhanh (Hết hạn & Tự Hủy)</span>
     </button>
 </div>
 @endif
@@ -122,7 +122,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const bookingId = {{ $booking->id }};
     const createdAtMs = new Date("{{ $booking->created_at->toIso8601String() }}").getTime();
-    const deadlineMs = createdAtMs + (30 * 60 * 1000);
+    const deadlineMs = createdAtMs + (15 * 60 * 1000);
     const csrfToken = "{{ csrf_token() }}";
 
     function updateTimer() {
@@ -135,6 +135,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (diffMs <= 0) {
             timerEl.innerText = "00:00";
             timerEl.classList.add('text-muted');
+            if (!window.hasShownExpireAlert) {
+                window.hasShownExpireAlert = true;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Hết thời gian thanh toán!',
+                        text: 'Giao dịch của bạn đã quá hạn 15 phút và sẽ bị hệ thống tự động hủy. Vui lòng đặt lại tour mới.',
+                        icon: 'error',
+                        confirmButtonText: 'Đóng',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        window.location.href = "{{ route('user.bookings') }}";
+                    });
+                } else {
+                    alert('Hết thời gian thanh toán! Giao dịch của bạn đã quá hạn và sẽ tự động bị hủy.');
+                    window.location.href = "{{ route('user.bookings') }}";
+                }
+            }
+            return;
         } else {
             const minutes = Math.floor(diffMs / (1000 * 60));
             const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);

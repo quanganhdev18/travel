@@ -33,6 +33,7 @@ class UpdateTourLifecycle extends Command
         $operatingCount = TourSchedule::where(function ($q) {
             $q->whereNull('status')->orWhere('status', 'pending');
         })
+            ->has('schedule_guides')
             ->where('departure_date', '<=', $today)
             ->where('return_date', '>=', $today)
             ->update(['status' => 'operating']);

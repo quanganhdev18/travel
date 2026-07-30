@@ -43,8 +43,41 @@
             }
         });
     </script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('socialProof', (tourId) => ({
+                viewers: 0,
+                init() {
+                    // Start listening when initialized
+                    if (window.Echo) {
+                        // Override authEndpoint to support guests
+                        const originalAuthEndpoint = window.Echo.connector.options.authEndpoint;
+                        window.Echo.connector.options.authEndpoint = '/broadcasting/guest-auth';
+                        
+                        window.Echo.join(`tour.${tourId}`)
+                            .here((users) => {
+                                this.viewers = users.length;
+                            })
+                            .joining((user) => {
+                                this.viewers++;
+                            })
+                            .leaving((user) => {
+                                this.viewers--;
+                            })
+                            .error((error) => {
+                                console.error(error);
+                            });
+                            
+                        // Reset authEndpoint for other potential connections
+                        setTimeout(() => {
+                            window.Echo.connector.options.authEndpoint = originalAuthEndpoint;
+                        }, 1000);
+                    }
+                }
+            }));
+        });
+    </script>
 @endpush
-
 @section('content')
 <style>
     .gallery-main {
@@ -384,7 +417,28 @@
         <div class="row g-4">
             <div class="col-lg-8">
                 <!-- Image Slider -->
-                <div id="tourImageCarousel" class="carousel slide mb-5 overflow-hidden-rounded shadow-sm" data-bs-ride="carousel">
+                <div id="tourImageCarousel" class="carousel slide mb-5 overflow-hidden-rounded shadow-sm position-relative" data-bs-ride="carousel">
+                    
+                    <!-- Social Proof Floating Bar -->
+                    <div x-data="socialProof({{ $tour->id }})" 
+                         x-init="init()"
+                         class="position-absolute top-0 start-0 m-3 z-3" 
+                         style="pointer-events: none;" x-cloak>
+                        
+                        <div x-show="viewers > 0" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 transform -translate-y-2"
+                             x-transition:enter-end="opacity-100 transform translate-y-0"
+                             class="bg-dark bg-opacity-75 text-white px-3 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2"
+                             style="backdrop-filter: blur(4px); font-size: 0.85rem;">
+                            <span class="position-relative d-flex h-2 w-2 align-items-center justify-content-center me-1">
+                                <span class="animate-ping position-absolute h-100 w-100 rounded-circle bg-danger opacity-75"></span>
+                                <span class="position-relative rounded-circle bg-danger" style="width: 8px; height: 8px;"></span>
+                            </span>
+                            <span x-text="viewers + ' người đang xem tour này'"></span>
+                        </div>
+                    </div>
+
                     <div class="carousel-indicators">
                         @foreach($allImages as $index => $img)
                             <button type="button" data-bs-target="#tourImageCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index == 0 ? 'active' : '' }}" aria-current="{{ $index == 0 ? 'true' : 'false' }}" aria-label="Slide {{ $index + 1 }}"></button>
@@ -949,7 +1003,7 @@
                                                 }
                                             }
                                             $rDestinationName = optional($relatedTour->destination)->name ?: 'Việt Nam';
-                                            $rStars = $relatedTour->hotel_stars ?? 4;
+                                            $rStars = $relatedTour->reviews()->where('is_hidden', false)->avg('rating') ? round($relatedTour->reviews()->where('is_hidden', false)->avg('rating')) : 0;
                                         @endphp
                                         <img src="{{ $rTourImage }}"
                                              alt="{{ $relatedTour->title }}"
@@ -959,8 +1013,8 @@
                                     <div class="combo-card-body">
                                         <h3 class="combo-title">{{ $relatedTour->title }}</h3>
                                         <div class="combo-stars">
-                                            @for($i = 1; $i <= $rStars; $i++)
-                                                <i class="bi bi-star-fill text-warning"></i>
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <i class="bi {{ $i <= $rStars ? 'bi-star-fill' : 'bi-star' }} text-warning"></i>
                                             @endfor
                                         </div>
                                         <div class="combo-location">
@@ -1146,23 +1200,38 @@
         const aiSummaryText = document.getElementById('aiSummaryText');
 
         if (aiSummaryLoader && aiSummaryContent && aiSummaryText) {
-            fetch(`/tours/{{ $tour->id }}/ai-summary`)
-                .then(response => response.json())
-                .then(data => {
-                    aiSummaryLoader.classList.add('d-none');
-                    aiSummaryContent.classList.remove('d-none');
+            window.fetchAISummary = function() {
+                aiSummaryLoader.classList.remove('d-none');
+                aiSummaryContent.classList.add('d-none');
+                aiSummaryText.innerHTML = '';
+                
+                fetch(`/tours/{{ $tour->id }}/ai-summary`)
+                    .then(response => response.json())
+                    .then(data => {
+                        aiSummaryLoader.classList.add('d-none');
+                        aiSummaryContent.classList.remove('d-none');
 
-                    if (data.success && data.summary) {
-                        aiSummaryText.innerHTML = data.summary.replace(/\n/g, '<br>');
-                    } else {
-                        aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Không thể tạo tóm tắt vào lúc này. Vui lòng thử lại sau.</span>';
-                    }
-                })
-                .catch(error => {
-                    aiSummaryLoader.classList.add('d-none');
-                    aiSummaryContent.classList.remove('d-none');
-                    aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Lỗi kết nối khi tải tóm tắt AI.</span>';
-                });
+                        if (data.success && data.summary) {
+                            let summaryHtml = data.summary.replace(/\n/g, '<br>');
+                            
+                            // Check if the summary returned is actually an error message from the controller
+                            if (data.summary.includes('Không thể kết nối đến dịch vụ AI') || data.summary.includes('Không thể tạo tóm tắt vào lúc này')) {
+                                summaryHtml += ' <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2 rounded-pill" onclick="window.fetchAISummary()" style="font-size: 0.8rem;"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>';
+                            }
+                            
+                            aiSummaryText.innerHTML = summaryHtml;
+                        } else {
+                            aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Không thể tạo tóm tắt vào lúc này. Vui lòng thử lại sau.</span> <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2 rounded-pill" onclick="window.fetchAISummary()" style="font-size: 0.8rem;"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>';
+                        }
+                    })
+                    .catch(error => {
+                        aiSummaryLoader.classList.add('d-none');
+                        aiSummaryContent.classList.remove('d-none');
+                        aiSummaryText.innerHTML = '<span class="text-muted"><i class="bi bi-exclamation-triangle me-1"></i> Lỗi kết nối khi tải tóm tắt AI.</span> <button class="btn btn-sm btn-outline-primary ms-2 py-0 px-2 rounded-pill" onclick="window.fetchAISummary()" style="font-size: 0.8rem;"><i class="bi bi-arrow-clockwise"></i> Thử lại</button>';
+                    });
+            };
+            
+            window.fetchAISummary();
         }
     });
 </script>

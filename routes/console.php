@@ -22,3 +22,6 @@ Schedule::command('chat:re-route-offline')->everyMinute();
 
 // Tự động hủy đơn hàng chưa thanh toán quá 30 phút
 Schedule::command('bookings:cancel-unpaid')->everyMinute();
+
+// Tự động gửi thông báo nhắc nhở khách hàng trước 1 ngày khởi hành
+Schedule::command('tours:send-reminders')->dailyAt('08:00');
