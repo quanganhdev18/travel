@@ -7,125 +7,217 @@ use App\Models\Booking;
 use App\Models\Tour;
 use App\Models\TourSchedule;
 use App\Models\User;
+use App\Models\Review;
+use App\Models\Refund;
+use App\Models\Message;
+use App\Models\TicketBooking;
+use App\Models\Coupon;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $rangeInput = $request->input('range');
-        $validRanges = ['today', '7days', 'this_month', 'last_month', 'this_quarter', 'this_year', 'custom'];
-        $range = in_array($rangeInput, $validRanges) ? $rangeInput : 'this_month';
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
 
-        $customErrors = [];
         $now = now();
-        $startDate = $now->copy()->startOfMonth();
-        $endDate = $now->copy()->endOfMonth();
+        $groupBy = 'day';
 
-        if ($range === 'custom') {
-            $validator = Validator::make($request->all(), [
-                'from' => 'required|date_format:Y-m-d',
-                'to' => 'required|date_format:Y-m-d|after_or_equal:from|before_or_equal:today',
-            ], [
-                'from.required' => 'Vui lòng chọn từ ngày.',
-                'from.date_format' => 'Định dạng ngày không hợp lệ.',
-                'to.required' => 'Vui lòng chọn đến ngày.',
-                'to.date_format' => 'Định dạng ngày không hợp lệ.',
-                'to.after_or_equal' => 'Đến ngày phải lớn hơn hoặc bằng từ ngày.',
-                'to.before_or_equal' => 'Đến ngày không được ở tương lai.',
-            ]);
-
-            $validator->after(function ($validator) use ($request) {
-                if ($request->filled('from') && $request->filled('to')) {
-                    try {
-                        $from = Carbon::parse($request->from);
-                        $to = Carbon::parse($request->to);
-                        if ($from->diffInDays($to) > 366) {
-                            $validator->errors()->add('to', 'Khoảng cách tối đa 366 ngày.');
-                        }
-                    } catch (\Exception $e) {
-                        // date_format will catch it
-                    }
-                }
-            });
-
-            if ($validator->fails()) {
-                $customErrors = $validator->errors()->toArray();
-                // Fallback safe dates so query doesn't break
-                $startDate = $now->copy()->startOfMonth();
-                $endDate = $now->copy()->endOfMonth();
-            } else {
-                $startDate = Carbon::parse($request->from)->startOfDay();
-                $endDate = Carbon::parse($request->to)->endOfDay();
+        if ($startDateInput && $endDateInput) {
+            $startDate = Carbon::parse($startDateInput)->startOfDay();
+            $endDate = Carbon::parse($endDateInput)->endOfDay();
+            
+            // Ensure startDate < endDate
+            if ($startDate >= $endDate) {
+                $startDate = $endDate->copy()->subDay()->startOfDay();
             }
+            
+            // Prevent future dates
+            if ($endDate > $now->copy()->endOfDay()) {
+                $endDate = $now->copy()->endOfDay();
+                if ($startDate >= $endDate) {
+                    $startDate = $endDate->copy()->subDay()->startOfDay();
+                }
+            }
+            
+            $periodLength = $startDate->diffInDays($endDate) + 1;
+            
+            $prevEndDate = $startDate->copy()->subDay()->endOfDay();
+            $prevStartDate = $startDate->copy()->subDays($periodLength)->startOfDay();
         } else {
-            switch ($range) {
-                case 'today':
-                    $startDate = $now->copy()->startOfDay();
-                    $endDate = $now->copy()->endOfDay();
-                    break;
-                case '7days':
-                    $startDate = $now->copy()->subDays(6)->startOfDay();
-                    $endDate = $now->copy()->endOfDay();
-                    break;
-                case 'last_month':
-                    $startDate = $now->copy()->subMonth()->startOfMonth();
-                    $endDate = $now->copy()->subMonth()->endOfMonth();
-                    break;
-                case 'this_quarter':
-                    $startDate = $now->copy()->startOfQuarter();
-                    $endDate = $now->copy()->endOfQuarter();
-                    break;
-                case 'this_year':
-                    $startDate = $now->copy()->startOfYear();
-                    $endDate = $now->copy()->endOfYear();
-                    break;
-                case 'this_month':
-                default:
-                    $startDate = $now->copy()->startOfMonth();
-                    $endDate = $now->copy()->endOfMonth();
-                    break;
+            // Default to last 30 days
+            $periodLength = 30;
+            $startDate = $now->copy()->subDays(29)->startOfDay();
+            $endDate = $now->copy()->endOfDay();
+            $prevStartDate = $now->copy()->subDays(59)->startOfDay();
+            $prevEndDate = $now->copy()->subDays(30)->endOfDay();
+        }
+
+        // --- 1. KEY METRICS ---
+        // Current Period
+        $currentBookings = Booking::whereBetween('created_at', [$startDate, $endDate]);
+        $totalBookings = $currentBookings->count();
+        
+        // Finance metrics
+        $outstandingBalance = (clone $currentBookings)
+            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+            ->whereIn('payment_status', [Booking::PAYMENT_PENDING, Booking::PAYMENT_PAID_30])
+            ->sum(DB::raw('total_price - IFNULL(paid_amount, 0)'));
+
+        $totalTourRevenue = (clone $currentBookings)->whereIn('payment_status', [Booking::PAYMENT_PAID_100, Booking::PAYMENT_PAID_30, Booking::PAYMENT_PAID])->sum(DB::raw('IFNULL(paid_amount, IF(payment_status = "paid_100", total_price, 0))'));
+        
+        $currentTicketBookings = TicketBooking::whereBetween('created_at', [$startDate, $endDate]);
+        $totalTicketRevenue = (clone $currentTicketBookings)->where('booking_status', 'completed')->sum('total_price');
+        
+        $totalRevenue = $totalTourRevenue + $totalTicketRevenue;
+        
+        $cancelledBookings = (clone $currentBookings)->whereIn('tour_status', [Booking::TOUR_CANCELLED_CUSTOMER, Booking::TOUR_CANCELLED_ADMIN])->count();
+        $avgOrderValue = $totalBookings > 0 ? $totalTourRevenue / $totalBookings : 0;
+        $cancelRate = $totalBookings > 0 ? ($cancelledBookings / $totalBookings) * 100 : 0;
+
+        // Previous Period
+        $prevBookings = Booking::whereBetween('created_at', [$prevStartDate, $prevEndDate]);
+        $prevTotalBookings = $prevBookings->count();
+        
+        $prevTotalTourRevenue = (clone $prevBookings)->whereIn('payment_status', [Booking::PAYMENT_PAID_100, Booking::PAYMENT_PAID_30, Booking::PAYMENT_PAID])->sum(DB::raw('IFNULL(paid_amount, IF(payment_status = "paid_100", total_price, 0))'));
+        $prevTicketBookings = TicketBooking::whereBetween('created_at', [$prevStartDate, $prevEndDate]);
+        $prevTotalTicketRevenue = (clone $prevTicketBookings)->where('booking_status', 'completed')->sum('total_price');
+        
+        $prevTotalRevenue = $prevTotalTourRevenue + $prevTotalTicketRevenue;
+        
+        $prevCancelledBookings = (clone $prevBookings)->whereIn('tour_status', [Booking::TOUR_CANCELLED_CUSTOMER, Booking::TOUR_CANCELLED_ADMIN])->count();
+        $prevAvgOrderValue = $prevTotalBookings > 0 ? $prevTotalTourRevenue / $prevTotalBookings : 0;
+        $prevCancelRate = $prevTotalBookings > 0 ? ($prevCancelledBookings / $prevTotalBookings) * 100 : 0;
+
+        // Diffs
+        $diffBookings = $totalBookings - $prevTotalBookings;
+        $diffRevenue = $totalRevenue - $prevTotalRevenue;
+        $diffAov = $avgOrderValue - $prevAvgOrderValue;
+        $diffCancelRate = $cancelRate - $prevCancelRate;
+        
+        // --- 1.5 ACTIONABLE ITEMS ---
+        $pendingBookingsCount = Booking::where('tour_status', Booking::TOUR_UPCOMING)->where('payment_status', Booking::PAYMENT_PENDING)->count();
+        $unassignedGuidesCount = TourSchedule::whereDate('departure_date', '>=', now()->toDateString())
+            ->whereDate('departure_date', '<=', now()->addDays(7)->toDateString())
+            ->doesntHave('schedule_guides')
+            ->count();
+        $unreadMessagesCount = Message::whereNull('read_at')->where('sender_id', '!=', auth()->id())->count();
+        
+        // --- 1.6 MARKETING STATS ---
+        $couponUsageCount = (clone $currentBookings)->whereNotNull('coupon_id')->count() 
+            + (clone $currentTicketBookings)->whereNotNull('coupon_id')->count();
+        $totalDiscountAmount = (clone $currentBookings)->sum('discount_amount')
+            + (clone $currentTicketBookings)->sum('discount_amount');
+
+        // --- 2. REVENUE JOURNEY (Chart) ---
+        $revenueJourney = Booking::whereBetween('created_at', [$startDate, $endDate]);
+        if ($groupBy === 'month') {
+            $revenueJourney->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as date'),
+                DB::raw('SUM(CASE WHEN payment_status = "'.Booking::PAYMENT_PAID_100.'" THEN total_price ELSE 0 END) as revenue'),
+                DB::raw('COUNT(*) as orders')
+            );
+        } else {
+            $revenueJourney->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('SUM(CASE WHEN payment_status = "'.Booking::PAYMENT_PAID_100.'" THEN total_price ELSE 0 END) as revenue'),
+                DB::raw('COUNT(*) as orders')
+            );
+        }
+        
+        $revenueJourney = $revenueJourney->groupBy('date')->orderBy('date', 'asc')->get();
+            
+        // Fill missing dates
+        $dates = [];
+        $currentDate = $startDate->copy();
+        while($currentDate <= $endDate) {
+            $key = $groupBy === 'month' ? $currentDate->format('Y-m') : $currentDate->format('Y-m-d');
+            $dates[$key] = ['revenue' => 0, 'orders' => 0];
+            
+            if ($groupBy === 'month') {
+                $currentDate->addMonth();
+            } else {
+                $currentDate->addDay();
             }
         }
-        $totalTours = Tour::count();
-        $totalBookings = Booking::whereBetween('created_at', [$startDate, $endDate])->count();
-        $totalRevenue = Booking::where('payment_status', Booking::PAYMENT_PAID_100)
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->sum('total_price');
-        $totalUsers = User::count();
+        
+        foreach($revenueJourney as $item) {
+            if(isset($dates[$item->date])) {
+                $dates[$item->date] = ['revenue' => $item->revenue, 'orders' => $item->orders];
+            }
+        }
 
-        $today = now()->startOfDay();
-
-        $ongoingTours = TourSchedule::with(['tour', 'schedule_guides.tour_guide'])
-            ->withCount(['bookings as total_guests' => function ($q) {
-                $q->select(\DB::raw('SUM(adults_count + children_count)'))
-                  ->whereNotIn('booking_status', ['cancelled', 'failed']);
-            }])
-            ->where('departure_date', '<=', $today)
-            ->where('return_date', '>=', $today)
-            ->orderBy('departure_date', 'asc')
-            ->take(5)
-            ->get();
-
-        $bookingStatusData = Booking::select('tour_status', \DB::raw('count(*) as total'))
-            ->whereBetween('created_at', [$startDate, $endDate])
+        // --- 3. CHECK-IN STATUS (Bar Chart) ---
+        $checkinStatus = Booking::whereBetween('created_at', [$startDate, $endDate])
+            ->select('tour_status', DB::raw('count(*) as total'))
             ->groupBy('tour_status')
             ->pluck('total', 'tour_status')
             ->toArray();
 
+        // --- 4. TOP DESTINATIONS ---
+        $topDestinations = DB::table('bookings')
+            ->join('tour_schedules', 'bookings.tour_schedule_id', '=', 'tour_schedules.id')
+            ->join('tours', 'tour_schedules.tour_id', '=', 'tours.id')
+            ->join('provinces', 'tours.destination_province_id', '=', 'provinces.id')
+            ->whereBetween('bookings.created_at', [$startDate, $endDate])
+            ->select('provinces.name as province_name', 'provinces.id as province_id', DB::raw('count(bookings.id) as total_bookings'))
+            ->groupBy('provinces.id', 'provinces.name')
+            ->orderBy('total_bookings', 'desc')
+            ->take(5)
+            ->get();
+            
+        $maxTopDestBookings = $topDestinations->max('total_bookings') ?? 1; // avoid div by zero
+
+        // --- 5. TOUR FILL RATE ---
+        $today = now()->startOfDay();
+        $tourFillRates = TourSchedule::with(['tour', 'schedule_guides'])
+            ->withCount(['bookings as total_guests' => function ($q) {
+                $q->select(DB::raw('SUM(adults_count + children_count)'))
+                  ->whereNotIn('booking_status', ['cancelled', 'failed']);
+            }])
+            ->where('departure_date', '>=', $today)
+            ->orderBy('departure_date', 'asc')
+            ->take(8)
+            ->get();
+
+        // --- 6. RECENT BOOKINGS ---
+        $recentBookings = Booking::with(['user', 'tour_schedule.tour'])
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        // --- 7. CUSTOMER REVIEWS ---
+        $averageRating = Review::avg('rating') ?? 0;
+        $totalReviews = Review::count();
+        $ratingDistribution = Review::select('rating', DB::raw('count(*) as count'))
+            ->groupBy('rating')
+            ->pluck('count', 'rating')
+            ->toArray();
+            
+        // Map 1-5 to ensure all keys exist
+        $ratings = [];
+        for ($i = 5; $i >= 1; $i--) {
+            $count = $ratingDistribution[$i] ?? 0;
+            $percent = $totalReviews > 0 ? ($count / $totalReviews) * 100 : 0;
+            $ratings[$i] = ['count' => $count, 'percent' => round($percent)];
+        }
+
         return view('admin.dashboard', compact(
-            'totalTours',
-            'totalBookings',
-            'totalRevenue',
-            'totalUsers',
-            'ongoingTours',
-            'range',
-            'startDate',
-            'endDate',
-            'bookingStatusData',
-            'customErrors'
+            'periodLength', 'startDate', 'endDate',
+            'totalBookings', 'totalRevenue', 'totalTourRevenue', 'totalTicketRevenue', 'outstandingBalance',
+            'avgOrderValue', 'cancelRate',
+            'diffBookings', 'diffRevenue', 'diffAov', 'diffCancelRate',
+            'pendingBookingsCount', 'unassignedGuidesCount', 'unreadMessagesCount',
+            'couponUsageCount', 'totalDiscountAmount',
+            'dates', 'groupBy',
+            'checkinStatus',
+            'topDestinations', 'maxTopDestBookings',
+            'tourFillRates',
+            'recentBookings',
+            'averageRating', 'totalReviews', 'ratings'
         ));
     }
 }
