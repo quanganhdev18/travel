@@ -52,6 +52,12 @@
                     <i class="bi bi-robot me-2 text-primary"></i>{{ __('Gợi ý AI') }}
                 </button>
             </li>
+
+            <li class="nav-item" role="presentation">
+                <a href="{{ route('frontend.tours.calendar') }}" class="nav-link" style="color: #64748b; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.color='#007CE8'" onmouseout="this.style.color='#64748b'">
+                    <i class="bi bi-calendar2-week-fill me-2 text-success"></i>{{ __('Bảng lịch tour') }}
+                </a>
+            </li>
         </ul>
 
         <div class="tab-content px-3 pb-3" id="searchTabsContent">

@@ -11,6 +11,47 @@ Route::get('/debug-schema', function () {
 
     return implode(', ', $columns);
 });
+
+// Route tạm để seed ngày lễ (chạy 1 lần rồi có thể xóa)
+Route::get('/seed-holidays', function () {
+    (new \Database\Seeders\VietnamHolidaySeeder)->run();
+    return response()->json(['status' => 'ok', 'message' => '✅ Đã seed ngày lễ Việt Nam thành công!', 'count' => \App\Models\Holiday::count()]);
+});
+
+// Route debug lọc danh mục
+Route::get('/debug-calendar', function (\Illuminate\Http\Request $request) {
+    $categoryId = $request->get('cat', null);
+
+    // Xem danh sách categories và số tour có schedule
+    $cats = \App\Models\Category::withCount(['tours as tour_count', 'tours as schedule_count' => function ($q) {
+        $q->whereHas('tour_schedules');
+    }])->get(['id', 'name']);
+
+    // Test query filter
+    $query = \App\Models\TourSchedule::with(['tour.categories'])
+        ->whereBetween('departure_date', [now()->startOfMonth(), now()->endOfMonth()])
+        ->whereIn('status', ['available', 'full']);
+
+    if ($categoryId) {
+        $query->whereHas('tour.categories', function ($q) use ($categoryId) {
+            $q->where('categories.id', $categoryId);
+        });
+    }
+
+    $results = $query->get()->map(fn($s) => [
+        'schedule_id' => $s->id,
+        'tour' => $s->tour?->title,
+        'categories' => $s->tour?->categories->pluck('name'),
+    ]);
+
+    return response()->json([
+        'all_categories' => $cats,
+        'filtered_schedules' => $results,
+        'filter_cat_id' => $categoryId,
+    ]);
+});
+
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
 Route::get('/tours/search', function (Request $request) {
@@ -49,6 +90,7 @@ use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
+use App\Http\Controllers\Frontend\CalendarController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
 use App\Models\User;
@@ -84,6 +126,10 @@ Route::get('/tours/vnpay-ipn', [TourBookingController::class, 'vnpayIpn'])
 // Tóm tắt AI
 Route::get('/tours/{id}/ai-summary', [FrontendTourController::class, 'aiSummary'])
     ->name('frontend.tours.ai_summary');
+
+// Lịch Tour
+Route::get('/lich-tour', [CalendarController::class, 'index'])->name('frontend.tours.calendar');
+Route::get('/api/lich-tour/data', [CalendarController::class, 'data'])->name('frontend.tours.calendar.data');
 
 // Tìm chuyến bay
 Route::get('/flights', [FlightController::class, 'search'])

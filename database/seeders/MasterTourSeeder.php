@@ -670,9 +670,19 @@ class MasterTourSeeder extends Seeder
                 }
 
                 // Schedules
-                for ($i = 1; $i <= 3; $i++) {
-                    $depDate = Carbon::now()->addDays($i * 5 + rand(1, 3))->setTime(8, 0);
+                // Tăng lên 8 lịch khởi hành mỗi tour để rải đều từ mùng 1 đến cuối tháng 8
+                // Cố định mốc bắt đầu là 01/08/2026
+                $baseDate = Carbon::create(2026, 8, 1, 8, 0, 0);
+                for ($i = 0; $i < 8; $i++) {
+                    // Cứ mỗi 4 ngày sẽ có 1 chuyến đi, cộng thêm ngẫu nhiên 0-2 ngày
+                    $depDate = (clone $baseDate)->addDays($i * 4 + rand(0, 2));
                     $retDate = (clone $depDate)->addDays($tourData['days']);
+                    
+                    // Ngẫu nhiên số chỗ để UI hiển thị trạng thái xanh/vàng/đỏ chân thực hơn
+                    $randCapacity = rand(15, 30);
+                    $randAvail = rand(0, $randCapacity);
+                    $status = ($randAvail === 0) ? 'full' : 'available';
+
                     TourSchedule::firstOrCreate(
                         [
                             'tour_id' => $tour->id,
@@ -680,9 +690,9 @@ class MasterTourSeeder extends Seeder
                         ],
                         [
                             'return_date' => $retDate->toDateTimeString(),
-                            'capacity' => 20,
-                            'available_seats' => 20,
-                            'status' => 'available',
+                            'capacity' => $randCapacity,
+                            'available_seats' => $randAvail,
+                            'status' => $status,
                         ]
                     );
                 }
