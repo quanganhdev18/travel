@@ -84,7 +84,7 @@
 </head>
 <body>
     @auth
-        @hasanyrole('Super Admin|Admin|Staff|cskh|Guide')
+        @hasanyrole('Admin|Staff|cskh|Guide')
             <a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-light border shadow-sm" style="position: fixed; top: 12px; left: 20px; z-index: 999999; border-radius: 8px; font-weight: 500; font-family: 'Inter', sans-serif; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #fff; border: 1px solid #dee2e6; color: #212529; text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; transition: all 0.2s;" onmouseover="this.style.background='#f8f9fa'; this.style.borderColor='#c1c9d0';" onmouseout="this.style.background='#fff'; this.style.borderColor='#dee2e6';">
                 <i class="bi bi-speedometer2 text-primary"></i> Quay lại quản trị
             </a>

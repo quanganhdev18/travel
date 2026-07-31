@@ -96,7 +96,7 @@
                             <div class="fw-bold text-dark text-truncate" style="max-width: 250px;" title="{{ $schedule->tour->title ?? '' }}">
                                 {{ $schedule->tour->title ?? 'N/A' }}
                             </div>
-                            <small class="text-muted">Mã: #{{ str_pad($schedule->id, 5, '0', STR_PAD_LEFT) }}</small>
+                            <div class="small text-muted mt-1"><i class="bi bi-upc-scan me-1"></i>{{ $schedule->code }}</div>
                         </td>
                         <td>
                             <div class="fw-500 text-primary">

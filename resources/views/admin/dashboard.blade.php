@@ -36,12 +36,16 @@
     
     /* Custom Progress bar styling */
     .progress-slim {
-        height: 6px;
-        border-radius: 3px;
+        height: 8px;
+        border-radius: 4px;
         background-color: #f1f5f9;
+        overflow: hidden;
+        display: flex;
     }
     .progress-slim .progress-bar {
-        border-radius: 3px;
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.4s ease;
     }
     
     /* Table styling */
@@ -290,9 +294,9 @@
                     ];
                     
                     $mergedConfig = [
-                        'upcoming' => ['label' => 'Chờ xác nhận', 'color' => '#f59e0b'],
-                        'in_progress' => ['label' => 'Đã xác nhận', 'color' => '#10b981'],
-                        'completed' => ['label' => 'Hoàn thành', 'color' => '#1e293b'],
+                        'upcoming' => ['label' => 'Sắp khởi hành', 'color' => '#3b82f6'],
+                        'in_progress' => ['label' => 'Đang check-in / Đi tour', 'color' => '#10b981'],
+                        'completed' => ['label' => 'Hoàn thành', 'color' => '#6366f1'],
                         'cancelled' => ['label' => 'Đã huỷ', 'color' => '#ef4444'],
                     ];
                     
@@ -311,7 +315,7 @@
                                 <span class="fw-bold">{{ number_format($count, 0, ',', '.') }}</span>
                             </div>
                             <div class="progress-slim">
-                                <div class="progress-bar" style="width: {{ $width }}%; background-color: {{ $config['color'] }}"></div>
+                                <div class="progress-bar" style="width: {{ $width }}%; height: 100%; background-color: {{ $config['color'] }} !important;"></div>
                             </div>
                         </div>
                     @endforeach
@@ -343,13 +347,20 @@
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <div>
-                                        <div class="fw-bold text-dark text-sm">{{ $dest->province_name }}</div>
+                                        @php
+                                            $destName = $dest->province_name;
+                                            if (is_string($destName) && str_starts_with(trim($destName), '{')) {
+                                                $decoded = json_decode($destName, true);
+                                                $destName = is_array($decoded) ? ($decoded['vi'] ?? $decoded['en'] ?? reset($decoded) ?: $destName) : $destName;
+                                            }
+                                        @endphp
+                                        <div class="fw-bold text-dark text-sm">{{ $destName }}</div>
                                         <div class="text-muted text-xs">Điểm đến</div>
                                     </div>
                                     <div class="fw-bold text-sm">{{ number_format($dest->total_bookings, 0, ',', '.') }}</div>
                                 </div>
-                                <div class="progress-slim d-flex justify-content-end" style="background:transparent;">
-                                    <div class="progress-bar rounded-pill" style="width: {{ $width }}%; background-color: {{ $color }}; height: 4px;"></div>
+                                <div class="progress-slim mt-1">
+                                    <div class="progress-bar rounded-pill" style="width: {{ $width }}%; height: 100%; background-color: {{ $color }} !important;"></div>
                                 </div>
                             </div>
                         </div>
@@ -461,7 +472,7 @@
                                     $isCancelled = in_array($booking->tour_status, ['cancelled_by_customer', 'cancelled_by_admin']);
                                 @endphp
                                 <tr class="border-bottom">
-                                    <td class="text-muted">TD-{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</td>
+                                    <td class="text-muted">{{ $booking->code }}</td>
                                     <td>
                                         <div>
                                             <div class="fw-bold text-dark">{{ $userName }}</div>

@@ -136,9 +136,9 @@
     <p class="greeting">Kính gửi Quý khách <strong>{{ $customerName }}</strong>,</p>
     <p class="intro">
         @if($booking->payment_status === 'paid_30')
-            Travel Wonder đã nhận được khoản đặt cọc 30% cho đơn tour <strong>#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</strong>. Vị trí trên chuyến đi của Quý khách đã được bảo lưu an toàn.
+            Travel Wonder đã nhận được khoản đặt cọc 30% cho đơn tour <strong>{{ $booking->code }}</strong>. Vị trí trên chuyến đi của Quý khách đã được bảo lưu an toàn.
         @elseif(in_array($booking->payment_status, ['paid_100', 'paid']))
-            Travel Wonder xác nhận đơn tour <strong>#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</strong> của Quý khách đã được thanh toán toàn bộ 100%. Toàn bộ dịch vụ đã được chuẩn bị sẵn sàng.
+            Travel Wonder xác nhận đơn tour <strong>{{ $booking->code }}</strong> của Quý khách đã được thanh toán toàn bộ 100%. Toàn bộ dịch vụ đã được chuẩn bị sẵn sàng.
         @else
             Travel Wonder xin trân trọng cảm ơn Quý khách đã lựa chọn dịch vụ của chúng tôi. Đơn đặt tour đã được hệ thống ghi nhận. Vui lòng hoàn tất thanh toán để giữ chỗ.
         @endif
@@ -148,7 +148,7 @@
     <div class="order-meta">
         <div class="order-meta-row1">
             <div>
-                <div class="order-id">MÃ ĐƠN: #{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</div>
+                <div class="order-id">MÃ ĐƠN: {{ $booking->code }}</div>
                 <div class="order-date">Thời gian đặt: {{ $booking->created_at->format('H:i, d/m/Y') }}</div>
             </div>
             <div style="text-align: right;">
@@ -224,7 +224,7 @@
             </tr>
             <tr>
                 <td class="t-label">Mã tour</td>
-                <td class="t-value">TW-{{ strtoupper(substr(preg_replace('/[^a-z0-9]/i', '', $tour->slug ?? ''), 0, 8)) ?: str_pad($tour->id, 4, '0', STR_PAD_LEFT) }}</td>
+                <td class="t-value">{{ $tour->code }}</td>
             </tr>
             <tr>
                 <td class="t-label">Thời gian</td>

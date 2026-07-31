@@ -41,7 +41,7 @@
                         <td>
                             <div class="fw-bold text-dark text-truncate" style="max-width: 300px;" title="{{ $tour->title }}">{{ $tour->title }}</div>
                             <small class="text-muted">
-                                ID: #{{ str_pad($tour->id, 4, '0', STR_PAD_LEFT) }}
+                                ID: {{ $tour->code }}
                             </small>
                         </td>
                         <td>

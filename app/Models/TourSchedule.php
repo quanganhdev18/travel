@@ -69,4 +69,13 @@ class TourSchedule extends Model
     {
         return $this->hasMany(ScheduleActivityCheckin::class);
     }
+
+    public function getCodeAttribute()
+    {
+        if ($this->tour) {
+            return $this->tour->code.'-'.Carbon::parse($this->departure_date)->format('dmy');
+        }
+
+        return '';
+    }
 }

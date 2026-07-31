@@ -325,14 +325,14 @@
 <body>
 @php
     $unreadChatCount = 0;
-    if(Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff'])) {
+    if(Auth::check() && Auth::user()->hasAnyRole(['Admin', 'cskh', 'Staff'])) {
         $user = Auth::user();
-        if ($user->hasAnyRole(['Super Admin', 'Admin', 'Staff'])) {
+        if ($user->hasAnyRole(['Admin', 'Staff'])) {
             $unreadChatCount = \App\Models\Message::whereNull('read_at')
                 ->where('sender_id', '!=', $user->id)
                 ->whereHas('sender', function($q) {
                     $q->whereDoesntHave('roles', function($r) {
-                        $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                        $r->whereIn('name', ['Admin', 'cskh', 'Staff']);
                     });
                 })->count();
         } elseif ($user->hasAnyRole(['cskh'])) {
@@ -340,7 +340,7 @@
                 ->where('sender_id', '!=', $user->id)
                 ->whereHas('sender', function($q) {
                     $q->whereDoesntHave('roles', function($r) {
-                        $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                        $r->whereIn('name', ['Admin', 'cskh', 'Staff']);
                     });
                 })
                 ->whereHas('conversation', function($q) use ($user) {
@@ -354,7 +354,7 @@
     }
 
     $unassignedToursCount = 0;
-    if(Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'Staff'])) {
+    if(Auth::check() && Auth::user()->hasAnyRole(['Admin', 'Staff'])) {
         $unassignedToursCount = \App\Models\TourSchedule::where('departure_date', '>=', now()->startOfDay())
             ->where('departure_date', '<=', now()->startOfDay()->addDays(7))
             ->doesntHave('schedule_guides')
@@ -370,14 +370,14 @@
 
         <div class="group-title">Bảng điều khiển</div>
         <ul class="nav flex-column mb-3">
-            @hasanyrole('Super Admin|Admin|Staff')
+            @hasanyrole('Admin|Staff')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-grid-1x2"></i> Tổng quan
                 </a>
             </li>
             @endhasanyrole
-            @hasanyrole('Super Admin|Admin|cskh')
+            @hasanyrole('Admin|cskh')
             <li class="nav-item">
                 <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}" href="{{ route('admin.chat.index') }}">
                     <div><i class="bi bi-chat-dots"></i> Live Chat</div>
@@ -391,7 +391,7 @@
             @endhasanyrole
         </ul>
 
-        @hasanyrole('Super Admin|Admin|Staff')
+        @hasanyrole('Admin|Staff')
         <div class="group-title">Nghiệp vụ kinh doanh</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
@@ -467,7 +467,7 @@
                     <i class="bi bi-images"></i> Banner quảng cáo
                 </a>
             </li>
-            @hasanyrole('Super Admin|Admin')
+            @hasanyrole('Admin')
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
                     <i class="bi bi-people"></i> Tài khoản & Phân quyền
@@ -583,7 +583,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="{{ asset('js/pjax-navigation.js') }}"></script>
 
-    @hasanyrole('Super Admin|Admin|cskh|Staff')
+    @hasanyrole('Admin|cskh|Staff')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Lắng nghe realtime tin nhắn mới để cập nhật badge

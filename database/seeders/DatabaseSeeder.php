@@ -155,5 +155,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             VietnamHolidaySeeder::class,
         ]);
+
+        // 9. Dashboard Seeder (100 đơn hàng mẫu và dữ liệu thống kê)
+        $this->call([
+            DashboardSeeder::class,
+        ]);
     }
 }

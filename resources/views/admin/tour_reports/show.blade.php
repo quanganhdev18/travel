@@ -15,7 +15,7 @@
                     <div class="col-md-6">
                         <p class="mb-1 text-muted small">Tour:</p>
                         <h6 class="fw-bold">{{ $report->tour_schedule->tour->title }}</h6>
-                        <p class="mb-1"><strong>Mã Tour:</strong> {{ $report->tour_schedule->tour->tour_code }}</p>
+                        <p class="mb-1"><strong>Mã Tour:</strong> {{ $report->tour_schedule->tour->code }}</p>
                         <p class="mb-0"><strong>Thời gian:</strong> {{ $report->tour_schedule->departure_date->format('d/m/Y') }} - {{ $report->tour_schedule->return_date->format('d/m/Y') }}</p>
                     </div>
                     <div class="col-md-6">

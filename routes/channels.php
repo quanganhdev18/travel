@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -14,18 +15,18 @@ Broadcast::channel('conversation.{id}', function ($user, $id) {
     }
 
     // Allow if user is the customer OR if user has 'cskh' or 'admin' role
-    return $user->id === $conversation->user_id || $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']);
+    return $user->id === $conversation->user_id || $user->hasAnyRole(['cskh', 'Admin', 'Staff']);
 });
 
 Broadcast::channel('admin.chat', function ($user) {
-    return $user->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff']);
+    return $user->hasAnyRole(['Admin', 'cskh', 'Staff']);
 });
 
-Broadcast::channel('tour.{id}', function (?App\Models\User $user, $id) {
+Broadcast::channel('tour.{id}', function (?User $user, $id) {
     // If we want a presence channel, we need to return an array of user data.
     // If not authenticated (handled by custom auth endpoint), they get a fake user.
     return [
         'id' => $user->id ?? session()->getId(),
-        'name' => $user->name ?? 'Guest'
+        'name' => $user->name ?? 'Guest',
     ];
 });

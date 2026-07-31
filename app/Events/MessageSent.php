@@ -53,7 +53,7 @@ class MessageSent implements ShouldBroadcastNow
                 'attachment_path' => $this->message->attachment_path,
                 'attachment_name' => $this->message->attachment_name,
                 'created_at' => $this->message->created_at->toISOString(),
-                'is_admin_sender' => $this->message->sender ? $this->message->sender->hasAnyRole(['Super Admin', 'Admin', 'cskh', 'Staff']) : false,
+                'is_admin_sender' => $this->message->sender ? $this->message->sender->hasAnyRole(['Admin', 'cskh', 'Staff']) : false,
                 'sender' => $this->message->sender ? [
                     'id' => $this->message->sender->id,
                     'name' => $this->message->sender->name,

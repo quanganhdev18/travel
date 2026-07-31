@@ -110,7 +110,7 @@
         <div class="order-meta">
             <div class="order-meta-row1">
                 <div>
-                    <div class="order-id">MÃ ĐƠN: #{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</div>
+                    <div class="order-id">MÃ ĐƠN: {{ $booking->code }}</div>
                     <div class="order-date">Trạng thái thanh toán: 
                         @if($booking->payment_status == 'pending')
                             <span style="color: #d97706; font-weight: 600;">Chờ thanh toán</span>

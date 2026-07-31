@@ -27,7 +27,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url('/') }}" class="text-decoration-none text-primary fw-500">Trang chủ</a></li>
             <li class="breadcrumb-item"><a href="{{ route('user.bookings') }}" class="text-decoration-none text-primary fw-500">Đơn đặt tour</a></li>
-            <li class="breadcrumb-item active fw-bold">#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</li>
+            <li class="breadcrumb-item active fw-bold">{{ $booking->code }}</li>
         </ol>
     </nav>
 
@@ -50,18 +50,10 @@
     <div class="d-flex flex-wrap gap-3 justify-content-between align-items-start mb-4 reveal-up">
         <div>
             <h2 class="fw-bold text-dark mb-1">Chi tiết đơn đặt</h2>
-            <span class="text-muted small">Mã: <strong>#{{ str_pad($booking->id,6,'0',STR_PAD_LEFT) }}</strong> · {{ $booking->created_at->format('H:i d/m/Y') }}</span>
+            <span class="text-muted small">Mã: <strong>{{ $booking->code }}</strong> · {{ $booking->created_at->format('H:i d/m/Y') }}</span>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
-            @if(in_array($status,['pending','confirmed']))
-            <form method="POST" action="{{ route('user.bookings.cancel',$booking->id) }}"
-                onsubmit="return confirm('Hủy đơn này?')">
-                @csrf
-                <button class="btn btn-sm btn-outline-danger rounded-3 px-3">
-                    <i class="bi bi-x me-1"></i>Hủy đơn
-                </button>
-            </form>
-            @endif
+
         </div>
     </div>
 

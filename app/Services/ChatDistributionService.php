@@ -31,8 +31,8 @@ class ChatDistributionService
             ->get();
 
         if ($agents->isEmpty()) {
-            // Fallback: If no cskh roles are online, check for 'Staff' or 'Admin' or 'Super Admin'
-            $agents = User::role(['Staff', 'Admin', 'Super Admin'])
+            // Fallback: If no cskh roles are online, check for 'Staff' or 'Admin'
+            $agents = User::role(['Staff', 'Admin'])
                 ->where('is_active', true)
                 ->where('last_seen_at', '>=', $threshold)
                 ->get();

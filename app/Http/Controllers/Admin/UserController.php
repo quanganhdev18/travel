@@ -105,7 +105,7 @@ class UserController extends Controller
     protected function syncSpatieRole(User $user)
     {
         $roleMap = [
-            'admin' => 'Super Admin',
+            'admin' => 'Admin',
             'staff' => 'Staff',
             'guide' => 'Guide',
             'cskh' => 'cskh',
