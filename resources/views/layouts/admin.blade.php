@@ -494,6 +494,11 @@
                     <i class="bi bi-star"></i> Đánh giá khách hàng
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.faqs.*') ? 'active' : '' }}" href="{{ route('admin.faqs.index') }}">
+                    <i class="bi bi-question-circle"></i> Câu hỏi thường gặp
+                </a>
+            </li>
         </ul>
         @endhasanyrole
 
