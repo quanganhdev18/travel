@@ -11,10 +11,10 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     // Setup roles
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
 
     $this->admin = User::factory()->create(['role' => 'admin']);
-    $this->admin->assignRole('Super Admin');
+    $this->admin->assignRole('Admin');
     $this->actingAs($this->admin);
 
     $this->destination = Destination::create([

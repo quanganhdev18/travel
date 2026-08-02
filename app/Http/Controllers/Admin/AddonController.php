@@ -26,13 +26,15 @@ class AddonController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:addons,name',
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
             'tours' => 'nullable|array',
             'tours.*' => 'exists:tours,id',
+        ], [
+            'name.unique' => 'Tên dịch vụ Addon này đã tồn tại.',
         ]);
 
         $data = $request->except(['image', 'tours']);
@@ -63,13 +65,15 @@ class AddonController extends Controller
     public function update(Request $request, Addon $addon)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:addons,name,' . $addon->id,
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
             'tours' => 'nullable|array',
             'tours.*' => 'exists:tours,id',
+        ], [
+            'name.unique' => 'Tên dịch vụ Addon này đã tồn tại.',
         ]);
 
         $data = $request->except(['image', 'tours']);

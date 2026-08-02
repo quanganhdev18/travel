@@ -218,7 +218,7 @@
                     <img src="{{ Storage::url($tour->primary_image) }}" alt="{{ $tour->title }}" class="img-fluid rounded mb-3 w-100" style="object-fit: cover; height: 180px;">
                 @endif
                 <h5 class="fw-bold">{{ $tour->title }}</h5>
-                <p class="text-muted small mb-3">Mã Tour: #{{ str_pad($tour->id, 4, '0', STR_PAD_LEFT) }}</p>
+                <p class="text-muted small mb-3">Mã Tour: {{ $tour->code }}</p>
 
                 <ul class="list-group list-group-flush border-top pt-3">
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">

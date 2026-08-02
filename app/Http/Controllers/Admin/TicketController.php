@@ -35,7 +35,7 @@ class TicketController extends Controller
     {
         $request->validate([
             'destination_id' => 'required|exists:destinations,id',
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:255|unique:tickets,title',
             'description' => 'nullable|string',
             'provider_name' => 'nullable|string|max:255',
             'cancellation_policy' => 'nullable|string',
@@ -51,6 +51,8 @@ class TicketController extends Controller
             'option_conditions' => 'nullable|array',
             'tours' => 'nullable|array',
             'tours.*' => 'exists:tours,id',
+        ], [
+            'title.unique' => 'Tên vé tham quan này đã tồn tại.',
         ]);
 
         DB::beginTransaction();
@@ -124,7 +126,7 @@ class TicketController extends Controller
     {
         $request->validate([
             'destination_id' => 'required|exists:destinations,id',
-            'title' => 'required|string|max:255',
+            'title' => 'required|string|max:255|unique:tickets,title,' . $ticket->id,
             'description' => 'nullable|string',
             'provider_name' => 'nullable|string|max:255',
             'cancellation_policy' => 'nullable|string',
@@ -141,6 +143,8 @@ class TicketController extends Controller
             'option_conditions' => 'nullable|array',
             'tours' => 'nullable|array',
             'tours.*' => 'exists:tours,id',
+        ], [
+            'title.unique' => 'Tên vé tham quan này đã tồn tại.',
         ]);
 
         DB::beginTransaction();

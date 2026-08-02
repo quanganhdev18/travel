@@ -15,7 +15,7 @@ class ChatController extends Controller
     public function getConversations()
     {
         $user = Auth::user();
-        if ($user->hasAnyRole(['Admin', 'Super Admin', 'Staff'])) {
+        if ($user->hasAnyRole(['Admin', 'Staff'])) {
             $conversations = Conversation::with(['user', 'cskh', 'messages' => function ($q) {
                 $q->latest()->limit(1);
             }])->orderBy('updated_at', 'desc')->get();
@@ -40,7 +40,7 @@ class ChatController extends Controller
         $conversation = Conversation::with('messages.sender')->findOrFail($id);
 
         $user = Auth::user();
-        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Staff']) && $conversation->user_id !== $user->id) {
             abort(403);
         }
 
@@ -57,12 +57,12 @@ class ChatController extends Controller
         $conversation = Conversation::findOrFail($id);
 
         $user = Auth::user();
-        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Staff']) && $conversation->user_id !== $user->id) {
             abort(403);
         }
 
         // If admin/cskh replies, assign conversation to them
-        if ($user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff'])) {
+        if ($user->hasAnyRole(['cskh', 'Admin', 'Staff'])) {
             if ($conversation->cskh_id !== $user->id) {
                 $conversation->cskh_id = $user->id;
                 $conversation->routing_status = 'assigned';
@@ -149,7 +149,7 @@ class ChatController extends Controller
         $conversation = Conversation::findOrFail($id);
         $user = Auth::user();
 
-        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Staff']) && $conversation->user_id !== $user->id) {
             abort(403);
         }
 
@@ -166,12 +166,12 @@ class ChatController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->hasAnyRole(['Admin', 'Super Admin', 'Staff'])) {
+        if ($user->hasAnyRole(['Admin', 'Staff'])) {
             $count = Message::whereNull('read_at')
                 ->where('sender_id', '!=', $user->id)
                 ->whereHas('sender', function ($q) {
                     $q->whereDoesntHave('roles', function ($r) {
-                        $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                        $r->whereIn('name', ['Admin', 'cskh', 'Staff']);
                     });
                 })->count();
         } elseif ($user->hasAnyRole(['cskh'])) {
@@ -179,7 +179,7 @@ class ChatController extends Controller
                 ->where('sender_id', '!=', $user->id)
                 ->whereHas('sender', function ($q) {
                     $q->whereDoesntHave('roles', function ($r) {
-                        $r->whereIn('name', ['Super Admin', 'Admin', 'cskh', 'Staff']);
+                        $r->whereIn('name', ['Admin', 'cskh', 'Staff']);
                     });
                 })
                 ->whereHas('conversation', function ($q) use ($user) {
@@ -214,7 +214,7 @@ class ChatController extends Controller
         $conversation = Conversation::findOrFail($id);
         $user = Auth::user();
 
-        if (! $user->hasAnyRole(['cskh', 'Admin', 'Super Admin', 'Staff']) && $conversation->user_id !== $user->id) {
+        if (! $user->hasAnyRole(['cskh', 'Admin', 'Staff']) && $conversation->user_id !== $user->id) {
             abort(403);
         }
 

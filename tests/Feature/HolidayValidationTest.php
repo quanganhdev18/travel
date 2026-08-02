@@ -5,9 +5,9 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $this->adminUser = User::factory()->create(['role' => 'admin']);
-    $this->adminUser->assignRole('Super Admin');
+    $this->adminUser->assignRole('Admin');
 });
 
 test('holiday creation fails if end_date is equal to start_date', function () {

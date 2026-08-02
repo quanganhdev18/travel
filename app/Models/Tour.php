@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -35,6 +36,7 @@ class Tour extends Model
     ];
 
     protected $fillable = [
+        'code',
         'destination_id',
         'departure_location_id',
         'departure_time',
@@ -171,5 +173,37 @@ class Tour extends Model
     {
         return $this->belongsToMany(Addon::class, 'tour_addons', 'tour_id', 'addon_id')
             ->withTimestamps();
+    }
+
+    protected static function booted()
+    {
+        static::created(function ($tour) {
+            if (empty($tour->code)) {
+                $tour->code = self::generateTourCode($tour);
+                $tour->save();
+            }
+        });
+    }
+
+    public static function generateTourCode($tour)
+    {
+        $destName = $tour->destination ? $tour->destination->name : 'NA';
+        $destAcronym = self::generateAcronym($destName);
+
+        return sprintf('TR-%s-%dD%dN-%04d', $destAcronym, $tour->duration_days, $tour->duration_nights, $tour->id);
+    }
+
+    public static function generateAcronym($string)
+    {
+        $string = Str::ascii($string);
+        $words = explode(' ', $string);
+        $acronym = '';
+        foreach ($words as $w) {
+            if (! empty($w)) {
+                $acronym .= strtoupper(substr($w, 0, 1));
+            }
+        }
+
+        return $acronym;
     }
 }

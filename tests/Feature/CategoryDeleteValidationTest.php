@@ -7,9 +7,9 @@ use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $this->adminUser = User::factory()->create(['role' => 'admin']);
-    $this->adminUser->assignRole('Super Admin');
+    $this->adminUser->assignRole('Admin');
 });
 
 test('admin cannot delete category if it has active tours linked', function () {

@@ -138,7 +138,7 @@ class TourBookingController extends Controller
     {
         $booking = Booking::with('tour_schedule')->findOrFail($id);
 
-        if ($booking->user_id !== Auth::id() && ! (Auth::check() && Auth::user()->hasAnyRole(['Super Admin', 'Admin', 'Staff', 'cskh']))) {
+        if ($booking->user_id !== Auth::id() && ! (Auth::check() && Auth::user()->hasAnyRole(['Admin', 'Staff', 'cskh']))) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -176,7 +176,7 @@ class TourBookingController extends Controller
         });
 
         // Tính tổng chỗ đang bị giữ bởi những người khác
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             session()->put('seat_hold_active', true); // Force session save to persist session ID for guests across F5
         }
         $userId = Auth::id() ?? session()->getId();
@@ -206,7 +206,7 @@ class TourBookingController extends Controller
         }
 
         $maxExpiresAt = max(array_column($currentHolds, 'expires_at'));
-        Cache::put($holdKey, $currentHolds, \Carbon\Carbon::createFromTimestamp($maxExpiresAt));
+        Cache::put($holdKey, $currentHolds, Carbon::createFromTimestamp($maxExpiresAt));
 
         // Nếu available_seats thực tế (ko tính hold) không đủ thì cũng báo lỗi
         if ($schedule->available_seats < $totalPersons) {
@@ -420,4 +420,3 @@ class TourBookingController extends Controller
         ]);
     }
 }
-

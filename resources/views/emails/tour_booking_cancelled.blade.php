@@ -36,14 +36,14 @@
             </span>
         </div>
         <h1 style="font-size: 22px; color: #dc2626; margin: 0 0 6px 0; font-weight: 600;">Thông Báo Tự Động Hủy Đơn Đặt Tour</h1>
-        <p style="font-size: 14px; color: #64748b; margin: 0;">Đơn hàng #{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }} đã bị hủy do hết thời hạn thanh toán 15 phút.</p>
+        <p style="font-size: 14px; color: #64748b; margin: 0;">Đơn hàng {{ $booking->code }} đã bị hủy do hết thời hạn thanh toán 15 phút.</p>
     </div>
 
     {{-- BODY --}}
     <div class="body">
         <p class="greeting">Kính gửi Quý khách <strong>{{ $booking->user->name ?? 'Quý khách' }}</strong>,</p>
         <p class="intro">
-            Hệ thống Travel Wonder xin thông báo đơn đặt tour <strong>#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</strong> của Quý khách đã bị tự động hủy theo quy định.
+            Hệ thống Travel Wonder xin thông báo đơn đặt tour <strong>{{ $booking->code }}</strong> của Quý khách đã bị tự động hủy theo quy định.
         </p>
 
         <div class="cancel-box">
@@ -56,7 +56,7 @@
             <table class="info-table">
                 <tr>
                     <td class="t-label">Mã đơn hàng:</td>
-                    <td class="t-value">#{{ str_pad($booking->id, 6, '0', STR_PAD_LEFT) }}</td>
+                    <td class="t-value">{{ $booking->code }}</td>
                 </tr>
                 <tr>
                     <td class="t-label">Tên tour:</td>

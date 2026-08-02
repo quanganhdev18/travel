@@ -73,25 +73,18 @@ class BookingController extends Controller
     {
         $request->validate([
             'payment_status' => 'required|in:pending,paid_30,paid_100,failed',
+            'booking_status' => 'required|in:pending,confirmed,paid,cancelled',
             'tour_status' => 'nullable|in:upcoming,in_progress,checking_in,completed,cancelled_by_customer,cancelled_by_admin',
             'current_checkin_step' => 'nullable|string|max:255',
         ]);
 
         $booking = Booking::with('tour_schedule')->findOrFail($id);
 
-        // Kiểm tra xem admin có bị khóa quyền đổi tour_status không
-        $isTourStatusLocked = in_array($booking->tour_status, self::GUIDE_CONTROLLED_STATUSES);
-
-        if ($isTourStatusLocked && $request->filled('tour_status') && $request->tour_status !== $booking->tour_status) {
-            return back()->with('error', 'Tour đang được điều hành bởi Hướng dẫn viên. Admin không thể thay đổi trạng thái tour lúc này.');
-        }
-
-        // Chỉ cập nhật tour_status nếu tour chưa bị khoá
-        if (! $isTourStatusLocked && $request->filled('tour_status')) {
+        if ($request->filled('tour_status')) {
             $validStatuses = Booking::getValidNextStatuses($booking->tour_status);
-            if (! in_array($request->tour_status, $validStatuses)) {
-                return back()->with('error', 'Không thể chuyển đổi trạng thái tour từ trạng thái hiện tại sang trạng thái này (Không được nhảy cóc).');
-            }
+            // We allow Admin to jump statuses if needed because they are intervening manually, but let's keep the validStatuses check if we want, or remove it so Admin has FULL control.
+            // The prompt says "admin can thiệp thủ công được", implying Admin should have absolute override power.
+            // We'll remove the strict next-status validation so Admin can freely intervene.
 
             $isCurrentlyCancelled = in_array($booking->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
             $willBeCancelled = in_array($request->tour_status, [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER]);
@@ -120,17 +113,12 @@ class BookingController extends Controller
         }
 
         $booking->payment_status = $request->payment_status;
+        $booking->booking_status = $request->booking_status;
 
         if ($booking->payment_status === Booking::PAYMENT_PAID_100) {
             $booking->paid_amount = $booking->total_price;
-            if (in_array($booking->booking_status, ['pending', 'confirmed'])) {
-                $booking->booking_status = 'paid';
-            }
         } elseif ($booking->payment_status === Booking::PAYMENT_PAID_30) {
             $booking->paid_amount = $booking->total_price * 0.3;
-            if ($booking->booking_status === 'pending') {
-                $booking->booking_status = 'confirmed';
-            }
         } elseif ($booking->payment_status === Booking::PAYMENT_FAILED || $booking->payment_status === Booking::PAYMENT_PENDING) {
             $booking->paid_amount = 0;
         }
@@ -143,10 +131,10 @@ class BookingController extends Controller
         if ($booking->user) {
             if ($oldTourStatus !== $booking->tour_status) {
                 $statusName = $this->getTourStatusName($booking->tour_status);
-                $booking->user->notify(new BookingStatusUpdatedNotification($booking, "Trạng thái tour của bạn đã được cập nhật thành: " . $statusName));
+                $booking->user->notify(new BookingStatusUpdatedNotification($booking, 'Trạng thái tour của bạn đã được cập nhật thành: '.$statusName));
             } elseif ($oldPaymentStatus !== $booking->payment_status) {
                 $paymentStatusName = $this->getPaymentStatusName($booking->payment_status);
-                $booking->user->notify(new BookingStatusUpdatedNotification($booking, "Trạng thái thanh toán của bạn đã được cập nhật thành: " . $paymentStatusName));
+                $booking->user->notify(new BookingStatusUpdatedNotification($booking, 'Trạng thái thanh toán của bạn đã được cập nhật thành: '.$paymentStatusName));
             }
         }
 
@@ -155,7 +143,7 @@ class BookingController extends Controller
 
     private function getTourStatusName($status)
     {
-        return match($status) {
+        return match ($status) {
             Booking::TOUR_UPCOMING => 'Sắp khởi hành',
             Booking::TOUR_IN_PROGRESS => 'Đang diễn ra',
             Booking::TOUR_CHECKING_IN => 'Đang điểm danh',
@@ -168,7 +156,7 @@ class BookingController extends Controller
 
     private function getPaymentStatusName($status)
     {
-        return match($status) {
+        return match ($status) {
             Booking::PAYMENT_PENDING => 'Chờ thanh toán',
             Booking::PAYMENT_PAID_30 => 'Đã cọc 30%',
             Booking::PAYMENT_PAID_100 => 'Đã thanh toán 100%',

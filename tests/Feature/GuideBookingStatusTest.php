@@ -18,7 +18,7 @@ use Spatie\Permission\Models\Role;
  */
 function setupGuideScenario(string $tourStatus = Booking::TOUR_IN_PROGRESS): array
 {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
 
     $destination = Destination::create([
         'name' => 'Địa danh Test '.uniqid(),
@@ -77,9 +77,9 @@ function setupGuideScenario(string $tourStatus = Booking::TOUR_IN_PROGRESS): arr
 // ─── ADMIN bị khóa ──────────────────────────────────────────────────────────
 
 test('admin không thể thay đổi tour_status khi booking đang in_progress', function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
-    $admin->assignRole('Super Admin');
+    $admin->assignRole('Admin');
 
     ['booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
 
@@ -95,9 +95,9 @@ test('admin không thể thay đổi tour_status khi booking đang in_progress',
 });
 
 test('admin không thể thay đổi tour_status khi booking đang checking_in', function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
-    $admin->assignRole('Super Admin');
+    $admin->assignRole('Admin');
 
     ['booking' => $booking] = setupGuideScenario(Booking::TOUR_CHECKING_IN);
 
@@ -110,9 +110,9 @@ test('admin không thể thay đổi tour_status khi booking đang checking_in',
 });
 
 test('admin vẫn có thể cập nhật payment_status khi tour đang in_progress', function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
-    $admin->assignRole('Super Admin');
+    $admin->assignRole('Admin');
 
     ['booking' => $booking] = setupGuideScenario(Booking::TOUR_IN_PROGRESS);
 
@@ -127,9 +127,9 @@ test('admin vẫn có thể cập nhật payment_status khi tour đang in_progre
 });
 
 test('admin vẫn có thể thay đổi tour_status khi booking còn ở upcoming', function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
-    $admin->assignRole('Super Admin');
+    $admin->assignRole('Admin');
 
     ['booking' => $booking] = setupGuideScenario(Booking::TOUR_UPCOMING);
 
@@ -263,9 +263,9 @@ test('guide co the chuyen trang thai tu in_progress sang completed truc tiep', f
 });
 
 test('admin khong the chuyen trang thai tour nhay coc tu upcoming sang completed hoac checking_in', function () {
-    Role::firstOrCreate(['name' => 'Super Admin']);
+    Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
-    $admin->assignRole('Super Admin');
+    $admin->assignRole('Admin');
 
     ['booking' => $booking] = setupGuideScenario(Booking::TOUR_UPCOMING);
 

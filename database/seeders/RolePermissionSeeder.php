@@ -29,11 +29,8 @@ class RolePermissionSeeder extends Seeder
         }
 
         // Tạo roles và gán permissions
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
-        $superAdmin->givePermissionTo(Permission::all());
-
         $admin = Role::firstOrCreate(['name' => 'Admin']);
-        $admin->givePermissionTo(['manage tours', 'manage bookings', 'manage invoices']);
+        $admin->givePermissionTo(Permission::all());
 
         $staff = Role::firstOrCreate(['name' => 'Staff']);
         $staff->givePermissionTo(['manage bookings', 'manage invoices']);
@@ -58,7 +55,7 @@ class RolePermissionSeeder extends Seeder
         $users = User::all();
         foreach ($users as $user) {
             if ($user->role == 'admin') {
-                $user->assignRole('Super Admin');
+                $user->assignRole('Admin');
             } elseif ($user->role == 'staff') {
                 $user->assignRole('Staff');
             } elseif ($user->role == 'guide') {

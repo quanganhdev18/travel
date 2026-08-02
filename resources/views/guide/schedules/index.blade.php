@@ -125,7 +125,7 @@
                             <td data-label="ID">#{{ $tourSchedule->id }}</td>
                             <td data-label="Tên Tour">
                                 <strong class="text-md-start d-block">{{ $tour->title }}</strong>
-                                <div class="text-muted small mt-1 text-md-start">Mã: #{{ str_pad($tour->id, 4, '0', STR_PAD_LEFT) }}</div>
+                                <div class="text-muted small mt-1 text-md-start">Mã: {{ $tour->code }}</div>
                             </td>
                             <td data-label="Khởi hành">{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
                             <td data-label="Kết thúc">{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
