@@ -451,6 +451,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchTerm = e.target.value.toLowerCase();
             let hasResults = false;
             
+            // Remove existing "no results" message first
+            const existingNoResults = document.getElementById('noResults');
+            if (existingNoResults) {
+                existingNoResults.remove();
+            }
+            
             // Search in popular FAQs
             document.querySelectorAll('.popular-faq-item').forEach(item => {
                 const question = item.dataset.question?.toLowerCase() || '';
@@ -466,14 +472,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const categoryName = card.querySelector('.category-name').textContent.toLowerCase();
                 const matches = categoryName.includes(searchTerm);
                 card.style.display = matches || !searchTerm ? 'flex' : 'none';
+                if (matches) hasResults = true;
             });
 
-            // Show/hide sections based on search
+            // Show "no results" message only once if no matches found
             if (searchTerm && !hasResults) {
-                document.querySelector('.popular-section')?.insertAdjacentHTML('beforeend', 
-                    '<div class="text-center py-4 text-muted" id="noResults"><i class="bi bi-search fs-3 d-block mb-2"></i>Không tìm thấy kết quả</div>');
-            } else {
-                document.getElementById('noResults')?.remove();
+                const popularSection = document.querySelector('.popular-section');
+                if (popularSection && !document.getElementById('noResults')) {
+                    popularSection.insertAdjacentHTML('beforeend', 
+                        '<div class="text-center py-4 text-muted" id="noResults"><i class="bi bi-search fs-3 d-block mb-2"></i>Không tìm thấy kết quả</div>');
+                }
             }
         });
     }

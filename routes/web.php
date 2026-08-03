@@ -387,13 +387,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('tickets/{ticketId}/images/{imageId}/set-primary', [App\Http\Controllers\Admin\TicketController::class, 'setPrimaryImage'])
         ->name('admin.tickets.images.set-primary');
 
-    // FAQs
-    Route::get('/faqs/trash', [App\Http\Controllers\Admin\FaqController::class, 'trash'])->name('admin.faqs.trash');
-    Route::post('/faqs/{id}/restore', [App\Http\Controllers\Admin\FaqController::class, 'restore'])->name('admin.faqs.restore');
-    Route::delete('/faqs/{id}/force-delete', [App\Http\Controllers\Admin\FaqController::class, 'forceDelete'])->name('admin.faqs.force-delete');
-    Route::resource('faqs', App\Http\Controllers\Admin\FaqController::class)
-        ->except(['show'])
-        ->names('admin.faqs');
+
 });
 
 /*
