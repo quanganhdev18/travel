@@ -83,6 +83,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\Frontend\BookingPassengerController;
+use App\Http\Controllers\Frontend\FaqController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\OcrController;
@@ -247,6 +248,10 @@ Route::middleware(['auth'])->group(function () {
 // Điểm đến
 Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController::class, 'index'])
     ->name('frontend.destinations.index');
+
+// FAQs
+Route::get('/faqs', [FaqController::class, 'index'])
+    ->name('frontend.faqs.index');
 
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
@@ -436,6 +441,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('tickets/{ticketId}/images/{imageId}/set-primary', [App\Http\Controllers\Admin\TicketController::class, 'setPrimaryImage'])
         ->name('admin.tickets.images.set-primary');
+
+
 });
 
 /*
