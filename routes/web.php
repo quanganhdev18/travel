@@ -292,12 +292,21 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/reviews/{id}/toggle-hidden', [ReviewController::class, 'toggleHidden'])->name('admin.reviews.toggle-hidden');
 
     // Booking
-    Route::get('/bookings', [BookingController::class, 'index'])
-        ->name('admin.bookings.index');
+   Route::get('/bookings', [BookingController::class, 'index'])
+    ->name('admin.bookings.index');
 
-    Route::get('/bookings/live-statuses', [BookingController::class, 'liveStatuses'])
-        ->name('admin.bookings.live_statuses');
+Route::get('/bookings/live-statuses', [BookingController::class, 'liveStatuses'])
+    ->name('admin.bookings.live_statuses');
 
+Route::get('/bookings/{id}/invoice/download', [
+    BookingController::class,
+    'downloadInvoice'
+])->name('admin.bookings.invoice.download');
+
+Route::get('/bookings/{id}/invoice', [
+    BookingController::class,
+    'invoice'
+])->name('admin.bookings.invoice');
     // Quản lý tài khoản (Users)
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->except(['show'])
@@ -545,3 +554,27 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread_count');
     Route::post('/{id}/mark-as-read', [ChatController::class, 'markAsRead'])->name('chat.mark_as_read');
 });
+use App\Http\Controllers\Frontend\InvoiceRequestController;
+
+Route::post('/my-bookings/{booking}/request-invoice', [
+    InvoiceRequestController::class,
+    'store'
+])->name('frontend.bookings.invoice.request');
+Route::post('/my-bookings/{booking}/request-invoice', [
+    \App\Http\Controllers\Frontend\InvoiceRequestController::class,
+    'store'
+])->name('frontend.bookings.invoice.request');
+Route::get('/bookings/{id}/invoice/download', [
+    BookingController::class,
+    'downloadInvoice'
+])->name('admin.bookings.invoice.download');
+
+Route::get('/bookings/{id}/invoice', [
+    BookingController::class,
+    'invoice'
+])->name('admin.bookings.invoice');
+
+Route::post('/bookings/{id}/invoice/send', [
+    BookingController::class,
+    'sendInvoice'
+])->name('admin.bookings.invoice.send');
