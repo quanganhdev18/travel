@@ -94,6 +94,11 @@ class Booking extends Model
         'payment_step',
         'meeting_point',
         'cancel_reason',
+        'invoice_status',
+    'invoice_email',
+    'invoice_requested_at',
+    'invoice_sent_at',
+
     ];
 
     public function user()
@@ -232,4 +237,11 @@ class Booking extends Model
     {
         return 'BK-'.str_pad($this->id, 6, '0', STR_PAD_LEFT);
     }
+    protected function casts(): array
+{
+    return [
+        'invoice_requested_at' => 'datetime',
+        'invoice_sent_at' => 'datetime',
+    ];
+}
 }

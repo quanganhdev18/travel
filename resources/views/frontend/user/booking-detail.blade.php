@@ -200,7 +200,7 @@
                     </div>
                     <div class="detail-card-body">
                         <p class="text-muted small mb-3">Vui lòng chọn hình thức thanh toán 70% còn lại trước ngày khởi hành để hoàn tất đơn tour của bạn:</p>
-                        
+
                         <ul class="nav nav-pills nav-justified mb-3 gap-2" id="pay70Tab" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active rounded-pill py-2 fw-bold" id="qr70-tab" data-bs-toggle="pill" data-bs-target="#qr70-pane" type="button" role="tab">
@@ -220,7 +220,7 @@
                                 <div class="bg-light p-3 rounded-4 mx-auto" style="max-width: 420px;">
                                     <h6 class="fw-bold text-primary mb-2"><i class="bi bi-qr-code-scan me-1"></i>Chuyển khoản VietQR Tự Động</h6>
                                     <img src="{{ $qrUrl }}" alt="VietQR 70%" class="img-fluid rounded border bg-white p-2 mb-3 shadow-sm" style="max-width: 230px;">
-                                    
+
                                     <div class="text-start bg-white p-3 rounded border small shadow-sm">
                                         <div class="d-flex justify-content-between mb-2 border-bottom pb-1">
                                             <span class="text-muted">Ngân hàng:</span>
@@ -340,7 +340,7 @@
                                 @for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$existingReview->rating?'-fill':'' }} text-warning" style="font-size:1.2rem;"></i>@endfor
                                 <span class="ms-2 text-muted small">Đánh giá chung của bạn</span>
                             </div>
-                            
+
                             @if($existingReview->guide_rating)
                             <div class="d-flex align-items-center mb-2 gap-1 mt-2 border-top pt-2">
                                 @for($i=1;$i<=5;$i++)<i class="bi bi-star{{ $i<=$existingReview->guide_rating?'-fill':'' }} text-primary" style="font-size:1.2rem;"></i>@endfor
@@ -417,15 +417,15 @@
                         $isCancelled = in_array($bStatus, ['cancelled']) || in_array($tStatus, ['cancelled_by_customer', 'cancelled_by_admin']) || $pStatus === 'failed';
 
                         $step1Done = true; // Tạo đơn thành công
-                        
+
                         $step2Done = in_array($pStatus, ['paid_30', 'paid_100', 'paid']);
                         $step2Label = $pStatus === 'paid_30' ? 'Đã cọc 30%' : ($pStatus === 'paid_100' || $pStatus === 'paid' ? 'Đã thanh toán 100%' : 'Chờ thanh toán');
-                        
+
                         $step3Done = $step2Done || in_array($bStatus, ['confirmed', 'paid', 'completed']);
-                        
+
                         $step4Done = in_array($tStatus, ['checking_in', 'in_progress', 'completed']);
                         $step4Label = $tStatus === 'checking_in' ? 'Đang check-in' : ($tStatus === 'in_progress' ? 'Đang đi tour' : 'Chuyến đi tour');
-                        
+
                         $step5Done = $tStatus === 'completed' || $bStatus === 'completed';
 
                         if ($step5Done) { $currentStep = 5; }
@@ -523,6 +523,40 @@
                     @endif
 
                     <div class="mt-3 d-grid gap-2">
+                        @if(
+    !$isCancelled
+    && in_array($booking->payment_status, ['paid_30', 'paid_100'], true)
+)
+    <div class="mb-2">
+
+        @if(($booking->invoice_status ?? 'none') === 'requested')
+            <button type="button"
+                    class="btn btn-warning w-100"
+                    disabled>
+                <i class="bi bi-clock-history me-1"></i>
+                Yêu cầu hóa đơn đang chờ xử lý
+            </button>
+
+        @elseif(($booking->invoice_status ?? 'none') === 'sent')
+            <button type="button"
+                    class="btn btn-success w-100"
+                    disabled>
+                <i class="bi bi-check-circle-fill me-1"></i>
+                Hóa đơn đã được gửi
+            </button>
+
+        @else
+            <button type="button"
+                    class="btn btn-primary w-100"
+                    data-bs-toggle="modal"
+                    data-bs-target="#requestInvoiceModal">
+                <i class="bi bi-receipt-cutoff me-1"></i>
+                Yêu cầu xuất hóa đơn
+            </button>
+        @endif
+
+    </div>
+@endif
                         <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary rounded-pill">
                             <i class="bi bi-arrow-left me-2"></i>Danh sách đơn
                         </a>
@@ -582,24 +616,24 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(checkStatus, 3000);
 
     var starRows = document.querySelectorAll('.starRow');
-    
+
     starRows.forEach(function(row) {
         var stars = row.querySelectorAll('.star-btn');
         var inputId = row.dataset.input;
         var inp = document.getElementById(inputId);
-        
+
         if (!stars.length) return;
 
         function paint(val) {
             stars.forEach(function(b){ b.classList.toggle('lit', parseInt(b.dataset.v) <= val); });
             if (inp) inp.value = val;
         }
-        
+
         stars.forEach(function(b){
             b.addEventListener('click',    function(){ paint(parseInt(b.dataset.v)); });
             b.addEventListener('mouseover',function(){ paint(parseInt(b.dataset.v)); });
         });
-        
+
         row.addEventListener('mouseleave', function(){ paint(parseInt(inp.value)||0); });
     });
 
@@ -611,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnPay.addEventListener('click', function () {
             btnPay.disabled = true;
             btnPay.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
-            
+
             fetch(`/demo/bookings/${bookingId}/simulate-payment`, {
                 method: 'POST',
                 headers: {
@@ -656,4 +690,80 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
+@if(
+    ($booking->invoice_status ?? 'none') === 'none'
+    && in_array($booking->payment_status, ['paid_30', 'paid_100'], true)
+)
+    <div class="modal fade"
+         id="requestInvoiceModal"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <form action="{{ route('frontend.bookings.invoice.request', $booking->id) }}"
+                      method="POST">
+                    @csrf
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-receipt-cutoff text-primary me-1"></i>
+                            Yêu cầu xuất hóa đơn
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Mã đơn tour
+                            </label>
+
+                            <input type="text"
+                                   class="form-control"
+                                   value="BOOK-{{ $booking->created_at->format('Ymd') }}-{{ str_pad($booking->id, 3, '0', STR_PAD_LEFT) }}"
+                                   readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Email nhận hóa đơn
+                            </label>
+
+                            <input type="email"
+                                   name="invoice_email"
+                                   class="form-control"
+                                   value="{{ old('invoice_email', auth()->user()->email ?? '') }}"
+                                   required>
+
+                            <div class="form-text">
+                                Hóa đơn PDF sẽ được gửi đến email này.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-light"
+                                data-bs-dismiss="modal">
+                            Hủy
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i>
+                            Gửi yêu cầu
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
 @endsection
