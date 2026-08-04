@@ -18,27 +18,26 @@ class CalendarController extends Controller
     public function index()
     {
         $destinations = Destination::orderBy('name')->get();
-        $categories   = Category::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
         return view('frontend.tours.calendar', compact('destinations', 'categories'));
     }
-
 
     /**
      * API trả về dữ liệu lịch tour + ngày lễ theo tháng/bộ lọc (JSON).
      */
     public function data(Request $request)
     {
-        $year  = (int) $request->get('year', now()->year);
+        $year = (int) $request->get('year', now()->year);
         $month = (int) $request->get('month', now()->month);
 
         $destinationId = $request->get('destination_id');
-        $categoryId    = $request->get('category_id');
-        $budget        = $request->get('budget');
-        $duration      = $request->get('duration');
+        $categoryId = $request->get('category_id');
+        $budget = $request->get('budget');
+        $duration = $request->get('duration');
 
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate   = Carbon::create($year, $month, 1)->endOfMonth();
+        $endDate = Carbon::create($year, $month, 1)->endOfMonth();
 
         // --- Tour schedules ---
         $query = TourSchedule::with([
@@ -69,10 +68,10 @@ class CalendarController extends Controller
             $query->whereHas('tour', function ($q) use ($budget) {
                 match ($budget) {
                     'under_1m' => $q->where('base_price', '<', 1000000),
-                    '1m_2m'    => $q->whereBetween('base_price', [1000000, 2000000]),
-                    '2m_4m'    => $q->whereBetween('base_price', [2000000, 4000000]),
-                    'over_4m'  => $q->where('base_price', '>', 4000000),
-                    default    => null,
+                    '1m_2m' => $q->whereBetween('base_price', [1000000, 2000000]),
+                    '2m_4m' => $q->whereBetween('base_price', [2000000, 4000000]),
+                    'over_4m' => $q->where('base_price', '>', 4000000),
+                    default => null,
                 };
             });
         }
@@ -116,18 +115,18 @@ class CalendarController extends Controller
                 }
 
                 return [
-                    'schedule_id'     => $schedule->id,
-                    'tour_id'         => $tour->id,
-                    'tour_name'       => $tour->title,
-                    'tour_slug'       => $tour->slug,
-                    'tour_url'        => route('frontend.tours.show', $tour->slug),
-                    'destination'     => $tour->destination?->name,
-                    'duration'        => $tour->duration_days.'N'.$tour->duration_nights.'Đ',
-                    'price'           => $tour->base_price,
+                    'schedule_id' => $schedule->id,
+                    'tour_id' => $tour->id,
+                    'tour_name' => $tour->title,
+                    'tour_slug' => $tour->slug,
+                    'tour_url' => route('frontend.tours.show', $tour->slug),
+                    'destination' => $tour->destination?->name,
+                    'duration' => $tour->duration_days.'N'.$tour->duration_nights.'Đ',
+                    'price' => $tour->base_price,
                     'available_seats' => $schedule->available_seats,
-                    'capacity'        => $schedule->capacity,
-                    'status'          => $schedule->status,
-                    'image_url'       => $imageUrl,
+                    'capacity' => $schedule->capacity,
+                    'status' => $schedule->status,
+                    'image_url' => $imageUrl,
                 ];
             })->values();
 
@@ -143,7 +142,7 @@ class CalendarController extends Controller
         $holidayMap = [];
         foreach ($holidays as $holiday) {
             $cursor = Carbon::parse($holiday->start_date);
-            $end    = Carbon::parse($holiday->end_date);
+            $end = Carbon::parse($holiday->end_date);
             while ($cursor->lte($end)) {
                 $key = $cursor->format('Y-m-d');
                 if (! isset($holidayMap[$key])) {
@@ -155,7 +154,7 @@ class CalendarController extends Controller
         }
 
         return response()->json([
-            'tours'    => $tours,
+            'tours' => $tours,
             'holidays' => $holidayMap,
         ]);
     }

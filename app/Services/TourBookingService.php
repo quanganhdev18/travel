@@ -307,7 +307,7 @@ class TourBookingService
                 Cache::forget($holdKey);
             } else {
                 $maxExpiresAt = max(array_column($currentHolds, 'expires_at'));
-                Cache::put($holdKey, $currentHolds, \Carbon\Carbon::createFromTimestamp($maxExpiresAt));
+                Cache::put($holdKey, $currentHolds, Carbon::createFromTimestamp($maxExpiresAt));
             }
         }
     }

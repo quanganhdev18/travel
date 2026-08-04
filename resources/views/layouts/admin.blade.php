@@ -400,6 +400,12 @@
                     Quản lý Booking
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.insurance.*') ? 'active' : '' }}" href="{{ route('admin.insurance.index') }}">
+                    <i class="bi bi-shield-check me-2"></i>
+                    Bảo hiểm du lịch
+                </a>
+            </li>
         </ul>
 
         <div class="group-title">Quản lý chung</div>

@@ -2,10 +2,10 @@
 
 namespace App\Notifications\User;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use App\Models\Booking;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Notification;
 
 class TourDepartureReminderNotification extends Notification
 {
@@ -39,12 +39,13 @@ class TourDepartureReminderNotification extends Notification
     public function toArray(object $notifiable): array
     {
         $tourName = $this->booking->tour_schedule->tour->name ?? 'Tour của bạn';
+
         return [
             'type' => 'departure_reminder',
             'title' => 'Nhắc nhở khởi hành',
-            'message' => 'Tour "' . $tourName . '" sẽ khởi hành vào ngày mai. Vui lòng chuẩn bị và có mặt đúng giờ nhé!',
+            'message' => 'Tour "'.$tourName.'" sẽ khởi hành vào ngày mai. Vui lòng chuẩn bị và có mặt đúng giờ nhé!',
             'booking_id' => $this->booking->id,
-            'link' => route('user.bookings.detail', $this->booking->id)
+            'link' => route('user.bookings.detail', $this->booking->id),
         ];
     }
 

@@ -14,21 +14,22 @@ Route::get('/debug-schema', function () {
 
 // Route tạm để seed ngày lễ (chạy 1 lần rồi có thể xóa)
 Route::get('/seed-holidays', function () {
-    (new \Database\Seeders\VietnamHolidaySeeder)->run();
-    return response()->json(['status' => 'ok', 'message' => '✅ Đã seed ngày lễ Việt Nam thành công!', 'count' => \App\Models\Holiday::count()]);
+    (new VietnamHolidaySeeder)->run();
+
+    return response()->json(['status' => 'ok', 'message' => '✅ Đã seed ngày lễ Việt Nam thành công!', 'count' => Holiday::count()]);
 });
 
 // Route debug lọc danh mục
-Route::get('/debug-calendar', function (\Illuminate\Http\Request $request) {
+Route::get('/debug-calendar', function (Request $request) {
     $categoryId = $request->get('cat', null);
 
     // Xem danh sách categories và số tour có schedule
-    $cats = \App\Models\Category::withCount(['tours as tour_count', 'tours as schedule_count' => function ($q) {
+    $cats = Category::withCount(['tours as tour_count', 'tours as schedule_count' => function ($q) {
         $q->whereHas('tour_schedules');
     }])->get(['id', 'name']);
 
     // Test query filter
-    $query = \App\Models\TourSchedule::with(['tour.categories'])
+    $query = TourSchedule::with(['tour.categories'])
         ->whereBetween('departure_date', [now()->startOfMonth(), now()->endOfMonth()])
         ->whereIn('status', ['available', 'full']);
 
@@ -38,7 +39,7 @@ Route::get('/debug-calendar', function (\Illuminate\Http\Request $request) {
         });
     }
 
-    $results = $query->get()->map(fn($s) => [
+    $results = $query->get()->map(fn ($s) => [
         'schedule_id' => $s->id,
         'tour' => $s->tour?->title,
         'categories' => $s->tour?->categories->pluck('name'),
@@ -50,7 +51,6 @@ Route::get('/debug-calendar', function (\Illuminate\Http\Request $request) {
         'filter_cat_id' => $categoryId,
     ]);
 });
-
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/tour-tron-goi', [HomeController::class, 'tours'])->name('frontend.tours.index');
@@ -71,6 +71,7 @@ use App\Http\Controllers\Admin\DashboardController;
 // Admin Controllers
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
+use App\Http\Controllers\Admin\InsuranceController as AdminInsuranceController;
 use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\TourActivityController;
@@ -83,18 +84,25 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\Frontend\BookingPassengerController;
+use App\Http\Controllers\Frontend\CalendarController;
 use App\Http\Controllers\Frontend\FaqController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
+use App\Http\Controllers\Frontend\InsuranceController;
 use App\Http\Controllers\Frontend\OcrController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
-use App\Http\Controllers\Frontend\CalendarController;
+use App\Http\Controllers\GuestBroadcastingController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
+use App\Http\Controllers\User\NotificationController;
+use App\Models\Category;
+use App\Models\Holiday;
+use App\Models\TourSchedule;
 use App\Models\User;
+use Database\Seeders\VietnamHolidaySeeder;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -210,13 +218,13 @@ Route::middleware(['auth'])->group(function () {
         ->name('frontend.flights.book');
 
     // Thông báo
-    Route::get('/notifications', [\App\Http\Controllers\User\NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/mark-all-as-read', [\App\Http\Controllers\User\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_as_read');
-    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\User\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
-    Route::get('/notifications/unread-count', [\App\Http\Controllers\User\NotificationController::class, 'unreadCount'])->name('notifications.unread_count');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_as_read');
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread_count');
 
     // Broadcast Auth cho Guest
-    Route::post('/broadcasting/guest-auth', [\App\Http\Controllers\GuestBroadcastingController::class, 'auth'])->withoutMiddleware(['auth']);
+    Route::post('/broadcasting/guest-auth', [GuestBroadcastingController::class, 'auth'])->withoutMiddleware(['auth']);
 
     // Tài khoản user
     Route::get('/user/profile', [UserController::class, 'profile'])->name('user.profile');
@@ -252,6 +260,12 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 // FAQs
 Route::get('/faqs', [FaqController::class, 'index'])
     ->name('frontend.faqs.index');
+
+// Bảo hiểm du lịch
+Route::get('/bao-hiem-du-lich', [InsuranceController::class, 'index'])
+    ->name('frontend.insurance.index');
+Route::post('/bao-hiem-du-lich/dang-ky', [InsuranceController::class, 'store'])
+    ->name('frontend.insurance.store');
 
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
@@ -308,6 +322,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/bookings/{id}/pnr', [BookingController::class, 'updatePnr'])
         ->name('admin.bookings.update_pnr');
+
+    // Quản lý Bảo hiểm du lịch
+    Route::get('/insurance', [AdminInsuranceController::class, 'index'])->name('admin.insurance.index');
+    Route::post('/insurance/{id}/status', [AdminInsuranceController::class, 'updateStatus'])->name('admin.insurance.update_status');
+    Route::delete('/insurance/{id}', [AdminInsuranceController::class, 'destroy'])->name('admin.insurance.destroy');
 
     // Lịch trình Tour
     Route::get('tours/{tour}/itineraries', [TourItineraryController::class, 'index'])
@@ -441,7 +460,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('tickets/{ticketId}/images/{imageId}/set-primary', [App\Http\Controllers\Admin\TicketController::class, 'setPrimaryImage'])
         ->name('admin.tickets.images.set-primary');
-
 
 });
 
