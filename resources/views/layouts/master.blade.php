@@ -129,7 +129,7 @@
 
                     <!-- Support -->
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center py-1" href="{{ route('frontend.faqs.index') }}" style="font-weight: 600;">
+                        <a class="nav-link d-flex align-items-center py-1" href="{{ route('frontend.support.index') }}" style="font-weight: 600;">
                             <i class="bi bi-question-circle me-1"></i> {{ __('Hỗ trợ') }}
                         </a>
                     </li>
@@ -218,7 +218,7 @@
                                 <li><a class="dropdown-item" href="{{ route('locale.switch', 'zh') }}">中文</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="{{ route('frontend.faqs.index') }}"><i class="bi bi-question-circle me-2"></i> {{ __('Hỗ trợ') }}</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('frontend.support.index') }}"><i class="bi bi-question-circle me-2"></i> {{ __('Hỗ trợ') }}</a></li>
 
                         @guest
                         <li class="nav-item mt-2"><a class="btn-login-premium text-decoration-none d-block text-center" href="{{ route('login') }}">{{ __('Đăng nhập') }}</a></li>
@@ -322,6 +322,7 @@
 
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-title">{{ __('Khác') }}</h5>
+                    <a href="{{ route('frontend.support.index') }}" class="footer-link">{{ __('Trung tâm hỗ trợ') }}</a>
                     <a href="#" class="footer-link">{{ __('Chính sách bảo mật') }}</a>
                     <a href="#" class="footer-link">{{ __('Điều khoản sử dụng') }}</a>
                     <a href="#" class="footer-link">{{ __('Quy chế hoạt động') }}</a>
