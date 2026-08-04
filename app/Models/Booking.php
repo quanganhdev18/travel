@@ -95,9 +95,9 @@ class Booking extends Model
         'meeting_point',
         'cancel_reason',
         'invoice_status',
-    'invoice_email',
-    'invoice_requested_at',
-    'invoice_sent_at',
+        'invoice_email',
+        'invoice_requested_at',
+        'invoice_sent_at',
 
     ];
 
@@ -172,8 +172,7 @@ class Booking extends Model
         $bookings = self::where('tour_status', self::TOUR_UPCOMING)
             ->whereHas('tour_schedule', function ($q) use ($todayDate) {
                 $q->whereDate('departure_date', '<=', $todayDate)
-                    ->whereDate('return_date', '>=', $todayDate)
-                    ->has('schedule_guides');
+                    ->whereDate('return_date', '>=', $todayDate);
             })
             ->with(['tour_schedule.tour'])
             ->get();
@@ -237,11 +236,12 @@ class Booking extends Model
     {
         return 'BK-'.str_pad($this->id, 6, '0', STR_PAD_LEFT);
     }
+
     protected function casts(): array
-{
-    return [
-        'invoice_requested_at' => 'datetime',
-        'invoice_sent_at' => 'datetime',
-    ];
-}
+    {
+        return [
+            'invoice_requested_at' => 'datetime',
+            'invoice_sent_at' => 'datetime',
+        ];
+    }
 }

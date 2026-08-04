@@ -615,7 +615,7 @@ class MasterTourSeeder extends Seeder
                     'slug' => Str::slug($destInfo['ticket']['title'].'-'.time()),
                     'description' => $destInfo['ticket']['desc'],
                     'provider_name' => $destInfo['ticket']['provider'],
-                    'cancellation_policy' => 'Hủy miễn phí trước 24h',
+                    'cancellation_policy' => 'Vé không hỗ trợ hủy hoặc hoàn tiền',
                 ]
             );
             foreach ($destInfo['ticket']['options'] as $opt) {
@@ -677,7 +677,7 @@ class MasterTourSeeder extends Seeder
                     // Cứ mỗi 4 ngày sẽ có 1 chuyến đi, cộng thêm ngẫu nhiên 0-2 ngày
                     $depDate = (clone $baseDate)->addDays($i * 4 + rand(0, 2));
                     $retDate = (clone $depDate)->addDays($tourData['days']);
-                    
+
                     // Ngẫu nhiên số chỗ để UI hiển thị trạng thái xanh/vàng/đỏ chân thực hơn
                     $randCapacity = rand(15, 30);
                     $randAvail = rand(0, $randCapacity);

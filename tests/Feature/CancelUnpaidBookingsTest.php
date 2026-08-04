@@ -64,7 +64,7 @@ test('bookings cancel unpaid command automatically cancels pending bookings crea
 
     expect($expiredBooking->booking_status)->toBe('cancelled');
     expect($expiredBooking->payment_status)->toBe(Booking::PAYMENT_FAILED);
-    expect($expiredBooking->cancel_reason)->toContain('30 phút');
+    expect($expiredBooking->cancel_reason)->toContain('15 phút');
 
     expect($recentBooking->booking_status)->toBe('pending');
 

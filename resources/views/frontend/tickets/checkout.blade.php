@@ -176,12 +176,12 @@
                     <small>{{ __('Bạn sẽ nhận được vé điện tử qua email sau khi thanh toán thành công.') }}</small>
                 </div>
 
-                @if($ticket->cancellation_policy)
-                <div class="alert alert-success border-0 bg-opacity-10">
-                    <i class="bi bi-shield-check me-2"></i>
-                    <small><strong>{{ __('Chính sách hủy:') }}</strong> {{ $ticket->cancellation_policy }}</small>
+                <div class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger mb-3">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-x-circle-fill me-2 mt-1"></i>
+                        <small><strong>{{ __('Chính sách hủy:') }}</strong> {{ $ticket->cancellation_policy ?? __('Vé không hỗ trợ hủy hoặc hoàn tiền sau khi đặt.') }}</small>
+                    </div>
                 </div>
-                @endif
             </div>
         </div>
     </div>
