@@ -63,7 +63,7 @@ class AuthenticatedSessionController extends Controller
     {
         $redirectUrl = $request->query('redirect') ?? $request->input('redirect');
 
-        if (!$redirectUrl) {
+        if (! $redirectUrl) {
             return;
         }
 

@@ -66,12 +66,12 @@ class TourBookingService
             $booking->payment_status = Booking::PAYMENT_PENDING;
             $booking->tour_status = Booking::TOUR_UPCOMING;
             $booking->transport_type = $data['transport_type'];
-$booking->transport_price = $data['transport_price'] ?? 0;
-$booking->transport_data = $transportData;
-$booking->meeting_point = $data['meeting_point']
-    ?? $schedule->tour->meeting_point;
+            $booking->transport_price = $data['transport_price'] ?? 0;
+            $booking->transport_data = $transportData;
+            $booking->meeting_point = $data['meeting_point']
+                ?? $schedule->tour->meeting_point;
 
-$booking->payment_type = $data['payment_type'] ?? 'full';
+            $booking->payment_type = $data['payment_type'] ?? 'full';
             $booking->payment_method = $data['payment_method'] ?? 'transfer';
             $booking->paid_amount = 0;
             $booking->is_passenger_list_submitted = ($totalPersons < 2);
@@ -310,7 +310,7 @@ $booking->payment_type = $data['payment_type'] ?? 'full';
                 Cache::forget($holdKey);
             } else {
                 $maxExpiresAt = max(array_column($currentHolds, 'expires_at'));
-                Cache::put($holdKey, $currentHolds, \Carbon\Carbon::createFromTimestamp($maxExpiresAt));
+                Cache::put($holdKey, $currentHolds, Carbon::createFromTimestamp($maxExpiresAt));
             }
         }
     }

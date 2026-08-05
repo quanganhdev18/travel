@@ -78,9 +78,9 @@ class CancelUnpaidBookingsCommand extends Command
                         Log::warning('[bookings:cancel-unpaid] Không thể gửi email hủy đơn #'.$booking->id.': '.$me->getMessage());
                     }
                 }
-                
+
                 if ($booking->user) {
-                    $booking->user->notify(new BookingStatusUpdatedNotification($booking, "Đơn hàng của bạn đã bị huỷ do quá hạn thanh toán."));
+                    $booking->user->notify(new BookingStatusUpdatedNotification($booking, 'Đơn hàng của bạn đã bị huỷ do quá hạn thanh toán.'));
                 }
 
                 $cancelledCount++;

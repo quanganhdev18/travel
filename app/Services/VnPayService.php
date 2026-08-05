@@ -168,7 +168,7 @@ class VnPayService
                         Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
                     }
                 }
-                
+
                 // Send notification
                 $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
             }

@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Booking;
 use App\Notifications\User\TourDepartureReminderNotification;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class SendTourReminders extends Command
@@ -31,13 +31,13 @@ class SendTourReminders extends Command
     {
         // Get tomorrow's date (Y-m-d)
         $tomorrow = Carbon::tomorrow()->toDateString();
-        
+
         $this->info("Bắt đầu gửi thông báo cho các tour khởi hành vào ngày: $tomorrow");
         Log::info("SendTourReminders: Bắt đầu gửi thông báo cho ngày $tomorrow");
 
         // Find bookings that are confirmed/paid and depart tomorrow
         $bookings = Booking::whereIn('booking_status', ['confirmed', 'paid'])
-            ->whereHas('tour_schedule', function($q) use ($tomorrow) {
+            ->whereHas('tour_schedule', function ($q) use ($tomorrow) {
                 $q->whereDate('start_date', $tomorrow);
             })
             ->with('user', 'tour_schedule.tour')

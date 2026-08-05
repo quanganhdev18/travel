@@ -126,7 +126,7 @@ class TicketController extends Controller
     {
         $request->validate([
             'destination_id' => 'required|exists:destinations,id',
-            'title' => 'required|string|max:255|unique:tickets,title,' . $ticket->id,
+            'title' => 'required|string|max:255|unique:tickets,title,'.$ticket->id,
             'description' => 'nullable|string',
             'provider_name' => 'nullable|string|max:255',
             'cancellation_policy' => 'nullable|string',

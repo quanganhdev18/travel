@@ -31,7 +31,7 @@ class HolidayController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $endDate = $request->end_date;
                     if ($endDate && strtotime($value) <= strtotime($endDate)) {
-                        $exists = \App\Models\Holiday::where('start_date', '<=', $endDate)
+                        $exists = Holiday::where('start_date', '<=', $endDate)
                             ->where('end_date', '>=', $value)
                             ->exists();
                         if ($exists) {
@@ -61,7 +61,7 @@ class HolidayController extends Controller
     public function update(Request $request, Holiday $holiday)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:holidays,name,' . $holiday->id,
+            'name' => 'required|string|max:255|unique:holidays,name,'.$holiday->id,
             'start_date' => [
                 'required',
                 'date',
@@ -69,7 +69,7 @@ class HolidayController extends Controller
                 function ($attribute, $value, $fail) use ($request, $holiday) {
                     $endDate = $request->end_date;
                     if ($endDate && strtotime($value) <= strtotime($endDate)) {
-                        $exists = \App\Models\Holiday::where('id', '!=', $holiday->id)
+                        $exists = Holiday::where('id', '!=', $holiday->id)
                             ->where('start_date', '<=', $endDate)
                             ->where('end_date', '>=', $value)
                             ->exists();

@@ -22,11 +22,11 @@ class TestTourScheduleAugustSeeder extends Seeder
         foreach ($tours as $tour) {
             // Generate schedules for dates: 2, 7, 12, 17 in August
             $dayOffsets = [2, 7, 12, 17];
-            
+
             foreach ($dayOffsets as $day) {
                 // Set departure time to 08:00 AM
                 $depDate = Carbon::create($currentYear, 8, $day, 8, 0, 0);
-                
+
                 // Calculate return date based on duration
                 $duration = $tour->duration_days ?: 0;
                 $retDate = (clone $depDate)->addDays($duration);
@@ -45,7 +45,7 @@ class TestTourScheduleAugustSeeder extends Seeder
                 );
             }
         }
-        
+
         $this->command->info('Successfully seeded tour schedules from Aug 1 to Aug 20.');
     }
 }

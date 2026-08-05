@@ -132,16 +132,16 @@ class VietnamHolidaySeeder extends Seeder
         foreach ($holidays as $holiday) {
             Holiday::updateOrCreate(
                 [
-                    'name'       => $holiday['name'],
+                    'name' => $holiday['name'],
                     'start_date' => $holiday['start_date'],
                 ],
                 [
-                    'end_date'                  => $holiday['end_date'],
+                    'end_date' => $holiday['end_date'],
                     'price_increase_percentage' => $holiday['price_increase_percentage'],
                 ]
             );
         }
 
-        $this->command->info('✅ Đã seed ' . count($holidays) . ' ngày lễ Việt Nam thành công!');
+        $this->command->info('✅ Đã seed '.count($holidays).' ngày lễ Việt Nam thành công!');
     }
 }

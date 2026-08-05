@@ -193,6 +193,7 @@
                         </li>
                         @endauth
                         <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tickets.index') }}">{{ __('Vé tham quan') }}</a></li>
+                        <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.insurance.index') }}">{{ __('Bảo hiểm du lịch') }}</a></li>
                     </ul>
 
                     <!-- Mobile Only Top Utilities -->

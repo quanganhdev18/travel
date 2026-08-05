@@ -50,7 +50,7 @@ class InvoiceRequestController extends Controller
         | Chỉ cho yêu cầu khi đã thanh toán
         |--------------------------------------------------------------------------
         */
-        if (!in_array(
+        if (! in_array(
             $booking->payment_status,
             ['paid_30', 'paid_100'],
             true

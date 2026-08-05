@@ -10,13 +10,6 @@ use App\Models\Coupon;
 use App\Models\Holiday;
 use App\Models\Payment;
 use App\Models\TourSchedule;
-use App\Models\UserIdentity;
-use App\Models\TicketOption;
-use App\Models\Addon;
-use App\Models\TicketBooking;
-use App\Models\BookingAddon;
-use App\Models\BookingPassenger;
-use App\Events\SeatAvailabilityUpdated;
 use App\Services\FlightBookingService;
 use App\Services\TourBookingService;
 use App\Services\VnPayService;
@@ -30,7 +23,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-
 
 class TourBookingController extends Controller
 {

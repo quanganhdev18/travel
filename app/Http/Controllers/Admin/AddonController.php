@@ -65,7 +65,7 @@ class AddonController extends Controller
     public function update(Request $request, Addon $addon)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:addons,name,' . $addon->id,
+            'name' => 'required|string|max:255|unique:addons,name,'.$addon->id,
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'image' => 'nullable|image|max:2048',

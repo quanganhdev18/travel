@@ -19,7 +19,7 @@ class OngoingTourController extends Controller
         $query = TourSchedule::with(['tour', 'schedule_guides.tour_guide'])
             ->withCount(['bookings as total_guests' => function ($q) {
                 $q->select(\DB::raw('SUM(adults_count + children_count)'))
-                  ->whereNotIn('booking_status', ['cancelled', 'failed']);
+                    ->whereNotIn('booking_status', ['cancelled', 'failed']);
             }]);
 
         if ($status === 'upcoming') {
