@@ -615,7 +615,7 @@ class MasterTourSeeder extends Seeder
                     'slug' => Str::slug($destInfo['ticket']['title'].'-'.time()),
                     'description' => $destInfo['ticket']['desc'],
                     'provider_name' => $destInfo['ticket']['provider'],
-                    'cancellation_policy' => 'Hủy miễn phí trước 24h',
+                    'cancellation_policy' => 'Vé không hỗ trợ hủy hoặc hoàn tiền',
                 ]
             );
             foreach ($destInfo['ticket']['options'] as $opt) {

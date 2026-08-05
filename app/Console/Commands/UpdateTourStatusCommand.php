@@ -32,7 +32,6 @@ class UpdateTourStatusCommand extends Command
 
         $scheduleExists = TourSchedule::whereDate('departure_date', '<=', $todayDate)
             ->whereDate('return_date', '>=', $todayDate)
-            ->has('schedule_guides')
             ->exists();
 
         if (! $scheduleExists) {

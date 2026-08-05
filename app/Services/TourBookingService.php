@@ -68,6 +68,9 @@ class TourBookingService
             $booking->transport_type = $data['transport_type'];
             $booking->transport_price = $data['transport_price'] ?? 0;
             $booking->transport_data = $transportData;
+            $booking->meeting_point = $data['meeting_point']
+                ?? $schedule->tour->meeting_point;
+
             $booking->payment_type = $data['payment_type'] ?? 'full';
             $booking->payment_method = $data['payment_method'] ?? 'transfer';
             $booking->paid_amount = 0;

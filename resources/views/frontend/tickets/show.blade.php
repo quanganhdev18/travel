@@ -217,12 +217,10 @@
                 </span>
                 @endif
 
-                @if($ticket->cancellation_policy)
-                <span class="d-flex align-items-center">
-                    <i class="bi bi-shield-check fs-5 me-2 text-success"></i>
-                    {{ $ticket->cancellation_policy }}
+                <span class="d-flex align-items-center text-danger">
+                    <i class="bi bi-x-circle-fill fs-5 me-2 text-danger"></i>
+                    {{ $ticket->cancellation_policy ?? __('Vé không hỗ trợ hủy hoặc hoàn tiền') }}
                 </span>
-                @endif
             </div>
         </div>
 
@@ -381,28 +379,21 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="heading-policy">
                                 <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-policy" aria-expanded="false" aria-controls="collapse-policy">
-                                    <i class="bi bi-shield-fill text-info me-3 fs-4"></i>
+                                    <i class="bi bi-x-octagon-fill text-danger me-3 fs-4"></i>
                                     {{ __('Chính sách hủy vé') }}
                                 </button>
                             </h2>
                             <div id="collapse-policy" class="accordion-collapse collapse" aria-labelledby="heading-policy" data-bs-parent="#masterAccordion">
                                 <div class="accordion-body">
-                                    @if($ticket->cancellation_policy)
-                                    <div class="alert alert-success mb-3 border-0" style="background-color: #ecfdf5;">
+                                    <div class="alert alert-danger mb-0 border-0" style="background-color: #fef2f2;">
                                         <div class="d-flex align-items-start">
-                                            <i class="bi bi-check-circle-fill text-success me-3 mt-1 fs-5"></i>
+                                            <i class="bi bi-info-circle-fill text-danger me-3 mt-1 fs-5"></i>
                                             <div>
-                                                <strong class="d-block mb-2">{{ __('Chính sách hủy linh hoạt') }}</strong>
-                                                <p class="mb-0 tour-content-text">{{ $ticket->cancellation_policy }}</p>
+                                                <strong class="d-block mb-1 text-danger">{{ $ticket->cancellation_policy ?? __('Vé tham quan này không hỗ trợ hoàn hủy.') }}</strong>
+                                                <p class="mb-0 tour-content-text text-dark">{{ __('Lưu ý: Tất cả các vé đã đặt và thanh toán thành công sẽ không được phép hủy, đổi ngày hoặc yêu cầu hoàn tiền dưới mọi hình thức.') }}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    @else
-                                    <div class="alert alert-warning mb-0 border-0" style="background-color: #fff3cd;">
-                                        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
-                                        {{ __('Vui lòng liên hệ với chúng tôi để biết thêm chi tiết về chính sách hủy vé.') }}
-                                    </div>
-                                    @endif
                                 </div>
                             </div>
                         </div>

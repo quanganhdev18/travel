@@ -85,11 +85,11 @@ use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DemoController;
 use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\CalendarController;
-use App\Http\Controllers\Frontend\FaqController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
 use App\Http\Controllers\Frontend\InsuranceController;
 use App\Http\Controllers\Frontend\OcrController;
+use App\Http\Controllers\Frontend\SupportController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
@@ -257,9 +257,9 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController::class, 'index'])
     ->name('frontend.destinations.index');
 
-// FAQs
-Route::get('/faqs', [FaqController::class, 'index'])
-    ->name('frontend.faqs.index');
+// Trung tâm hỗ trợ
+Route::get('/support', [SupportController::class, 'index'])
+    ->name('frontend.support.index');
 
 // Bảo hiểm du lịch
 Route::get('/bao-hiem-du-lich', [InsuranceController::class, 'index'])
@@ -312,6 +312,15 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/bookings/live-statuses', [BookingController::class, 'liveStatuses'])
         ->name('admin.bookings.live_statuses');
 
+    Route::get('/bookings/{id}/invoice/download', [
+        BookingController::class,
+        'downloadInvoice',
+    ])->name('admin.bookings.invoice.download');
+
+    Route::get('/bookings/{id}/invoice', [
+        BookingController::class,
+        'invoice',
+    ])->name('admin.bookings.invoice');
     // Quản lý tài khoản (Users)
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->except(['show'])
@@ -564,3 +573,27 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread_count');
     Route::post('/{id}/mark-as-read', [ChatController::class, 'markAsRead'])->name('chat.mark_as_read');
 });
+use App\Http\Controllers\Frontend\InvoiceRequestController;
+
+Route::post('/my-bookings/{booking}/request-invoice', [
+    InvoiceRequestController::class,
+    'store',
+])->name('frontend.bookings.invoice.request');
+Route::post('/my-bookings/{booking}/request-invoice', [
+    InvoiceRequestController::class,
+    'store',
+])->name('frontend.bookings.invoice.request');
+Route::get('/bookings/{id}/invoice/download', [
+    BookingController::class,
+    'downloadInvoice',
+])->name('admin.bookings.invoice.download');
+
+Route::get('/bookings/{id}/invoice', [
+    BookingController::class,
+    'invoice',
+])->name('admin.bookings.invoice');
+
+Route::post('/bookings/{id}/invoice/send', [
+    BookingController::class,
+    'sendInvoice',
+])->name('admin.bookings.invoice.send');

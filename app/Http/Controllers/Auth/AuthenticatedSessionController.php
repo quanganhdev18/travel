@@ -7,12 +7,13 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Hiển thị form đăng nhập.
      */
     public function create(Request $request): View
     {
@@ -24,10 +25,12 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Xử lý đăng nhập.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        $this->storeRedirectUrl($request);
+
         $request->authenticate();
 
         $request->session()->regenerate();
@@ -54,7 +57,28 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Destroy an authenticated session.
+     * Lưu lại URL người dùng đang đứng trước khi đăng nhập.
+     */
+    private function storeRedirectUrl(Request $request): void
+    {
+        $redirectUrl = $request->query('redirect') ?? $request->input('redirect');
+
+        if (! $redirectUrl) {
+            return;
+        }
+
+        $appUrl = url('/');
+
+        if (
+            Str::startsWith($redirectUrl, $appUrl) ||
+            Str::startsWith($redirectUrl, '/')
+        ) {
+            session(['url.intended' => $redirectUrl]);
+        }
+    }
+
+    /**
+     * Đăng xuất.
      */
     public function destroy(Request $request): RedirectResponse
     {

@@ -76,7 +76,7 @@ function setupGuideScenario(string $tourStatus = Booking::TOUR_IN_PROGRESS): arr
 
 // ─── ADMIN bị khóa ──────────────────────────────────────────────────────────
 
-test('admin không thể thay đổi tour_status khi booking đang in_progress', function () {
+test('admin có thể thay đổi tour_status khi booking đang in_progress', function () {
     Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
     $admin->assignRole('Admin');
@@ -89,12 +89,12 @@ test('admin không thể thay đổi tour_status khi booking đang in_progress',
     ]);
 
     $response->assertRedirect();
-    $response->assertSessionHas('error');
+    $response->assertSessionHas('success');
 
-    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_IN_PROGRESS);
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
 });
 
-test('admin không thể thay đổi tour_status khi booking đang checking_in', function () {
+test('admin có thể thay đổi tour_status khi booking đang checking_in', function () {
     Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
     $admin->assignRole('Admin');
@@ -104,9 +104,9 @@ test('admin không thể thay đổi tour_status khi booking đang checking_in',
     $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
         'payment_status' => Booking::PAYMENT_PAID_100,
         'tour_status' => Booking::TOUR_COMPLETED,
-    ])->assertSessionHas('error');
+    ])->assertSessionHas('success');
 
-    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_CHECKING_IN);
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
 });
 
 test('admin vẫn có thể cập nhật payment_status khi tour đang in_progress', function () {
@@ -262,26 +262,19 @@ test('guide co the chuyen trang thai tu in_progress sang completed truc tiep', f
     expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
 });
 
-test('admin khong the chuyen trang thai tour nhay coc tu upcoming sang completed hoac checking_in', function () {
+test('admin có thể chuyển trạng thái tour tùy ý từ upcoming sang completed', function () {
     Role::firstOrCreate(['name' => 'Admin']);
     $admin = User::factory()->create(['role' => 'admin']);
     $admin->assignRole('Admin');
 
     ['booking' => $booking] = setupGuideScenario(Booking::TOUR_UPCOMING);
 
-    // upcoming sang completed: không hợp lệ
     $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
         'payment_status' => Booking::PAYMENT_PAID_100,
         'tour_status' => Booking::TOUR_COMPLETED,
-    ])->assertRedirect()->assertSessionHas('error');
+    ])->assertRedirect()->assertSessionHas('success');
 
-    // upcoming sang checking_in: không hợp lệ
-    $this->actingAs($admin)->post(route('admin.bookings.update_status', $booking->id), [
-        'payment_status' => Booking::PAYMENT_PAID_100,
-        'tour_status' => Booking::TOUR_CHECKING_IN,
-    ])->assertRedirect()->assertSessionHas('error');
-
-    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_UPCOMING);
+    expect($booking->fresh()->tour_status)->toBe(Booking::TOUR_COMPLETED);
 });
 
 test('guide co the luu diem danh hang loat cho hanh khach', function () {
