@@ -261,11 +261,9 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 Route::get('/support', [SupportController::class, 'index'])
     ->name('frontend.support.index');
 
-// Bảo hiểm du lịch
+// Bảo hiểm du lịch (trang giới thiệu tĩnh)
 Route::get('/bao-hiem-du-lich', [InsuranceController::class, 'index'])
     ->name('frontend.insurance.index');
-Route::post('/bao-hiem-du-lich/dang-ky', [InsuranceController::class, 'store'])
-    ->name('frontend.insurance.store');
 
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])

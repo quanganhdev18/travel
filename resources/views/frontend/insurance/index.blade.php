@@ -1,971 +1,658 @@
 @extends('layouts.master')
 
 @section('title', 'Bảo hiểm du lịch - Travel Wonder')
+@section('meta_description', 'Khi đặt tour tại Travel Wonder, bảo hiểm du lịch được tự động áp dụng cho khách hàng mà không cần đăng ký hay thanh toán thêm.')
 
 @section('content')
-<style>
-    body {
-        background-color: #f8fafc;
-    }
 
-    /* Hero Banner Section */
-    .insurance-hero {
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
-        padding: 90px 0 110px;
-        position: relative;
-        overflow: hidden;
-        color: #ffffff;
-    }
-
-    .insurance-hero::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 600px;
-        height: 600px;
-        background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    .insurance-hero::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 40px;
-        background: linear-gradient(to top, #f8fafc, transparent);
-        pointer-events: none;
-    }
-
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 18px;
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 50px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #38bdf8;
-        margin-bottom: 24px;
-    }
-
-    .hero-title {
-        font-size: 3rem;
-        font-weight: 800;
-        line-height: 1.25;
-        letter-spacing: -0.02em;
-        margin-bottom: 20px;
-        background: linear-gradient(to right, #ffffff, #e0f2fe);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .hero-desc {
-        font-size: 1.2rem;
-        color: #cbd5e1;
-        max-width: 680px;
-        line-height: 1.7;
-        margin-bottom: 32px;
-    }
-
-    .hero-stats {
-        display: flex;
-        gap: 32px;
-        flex-wrap: wrap;
-        margin-top: 20px;
-    }
-
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .stat-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: rgba(56, 189, 248, 0.15);
-        color: #38bdf8;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.3rem;
-    }
-
-    .stat-text {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .stat-number {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #ffffff;
-    }
-
-    .stat-label {
-        font-size: 0.825rem;
-        color: #94a3b8;
-    }
-
-    /* Section Styling */
-    .section-header {
-        text-align: center;
-        max-width: 700px;
-        margin: 0 auto 50px;
-    }
-
-    .section-subtitle {
-        font-size: 0.9rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #0284c7;
-        margin-bottom: 10px;
-    }
-
-    .section-main-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 16px;
-    }
-
-    .section-description {
-        font-size: 1rem;
-        color: #64748b;
-        line-height: 1.6;
-    }
-
-    /* Packages Section */
-    .package-card {
-        background: #ffffff;
-        border-radius: 24px;
-        border: 2px solid #e2e8f0;
-        padding: 36px 28px;
-        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .package-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px -15px rgba(14, 165, 233, 0.18);
-        border-color: #38bdf8;
-    }
-
-    .package-card.popular {
-        border-color: #0284c7;
-        box-shadow: 0 12px 30px -10px rgba(2, 132, 199, 0.2);
-        background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);
-    }
-
-    .popular-tag {
-        position: absolute;
-        top: -15px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #0284c7, #0369a1);
-        color: #ffffff;
-        font-size: 0.8rem;
-        font-weight: 700;
-        padding: 6px 18px;
-        border-radius: 50px;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .package-name {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 8px;
-    }
-
-    .package-summary {
-        font-size: 0.95rem;
-        color: #0284c7;
-        font-weight: 600;
-        margin-bottom: 24px;
-        min-height: 48px;
-    }
-
-    .package-price-wrap {
-        display: flex;
-        align-items: baseline;
-        gap: 6px;
-        margin-bottom: 28px;
-        padding-bottom: 24px;
-        border-bottom: 1px dashed #e2e8f0;
-    }
-
-    .package-price {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #0f172a;
-    }
-
-    .package-unit {
-        font-size: 0.9rem;
-        color: #64748b;
-        font-weight: 500;
-    }
-
-    .package-features {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 32px;
-        flex-grow: 1;
-    }
-
-    .package-features li {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        font-size: 0.95rem;
-        color: #334155;
-        margin-bottom: 14px;
-        line-height: 1.5;
-    }
-
-    .package-features li i {
-        color: #10b981;
-        font-size: 1.1rem;
-        margin-top: 2px;
-        flex-shrink: 0;
-    }
-
-    .btn-select-package {
-        width: 100%;
-        padding: 14px 24px;
-        border-radius: 14px;
-        font-weight: 700;
-        font-size: 1rem;
-        transition: all 0.25s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        text-decoration: none;
-    }
-
-    .package-card.popular .btn-select-package {
-        background: linear-gradient(135deg, #0284c7, #0369a1);
-        color: #ffffff;
-        border: none;
-        box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
-    }
-
-    .package-card.popular .btn-select-package:hover {
-        background: linear-gradient(135deg, #0369a1, #075985);
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(2, 132, 199, 0.4);
-        color: #ffffff;
-    }
-
-    .package-card:not(.popular) .btn-select-package {
-        background: #f1f5f9;
-        color: #0f172a;
-        border: 1px solid #cbd5e1;
-    }
-
-    .package-card:not(.popular) .btn-select-package:hover {
-        background: #0284c7;
-        color: #ffffff;
-        border-color: #0284c7;
-        transform: translateY(-2px);
-    }
-
-    /* Benefits Section */
-    .benefits-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 24px;
-    }
-
-    .benefit-card {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 32px 24px;
-        border: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-    }
-
-    .benefit-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
-        border-color: #bae6fd;
-    }
-
-    .benefit-icon-box {
-        width: 60px;
-        height: 60px;
-        border-radius: 16px;
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-        color: #0284c7;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.7rem;
-        margin-bottom: 20px;
-    }
-
-    .benefit-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .benefit-check {
-        color: #10b981;
-        font-size: 1.1rem;
-    }
-
-    .benefit-desc {
-        font-size: 0.925rem;
-        color: #64748b;
-        line-height: 1.6;
-        margin: 0;
-    }
-
-    /* Registration Form Card */
-    .register-section-wrap {
-        background: #ffffff;
-        border-radius: 28px;
-        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-        border: 1px solid #e2e8f0;
-        overflow: hidden;
-    }
-
-    .register-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-        color: #ffffff;
-        padding: 40px 36px;
-        position: relative;
-    }
-
-    .register-header-title {
-        font-size: 1.8rem;
-        font-weight: 800;
-        margin-bottom: 8px;
-    }
-
-    .register-header-subtitle {
-        color: #94a3b8;
-        font-size: 0.95rem;
-        margin: 0;
-    }
-
-    .register-body {
-        padding: 40px 36px;
-    }
-
-    .form-label-custom {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: #334155;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .form-control-custom, .form-select-custom {
-        border-radius: 12px;
-        padding: 12px 16px;
-        border: 1.5px solid #cbd5e1;
-        font-size: 0.975rem;
-        color: #0f172a;
-        transition: all 0.2s ease;
-        background-color: #ffffff;
-    }
-
-    .form-control-custom:focus, .form-select-custom:focus {
-        border-color: #0284c7;
-        box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12);
-        outline: none;
-    }
-
-    /* Dynamic Pricing Box inside Form */
-    .price-calculator-box {
-        background: #f8fafc;
-        border: 1.5px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 20px 24px;
-        margin-top: 10px;
-    }
-
-    .calc-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.925rem;
-        color: #64748b;
-        margin-bottom: 8px;
-    }
-
-    .calc-row.total {
-        margin-bottom: 0;
-        padding-top: 12px;
-        border-top: 1px dashed #cbd5e1;
-        font-size: 1.15rem;
-        font-weight: 800;
-        color: #0f172a;
-    }
-
-    .total-price-val {
-        color: #0284c7;
-        font-size: 1.4rem;
-        font-weight: 800;
-    }
-
-    .btn-submit-insurance {
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-        color: #ffffff;
-        border: none;
-        border-radius: 14px;
-        padding: 16px 32px;
-        font-size: 1.1rem;
-        font-weight: 800;
-        width: 100%;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.3);
-        cursor: pointer;
-    }
-
-    .btn-submit-insurance:hover {
-        background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 12px 28px rgba(2, 132, 199, 0.4);
-        color: #ffffff;
-    }
-
-    /* FAQ Section */
-    .faq-accordion .accordion-item {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 16px !important;
-        margin-bottom: 16px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
-        transition: all 0.25s ease;
-    }
-
-    .faq-accordion .accordion-item:hover {
-        border-color: #cbd5e1;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-    }
-
-    .faq-accordion .accordion-button {
-        padding: 22px 28px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #0f172a;
-        background: #ffffff;
-        box-shadow: none !important;
-    }
-
-    .faq-accordion .accordion-button:not(.collapsed) {
-        color: #0284c7;
-        background: #f0f9ff;
-    }
-
-    .faq-accordion .accordion-body {
-        padding: 20px 28px 26px;
-        font-size: 0.975rem;
-        color: #475569;
-        line-height: 1.7;
-    }
-
-    /* Success Alert Box */
-    .registration-success-alert {
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-        border: 2px solid #10b981;
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 30px;
-    }
-
-    @media (max-width: 768px) {
-        .insurance-hero {
-            padding: 60px 0 80px;
-            text-align: center;
-        }
-
-        .hero-title {
-            font-size: 2.2rem;
-        }
-
-        .hero-stats {
-            justify-content: center;
-        }
-
-        .section-main-title {
-            font-size: 1.8rem;
-        }
-
-        .register-header, .register-body {
-            padding: 24px;
-        }
-    }
-</style>
-
-<!-- 1. Banner (Hero Section) -->
-<section class="insurance-hero">
-    <div class="container position-relative" style="z-index: 2;">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <div class="hero-badge">
-                    <i class="bi bi-shield-check"></i> {{ __('Bảo vệ toàn diện mọi hành trình') }}
-                </div>
-                <h1 class="hero-title">{{ __('Bảo hiểm du lịch') }}</h1>
-                <p class="hero-desc">
-                    "{{ __('Bảo vệ chuyến đi của bạn với các gói bảo hiểm toàn diện, giúp bạn an tâm khám phá mọi điểm đến.') }}"
+{{-- ═══════════════════════════════════════════════════════════════
+     HERO SECTION
+═══════════════════════════════════════════════════════════════ --}}
+<section class="ins-hero">
+    <div class="ins-hero__bg-orb ins-hero__bg-orb--1"></div>
+    <div class="ins-hero__bg-orb ins-hero__bg-orb--2"></div>
+    <div class="container position-relative" style="z-index:2;">
+        <div class="row align-items-center gy-5">
+            <div class="col-lg-7">
+                <span class="ins-badge mb-3">
+                    <i class="bi bi-shield-check me-2"></i>Bảo vệ tự động – Không cần đăng ký thêm
+                </span>
+                <h1 class="ins-hero__title">Bảo hiểm du lịch</h1>
+                <p class="ins-hero__subtitle">An tâm khám phá – Bảo vệ trọn hành trình</p>
+                <p class="ins-hero__desc">
+                    Khi đặt tour trên website, bảo hiểm du lịch được <strong>tự động áp dụng</strong>
+                    cho khách hàng mà không cần đăng ký hoặc thanh toán thêm.
                 </p>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <div class="stat-icon">
-                            <i class="bi bi-person-check-fill"></i>
-                        </div>
-                        <div class="stat-text">
-                            <span class="stat-number">50.000+</span>
-                            <span class="stat-label">Khách hàng tin dùng</span>
-                        </div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon">
-                            <i class="bi bi-clock-history"></i>
-                        </div>
-                        <div class="stat-text">
-                            <span class="stat-number">24/7</span>
-                            <span class="stat-label">Cứu hộ & Hỗ trợ y tế</span>
-                        </div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-icon">
-                            <i class="bi bi-award-fill"></i>
-                        </div>
-                        <div class="stat-text">
-                            <span class="stat-number">100%</span>
-                            <span class="stat-label">Bồi thường minh bạch</span>
-                        </div>
-                    </div>
+                <div class="ins-hero__pill mt-4">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                    <span>Bảo hiểm được áp dụng tự động khi đặt tour.</span>
                 </div>
             </div>
-            <div class="col-lg-4 d-none d-lg-block text-center position-relative">
-                <div class="p-4 rounded-4" style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.2);">
-                    <i class="bi bi-shield-lock-fill text-info" style="font-size: 5rem;"></i>
-                    <h5 class="mt-3 text-white fw-bold">An Tâm Du Lịch</h5>
-                    <p class="small text-white-50 mb-0">Hỗ trợ khẩn cấp toàn cầu 24/7</p>
+            <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+                <div class="ins-hero__visual">
+                    <div class="ins-hero__shield">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <div class="ins-hero__float ins-hero__float--1">
+                        <i class="bi bi-check-circle-fill"></i> Tự động
+                    </div>
+                    <div class="ins-hero__float ins-hero__float--2">
+                        <i class="bi bi-heart-pulse-fill"></i> 24/7
+                    </div>
+                    <div class="ins-hero__float ins-hero__float--3">
+                        <i class="bi bi-currency-dollar"></i> Miễn phí
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<div class="container my-5">
-    
-    @if(session('success_registration'))
-        <!-- Success Alert Card -->
-        <div class="registration-success-alert shadow-sm text-center">
-            <div class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle mb-3" style="width: 64px; height: 64px;">
-                <i class="bi bi-check-lg fs-1"></i>
-            </div>
-            <h3 class="fw-bold text-success mb-2">Đăng Ký Bảo Hiểm Thành Công!</h3>
-            <p class="text-muted mb-4">Cảm ơn bạn đã lựa chọn bảo hiểm du lịch Travel Wonder. Mã đăng ký của bạn là <strong class="text-dark">{{ session('success_registration')['code'] }}</strong>.</p>
-            
-            <div class="row justify-content-center text-start">
-                <div class="col-md-8 col-lg-6">
-                    <div class="bg-white p-4 rounded-4 border">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Họ và tên:</span>
-                            <strong class="text-dark">{{ session('success_registration')['fullname'] }}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Gói bảo hiểm:</span>
-                            <strong class="text-primary">{{ session('success_registration')['package'] }}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Thời gian:</span>
-                            <span>{{ session('success_registration')['start_date'] }} - {{ session('success_registration')['end_date'] }} ({{ session('success_registration')['total_days'] }} ngày)</span>
-                        </div>
-                        <div class="d-flex justify-content-between pt-2 border-top">
-                            <span class="fw-bold text-dark">Tổng chi phí:</span>
-                            <strong class="fs-5 text-success">{{ session('success_registration')['total_price'] }}</strong>
-                        </div>
+{{-- ═══════════════════════════════════════════════════════════════
+     CTA BANNER – ĐẶT TOUR → TỰ ĐỘNG ĐƯỢC BẢO HIỂM
+═══════════════════════════════════════════════════════════════ --}}
+<section class="ins-cta-banner">
+    <div class="container">
+        <div class="ins-cta-banner__card">
+            <div class="ins-cta-banner__glow"></div>
+            <div class="row align-items-center gy-4 position-relative" style="z-index:2;">
+                <div class="col-lg-8">
+                    <div class="ins-cta-banner__eyebrow">
+                        <i class="bi bi-lightning-fill me-2"></i>QUYỀN LỢI ĐẶC BIỆT
                     </div>
+                    <h2 class="ins-cta-banner__heading">
+                        ĐẶT TOUR – TỰ ĐỘNG ĐƯỢC BẢO HIỂM
+                    </h2>
+                    <p class="ins-cta-banner__body">
+                        Không cần mua thêm. Không cần đăng ký riêng.<br>
+                        Khi khách hoàn tất đặt tour, quyền lợi bảo hiểm sẽ được áp dụng tự động
+                        theo điều kiện của tour.
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{{ route('frontend.tours.index') }}" class="ins-cta-banner__btn">
+                        <i class="bi bi-compass-fill me-2"></i>Xem các tour
+                    </a>
                 </div>
             </div>
         </div>
-    @endif
+    </div>
+</section>
 
-    <!-- 2. Các gói bảo hiểm -->
-    <section class="my-5" id="packagesSection">
-        <div class="section-header">
-            <span class="section-subtitle">DANH SÁCH GÓI BẢO HIỂM</span>
-            <h2 class="section-main-title">Lựa Chọn Gói Bảo Hiểm Dành Cho Bạn</h2>
-            <p class="section-description">
-                Được thiết kế linh hoạt đáp ứng mọi nhu cầu từ cá nhân đến gia đình với mức chi phí tối ưu nhất.
+{{-- ═══════════════════════════════════════════════════════════════
+     BENEFITS GRID
+═══════════════════════════════════════════════════════════════ --}}
+<section class="ins-benefits">
+    <div class="container">
+        <div class="ins-section-header">
+            <span class="ins-section-header__label">QUYỀN LỢI BẢO HIỂM</span>
+            <h2 class="ins-section-header__title">Những quyền lợi bạn được bảo vệ</h2>
+            <p class="ins-section-header__desc">
+                Mọi khách hàng đặt tour đều tự động được hưởng đầy đủ các quyền lợi dưới đây trong suốt chuyến đi.
             </p>
         </div>
 
-        <div class="row g-4 justify-content-center">
-            @foreach($packages as $code => $pkg)
-                <div class="col-lg-4 col-md-6">
-                    <div class="package-card {{ $pkg['is_popular'] ? 'popular' : '' }}">
-                        @if($pkg['is_popular'])
-                            <div class="popular-tag">
-                                <i class="bi bi-star-fill me-1"></i> {{ $pkg['badge'] }}
-                            </div>
-                        @endif
+        <div class="row g-4">
+            @php
+            $benefits = [
+                [
+                    'icon'  => 'bi-hospital-fill',
+                    'color' => '#e74c3c',
+                    'bg'    => '#fdecea',
+                    'title' => 'Chi phí y tế',
+                    'desc'  => 'Hỗ trợ chi phí y tế phát sinh khi khách hàng gặp vấn đề sức khỏe hoặc tai nạn trong chuyến đi.',
+                ],
+                [
+                    'icon'  => 'bi-activity',
+                    'color' => '#e67e22',
+                    'bg'    => '#fef3e8',
+                    'title' => 'Tai nạn du lịch',
+                    'desc'  => 'Bảo vệ khách hàng trước những rủi ro tai nạn không mong muốn trong thời gian tham gia tour.',
+                ],
+                [
+                    'icon'  => 'bi-airplane-fill',
+                    'color' => '#2980b9',
+                    'bg'    => '#eaf4fb',
+                    'title' => 'Trì hoãn chuyến đi',
+                    'desc'  => 'Hỗ trợ theo điều kiện bảo hiểm khi chuyến đi hoặc chuyến bay gặp sự cố ngoài dự kiến.',
+                ],
+                [
+                    'icon'  => 'bi-luggage-fill',
+                    'color' => '#8e44ad',
+                    'bg'    => '#f5eef8',
+                    'title' => 'Hành lý',
+                    'desc'  => 'Hỗ trợ khi hành lý của khách hàng bị mất hoặc hư hỏng theo phạm vi bảo hiểm.',
+                ],
+                [
+                    'icon'  => 'bi-globe2',
+                    'color' => '#16a085',
+                    'bg'    => '#e8f8f5',
+                    'title' => 'Hỗ trợ khẩn cấp',
+                    'desc'  => 'Hỗ trợ khách hàng trong những tình huống khẩn cấp trong quá trình du lịch.',
+                ],
+                [
+                    'icon'  => 'bi-headset',
+                    'color' => '#1abc9c',
+                    'bg'    => '#eafaf1',
+                    'title' => 'Hỗ trợ 24/7',
+                    'desc'  => 'Đội ngũ hỗ trợ luôn sẵn sàng tiếp nhận và hướng dẫn khi khách hàng gặp sự cố.',
+                ],
+            ];
+            @endphp
 
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h3 class="package-name">{{ $pkg['name'] }}</h3>
-                            @if(!$pkg['is_popular'])
-                                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">{{ $pkg['badge'] }}</span>
-                            @endif
+            @foreach($benefits as $benefit)
+                <div class="col-md-6 col-lg-4">
+                    <div class="ins-benefit-card">
+                        <div class="ins-benefit-card__icon" style="background:{{ $benefit['bg'] }}; color:{{ $benefit['color'] }};">
+                            <i class="bi {{ $benefit['icon'] }}"></i>
                         </div>
-
-                        <p class="package-summary">{{ $pkg['summary'] }}</p>
-
-                        <div class="package-price-wrap">
-                            <span class="package-price">{{ $pkg['price_formatted'] }}</span>
-                            <span class="package-unit">/ ngày / người</span>
-                        </div>
-
-                        <ul class="package-features">
-                            @foreach($pkg['features'] as $feature)
-                                <li>
-                                    <i class="bi bi-check-circle-fill"></i>
-                                    <span>{{ $feature }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-
-                        <a href="#registrationForm" 
-                           class="btn-select-package" 
-                           onclick="selectInsurancePackage('{{ $code }}', '{{ $pkg['name'] }}', {{ $pkg['price'] }})">
-                            <i class="bi bi-shield-plus"></i> Chọn gói
-                        </a>
+                        <h3 class="ins-benefit-card__title">{{ $benefit['title'] }}</h3>
+                        <p class="ins-benefit-card__desc">{{ $benefit['desc'] }}</p>
                     </div>
                 </div>
             @endforeach
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- 3. Quyền lợi nổi bật -->
-    <section class="my-5 py-4">
-        <div class="section-header">
-            <span class="section-subtitle">ĐẶC QUYỀN VƯỢT TRỘI</span>
-            <h2 class="section-main-title">Quyền Lợi Nổi Bật</h2>
-            <p class="section-description">
-                Cam kết hỗ trợ tối đa cho hành khách trong mọi tình huống phát sinh trên chuyến đi.
+{{-- ═══════════════════════════════════════════════════════════════
+     HOW IT WORKS – 4 BƯỚC
+═══════════════════════════════════════════════════════════════ --}}
+<section class="ins-steps">
+    <div class="container">
+        <div class="ins-section-header">
+            <span class="ins-section-header__label">QUY TRÌNH</span>
+            <h2 class="ins-section-header__title">Đơn giản – Tự động – An tâm</h2>
+            <p class="ins-section-header__desc">
+                Quyền lợi bảo hiểm được tích hợp tự động vào mỗi đơn đặt tour mà không cần bất kỳ thao tác thêm nào.
             </p>
         </div>
 
-        <div class="benefits-grid">
-            @foreach($highlights as $item)
-                <div class="benefit-card">
-                    <div class="benefit-icon-box">
-                        <i class="bi {{ $item['icon'] }}"></i>
+        <div class="ins-steps__track">
+            @php
+            $steps = [
+                ['num' => '01', 'icon' => 'bi-map-fill',        'title' => 'Chọn tour',         'desc' => 'Khách hàng lựa chọn tour phù hợp với nhu cầu và sở thích của mình.'],
+                ['num' => '02', 'icon' => 'bi-pencil-square',   'title' => 'Đặt tour',          'desc' => 'Điền thông tin hành khách và hoàn tất quy trình đặt tour trên website.'],
+                ['num' => '03', 'icon' => 'bi-shield-check',    'title' => 'Bảo hiểm tự động', 'desc' => 'Hệ thống tự động áp dụng bảo hiểm du lịch cho khách hàng ngay khi đặt thành công.'],
+                ['num' => '04', 'icon' => 'bi-emoji-smile-fill','title' => 'An tâm du lịch',   'desc' => 'Khách hàng nhận thông tin bảo hiểm cùng thông tin đặt tour qua email xác nhận.'],
+            ];
+            @endphp
+
+            @foreach($steps as $i => $step)
+                <div class="ins-step">
+                    <div class="ins-step__icon">
+                        <i class="bi {{ $step['icon'] }}"></i>
                     </div>
-                    <h4 class="benefit-title">
-                        <i class="bi bi-check-circle-fill benefit-check"></i>
-                        {{ $item['title'] }}
-                    </h4>
-                    <p class="benefit-desc">{{ $item['description'] }}</p>
+                    <div class="ins-step__num">{{ $step['num'] }}</div>
+                    <h3 class="ins-step__title">{{ $step['title'] }}</h3>
+                    <p class="ins-step__desc">{{ $step['desc'] }}</p>
+                </div>
+                @if($i < count($steps) - 1)
+                    <div class="ins-step__arrow"><i class="bi bi-arrow-right"></i></div>
+                @endif
+            @endforeach
+        </div>
+    </div>
+</section>
+
+{{-- ═══════════════════════════════════════════════════════════════
+     TRUST STATS
+═══════════════════════════════════════════════════════════════ --}}
+<section class="ins-stats">
+    <div class="container">
+        <div class="ins-stats__grid">
+            @php
+            $stats = [
+                ['icon' => 'bi-people-fill',       'value' => '10.000+', 'label' => 'Khách hàng được bảo vệ'],
+                ['icon' => 'bi-clock-history',     'value' => '24/7',    'label' => 'Hỗ trợ khẩn cấp'],
+                ['icon' => 'bi-shield-fill-check', 'value' => '100%',    'label' => 'Tự động – Không cần đăng ký'],
+                ['icon' => 'bi-map-fill',          'value' => '50+',     'label' => 'Điểm đến được bảo vệ'],
+            ];
+            @endphp
+            @foreach($stats as $stat)
+                <div class="ins-stats__item">
+                    <div class="ins-stats__icon"><i class="bi {{ $stat['icon'] }}"></i></div>
+                    <div class="ins-stats__value">{{ $stat['value'] }}</div>
+                    <div class="ins-stats__label">{{ $stat['label'] }}</div>
                 </div>
             @endforeach
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- 4. Đăng ký bảo hiểm -->
-    <section class="my-5" id="registrationForm">
-        <div class="row justify-content-center">
-            <div class="col-lg-10 col-xl-9">
-                <div class="register-section-wrap">
-                    <div class="register-header">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; font-size: 1.5rem;">
-                                <i class="bi bi-file-earmark-medical-fill"></i>
-                            </div>
-                            <div>
-                                <h3 class="register-header-title">Đăng Ký Bảo Hiểm Du Lịch</h3>
-                                <p class="register-header-subtitle">Điền thông tin bên dưới để kích hoạt gói bảo hiểm cho chuyến đi của bạn</p>
-                            </div>
-                        </div>
-                    </div>
+{{-- ═══════════════════════════════════════════════════════════════
+     BOTTOM CTA
+═══════════════════════════════════════════════════════════════ --}}
+<section class="ins-bottom-cta">
+    <div class="container text-center">
+        <i class="bi bi-shield-lock-fill ins-bottom-cta__icon"></i>
+        <h2 class="ins-bottom-cta__title">Sẵn sàng khám phá thế giới?</h2>
+        <p class="ins-bottom-cta__desc">
+            Mọi chuyến đi của bạn đều được bảo vệ tự động khi đặt tour tại Travel Wonder.
+        </p>
+        <a href="{{ route('frontend.tours.index') }}" class="ins-bottom-cta__btn">
+            <i class="bi bi-compass-fill me-2"></i>Khám phá các tour ngay
+        </a>
+    </div>
+</section>
 
-                    <div class="register-body">
-                        <form action="{{ route('frontend.insurance.store') }}" method="POST" id="insuranceForm">
-                            @csrf
-                            <div class="row g-4">
-                                <!-- Họ và tên -->
-                                <div class="col-md-6">
-                                    <label for="fullname" class="form-label-custom">
-                                        <i class="bi bi-person-fill text-primary"></i> Họ và tên <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control form-control-custom @error('fullname') is-invalid @enderror" 
-                                           id="fullname" 
-                                           name="fullname" 
-                                           placeholder="Ví dụ: Nguyễn Văn A" 
-                                           value="{{ old('fullname', $user->name ?? '') }}" 
-                                           required>
-                                    @error('fullname')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+<style>
+/* ─── CSS Variables ─────────────────────────────────── */
+:root {
+    --ins-primary: #0ea5e9;
+    --ins-primary-dark: #0369a1;
+    --ins-secondary: #10b981;
+    --ins-dark: #0f172a;
+    --ins-text: #334155;
+    --ins-muted: #64748b;
+    --ins-bg: #f8fafc;
+    --ins-white: #ffffff;
+    --ins-radius: 20px;
+    --ins-shadow: 0 4px 24px rgba(14,165,233,.08);
+    --ins-transition: .3s cubic-bezier(.4,0,.2,1);
+}
 
-                                <!-- Số điện thoại -->
-                                <div class="col-md-6">
-                                    <label for="phone" class="form-label-custom">
-                                        <i class="bi bi-telephone-fill text-primary"></i> Số điện thoại <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="tel" 
-                                           class="form-control form-control-custom @error('phone') is-invalid @enderror" 
-                                           id="phone" 
-                                           name="phone" 
-                                           placeholder="Ví dụ: 0912345678" 
-                                           value="{{ old('phone', $user->phone ?? '') }}" 
-                                           required>
-                                    @error('phone')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+/* ─── Hero ──────────────────────────────────────────── */
+.ins-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #0369a1 100%);
+    padding: 100px 0 120px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+}
+.ins-hero__bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.ins-hero__bg-orb--1 {
+    width: 600px; height: 600px;
+    top: -200px; right: -100px;
+    background: radial-gradient(circle, rgba(56,189,248,.15) 0%, transparent 70%);
+}
+.ins-hero__bg-orb--2 {
+    width: 400px; height: 400px;
+    bottom: -150px; left: -100px;
+    background: radial-gradient(circle, rgba(16,185,129,.1) 0%, transparent 70%);
+}
+.ins-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,.12);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-size: .875rem;
+    font-weight: 600;
+    color: #7dd3fc;
+}
+.ins-hero__title {
+    font-size: clamp(2.4rem, 5vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -.03em;
+    line-height: 1.15;
+    background: linear-gradient(to right, #fff 30%, #bae6fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+}
+.ins-hero__subtitle {
+    font-size: 1.25rem;
+    color: #7dd3fc;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+.ins-hero__desc {
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    line-height: 1.75;
+    max-width: 560px;
+    margin-bottom: 0;
+}
+.ins-hero__pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(16,185,129,.18);
+    border: 1px solid rgba(52,211,153,.35);
+    border-radius: 50px;
+    padding: 10px 22px;
+    font-size: .95rem;
+    font-weight: 600;
+    color: #6ee7b7;
+}
 
-                                <!-- Email -->
-                                <div class="col-md-6">
-                                    <label for="email" class="form-label-custom">
-                                        <i class="bi bi-envelope-fill text-primary"></i> Email <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="email" 
-                                           class="form-control form-control-custom @error('email') is-invalid @enderror" 
-                                           id="email" 
-                                           name="email" 
-                                           placeholder="Ví dụ: email@example.com" 
-                                           value="{{ old('email', $user->email ?? '') }}" 
-                                           required>
-                                    @error('email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+/* Shield visual */
+.ins-hero__visual {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ins-hero__shield {
+    width: 220px;
+    height: 220px;
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255,255,255,.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6rem;
+    color: #38bdf8;
+    animation: ins-pulse 3s ease-in-out infinite;
+}
+@keyframes ins-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(56,189,248,.4); }
+    50%      { box-shadow: 0 0 0 24px rgba(56,189,248,0); }
+}
+.ins-hero__float {
+    position: absolute;
+    background: rgba(255,255,255,.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50px;
+    padding: 8px 16px;
+    font-size: .82rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: ins-float 4s ease-in-out infinite;
+}
+.ins-hero__float--1 { top: 24px; right: 0;   animation-delay: 0s; }
+.ins-hero__float--2 { top: 50%;  left: -10px; transform: translateY(-50%); animation-delay: 1.3s; }
+.ins-hero__float--3 { bottom: 24px; right: 0; animation-delay: 2.6s; }
+@keyframes ins-float {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-8px); }
+}
+.ins-hero__float--2 { animation: ins-float2 4s ease-in-out infinite 1.3s; }
+@keyframes ins-float2 {
+    0%,100% { transform: translateY(-50%); }
+    50%     { transform: translateY(calc(-50% - 8px)); }
+}
 
-                                <!-- Chọn gói bảo hiểm -->
-                                <div class="col-md-6">
-                                    <label for="package_code" class="form-label-custom">
-                                        <i class="bi bi-shield-shaded text-primary"></i> Chọn gói bảo hiểm <span class="text-danger">*</span>
-                                    </label>
-                                    <select class="form-select form-select-custom @error('package_code') is-invalid @enderror" 
-                                            id="package_code" 
-                                            name="package_code" 
-                                            onchange="updatePriceCalculation()" 
-                                            required>
-                                        @foreach($packages as $code => $pkg)
-                                            <option value="{{ $code }}" 
-                                                    data-price="{{ $pkg['price'] }}"
-                                                    {{ old('package_code', $selectedPackage) == $code ? 'selected' : '' }}>
-                                                Gói {{ $pkg['name'] }} ({{ $pkg['price_formatted'] }}/ngày)
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('package_code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+/* ─── CTA Banner ────────────────────────────────────── */
+.ins-cta-banner { padding: 60px 0; }
+.ins-cta-banner__card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    border-radius: 28px;
+    padding: 56px 60px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+}
+.ins-cta-banner__glow {
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(56,189,248,.25) 0%, transparent 70%);
+    pointer-events: none;
+}
+.ins-cta-banner__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(56,189,248,.15);
+    border: 1px solid rgba(56,189,248,.3);
+    border-radius: 50px;
+    padding: 6px 18px;
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: #38bdf8;
+    margin-bottom: 18px;
+}
+.ins-cta-banner__heading {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.ins-cta-banner__body {
+    font-size: 1.05rem;
+    color: #cbd5e1;
+    line-height: 1.75;
+    margin: 0;
+}
+.ins-cta-banner__btn {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, var(--ins-primary) 0%, var(--ins-primary-dark) 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 16px 32px;
+    border-radius: 14px;
+    text-decoration: none;
+    box-shadow: 0 8px 24px rgba(14,165,233,.35);
+    transition: var(--ins-transition);
+}
+.ins-cta-banner__btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(14,165,233,.45);
+    color: #fff;
+}
 
-                                <!-- Ngày khởi hành -->
-                                <div class="col-md-6">
-                                    <label for="start_date" class="form-label-custom">
-                                        <i class="bi bi-calendar-event-fill text-primary"></i> Ngày khởi hành <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="date" 
-                                           class="form-control form-control-custom @error('start_date') is-invalid @enderror" 
-                                           id="start_date" 
-                                           name="start_date" 
-                                           min="{{ date('Y-m-d') }}"
-                                           value="{{ old('start_date', date('Y-m-d')) }}" 
-                                           onchange="updatePriceCalculation()" 
-                                           required>
-                                    @error('start_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+/* ─── Section Header ────────────────────────────────── */
+.ins-section-header { text-align: center; max-width: 680px; margin: 0 auto 52px; }
+.ins-section-header__label {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    color: var(--ins-primary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+.ins-section-header__title {
+    font-size: clamp(1.7rem, 3vw, 2.3rem);
+    font-weight: 800;
+    color: var(--ins-dark);
+    letter-spacing: -.02em;
+    margin-bottom: 14px;
+}
+.ins-section-header__desc {
+    font-size: 1rem;
+    color: var(--ins-muted);
+    line-height: 1.7;
+    margin: 0;
+}
 
-                                <!-- Ngày kết thúc -->
-                                <div class="col-md-6">
-                                    <label for="end_date" class="form-label-custom">
-                                        <i class="bi bi-calendar-check-fill text-primary"></i> Ngày kết thúc <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="date" 
-                                           class="form-control form-control-custom @error('end_date') is-invalid @enderror" 
-                                           id="end_date" 
-                                           name="end_date" 
-                                           min="{{ date('Y-m-d') }}"
-                                           value="{{ old('end_date', date('Y-m-d', strtotime('+3 days'))) }}" 
-                                           onchange="updatePriceCalculation()" 
-                                           required>
-                                    @error('end_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+/* ─── Benefits ──────────────────────────────────────── */
+.ins-benefits { padding: 80px 0; background: var(--ins-bg); }
+.ins-benefit-card {
+    background: var(--ins-white);
+    border: 1.5px solid #e2e8f0;
+    border-radius: var(--ins-radius);
+    padding: 36px 28px;
+    height: 100%;
+    transition: var(--ins-transition);
+    box-shadow: var(--ins-shadow);
+}
+.ins-benefit-card:hover {
+    transform: translateY(-6px);
+    border-color: #bae6fd;
+    box-shadow: 0 16px 40px rgba(14,165,233,.12);
+}
+.ins-benefit-card__icon {
+    width: 62px; height: 62px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 22px;
+    transition: var(--ins-transition);
+}
+.ins-benefit-card:hover .ins-benefit-card__icon {
+    transform: scale(1.1);
+}
+.ins-benefit-card__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--ins-dark);
+    margin-bottom: 10px;
+}
+.ins-benefit-card__desc {
+    font-size: .925rem;
+    color: var(--ins-muted);
+    line-height: 1.65;
+    margin: 0;
+}
 
-                                <!-- Bảng tính tổng chi phí tạm tính -->
-                                <div class="col-12">
-                                    <div class="price-calculator-box">
-                                        <div class="calc-row">
-                                            <span>Gói bảo hiểm đã chọn:</span>
-                                            <strong id="summaryPackageName" class="text-dark">Gói Tiêu chuẩn</strong>
-                                        </div>
-                                        <div class="calc-row">
-                                            <span>Đơn giá theo ngày:</span>
-                                            <span id="summaryUnitPrice">199.000đ / ngày</span>
-                                        </div>
-                                        <div class="calc-row">
-                                            <span>Tổng số ngày bảo hiểm:</span>
-                                            <strong id="summaryTotalDays" class="text-dark">4 ngày</strong>
-                                        </div>
-                                        <div class="calc-row total">
-                                            <span>Tổng chi phí dự kiến:</span>
-                                            <span class="total-price-val" id="summaryTotalPrice">796.000đ</span>
-                                        </div>
-                                    </div>
-                                </div>
+/* ─── Steps ─────────────────────────────────────────── */
+.ins-steps { padding: 80px 0; background: #fff; }
+.ins-steps__track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.ins-step {
+    flex: 1;
+    min-width: 180px;
+    max-width: 220px;
+    text-align: center;
+    padding: 0 16px;
+}
+.ins-step__icon {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ins-primary) 0%, var(--ins-primary-dark) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: #fff;
+    margin: 0 auto 14px;
+    box-shadow: 0 8px 24px rgba(14,165,233,.3);
+    transition: var(--ins-transition);
+}
+.ins-step:hover .ins-step__icon {
+    transform: scale(1.1);
+    box-shadow: 0 14px 32px rgba(14,165,233,.4);
+}
+.ins-step__num {
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--ins-primary);
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+}
+.ins-step__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ins-dark);
+    margin-bottom: 8px;
+}
+.ins-step__desc {
+    font-size: .875rem;
+    color: var(--ins-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+.ins-step__arrow {
+    display: flex;
+    align-items: center;
+    padding-top: 36px;
+    font-size: 1.4rem;
+    color: #cbd5e1;
+    flex-shrink: 0;
+}
 
-                                <!-- Nút Đăng ký ngay -->
-                                <div class="col-12 mt-4">
-                                    <button type="submit" class="btn-submit-insurance" id="btnSubmitForm">
-                                        <i class="bi bi-shield-check"></i> Đăng ký ngay
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+/* ─── Stats ─────────────────────────────────────────── */
+.ins-stats {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+    padding: 70px 0;
+    color: #fff;
+}
+.ins-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 40px;
+    text-align: center;
+}
+.ins-stats__icon {
+    font-size: 2rem;
+    color: #38bdf8;
+    margin-bottom: 10px;
+}
+.ins-stats__value {
+    font-size: 2.4rem;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    color: #fff;
+    margin-bottom: 6px;
+}
+.ins-stats__label {
+    font-size: .875rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
 
-    <!-- 5. Câu hỏi thường gặp (FAQ) -->
-    <section class="my-5 py-3">
-        <div class="section-header">
-            <span class="section-subtitle">GIẢI ĐÁP THẮC MẮC</span>
-            <h2 class="section-main-title">Câu Hỏi Thường Gặp (FAQ)</h2>
-            <p class="section-description">
-                Tổng hợp những thắc mắc thường gặp về bảo hiểm du lịch giúp bạn hiểu rõ quyền lợi của mình.
-            </p>
-        </div>
+/* ─── Bottom CTA ────────────────────────────────────── */
+.ins-bottom-cta { padding: 100px 0; background: var(--ins-bg); }
+.ins-bottom-cta__icon {
+    font-size: 4rem;
+    color: var(--ins-primary);
+    display: block;
+    margin-bottom: 24px;
+}
+.ins-bottom-cta__title {
+    font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+    font-weight: 800;
+    color: var(--ins-dark);
+    letter-spacing: -.02em;
+    margin-bottom: 14px;
+}
+.ins-bottom-cta__desc {
+    font-size: 1.05rem;
+    color: var(--ins-muted);
+    max-width: 520px;
+    margin: 0 auto 36px;
+    line-height: 1.7;
+}
+.ins-bottom-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, var(--ins-primary) 0%, var(--ins-primary-dark) 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 18px 40px;
+    border-radius: 16px;
+    text-decoration: none;
+    box-shadow: 0 10px 28px rgba(14,165,233,.35);
+    transition: var(--ins-transition);
+}
+.ins-bottom-cta__btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(14,165,233,.45);
+    color: #fff;
+}
 
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
-                <div class="accordion faq-accordion" id="insuranceFaqAccordion">
-                    @foreach($faqs as $index => $faq)
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="heading-{{ $faq['id'] }}">
-                                <button class="accordion-button {{ $index !== 0 ? 'collapsed' : '' }}" 
-                                        type="button" 
-                                        data-bs-toggle="collapse" 
-                                        data-bs-target="#collapse-{{ $faq['id'] }}" 
-                                        aria-expanded="{{ $index === 0 ? 'true' : 'false' }}" 
-                                        aria-controls="collapse-{{ $faq['id'] }}">
-                                    <i class="bi bi-question-circle-fill text-primary me-3"></i>
-                                    {{ $faq['question'] }}
-                                </button>
-                            </h2>
-                            <div id="collapse-{{ $faq['id'] }}" 
-                                 class="accordion-collapse collapse {{ $index === 0 ? 'show' : '' }}" 
-                                 aria-labelledby="heading-{{ $faq['id'] }}" 
-                                 data-bs-parent="#insuranceFaqAccordion">
-                                <div class="accordion-body">
-                                    {{ $faq['answer'] }}
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </section>
+/* ─── Responsive ────────────────────────────────────── */
+@media (max-width: 992px) {
+    .ins-hero { padding: 70px 0 90px; }
+    .ins-cta-banner__card { padding: 40px 32px; }
+    .ins-steps__track { gap: 0; }
+    .ins-step { min-width: 140px; }
+    .ins-step__arrow { padding-top: 36px; font-size: 1.1rem; }
+}
+@media (max-width: 768px) {
+    .ins-steps__track { flex-direction: column; align-items: center; }
+    .ins-step { max-width: 100%; width: 100%; padding: 0 0 24px; }
+    .ins-step__arrow { display: none; }
+    .ins-cta-banner__card { padding: 36px 24px; }
+}
+</style>
 
-</div>
-
-@push('scripts')
-<script>
-    const packagePrices = {
-        'co_ban': { name: 'Gói Cơ bản', price: 99000, formatted: '99.000đ' },
-        'tieu_chuan': { name: 'Gói Tiêu chuẩn', price: 199000, formatted: '199.000đ' },
-        'cao_cap': { name: 'Gói Cao cấp', price: 399000, formatted: '399.000đ' }
-    };
-
-    function selectInsurancePackage(code, name, price) {
-        const selectElem = document.getElementById('package_code');
-        if (selectElem) {
-            selectElem.value = code;
-            updatePriceCalculation();
-        }
-    }
-
-    function updatePriceCalculation() {
-        const selectElem = document.getElementById('package_code');
-        const startDateElem = document.getElementById('start_date');
-        const endDateElem = document.getElementById('end_date');
-
-        if (!selectElem || !startDateElem || !endDateElem) return;
-
-        const packageCode = selectElem.value;
-        const pkg = packagePrices[packageCode] || packagePrices['tieu_chuan'];
-
-        const startDate = new Date(startDateElem.value);
-        const endDate = new Date(endDateElem.value);
-
-        // Ensure valid dates
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            return;
-        }
-
-        // Set min end date based on start date
-        endDateElem.min = startDateElem.value;
-        if (endDate < startDate) {
-            endDateElem.value = startDateElem.value;
-        }
-
-        // Calculate total days (inclusive)
-        const diffTime = Math.abs(endDate - startDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        const totalDays = Math.max(1, diffDays);
-
-        const totalPrice = pkg.price * totalDays;
-
-        // Update DOM
-        document.getElementById('summaryPackageName').textContent = pkg.name;
-        document.getElementById('summaryUnitPrice').textContent = pkg.formatted + ' / ngày';
-        document.getElementById('summaryTotalDays').textContent = totalDays + ' ngày';
-        document.getElementById('summaryTotalPrice').textContent = totalPrice.toLocaleString('vi-VN') + 'đ';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        updatePriceCalculation();
-    });
-</script>
-@endpush
 @endsection
