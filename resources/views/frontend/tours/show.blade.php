@@ -411,6 +411,11 @@
                 </span>
                 @endif
 
+                <span class="d-flex align-items-center text-success fw-600 bg-success bg-opacity-10 px-3 py-1 rounded-pill" style="font-size: 0.9rem;">
+                    <i class="bi bi-shield-check fs-5 me-2"></i>
+                    {{ __('Đã bao gồm ') }} <span style="cursor: pointer; text-decoration: underline;" class="ms-1" data-bs-toggle="modal" data-bs-target="#insuranceModal">{{ __('bảo hiểm tour') }}</span>
+                </span>
+
 
             </div>
 
@@ -983,7 +988,7 @@
                              @mouseenter="showPreview = true" @mouseleave="showPreview = false">
                             <a href="{{ route('frontend.tours.show', $relatedTour->slug) }}" class="text-decoration-none h-100 d-block" @mouseenter.stop>
                                 <div class="combo-card h-100">
-                                    <div class="combo-card-img-wrapper" style="height: 200px; position: relative;">
+                                    <div class="combo-card-img-wrapper">
                                         @if($relatedTour->duration_days)
                                             <div class="tour-duration-badge">
                                                 {{ $relatedTour->duration_days }}N{{ $relatedTour->duration_nights > 0 ? $relatedTour->duration_nights . 'Đ' : '' }}
@@ -1006,7 +1011,6 @@
                                         @endphp
                                         <img src="{{ $rTourImage }}"
                                              alt="{{ $relatedTour->title }}"
-                                             class="w-100 h-100 object-fit-cover"
                                              onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=800';">
                                     </div>
                                     <div class="combo-card-body">
@@ -1280,4 +1284,80 @@
         }
     }
 </script>
+
+<!-- Modal Bảo Hiểm Tour -->
+<div class="modal fade" id="insuranceModal" tabindex="-1" aria-labelledby="insuranceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom px-4 py-3" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                <h5 class="modal-title fw-bold text-primary" id="insuranceModalLabel">
+                    <i class="bi bi-shield-check fs-4 me-2"></i>Quyền Lợi Bảo Hiểm Tour
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 p-md-5" style="background-color: #fff;">
+
+                
+                <h6 class="fw-bold text-dark fs-5 mb-4">Bạn sẽ nhận được những quyền lợi gì?</h6>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-heart-pulse-fill text-success"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="fw-bold mb-1">Bồi thường y tế</h6>
+                                <p class="text-muted small mb-0">Chi trả các chi phí y tế phát sinh do ốm đau, tai nạn bất ngờ trong suốt hành trình chuyến đi.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-person-check-fill text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="fw-bold mb-1">Trách nhiệm cá nhân</h6>
+                                <p class="text-muted small mb-0">Bảo hiểm bồi thường thiệt hại về tài sản hoặc thương tật đối với bên thứ ba do sơ suất của bạn trong tour.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-suitcase-fill text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="fw-bold mb-1">Bảo vệ hành lý</h6>
+                                <p class="text-muted small mb-0">Hỗ trợ bồi thường trong trường hợp hành lý và tài sản cá nhân bị thất lạc, hỏng hóc hoặc mất cắp.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-telephone-fill text-info"></i>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <h6 class="fw-bold mb-1">Hỗ trợ khẩn cấp 24/7</h6>
+                                <p class="text-muted small mb-0">Luôn có mặt để cứu trợ y tế khẩn cấp hoặc hỗ trợ pháp lý bất cứ khi nào bạn cần trong chuyến đi.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top p-3 d-flex justify-content-center">
+                <button type="button" class="btn btn-primary px-5 py-2 rounded-pill fw-600" data-bs-dismiss="modal">Tôi đã hiểu</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
