@@ -94,36 +94,9 @@ class SupportController extends Controller
                     ],
                 ],
             ],
-            [
-                'category' => 'Liên hệ & Hỗ trợ',
-                'icon' => 'bi-headset',
-                'questions' => [
-                    [
-                        'question' => 'Làm sao để liên hệ bộ phận chăm sóc khách hàng?',
-                        'answer' => 'Bạn có thể liên hệ qua: Hotline 1900-xxxx (7:00-22:00 hàng ngày), Email support@travelwonder.vn, Chat trực tuyến trên website, hoặc đến trực tiếp văn phòng địa chỉ 123 Đại Lộ Võ Nguyên Giáp, Phường Quảng Thành, TP. Thanh Hóa',
-                    ],
-                    [
-                        'question' => 'Thời gian phản hồi của bộ phận hỗ trợ?',
-                        'answer' => 'Chúng tôi cam kết phản hồi trong vòng 2 giờ qua chat/hotline trong giờ hành chính, và trong 24 giờ qua email. Trường hợp khẩn cấp trong tour, vui lòng gọi hotline khẩn cấp 0999-xxx-xxx.',
-                    ],
-                    [
-                        'question' => 'Tôi muốn góp ý hoặc khiếu nại về dịch vụ?',
-                        'answer' => 'Mọi góp ý và khiếu nại xin gửi về email feedback@travelwonder.vn hoặc điền form phản hồi trên website. Chúng tôi sẽ xem xét và phản hồi trong vòng 48 giờ.',
-                    ],
-                ],
-            ],
+
         ];
 
-        $contactInfo = [
-            'hotline' => '1900-xxxx',
-            'email' => 'support@travelwonder.vn',
-            'address' => '123 Đại Lộ Võ Nguyên Giáp, Phường Quảng Thành, TP. Thanh Hóa',
-            'working_hours' => '7:00 - 22:00 (Hàng ngày)',
-            'emergency' => '0999-xxx-xxx',
-            'facebook' => '#',
-            'zalo' => '#',
-        ];
-
-        return view('frontend.support.index', compact('faqs', 'contactInfo'));
+        return view('frontend.support.index', compact('faqs'));
     }
 }
