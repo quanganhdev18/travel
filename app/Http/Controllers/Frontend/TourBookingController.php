@@ -30,6 +30,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
+use App\Models\User;
+use App\Notifications\AdminBookingNotification;
 
 
 class TourBookingController extends Controller
@@ -93,6 +96,17 @@ class TourBookingController extends Controller
 
             $booking = $this->bookingService->createBooking($request->validated(), $user, $sessionId);
             $schedule = $booking->tour_schedule;
+
+            // Bắn thông báo cho Admin
+            $admins = User::role('Admin')->get();
+            if ($admins->count() > 0) {
+                Notification::send($admins, new AdminBookingNotification(
+                    $booking,
+                    'booking_created',
+                    'Khách hàng ' . $request->customer_name . ' vừa đặt tour mới: ' . ($schedule->tour->title ?? '')
+                ));
+            }
+
         } catch (Exception $e) {
             DB::rollBack();
 

@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\User;
+use App\Notifications\AdminBookingNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 
 class InvoiceRequestController extends Controller
 {
@@ -116,9 +119,16 @@ class InvoiceRequestController extends Controller
         $booking->invoice_sent_at = null;
         $booking->save();
 
-        return back()->with(
-            'success',
-            'Yêu cầu xuất hóa đơn đã được gửi thành công.'
-        );
+        // Bắn thông báo cho Admin
+        $admins = User::role('Admin')->get();
+        if ($admins->count() > 0) {
+            Notification::send($admins, new AdminBookingNotification(
+                $booking,
+                'invoice_requested',
+                'Khách hàng yêu cầu xuất hóa đơn cho đơn hàng: ' . $booking->code
+            ));
+        }
+
+        return redirect()->back()->with('success', 'Đã gửi yêu cầu xuất hóa đơn thành công. Chúng tôi sẽ xử lý và gửi vào email của bạn.');
     }
 }

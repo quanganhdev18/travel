@@ -7,6 +7,9 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Notifications\User\PaymentSuccessNotification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Models\User;
+use App\Notifications\AdminBookingNotification;
 use Illuminate\Support\Facades\Mail;
 
 class VnPayService
@@ -171,6 +174,16 @@ class VnPayService
                 
                 // Send notification
                 $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
+
+                // Bắn thông báo cho Admin
+                $admins = User::role('Admin')->get();
+                if ($admins->count() > 0) {
+                    Notification::send($admins, new AdminBookingNotification(
+                        $bookingFresh,
+                        'payment_success',
+                        'Đơn hàng ' . $bookingFresh->code . ' vừa được thanh toán thành công.'
+                    ));
+                }
             }
         }
 

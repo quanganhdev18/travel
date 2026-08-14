@@ -443,11 +443,6 @@
                     <span>Mã giảm giá</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/invoices*') ? 'active' : '' }}" href="#">
-                    <i class="bi bi-receipt"></i> Hóa đơn & Thu chi
-                </a>
-            </li>
         </ul>
 
         <div class="group-title">Cấu hình hệ thống</div>
@@ -511,6 +506,8 @@
                 <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border" title="Xem trang chủ">
                     <i class="bi bi-box-arrow-up-right me-1"></i> Xem Website
                 </a>
+                
+                @include('components.admin-notification-bell')
 
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
