@@ -41,9 +41,10 @@
     37 => 'Termwind\\Laravel\\TermwindServiceProvider',
     38 => 'Pest\\Laravel\\PestServiceProvider',
     39 => 'Reliese\\Coders\\CodersServiceProvider',
-    40 => 'Spatie\\Permission\\PermissionServiceProvider',
-    41 => 'Spatie\\Translatable\\TranslatableServiceProvider',
-    42 => 'App\\Providers\\AppServiceProvider',
+    40 => 'SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider',
+    41 => 'Spatie\\Permission\\PermissionServiceProvider',
+    42 => 'Spatie\\Translatable\\TranslatableServiceProvider',
+    43 => 'App\\Providers\\AppServiceProvider',
   ),
   'eager' => 
   array (
@@ -69,9 +70,10 @@
     19 => 'Termwind\\Laravel\\TermwindServiceProvider',
     20 => 'Pest\\Laravel\\PestServiceProvider',
     21 => 'Reliese\\Coders\\CodersServiceProvider',
-    22 => 'Spatie\\Permission\\PermissionServiceProvider',
-    23 => 'Spatie\\Translatable\\TranslatableServiceProvider',
-    24 => 'App\\Providers\\AppServiceProvider',
+    22 => 'SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider',
+    23 => 'Spatie\\Permission\\PermissionServiceProvider',
+    24 => 'Spatie\\Translatable\\TranslatableServiceProvider',
+    25 => 'App\\Providers\\AppServiceProvider',
   ),
   'deferred' => 
   array (

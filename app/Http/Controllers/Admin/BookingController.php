@@ -8,6 +8,7 @@ use App\Notifications\User\BookingStatusUpdatedNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
 
 class BookingController extends Controller
@@ -200,46 +201,83 @@ class BookingController extends Controller
      * Các trạng thái tour mà admin không được phép thay đổi.
      * Sau khi tour bắt đầu, quyền điều hành thuộc về Hướng dẫn viên.
      */
-    public function invoice(int $id)
-    {
-        [$booking, $payment] = $this->getInvoiceData($id);
+private function makeInvoiceCode(Booking $booking): string
+{
+    return 'INV-'
+        . $booking->created_at->format('Ymd')
+        . '-'
+        . str_pad($booking->id, 3, '0', STR_PAD_LEFT);
+}
 
-        return view('admin.bookings.invoice', compact(
-            'booking',
-            'payment'
-        ));
-    }
+private function makeBookingCode(Booking $booking): string
+{
+    return 'BOOK-'
+        . $booking->created_at->format('Ymd')
+        . '-'
+        . str_pad($booking->id, 3, '0', STR_PAD_LEFT);
+}
+
+private function makeInvoiceQrCode(Booking $booking): string
+{
+    $invoiceCode = $this->makeInvoiceCode($booking);
+    $bookingCode = $this->makeBookingCode($booking);
+
+    $qrContent = implode("\n", [
+        'Ma hoa don: ' . $invoiceCode,
+        'Ma don: ' . $bookingCode,
+        'Khach hang: ' . ($booking->user?->name ?? 'N/A'),
+        'So dien thoai: ' . ($booking->user?->phone ?? 'N/A'),
+        'Tong thanh toan: '
+            . number_format($booking->total_price, 0, ',', '.')
+            . ' VND',
+        'Ngay dat: '
+            . $booking->created_at->format('H:i d/m/Y'),
+    ]);
+
+    return 'data:image/svg+xml;base64,' . base64_encode(
+        QrCode::format('svg')
+            ->size(140)
+            ->margin(1)
+            ->generate($qrContent)
+    );
+}
+    public function invoice(int $id)
+{
+    [$booking, $payment] = $this->getInvoiceData($id);
+
+    $qrCode = $this->makeInvoiceQrCode($booking);
+
+    return view('admin.bookings.invoice', compact(
+        'booking',
+        'payment',
+        'qrCode'
+    ));
+}
 
     public function downloadInvoice(int $id)
-    {
+{
+    [$booking, $payment] = $this->getInvoiceData($id);
 
-        [$booking, $payment] = $this->getInvoiceData($id);
+    $invoiceCode = $this->makeInvoiceCode($booking);
+    $qrCode = $this->makeInvoiceQrCode($booking);
 
-        $invoiceCode = 'INV-'
-            .$booking->created_at->format('Ymd')
-            .'-'
-            .str_pad($booking->id, 3, '0', STR_PAD_LEFT);
+    $fileName = 'hoa-don-' . $invoiceCode . '.pdf';
 
-        $fileName = 'hoa-don-'.$invoiceCode.'.pdf';
+    $pdf = Pdf::loadView(
+        'admin.bookings.invoice-pdf',
+        compact('booking', 'payment', 'qrCode')
+    );
 
-        $pdf = Pdf::loadView(
-            'admin.bookings.invoice-pdf',
-            [
-                'booking' => $booking,
-                'payment' => $payment,
-            ]
-        );
+    $pdf->setPaper('a4', 'portrait');
 
-        $pdf->setPaper('a4', 'portrait');
+    $pdf->setOptions([
+        'defaultFont' => 'DejaVu Sans',
+        'isRemoteEnabled' => true,
+        'isHtml5ParserEnabled' => true,
+    ]);
 
-        $pdf->setOptions([
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => true,
-            'isHtml5ParserEnabled' => true,
-        ]);
-
-        return $pdf->download($fileName);
-    }
+    return $pdf->download($fileName);
+}
 
     public function sendInvoice(int $id)
     {
