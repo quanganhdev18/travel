@@ -277,7 +277,7 @@
         text-align: center;
     }
 
-    .qr-box {
+    /* .qr-box {
         width: 92px;
         height: 92px;
         margin-left: auto;
@@ -299,7 +299,7 @@
         text-align: center;
         font-size: 10px;
         font-weight: 800;
-    }
+    } */
 
     .divider {
         border-top: 1px solid #e2e8f0;
@@ -552,6 +552,15 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
+.invoice-qr-code {
+    width: 110px;
+    height: 110px;
+    display: block;
+    margin-left: auto;
+    border: 1px solid #dbe2ea;
+    padding: 4px;
+    background: #fff;
+}
 </style>
 
 <div class="invoice-wrap">
@@ -572,8 +581,14 @@
                 </td>
 
                 <td style="width: 24%; text-align: right;">
-                    <div class="qr-box"><span>{{ $booking->id }}</span></div>
-                </td>
+    @if(!empty($qrCode))
+        <img
+            src="{{ $qrCode }}"
+            alt="QR hóa đơn"
+            class="invoice-qr-code"
+        >
+    @endif
+</td>
             </tr>
         </table>
 

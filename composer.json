@@ -16,6 +16,7 @@
         "laravel/socialite": "^5.28",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-permission": "^6.25",
         "spatie/laravel-translatable": "^6.11"
     },
