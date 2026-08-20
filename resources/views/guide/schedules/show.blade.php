@@ -301,6 +301,32 @@
                                     @php $stt = 1; @endphp
                                     @forelse($tourSchedule->bookings as $booking)
                                         @if(in_array($booking->payment_status, ['pending', 'paid_30', 'paid_100']) && !in_array($booking->tour_status, [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER]) && $booking->booking_status !== 'cancelled')
+                                            
+                                            {{-- Hiển thị Dịch vụ mua thêm (Vé / Addons) của cả nhóm --}}
+                                            @if($booking->ticket_bookings->isNotEmpty() || $booking->addons->isNotEmpty())
+                                                <tr class="table-warning bg-warning bg-opacity-10 border-bottom border-warning border-2">
+                                                    <td colspan="6" class="py-2">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <span class="fw-bold text-dark"><i class="bi bi-gift-fill text-warning me-1"></i> Dịch vụ nhóm mua thêm (Mã #{{ $booking->id }} - {{ $booking->user->name ?? 'Khách' }}):</span>
+                                                                <div class="d-flex gap-2 flex-wrap">
+                                                                    @foreach($booking->ticket_bookings as $tb)
+                                                                        <span class="badge bg-warning text-dark border border-warning" style="font-size: 0.8rem;">
+                                                                            <i class="bi bi-ticket-detailed"></i> {{ $tb->ticket_option->ticket->title ?? 'Vé' }} ({{ $tb->ticket_option->name ?? '' }}): <strong class="fs-6">{{ $tb->quantity }}</strong> vé
+                                                                        </span>
+                                                                    @endforeach
+                                                                    @foreach($booking->addons as $addon)
+                                                                        <span class="badge bg-info text-dark border border-info" style="font-size: 0.8rem;">
+                                                                            <i class="bi bi-plus-circle"></i> {{ $addon->pivot->addon_name ?? $addon->name }}: <strong class="fs-6">{{ $addon->pivot->quantity }}</strong>
+                                                                        </span>
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endif
+
                                             @foreach($booking->booking_passengers as $passenger)
                                                 <tr id="row-{{ $passenger->id }}" class="{{ !empty($passenger->special_note) ? 'table-warning' : '' }}">
                                                     <td data-label="STT">{{ $stt++ }}</td>

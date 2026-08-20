@@ -50,7 +50,7 @@ class ScheduleController extends Controller
         }
 
         $scheduleGuide = $tourGuide->schedule_guides()
-            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers.activity_checkins', 'tour_schedule.bookings.user'])
+            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers.activity_checkins', 'tour_schedule.bookings.user', 'tour_schedule.bookings.ticket_bookings.ticket_option.ticket', 'tour_schedule.bookings.addons'])
             ->where('tour_schedule_id', $id)
             ->firstOrFail();
 
