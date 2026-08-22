@@ -3,53 +3,17 @@
 @section('page-title', 'Xuất hóa đơn')
 
 @section('content')
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show">
-        <i class="bi bi-check-circle-fill me-1"></i>
-        {{ session('success') }}
-
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="alert">
-        </button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show">
-        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-        {{ session('error') }}
-
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="alert">
-        </button>
-    </div>
-@endif
-<div class="invoice-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div>
-        <h4 class="fw-bold mb-1">Xuất hóa đơn</h4>
-        <div class="text-muted">
-            Đơn đặt tour:
-            <span class="text-primary fw-semibold">
-                #BOOK-{{ $booking->created_at->format('Ymd') }}-{{ str_pad($booking->id, 3, '0', STR_PAD_LEFT) }}
-            </span>
-        </div>
-    </div>
 
     <div class="invoice-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-
-    {{-- <div>
-        <h4 class="fw-bold mb-1">Xuất hóa đơn</h4>
-
-        <div class="text-muted">
-            Đơn đặt tour:
-
-            <span class="text-primary fw-semibold">
-                #BOOK-{{ $booking->created_at->format('Ymd') }}-{{ str_pad($booking->id, 3, '0', STR_PAD_LEFT) }}
-            </span>
+        <div>
+            <h4 class="fw-bold mb-1">Xuất hóa đơn</h4>
+            <div class="text-muted">
+                Đơn đặt tour:
+                <span class="text-primary fw-semibold">
+                    #BOOK-{{ $booking->created_at->format('Ymd') }}-{{ str_pad($booking->id, 3, '0', STR_PAD_LEFT) }}
+                </span>
+            </div>
         </div>
-    </div> --}}
 
     <div class="invoice-actions d-flex flex-wrap align-items-center gap-2">
 

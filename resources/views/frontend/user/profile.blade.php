@@ -781,6 +781,18 @@
                                 <span class="ms-auto badge rounded-pill"
                                     style="background:#ef4444;color:white;font-size:0.72rem;">{{ $wishlists->count() }}</span>
                             </a>
+                            <a href="#" class="profile-nav-item" id="nav-notifications"
+                                onclick="switchProfileTab('notifications', event)">
+                                <span class="nav-icon"><i class="bi bi-bell-fill"></i></span>
+                                Thông báo
+                                @php
+                                    $unread = auth()->user()->unreadNotifications->count();
+                                @endphp
+                                @if($unread > 0)
+                                    <span class="ms-auto badge rounded-pill bg-danger"
+                                        style="color:white;font-size:0.72rem;">{{ $unread }}</span>
+                                @endif
+                            </a>
                         </nav>
                     </div>
                 </div>
@@ -1836,6 +1848,72 @@
                         @endif
                 </div>{{-- end tab-wishlists --}}
 
+                {{-- ===== TAB: THÔNG BÁO ===== --}}
+                <div id="tab-notifications" style="display: none;" x-data="notificationComponent()" x-init="init()">
+                    <div class="content-card reveal-up">
+                        <div class="content-card-header d-flex flex-wrap justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3 mb-2 mb-md-0">
+                                <div class="header-icon">
+                                    <i class="bi bi-bell-fill"></i>
+                                </div>
+                                <div>
+                                    <h5 class="fw-800 mb-0" style="color:#0B132B;">Thông báo của bạn</h5>
+                                    <p class="text-muted small mb-0">Cập nhật các thông tin mới nhất</p>
+                                </div>
+                            </div>
+                            <button @click="markAllAsRead()" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" x-show="unreadCount > 0" x-cloak>
+                                <i class="bi bi-check-all me-1"></i> Đánh dấu tất cả đã đọc
+                            </button>
+                        </div>
+
+                        <div class="notifications-list mt-3">
+                            <template x-if="notifications.length === 0">
+                                <div class="text-center py-5 text-muted">
+                                    <i class="bi bi-bell-slash fs-1 d-block mb-3" style="opacity: 0.5;"></i>
+                                    <p class="fw-bold">Bạn chưa có thông báo nào.</p>
+                                </div>
+                            </template>
+                            <template x-for="notification in notifications" :key="notification.id">
+                                <div class="p-3 border-bottom d-flex align-items-start gap-3 rounded mb-2 transition-all" 
+                                     :class="{'bg-light border': !notification.read_at, 'border-0': notification.read_at}"
+                                     style="transition: all 0.3s ease;">
+                                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" 
+                                         style="width: 45px; height: 45px; font-size: 1.2rem;" 
+                                         :class="getIconBgClass(notification.data ? notification.data.type : notification.type)">
+                                        <i :class="getIconClass(notification.data ? notification.data.type : notification.type)"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <h6 class="mb-0" style="font-weight: 700; color: #1a2b4c;" 
+                                                x-text="notification.data ? (notification.data.title || 'Thông báo mới') : (notification.title || 'Thông báo mới')"></h6>
+                                            <small class="text-muted" x-text="new Date(notification.created_at).toLocaleString('vi-VN')"></small>
+                                        </div>
+                                        <p class="mb-2 text-secondary" style="font-size: 0.95rem; line-height: 1.4;" 
+                                           x-text="notification.data ? notification.data.message : notification.message"></p>
+                                        
+                                        <div class="d-flex gap-2 mt-2">
+                                            <a :href="notification.data ? (notification.data.link || '#') : (notification.link || '#')" 
+                                               @click="markAsRead(notification.id)"
+                                               class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold" style="font-size: 0.8rem;"
+                                               x-show="(notification.data && notification.data.link) || notification.link">
+                                                Xem chi tiết
+                                            </a>
+                                            <button @click="markAsRead(notification.id)" 
+                                                    class="btn btn-sm btn-light border rounded-pill px-3 fw-bold text-secondary" 
+                                                    style="font-size: 0.8rem;" 
+                                                    x-show="!notification.read_at">
+                                                Đánh dấu đã đọc
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div x-show="!notification.read_at" class="ms-2">
+                                        <span class="p-1 bg-primary rounded-circle d-inline-block shadow-sm"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>{{-- end tab-notifications --}}
 
             </div>{{-- end col-lg-9 --}}
         </div>{{-- end row --}}
@@ -1846,7 +1924,7 @@
         // ===== Profile Tab Switching =====
         function switchProfileTab(tab, e) {
             if (e) e.preventDefault();
-            const tabs = ['info', 'bookings', 'wishlists'];
+            const tabs = ['info', 'bookings', 'wishlists', 'notifications'];
             tabs.forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 const nav = document.getElementById('nav-' + t);

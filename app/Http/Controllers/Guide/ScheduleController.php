@@ -142,7 +142,7 @@ class ScheduleController extends Controller
 
             foreach ($allPassengers as $p) {
                 $isCheckedIn = in_array($p->id, $checkedInPassengerIds);
-                $isFreeTimeFilled = $p->is_free_time && ! empty($p->free_time_location) && ! empty($p->free_time_start) && ! empty($p->free_time_end);
+                $isFreeTimeFilled = (bool) $p->is_free_time;
 
                 if (! $isCheckedIn && ! $isFreeTimeFilled) {
                     return response()->json([
@@ -239,7 +239,7 @@ class ScheduleController extends Controller
         abort_unless($assigned, 403);
 
         // Chỉ cho phép đổi khi booking đang trong trạng thái guide kiểm soát
-        $allowedCurrentStatuses = [Booking::TOUR_IN_PROGRESS, Booking::TOUR_CHECKING_IN];
+        $allowedCurrentStatuses = [Booking::TOUR_UPCOMING, Booking::TOUR_IN_PROGRESS, Booking::TOUR_CHECKING_IN];
         abort_unless(in_array($booking->tour_status, $allowedCurrentStatuses), 403);
 
         $request->validate([

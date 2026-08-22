@@ -212,6 +212,8 @@ class Booking extends Model
         return match ($currentStatus) {
             self::TOUR_UPCOMING => [
                 self::TOUR_UPCOMING,
+                self::TOUR_IN_PROGRESS,
+                self::TOUR_CHECKING_IN,
                 self::TOUR_CANCELLED_ADMIN,
             ],
             self::TOUR_IN_PROGRESS => [
