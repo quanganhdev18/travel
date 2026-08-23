@@ -127,7 +127,7 @@
                     @forelse($bookings as $booking)
                     <tr class="booking-row" id="booking-row-{{ $booking->id }}" data-booking-id="{{ $booking->id }}" data-payment-status="{{ $booking->payment_status }}" data-tour-status="{{ $booking->tour_status }}">
                         <td class="ps-4">
-                            <div class="fw-bold text-dark">#{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</div>
+                            <div class="fw-bold text-dark">{{ $booking->code }}</div>
                             <div class="small text-muted">{{ $booking->created_at->format('H:i d/m/Y') }}</div>
                         </td>
                         <td>
@@ -257,7 +257,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom px-4 py-3" style="background-color: var(--admin-sidebar); color: white;">
-                <h5 class="modal-title fw-600">Chi Tiết Đơn Đặt Chỗ #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}</h5>
+                <h5 class="modal-title fw-600">Chi Tiết Đơn Đặt Chỗ {{ $booking->code }}</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
@@ -361,9 +361,9 @@
             <div class="modal-header border-bottom px-4 py-3 bg-light">
                 <h5 class="modal-title fw-bold text-dark">
                     @if($tourStatusLocked)
-                        <i class="bi bi-credit-card me-2 text-info"></i>Cập nhật thanh toán #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}
+                        <i class="bi bi-credit-card me-2 text-info"></i>Cập nhật thanh toán {{ $booking->code }}
                     @else
-                        Cập nhật trạng thái #{{ str_pad($booking->id, 5, '0', STR_PAD_LEFT) }}
+                        Cập nhật trạng thái {{ $booking->code }}
                     @endif
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

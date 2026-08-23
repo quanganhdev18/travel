@@ -354,11 +354,14 @@
     }
 
     $unassignedToursCount = 0;
+    $pendingReportsCount = 0;
     if(Auth::check() && Auth::user()->hasAnyRole(['Admin', 'Staff'])) {
         $unassignedToursCount = \App\Models\TourSchedule::where('departure_date', '>=', now()->startOfDay())
             ->where('departure_date', '<=', now()->startOfDay()->addDays(7))
             ->doesntHave('schedule_guides')
             ->count();
+            
+        $pendingReportsCount = \App\Models\TourReport::where('status', 'pending')->count();
     }
 @endphp
 
@@ -429,8 +432,11 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/tour-reports*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
-                    <i class="bi bi-file-earmark-check"></i> Báo cáo & Quyết toán
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->is('admin/tour-reports*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
+                    <div><i class="bi bi-file-earmark-check"></i> Báo cáo & Quyết toán</div>
+                    @if(isset($pendingReportsCount) && $pendingReportsCount > 0)
+                        <span class="badge bg-warning text-dark rounded-pill" title="Báo cáo chờ duyệt">{{ $pendingReportsCount }}</span>
+                    @endif
                 </a>
             </li>
             <li class="nav-item">
@@ -447,11 +453,6 @@
                 <a href="{{ route('admin.coupons.index') }}" class="nav-link">
                     <i class="bi bi-percent"></i>
                     <span>Mã giảm giá</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('admin/invoices*') ? 'active' : '' }}" href="#">
-                    <i class="bi bi-receipt"></i> Hóa đơn & Thu chi
                 </a>
             </li>
         </ul>
@@ -517,6 +518,8 @@
                 <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border" title="Xem trang chủ">
                     <i class="bi bi-box-arrow-up-right me-1"></i> Xem Website
                 </a>
+                
+                @include('components.admin-notification-bell')
 
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">

@@ -85,11 +85,6 @@
                     Lọc
                 </button>
             </form>
-            
-            <button class="btn btn-white rounded-circle shadow-sm ms-2 position-relative" style="width:40px;height:40px;">
-                <i class="bi bi-bell"></i>
-                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-            </button>
         </div>
     </div>
 

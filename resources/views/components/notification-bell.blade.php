@@ -1,7 +1,7 @@
 <li class="nav-item dropdown" x-data="notificationComponent()" x-init="init()">
     <a class="nav-link dropdown-toggle d-flex align-items-center py-1 position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight: 600;">
         <i class="bi bi-bell fs-5"></i>
-        <span x-show="unreadCount > 0" x-text="unreadCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;" x-cloak></span>
+        <span x-show="unreadCount > 0" x-text="unreadCount" class="position-absolute badge rounded-pill bg-danger" style="font-size: 0.6rem; top: 0px; right: 2px; min-width: 16px; padding: 2px 5px; line-height: 1.2;" x-cloak></span>
     </a>
     <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="notificationDropdown" style="border-radius: 12px; margin-top: 5px; width: 350px; max-height: 400px; overflow-y: auto;">
         <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center bg-light" style="position: sticky; top: 0; z-index: 10;">
