@@ -8,6 +8,7 @@ use App\Models\Favorite;
 use App\Models\Review;
 use App\Models\TicketBooking;
 use App\Models\TourGuide;
+use App\Services\RefundService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +31,7 @@ class UserController extends Controller
             'addons',
             'coupon',
             'payments',
+            'refund_request',
         ])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
@@ -67,6 +69,7 @@ class UserController extends Controller
             'addons',
             'coupon',
             'payments',
+            'refund_request',
         ])
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
@@ -187,9 +190,34 @@ class UserController extends Controller
         return view('frontend.user.booking-detail', compact('booking', 'existingReview'));
     }
 
-    public function cancelBooking(int $id): RedirectResponse
+    public function cancelBooking(Request $request, int $id): RedirectResponse
     {
-        return redirect()->back()->with('error', 'Chỉ có Admin mới có quyền huỷ đơn. Vui lòng liên hệ hỗ trợ.');
+        $booking = Booking::with('tour_schedule')->where('user_id', Auth::id())->findOrFail($id);
+
+        if ($booking->booking_status === 'cancelled') {
+            return redirect()->back()->with('error', 'Đơn hàng đã được hủy trước đó.');
+        }
+
+        $bankData = null;
+        if ($booking->paid_amount > 0) {
+            $request->validate([
+                'bank_name' => 'required_with:bank_account_number|string|max:255',
+                'bank_account_name' => 'required_with:bank_account_number|string|max:255',
+                'bank_account_number' => 'nullable|string|max:255',
+            ]);
+
+            $bankData = $request->only(['bank_name', 'bank_account_name', 'bank_account_number']);
+        }
+
+        $refundService = app(RefundService::class);
+        $refundCalc = $refundService->processUserCancellation($booking, $bankData);
+
+        $msg = 'Đơn hàng đã được hủy thành công.';
+        if ($refundCalc['is_refundable']) {
+            $msg .= ' Yêu cầu hoàn tiền của bạn đang được chờ xử lý.';
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 
     public function storeReview(Request $request): RedirectResponse

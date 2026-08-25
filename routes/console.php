@@ -25,3 +25,6 @@ Schedule::command('bookings:cancel-unpaid')->everyMinute();
 
 // Tự động gửi thông báo nhắc nhở khách hàng trước 1 ngày khởi hành
 Schedule::command('tours:send-reminders')->dailyAt('08:00');
+
+// Tự động xóa ảnh CCCD sau 10 ngày kết thúc tour
+Schedule::command('identities:cleanup')->hourly();

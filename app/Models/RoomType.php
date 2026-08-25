@@ -17,6 +17,7 @@ class RoomType extends Model
         'base_price',
         'extra_bed_price',
         'child_surcharge_price',
+        'total_rooms',
     ];
 
     public function accommodation()

@@ -55,6 +55,11 @@ class TourGuide extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class, 'guide_id');
+    }
+
     public function updateKpiScore()
     {
         $avgRating = Review::where('guide_id', $this->id)

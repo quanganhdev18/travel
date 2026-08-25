@@ -5,10 +5,13 @@ namespace App\Services;
 use App\Events\SeatAvailabilityUpdated;
 use App\Models\Addon;
 use App\Models\Booking;
+use App\Models\BookingAccommodation;
 use App\Models\BookingAddon;
 use App\Models\BookingPassenger;
 use App\Models\Coupon;
 use App\Models\Holiday;
+use App\Models\RoomInventory;
+use App\Models\RoomType;
 use App\Models\TicketBooking;
 use App\Models\TicketOption;
 use App\Models\TourSchedule;
@@ -18,7 +21,10 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TourBookingService
 {
@@ -71,10 +77,10 @@ class TourBookingService
             $booking->payment_status = Booking::PAYMENT_PENDING;
             $booking->tour_status = Booking::TOUR_UPCOMING;
             $booking->transport_type = $data['transport_type'];
-$booking->transport_price = $data['transport_price'] ?? 0;
-$booking->transport_data = $transportData;
-$booking->meeting_point = $data['meeting_point']
-    ?? $schedule->tour->meeting_point;
+            $booking->transport_price = $data['transport_price'] ?? 0;
+            $booking->transport_data = $transportData;
+            $booking->meeting_point = $data['meeting_point']
+                ?? $schedule->tour->meeting_point;
 
             $booking->payment_type = $data['payment_type'] ?? 'full';
             $booking->payment_method = $data['payment_method'] ?? 'transfer';
@@ -86,10 +92,10 @@ $booking->meeting_point = $data['meeting_point']
             $booking->price_breakdown = $pricing['priceBreakdown'] ?? null;
             $booking->save();
 
-            if (!empty($data['accommodation_id'])) {
-                $room = \App\Models\RoomType::with('accommodation')->find($data['accommodation_id']);
+            if (! empty($data['accommodation_id'])) {
+                $room = RoomType::with('accommodation')->find($data['accommodation_id']);
                 if ($room) {
-                    \App\Models\BookingAccommodation::create([
+                    BookingAccommodation::create([
                         'booking_id' => $booking->id,
                         'room_type_id' => $room->id,
                         'room_type_name_snapshot' => $room->name,
@@ -103,20 +109,20 @@ $booking->meeting_point = $data['meeting_point']
                         'extra_bed_qty' => $data['extra_beds_count'] ?? 0,
                         'child_surcharge_total' => $pricing['priceBreakdown']['accommodation_child'] ?? 0,
                         'extra_bed_total' => $pricing['priceBreakdown']['accommodation_extra_bed'] ?? 0,
-                        'total_amount' => ($pricing['priceBreakdown']['accommodation_base'] ?? 0) 
-                                        + ($pricing['priceBreakdown']['accommodation_extra_bed'] ?? 0) 
+                        'total_amount' => ($pricing['priceBreakdown']['accommodation_base'] ?? 0)
+                                        + ($pricing['priceBreakdown']['accommodation_extra_bed'] ?? 0)
                                         + ($pricing['priceBreakdown']['accommodation_child'] ?? 0),
                     ]);
-                    
+
                     // Deduct inventory
-                    $inventory = \App\Models\RoomInventory::where('room_type_id', $room->id)
+                    $inventory = RoomInventory::where('room_type_id', $room->id)
                         ->where('date', $schedule->departure_date->toDateString())
                         ->first();
                     if ($inventory) {
                         $inventory->increment('booked_rooms', $data['single_rooms_count'] ?? 1);
                     } else {
                         // Create inventory record if not exists (assume unlimited or handle later)
-                        \App\Models\RoomInventory::create([
+                        RoomInventory::create([
                             'room_type_id' => $room->id,
                             'date' => $schedule->departure_date->toDateString(),
                             'total_rooms' => 10, // default fallback
@@ -172,13 +178,19 @@ $booking->meeting_point = $data['meeting_point']
             $identity->issue_place = $data['issue_place'] ?? 'Hà Nội';
 
             if (isset($data['front_image']) && $data['front_image'] instanceof UploadedFile) {
-                $frontPath = $data['front_image']->store('identities', 'public');
-                $identity->front_image_url = '/storage/'.$frontPath;
+                $frontContent = file_get_contents($data['front_image']->getRealPath());
+                $encryptedFront = Crypt::encrypt($frontContent);
+                $frontFilename = Str::uuid().'.enc';
+                Storage::disk('local')->put('private/identities/'.$frontFilename, $encryptedFront);
+                $identity->front_image_url = 'private/identities/'.$frontFilename;
             }
 
             if (isset($data['back_image']) && $data['back_image'] instanceof UploadedFile) {
-                $backPath = $data['back_image']->store('identities', 'public');
-                $identity->back_image_url = '/storage/'.$backPath;
+                $backContent = file_get_contents($data['back_image']->getRealPath());
+                $encryptedBack = Crypt::encrypt($backContent);
+                $backFilename = Str::uuid().'.enc';
+                Storage::disk('local')->put('private/identities/'.$backFilename, $encryptedBack);
+                $identity->back_image_url = 'private/identities/'.$backFilename;
             }
 
             $identity->save();
@@ -195,7 +207,7 @@ $booking->meeting_point = $data['meeting_point']
         $costMeal = $tour->cost_meal ?? 0;
         $costInsurance = $tour->cost_insurance ?? 0;
         $costServiceFee = $tour->cost_service_fee ?? 0;
-        
+
         $ticketAdultCost = 0;
         $ticketChildCost = 0;
         foreach ($tour->tickets as $ticket) {
@@ -204,7 +216,8 @@ $booking->meeting_point = $data['meeting_point']
         }
 
         $tourBasePerAdult = $costTransport + $costMeal + $costInsurance + $costServiceFee + $ticketAdultCost;
-        $tourBasePerChild = ($costTransport * 0.75) + ($costMeal * 0.75) + ($costInsurance * 0.75) + ($costServiceFee * 0.75) + $ticketChildCost;
+        $childRate = config('booking.child_price_rate');
+        $tourBasePerChild = ($costTransport * $childRate) + ($costMeal * $childRate) + ($costInsurance * $childRate) + ($costServiceFee * $childRate) + $ticketChildCost;
 
         if ($isHoliday) {
             $tourBasePerAdult = $tourBasePerAdult * (1 + $holidaySurcharge / 100);
@@ -223,7 +236,7 @@ $booking->meeting_point = $data['meeting_point']
         $totalAccCost = 0;
 
         if ($roomId) {
-            $selectedRoom = \App\Models\RoomType::find($roomId);
+            $selectedRoom = RoomType::find($roomId);
             if ($selectedRoom) {
                 // RoomType doesn't have built-in holiday prices in our schema, but we can apply the generic holiday surcharge percentage
                 $base = $selectedRoom->base_price;
@@ -242,8 +255,8 @@ $booking->meeting_point = $data['meeting_point']
             }
         }
 
-        $totalAccCost = ($accBase * $roomsCount) 
-                      + ($accExtra * $extraBedsCount) 
+        $totalAccCost = ($accBase * $roomsCount)
+                      + ($accExtra * $extraBedsCount)
                       + ($accChild * $data['children']);
 
         // 3. Combine to get Calculated Price
@@ -334,10 +347,10 @@ $booking->meeting_point = $data['meeting_point']
             }
         }
 
-        $calcTransport = $costTransport * $data['adults'] + ($costTransport * 0.75 * $data['children']);
-        $calcMeal = $costMeal * $data['adults'] + ($costMeal * 0.75 * $data['children']);
-        $calcInsurance = $costInsurance * $data['adults'] + ($costInsurance * 0.75 * $data['children']);
-        $calcService = $costServiceFee * $data['adults'] + ($costServiceFee * 0.75 * $data['children']);
+        $calcTransport = $costTransport * $data['adults'] + ($costTransport * $childRate * $data['children']);
+        $calcMeal = $costMeal * $data['adults'] + ($costMeal * $childRate * $data['children']);
+        $calcInsurance = $costInsurance * $data['adults'] + ($costInsurance * $childRate * $data['children']);
+        $calcService = $costServiceFee * $data['adults'] + ($costServiceFee * $childRate * $data['children']);
         $calcTicket = $ticketAdultCost * $data['adults'] + $ticketChildCost * $data['children'];
 
         if ($isHoliday) {
@@ -437,7 +450,7 @@ $booking->meeting_point = $data['meeting_point']
                 Cache::forget($holdKey);
             } else {
                 $maxExpiresAt = max(array_column($currentHolds, 'expires_at'));
-                Cache::put($holdKey, $currentHolds, \Carbon\Carbon::createFromTimestamp($maxExpiresAt));
+                Cache::put($holdKey, $currentHolds, Carbon::createFromTimestamp($maxExpiresAt));
             }
         }
     }

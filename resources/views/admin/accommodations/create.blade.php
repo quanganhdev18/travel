@@ -41,7 +41,7 @@
                         <select class="form-select" name="destination_id" required>
                             <option value="">Chọn điểm đến</option>
                             @foreach($destinations as $dest)
-                                <option value="{{ $dest->id }}" {{ old('destination_id') == $dest->id ? 'selected' : '' }}>{{ $dest->name['vi'] ?? 'N/A' }}</option>
+                                <option value="{{ $dest->id }}" {{ old('destination_id') == $dest->id ? 'selected' : '' }}>{{ $dest->name ?? 'N/A' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -88,17 +88,21 @@
                 <div class="room-item border rounded p-3 mb-3 position-relative bg-light">
                     <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-room-btn" style="display:none;"><i class="bi bi-trash"></i></button>
                     <div class="row">
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-3 mb-2">
                             <label class="form-label fw-bold">Tên hạng phòng <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="rooms[0][name]" placeholder="VD: Standard Double" required>
                         </div>
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-3 mb-2">
                             <label class="form-label fw-bold">Sức chứa cơ bản <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" name="rooms[0][base_capacity]" value="2" min="1" required>
                         </div>
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-3 mb-2">
                             <label class="form-label fw-bold">Sức chứa tối đa (Max) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" name="rooms[0][max_capacity]" value="3" min="1" required>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label fw-bold">Số lượng phòng <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="rooms[0][total_rooms]" value="10" min="1" required>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label class="form-label fw-bold">Giá cơ bản (VND) <span class="text-danger">*</span></label>
@@ -134,17 +138,21 @@
                 <div class="room-item border rounded p-3 mb-3 position-relative bg-light">
                     <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-room-btn"><i class="bi bi-trash"></i></button>
                     <div class="row">
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-3 mb-2">
                             <label class="form-label fw-bold">Tên hạng phòng <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="rooms[${roomIndex}][name]" placeholder="VD: Standard Double" required>
                         </div>
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-3 mb-2">
                             <label class="form-label fw-bold">Sức chứa cơ bản <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" name="rooms[${roomIndex}][base_capacity]" value="2" min="1" required>
                         </div>
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-3 mb-2">
                             <label class="form-label fw-bold">Sức chứa tối đa (Max) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" name="rooms[${roomIndex}][max_capacity]" value="3" min="1" required>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label fw-bold">Số lượng phòng <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="rooms[${roomIndex}][total_rooms]" value="10" min="1" required>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label class="form-label fw-bold">Giá cơ bản (VND) <span class="text-danger">*</span></label>

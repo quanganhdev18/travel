@@ -46,7 +46,7 @@ class SupportController extends Controller
                     ],
                     [
                         'question' => 'Tôi có được hoàn tiền nếu hủy tour?',
-                        'answer' => 'Chính sách hoàn tiền: Hủy trước 30 ngày: hoàn 80%, hủy trước 15 ngày: hoàn 50%, hủy trước 7 ngày: hoàn 30%, hủy trong vòng 7 ngày: không hoàn tiền. Thời gian hoàn tiền là 7-10 ngày làm việc.',
+                        'answer' => 'Chính sách hoàn tiền (áp dụng cho số tiền đã thanh toán trừ đi phí bảo hiểm du lịch): Hủy trước 7 ngày: hoàn 100%, hủy trước 3-7 ngày: hoàn 50%, hủy trong vòng 3 ngày: không hoàn tiền. Mã giảm giá đã sử dụng sẽ không được hoàn lại. Thời gian xử lý hoàn tiền là 7-10 ngày làm việc.',
                     ],
                     [
                         'question' => 'Có áp dụng mã giảm giá không?',

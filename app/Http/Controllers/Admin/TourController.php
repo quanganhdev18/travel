@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accommodation;
+use App\Models\Addon;
 use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Province;
+use App\Models\RoomType;
+use App\Models\Ticket;
 use App\Models\Tour;
 use App\Models\TourImage;
 use App\Models\TourSchedule;
@@ -30,9 +34,9 @@ class TourController extends Controller
         $provinces = Province::all();
         $categories = Category::all();
         $destinations = Destination::all();
-        $tickets = \App\Models\Ticket::all();
-        $accommodations = \App\Models\Accommodation::with('room_types')->where('is_active', true)->get();
-        $addons = \App\Models\Addon::all();
+        $tickets = Ticket::all();
+        $accommodations = Accommodation::with('room_types')->where('is_active', true)->get();
+        $addons = Addon::all();
 
         return view('admin.tours.create', compact('provinces', 'categories', 'destinations', 'tickets', 'accommodations', 'addons'));
     }
@@ -111,11 +115,11 @@ class TourController extends Controller
         if ($request->has('room_types')) {
             foreach ($request->room_types as $roomId) {
                 // Get room type to figure out tier label (e.g. 4 Sao)
-                $rt = \App\Models\RoomType::with('accommodation')->find($roomId);
+                $rt = RoomType::with('accommodation')->find($roomId);
                 if ($rt) {
                     $tour->accommodation_tiers()->create([
                         'room_type_id' => $roomId,
-                        'tier_label' => ($rt->accommodation->star_rating ?? 3) . ' Sao',
+                        'tier_label' => ($rt->accommodation->star_rating ?? 3).' Sao',
                         'price_adjustment' => 0,
                     ]);
                 }
@@ -129,7 +133,7 @@ class TourController extends Controller
         $ticketAdultCost = $tour->tickets()->sum('adult_price');
         $ticketChildCost = $tour->tickets()->sum('child_price');
         $tour->base_price = ($tour->cost_transport ?? 0) + ($tour->cost_meal ?? 0) + ($tour->cost_insurance ?? 0) + ($tour->cost_service_fee ?? 0) + $ticketAdultCost;
-        $tour->child_price = (($tour->cost_transport ?? 0) * 0.75) + (($tour->cost_meal ?? 0) * 0.75) + (($tour->cost_insurance ?? 0) * 0.75) + (($tour->cost_service_fee ?? 0) * 0.75) + $ticketChildCost;
+        $tour->child_price = (($tour->cost_transport ?? 0) * config('booking.child_price_rate')) + (($tour->cost_meal ?? 0) * config('booking.child_price_rate')) + (($tour->cost_insurance ?? 0) * config('booking.child_price_rate')) + (($tour->cost_service_fee ?? 0) * config('booking.child_price_rate')) + $ticketChildCost;
         $tour->save();
 
         // Kiểm tra nếu là AJAX request
@@ -216,9 +220,9 @@ class TourController extends Controller
         $provinces = Province::all();
         $categories = Category::all();
         $destinations = Destination::all();
-        $tickets = \App\Models\Ticket::all();
-        $accommodations = \App\Models\Accommodation::with('room_types')->where('is_active', true)->get();
-        $addons = \App\Models\Addon::all();
+        $tickets = Ticket::all();
+        $accommodations = Accommodation::with('room_types')->where('is_active', true)->get();
+        $addons = Addon::all();
 
         // Lấy danh sách ID danh mục mà tour đang có để check vào checkbox
         $tourCategoryIds = $tour->categories->pluck('id')->toArray();
@@ -314,11 +318,11 @@ class TourController extends Controller
         $tour->accommodation_tiers()->delete();
         if ($request->has('room_types')) {
             foreach ($request->room_types as $roomId) {
-                $rt = \App\Models\RoomType::with('accommodation')->find($roomId);
+                $rt = RoomType::with('accommodation')->find($roomId);
                 if ($rt) {
                     $tour->accommodation_tiers()->create([
                         'room_type_id' => $roomId,
-                        'tier_label' => ($rt->accommodation->star_rating ?? 3) . ' Sao',
+                        'tier_label' => ($rt->accommodation->star_rating ?? 3).' Sao',
                         'price_adjustment' => 0,
                     ]);
                 }
@@ -334,7 +338,7 @@ class TourController extends Controller
         $ticketAdultCost = $tour->tickets()->sum('adult_price');
         $ticketChildCost = $tour->tickets()->sum('child_price');
         $tour->base_price = ($tour->cost_transport ?? 0) + ($tour->cost_meal ?? 0) + ($tour->cost_insurance ?? 0) + ($tour->cost_service_fee ?? 0) + $ticketAdultCost;
-        $tour->child_price = (($tour->cost_transport ?? 0) * 0.75) + (($tour->cost_meal ?? 0) * 0.75) + (($tour->cost_insurance ?? 0) * 0.75) + (($tour->cost_service_fee ?? 0) * 0.75) + $ticketChildCost;
+        $tour->child_price = (($tour->cost_transport ?? 0) * config('booking.child_price_rate')) + (($tour->cost_meal ?? 0) * config('booking.child_price_rate')) + (($tour->cost_insurance ?? 0) * config('booking.child_price_rate')) + (($tour->cost_service_fee ?? 0) * config('booking.child_price_rate')) + $ticketChildCost;
         $tour->save();
 
         // Kiểm tra nếu là AJAX request

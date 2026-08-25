@@ -536,6 +536,63 @@
             </div>
         </div>
     </div>
+
+    <!-- Guide Ratings Row -->
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark">Top Hướng dẫn viên</h5>
+                        <div class="text-muted text-sm">Điểm đánh giá trung bình cao nhất</div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-borderless table-custom align-middle">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Hướng dẫn viên</th>
+                                <th>Số lượt đánh giá</th>
+                                <th class="text-end">Điểm trung bình</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($guideRatings ?? [] as $index => $guide)
+                                <tr>
+                                    <td class="text-muted fw-bold">0{{ $index + 1 }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            @php
+                                                $colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+                                                $color = $colors[strlen($guide->name) % count($colors)];
+                                            @endphp
+                                            <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:35px; height:35px; background-color: {{ $color }}">
+                                                {{ mb_substr($guide->name, 0, 1) }}
+                                            </div>
+                                            <div class="fw-bold text-dark">{{ $guide->name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ number_format($guide->reviews_count) }} lượt</td>
+                                    <td class="text-end">
+                                        <div class="d-flex align-items-center justify-content-end gap-1">
+                                            <span class="fw-bold fs-5 text-dark">{{ number_format($guide->kpi_score, 1) }}</span>
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">Chưa có đánh giá nào cho HDV.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 

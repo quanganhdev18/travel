@@ -403,6 +403,18 @@
                     Quản lý Booking
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.refunds.*') ? 'active' : '' }}" href="{{ route('admin.refunds.index') }}">
+                    <i class="bi bi-cash-coin me-2"></i>
+                    Yêu cầu hoàn tiền
+                    @php
+                        $pendingRefunds = \App\Models\RefundRequest::where('status', 'pending')->count();
+                    @endphp
+                    @if($pendingRefunds > 0)
+                        <span class="badge bg-danger ms-auto rounded-pill">{{ $pendingRefunds }}</span>
+                    @endif
+                </a>
+            </li>
         </ul>
 
         <div class="group-title">Quản lý chung</div>

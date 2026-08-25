@@ -205,7 +205,7 @@
                     <i class="bi bi-exclamation-circle me-1"></i> Còn lại cần thanh toán (70%)
                 </span>
                 <span class="fw-bold text-danger fs-6">
-                    {{ number_format($booking->total_price - $booking->paid_amount, 0, ',', '.') }}₫
+                    {{ number_format($booking->remaining_amount, 0, ',', '.') }}₫
                 </span>
             </div>
         @endif
@@ -215,7 +215,7 @@
             {{-- Khối Thanh Toán 70% Còn Lại --}}
             @if($booking->payment_status === 'paid_30' && !in_array($booking->booking_status, ['cancelled', 'completed']))
                 @php
-                    $remainingAmount = $booking->total_price - $booking->paid_amount;
+                    $remainingAmount = $booking->remaining_amount;
                     $bankId = 'BIDV';
                     $accountNo = '0818802032';
                     $template = 'compact2';
@@ -363,7 +363,7 @@
             @endif
 
             {{-- Đánh giá --}}
-            @if(in_array($status,['completed','confirmed','paid']) && $tour)
+            @if($booking->tour_status === 'completed' && $tour)
             <div class="detail-card reveal-up">
                 <div class="detail-card-header"><i class="bi bi-star me-2 text-warning"></i>Đánh giá chuyến đi</div>
                 <div class="detail-card-body">
@@ -419,10 +419,10 @@
                                 <label class="form-label fw-600 text-dark">Nhận xét chi tiết <span class="text-muted fw-normal">(không bắt buộc)</span></label>
                                 <textarea class="form-control" name="comment" rows="3"
                                     style="border-radius:12px;resize:none;"
-                                    placeholder="Chia sẻ trải nghiệm chuyến đi, nhận xét về HDV..."></textarea>
+                                    placeholder="Chia sẻ trải nghiệm chuyến đi của bạn..."></textarea>
                             </div>
-                            <button type="submit" class="btn btn-register-premium px-4 py-2">
-                                <i class="bi bi-send me-2"></i>Gửi đánh giá
+                            <button type="submit" class="btn btn-register-premium px-4 py-2 mt-2">
+                                <i class="bi bi-send me-2"></i>Gửi Đánh giá
                             </button>
                         </form>
                     @endif
@@ -590,6 +590,36 @@
 
     </div>
 @endif
+
+@if(!$isCancelled && !in_array($booking->tour_status, ['completed']))
+    <div class="mb-3">
+        <button type="button"
+                class="btn btn-outline-danger w-100 rounded-pill"
+                data-bs-toggle="modal"
+                data-bs-target="#cancelBookingModal">
+            <i class="bi bi-x-circle me-1"></i>
+            Yêu cầu hủy đơn hàng
+        </button>
+    </div>
+@endif
+
+@if($booking->refund_request)
+    <div class="alert alert-info mt-3 mb-3 text-start small border-0 bg-info bg-opacity-10 rounded-4">
+        <h6 class="fw-bold mb-1 text-info"><i class="bi bi-arrow-counterclockwise"></i> Trạng thái hoàn tiền:</h6>
+        <p class="mb-0">
+            Trạng thái: 
+            @if($booking->refund_request->status === 'pending')
+                <span class="badge bg-warning text-dark">Đang xử lý</span>
+            @elseif($booking->refund_request->status === 'completed')
+                <span class="badge bg-success">Đã hoàn tiền</span>
+            @else
+                <span class="badge bg-danger">Từ chối</span>
+            @endif
+            <br>
+            Số tiền hoàn: <strong>{{ number_format($booking->refund_request->amount) }} VNĐ</strong>
+        </p>
+    </div>
+@endif
                         <a href="{{ route('user.bookings') }}" class="btn btn-outline-secondary rounded-pill">
                             <i class="bi bi-arrow-left me-2"></i>Danh sách đơn
                         </a>
@@ -606,7 +636,7 @@
 </div>
 
 <!-- FLOATING ADMIN DEMO TOOLBAR -->
-@if(Auth::check() || config('app.debug'))
+@if((Auth::check() || config('app.debug')) && $booking->payment_status !== 'paid_100')
 <div id="adminDemoBar" class="position-fixed bottom-0 start-50 translate-middle-x mb-3 z-3 bg-dark text-white p-3 rounded-4 shadow-lg border border-secondary d-flex align-items-center gap-3" style="max-width: 90vw;">
     <div class="d-flex align-items-center me-2 text-warning fw-bold small">
         <i class="bi bi-sliders me-1 fs-5"></i> DEMO TOOLBAR
@@ -799,4 +829,65 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 @endif
+
+@if(!$isCancelled && !in_array($booking->tour_status, ['completed']))
+    <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form action="{{ route('user.bookings.cancel', $booking->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Yêu cầu hủy đơn hàng</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Bạn có chắc chắn muốn hủy đơn hàng <strong>#{{ $booking->code }}</strong> không?</p>
+                        
+                        @php
+                            $refundService = app(\App\Services\RefundService::class);
+                            $refundCalc = $refundService->calculateRefund($booking);
+                        @endphp
+
+                        @if($booking->paid_amount > 0)
+                            <div class="alert alert-warning mb-3">
+                                <strong>Chính sách hoàn tiền:</strong><br>
+                                - Trạng thái: {{ $refundCalc['reason'] }}<br>
+                                - Số tiền đã thanh toán: {{ number_format($booking->paid_amount) }} VNĐ<br>
+                                - Khấu trừ bảo hiểm (không hoàn lại): {{ number_format($refundCalc['insurance_cost']) }} VNĐ<br>
+                                - Số tiền được hoàn ({{ $refundCalc['refund_percent'] }}%): <strong class="text-danger">{{ number_format($refundCalc['refund_amount']) }} VNĐ</strong>
+                            </div>
+
+                            @if($refundCalc['is_refundable'])
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Thông tin tài khoản nhận tiền hoàn</label>
+                                    <p class="small text-muted mb-2">Vui lòng cung cấp chính xác thông tin tài khoản ngân hàng của bạn để kế toán tiến hành hoàn tiền.</p>
+                                    
+                                    <div class="mb-2">
+                                        <input type="text" name="bank_name" class="form-control" placeholder="Tên Ngân hàng (VD: Vietcombank)" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <input type="text" name="bank_account_name" class="form-control" placeholder="Tên chủ tài khoản" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <input type="text" name="bank_account_number" class="form-control" placeholder="Số tài khoản" required>
+                                    </div>
+                                </div>
+                            @endif
+                        @else
+                            <div class="alert alert-secondary">
+                                Đơn hàng này chưa được thanh toán nên sẽ không phát sinh hoàn tiền.
+                            </div>
+                        @endif
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        <button type="submit" class="btn btn-danger">Xác nhận Hủy đơn</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
+
 @endsection

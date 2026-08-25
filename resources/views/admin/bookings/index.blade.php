@@ -22,47 +22,6 @@
         </span>
     </a>
 @endif
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="admin-card border-0 mb-0">
-            <div class="admin-card-body d-flex align-items-center">
-                <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                    <i class="bi bi-cart-check text-primary fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Tổng đơn hàng</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['total']) }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="admin-card border-0 mb-0">
-            <div class="admin-card-body d-flex align-items-center">
-                <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                    <i class="bi bi-clock-history text-warning fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Chờ thanh toán</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['pending_payment'] ?? 0) }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="admin-card border-0 mb-0">
-            <div class="admin-card-body d-flex align-items-center">
-                <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
-                    <i class="bi bi-cash-stack text-success fs-4"></i>
-                </div>
-                <div>
-                    <div class="text-muted small fw-500 text-uppercase mb-1">Doanh thu tạm tính</div>
-                    <div class="h5 mb-0 fw-bold text-dark">{{ number_format($stats['revenue'], 0, ',', '.') }} ₫</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div class="admin-card border-0 mb-4">
     <div class="admin-card-body">
@@ -107,7 +66,7 @@
 <div class="admin-card border-0">
     <div class="admin-card-header bg-white py-3">
         <h5 class="admin-card-title"><i class="bi bi-list-ul me-2"></i>Danh sách Đơn đặt chỗ</h5>
-        <button class="btn btn-admin btn-admin-primary"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</button>
+        <a href="{{ request()->fullUrlWithQuery(['export' => 1]) }}" class="btn btn-admin btn-admin-primary"><i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel</a>
     </div>
     <div class="admin-card-body p-0">
         <div class="table-responsive" style="min-height: 400px;">
@@ -325,18 +284,34 @@
                         </div>
                     </div>
 
-                    @if(isset($booking->user->identity))
+                    @if(isset($booking->user->identity) && ($booking->user->identity->front_image_url || $booking->user->identity->back_image_url))
                     <div class="col-12">
                         <hr class="my-2">
                         <h6 class="text-primary mt-3 mb-3 fw-bold text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;"><i class="bi bi-card-image me-2"></i>Ảnh Định Danh Đại Diện</h6>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="text-muted small mb-2 text-center">Mặt trước CCCD</div>
-                                <img src="{{ asset($booking->user->identity->front_image_url) }}" class="img-fluid rounded border shadow-sm w-100 object-fit-cover" style="height: 150px;" alt="Mặt trước">
+                                @if($booking->user->identity->front_image_url)
+                                    @php
+                                        $fUrl = $booking->user->identity->front_image_url;
+                                        $fSrc = str_starts_with($fUrl, 'private/') ? route('admin.bookings.identity.image', basename($fUrl)) : asset($fUrl);
+                                    @endphp
+                                    <img src="{{ $fSrc }}" class="img-fluid rounded border shadow-sm w-100 object-fit-cover" style="height: 150px;" alt="Mặt trước">
+                                @else
+                                    <div class="text-center text-muted border rounded p-4">Không có ảnh</div>
+                                @endif
                             </div>
                             <div class="col-md-6">
                                 <div class="text-muted small mb-2 text-center">Mặt sau CCCD</div>
-                                <img src="{{ asset($booking->user->identity->back_image_url) }}" class="img-fluid rounded border shadow-sm w-100 object-fit-cover" style="height: 150px;" alt="Mặt sau">
+                                @if($booking->user->identity->back_image_url)
+                                    @php
+                                        $bUrl = $booking->user->identity->back_image_url;
+                                        $bSrc = str_starts_with($bUrl, 'private/') ? route('admin.bookings.identity.image', basename($bUrl)) : asset($bUrl);
+                                    @endphp
+                                    <img src="{{ $bSrc }}" class="img-fluid rounded border shadow-sm w-100 object-fit-cover" style="height: 150px;" alt="Mặt sau">
+                                @else
+                                    <div class="text-center text-muted border rounded p-4">Không có ảnh</div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -360,11 +335,7 @@
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom px-4 py-3 bg-light">
                 <h5 class="modal-title fw-bold text-dark">
-                    @if($tourStatusLocked)
-                        <i class="bi bi-credit-card me-2 text-info"></i>Cập nhật thanh toán {{ $booking->code }}
-                    @else
-                        Cập nhật trạng thái {{ $booking->code }}
-                    @endif
+                    Cập nhật trạng thái {{ $booking->code }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -374,57 +345,31 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Trạng thái thanh toán</label>
                         <select name="payment_status" class="form-select">
-                            <option value="pending" {{ $booking->payment_status == 'pending' ? 'selected' : '' }}>Chờ thanh toán</option>
-                            <option value="paid_30" {{ $booking->payment_status == 'paid_30' ? 'selected' : '' }}>Đã thanh toán 30% (Cọc)</option>
+                            <option value="pending" {{ $booking->payment_status == 'pending' ? 'selected' : '' }}>Chưa thanh toán (Pending)</option>
+                            <option value="paid_30" {{ $booking->payment_status == 'paid_30' ? 'selected' : '' }}>Đã cọc 30%</option>
                             <option value="paid_100" {{ $booking->payment_status == 'paid_100' ? 'selected' : '' }}>Đã thanh toán 100%</option>
                             <option value="failed" {{ $booking->payment_status == 'failed' ? 'selected' : '' }}>Thanh toán thất bại / Hủy</option>
                         </select>
                     </div>
 
-                    @if($tourStatusLocked)
-                        {{-- Tour đang được điều hành bởi HDV: admin chỉ xem, không sửa tour_status --}}
-                        <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" style="font-size:0.875rem;">
-                            <i class="bi bi-shield-lock-fill flex-shrink-0 mt-1"></i>
-                            <div>
-                                <strong>Tour đang do Hướng dẫn viên điều hành.</strong><br>
-                                Trạng thái tour hiện tại: <span class="fw-semibold">{{ ['in_progress'=>'Đang thực hiện','checking_in'=>'Đang check-in','completed'=>'Hoàn thành'][$booking->tour_status] ?? $booking->tour_status }}</span>.<br>
-                                Admin không thể thay đổi trạng thái tour trong giai đoạn này.
-                            </div>
-                        </div>
-                        {{-- Giữ giá trị tour_status hiện tại để server không coi là thay đổi --}}
-                        <input type="hidden" name="tour_status" value="{{ $booking->tour_status }}">
-                    @else
+                    <div class="mb-3">
                         @php
                             $validNextStatuses = \App\Models\Booking::getValidNextStatuses($booking->tour_status);
                         @endphp
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Trạng thái Tour</label>
-                            <select name="tour_status" class="form-select tour-status-select" data-booking-id="{{ $booking->id }}">
-                                @if(in_array('upcoming', $validNextStatuses))
-                                    <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
-                                @endif
-                                @if(in_array('in_progress', $validNextStatuses))
-                                    <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
-                                @endif
-                                @if(in_array('checking_in', $validNextStatuses))
-                                    <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
-                                @endif
-                                @if(in_array('completed', $validNextStatuses))
-                                    <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
-                                @endif
-                                @if(in_array('cancelled_by_customer', $validNextStatuses))
-                                    <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
-                                @endif
-                                @if(in_array('cancelled_by_admin', $validNextStatuses))
-                                    <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
-                                @endif
-                            </select>
-                        </div>
-                        <div class="mb-3 checkin-step-container" id="checkinStepContainer{{ $booking->id }}" style="display: {{ $booking->tour_status == 'checking_in' ? 'block' : 'none' }};">
-                            <label class="form-label fw-bold">Điểm check-in hiện tại</label>
-                            <input type="text" name="current_checkin_step" class="form-control" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $booking->current_checkin_step }}">
-                        </div>
-                    @endif
+                        <label class="form-label fw-bold">Trạng thái Tour</label>
+                        <select name="tour_status" class="form-select tour-status-select" data-booking-id="{{ $booking->id }}">
+                            <option value="upcoming" {{ $booking->tour_status == 'upcoming' ? 'selected' : '' }}>Sắp bắt đầu</option>
+                            <option value="in_progress" {{ $booking->tour_status == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
+                            <option value="checking_in" {{ $booking->tour_status == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
+                            <option value="completed" {{ $booking->tour_status == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
+                            <option value="cancelled_by_customer" {{ $booking->tour_status == 'cancelled_by_customer' ? 'selected' : '' }}>Khách hủy</option>
+                            <option value="cancelled_by_admin" {{ $booking->tour_status == 'cancelled_by_admin' ? 'selected' : '' }}>Admin hủy</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 checkin-step-container" id="checkinStepContainer{{ $booking->id }}" style="display: {{ $booking->tour_status == 'checking_in' ? 'block' : 'none' }};">
+                        <label class="form-label fw-bold">Điểm check-in hiện tại</label>
+                        <input type="text" name="current_checkin_step" class="form-control" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $booking->current_checkin_step }}">
+                    </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-admin btn-light border" data-bs-dismiss="modal">Hủy</button>

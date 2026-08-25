@@ -5,12 +5,13 @@ namespace App\Services;
 use App\Mail\TourBookingMail;
 use App\Models\Booking;
 use App\Models\Payment;
-use App\Notifications\User\PaymentSuccessNotification;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use App\Models\User;
 use App\Notifications\AdminBookingNotification;
+use App\Notifications\User\PaymentSuccessNotification;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
+use Spatie\Permission\Models\Role;
 
 class VnPayService
 {
@@ -30,10 +31,10 @@ class VnPayService
 
         // Xác định số tiền cần thanh toán
         if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
-            $actualAmount = $booking->total_price * 0.7;
+            $actualAmount = $booking->remaining_amount;
             $vnp_OrderInfo = 'Thanh toan phan con lai tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         } elseif ($booking->payment_type === 'deposit') {
-            $actualAmount = $booking->total_price * 0.3;
+            $actualAmount = $booking->deposit_amount;
         } else {
             $actualAmount = $booking->total_price;
         }
@@ -171,17 +172,17 @@ class VnPayService
                         Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
                     }
                 }
-                
+
                 // Send notification
                 $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
 
                 // Bắn thông báo cho Admin
-                $admins = \Spatie\Permission\Models\Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
+                $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
                 if ($admins->count() > 0) {
                     Notification::send($admins, new AdminBookingNotification(
                         $bookingFresh,
                         'payment_success',
-                        'Đơn hàng ' . $bookingFresh->code . ' vừa được thanh toán thành công.'
+                        'Đơn hàng '.$bookingFresh->code.' vừa được thanh toán thành công.'
                     ));
                 }
             }

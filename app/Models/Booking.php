@@ -148,6 +148,11 @@ class Booking extends Model
             ->withTimestamps();
     }
 
+    public function refund_request()
+    {
+        return $this->hasOne(RefundRequest::class);
+    }
+
     public function booking_passengers()
     {
         return $this->hasMany(BookingPassenger::class);
@@ -250,6 +255,42 @@ class Booking extends Model
     public function getCodeAttribute()
     {
         return 'BK-'.str_pad($this->id, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Số tiền đặt cọc (dựa trên tỷ lệ cọc trong config).
+     */
+    public function getDepositAmountAttribute(): float
+    {
+        return $this->total_price * config('booking.deposit_rate');
+    }
+
+    /**
+     * Số tiền còn lại chưa thanh toán.
+     */
+    public function getRemainingAmountAttribute(): float
+    {
+        return max(0, $this->total_price - ($this->paid_amount ?? 0));
+    }
+
+    /**
+     * Phần trăm đã thanh toán (0–100).
+     */
+    public function getPaidPercentAttribute(): int
+    {
+        if ($this->total_price <= 0) {
+            return 0;
+        }
+
+        return min(100, (int) round(($this->paid_amount ?? 0) / $this->total_price * 100));
+    }
+
+    /**
+     * Tổng tiền dịch vụ bổ sung (addons) đã snapshot.
+     */
+    public function getAddonTotalAttribute(): float
+    {
+        return $this->addons->sum(fn ($a) => ($a->pivot->price ?? 0) * ($a->pivot->quantity ?? 0));
     }
 
     protected function casts(): array

@@ -1184,6 +1184,12 @@
                                 border: 1px solid #bbf7d0;
                             }
 
+                            .ps-refunded {
+                                background: #f3e8ff;
+                                color: #7e22ce;
+                                border: 1px solid #e9d5ff;
+                            }
+
                             .ps-failed {
                                 background: #fef2f2;
                                 color: #b91c1c;
@@ -1462,10 +1468,10 @@
                                                         $tabAttr .= ' past';
                                                     if ($isPendingPay)
                                                         $tabAttr .= ' pending_payment';
-                                                    $depositAmt = $booking->total_price * 0.3;
-                                                    $remainAmt = $booking->total_price * 0.7;
+                                                    $depositAmt = $booking->deposit_amount;
+                                                    $remainAmt = $booking->remaining_amount;
                                                     $paidAmt = (float) ($booking->paid_amount ?? 0);
-                                                    $paidPercent = $booking->total_price > 0 ? min(100, round($paidAmt / $booking->total_price * 100)) : 0;
+                                                    $paidPercent = $booking->paid_percent;
                                                 @endphp
                                                 <div class="bk-card" data-bk-tab="{{ $tabAttr }}">
                                                     <div class="bk-card-header">
@@ -1604,17 +1610,26 @@
                                                                             </div>
                                                                         </div>
                                                                     @endif
-                                                                    @if($paymentStatus === 'paid_100')
-                                                                        <div class="ps-badge ps-paid100"><i class="bi bi-check-circle-fill"></i>Đã
-                                                                            thanh toán 100%</div>
-                                                                    @elseif($paymentStatus === 'paid_30')
-                                                                        <div class="ps-badge ps-paid30"><i class="bi bi-pie-chart-fill"></i>Đã thanh
-                                                                            toán 30% (Cọc)</div>
-                                                                        @if(!$isCancelled)
-                                                                            <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section"
-                                                                                class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
-                                                                                <i class="bi bi-credit-card-fill"></i>Thanh toán 70% còn lại
-                                                                            </a>
+                                                                    @if($paymentStatus === 'paid_100' || $paymentStatus === 'paid_30')
+                                                                        @if($isCancelled && $booking->refund_request)
+                                                                            @if($booking->refund_request->status === 'completed')
+                                                                                <div class="ps-badge ps-refunded"><i class="bi bi-arrow-return-left"></i>Đã hoàn tiền</div>
+                                                                            @elseif($booking->refund_request->status === 'pending')
+                                                                                <div class="ps-badge ps-pending"><i class="bi bi-hourglass-split"></i>Chờ hoàn tiền</div>
+                                                                            @else
+                                                                                <div class="ps-badge ps-failed"><i class="bi bi-x-circle-fill"></i>Từ chối hoàn tiền</div>
+                                                                            @endif
+                                                                        @else
+                                                                            @if($paymentStatus === 'paid_100')
+                                                                                <div class="ps-badge ps-paid100"><i class="bi bi-check-circle-fill"></i>Đã thanh toán 100%</div>
+                                                                            @else
+                                                                                <div class="ps-badge ps-paid30"><i class="bi bi-pie-chart-fill"></i>Đã thanh toán 30% (Cọc)</div>
+                                                                                @if(!$isCancelled)
+                                                                                    <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section" class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
+                                                                                        <i class="bi bi-credit-card-fill"></i>Thanh toán 70% còn lại
+                                                                                    </a>
+                                                                                @endif
+                                                                            @endif
                                                                         @endif
                                                                     @elseif($paymentStatus === 'pending')
                                                                         <div class="ps-badge ps-pending">
@@ -1830,7 +1845,7 @@
                                                                     <div>
                                                                         <div class="combo-price-label">Giá từ:</div>
                                                                         <div class="combo-price-val">
-                                                                            {{ format_currency($t?->base_price ?? 0) }}</div>
+                                                                            {{ format_currency($t?->getBasePrice() > 0 ? $t->getBasePrice() : ($t?->base_price ?? 0)) }}</div>
                                                                     </div>
                                                                     <span class="btn-combo-detail">Xem chi tiết</span>
                                                                 </div>

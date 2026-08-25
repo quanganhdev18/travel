@@ -183,7 +183,7 @@
         @elseif($booking->payment_status === 'paid_30')
         <div class="order-meta-pay-row">
             <p style="margin-bottom: 16px; color: #0369a1;">
-                ✅ Đơn hàng đã được xác nhận cọc 30% (<strong>{{ number_format($booking->paid_amount, 0, ',', '.') }}₫</strong>). Số tiền 70% còn lại là <strong>{{ number_format($booking->total_price - $booking->paid_amount, 0, ',', '.') }}₫</strong>. Vui lòng thanh toán trước ngày khởi hành.
+                ✅ Đơn hàng đã được xác nhận cọc 30% (<strong>{{ number_format($booking->paid_amount, 0, ',', '.') }}₫</strong>). Số tiền 70% còn lại là <strong>{{ number_format($booking->remaining_amount, 0, ',', '.') }}₫</strong>. Vui lòng thanh toán trước ngày khởi hành.
             </p>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <a href="{{ route('user.bookings.detail', $booking->id) }}" style="display: inline-block; background: #f1f5f9; color: #0f172a; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1;">
@@ -461,7 +461,7 @@
             @if($booking->addons && $booking->addons->count() > 0)
             <div class="price-line">
                 <div class="price-line-label">Dịch vụ bổ sung (Addons)</div>
-                <div class="price-line-value">{!! format_currency($booking->addons->sum(function($a) { return $a->pivot->price * $a->pivot->quantity; })) !!}</div>
+                <div class="price-line-value">{!! format_currency($booking->addon_total) !!}</div>
             </div>
                 <div style="font-size: 12px; color: #64748b; margin-left: 20px; margin-bottom: 10px;">
                     @foreach($booking->addons as $addon)
@@ -488,7 +488,7 @@
             @if($booking->total_price > ($booking->paid_amount ?? 0))
             <div class="price-line remaining">
                 <div class="price-line-label">SỐ TIỀN CÒN LẠI CẦN THANH TOÁN</div>
-                <div class="price-line-value">{!! format_currency($booking->total_price - ($booking->paid_amount ?? 0)) !!}</div>
+                <div class="price-line-value">{!! format_currency($booking->remaining_amount) !!}</div>
             </div>
             @endif
         </div>

@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\Review;
 use App\Models\TicketBooking;
 use App\Models\Tour;
+use App\Models\TourGuide;
 use App\Models\TourSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -217,6 +218,13 @@ class DashboardController extends Controller
             $ratings[$i] = ['count' => $count, 'percent' => round($percent)];
         }
 
+        // --- Guide Ratings ---
+        $guideRatings = TourGuide::where('kpi_score', '>', 0)
+            ->withCount('reviews')
+            ->orderByDesc('kpi_score')
+            ->take(10)
+            ->get();
+
         return view('admin.dashboard', compact(
             'periodLength', 'startDate', 'endDate',
             'totalBookings', 'totalRevenue', 'totalTourRevenue', 'totalTicketRevenue', 'outstandingBalance',
@@ -229,7 +237,8 @@ class DashboardController extends Controller
             'topDestinations', 'maxTopDestBookings',
             'tourFillRates',
             'recentBookings',
-            'averageRating', 'totalReviews', 'ratings'
+            'averageRating', 'totalReviews', 'ratings',
+            'guideRatings'
         ));
     }
 }

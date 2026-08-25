@@ -64,10 +64,10 @@ class Tour extends Model
         return $this->hasMany(TourAccommodationTier::class);
     }
 
-    public function getBasePrice(Accommodation $accommodation = null, $isHoliday = false)
+    public function getBasePrice(?Accommodation $accommodation = null, $isHoliday = false)
     {
         $base = $this->cost_transport + $this->cost_meal + $this->cost_insurance + $this->cost_service_fee;
-        
+
         $ticketTotal = $this->tickets->sum('adult_price');
         $base += $ticketTotal;
 
@@ -76,6 +76,18 @@ class Tour extends Model
         }
 
         return $base;
+    }
+
+    /**
+     * Giá tour cho trẻ em (dựa trên tỷ lệ child_price_rate trong config).
+     */
+    public function getChildPrice(): float
+    {
+        $rate = config('booking.child_price_rate');
+        $baseCosts = ($this->cost_transport + $this->cost_meal + $this->cost_insurance + $this->cost_service_fee) * $rate;
+        $ticketChildCost = $this->tickets->sum('child_price');
+
+        return $baseCosts + $ticketChildCost;
     }
 
     public function departure_location()

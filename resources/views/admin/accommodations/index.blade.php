@@ -38,7 +38,7 @@
                                 <strong>{{ $acc->name }}</strong><br>
                                 <small class="text-muted">{{ Str::limit($acc->address, 50) }}</small>
                             </td>
-                            <td>{{ $acc->destination->name['vi'] ?? 'N/A' }}</td>
+                            <td>{{ $acc->destination->name ?? 'N/A' }}</td>
                             <td>
                                 @for($i=0; $i<$acc->star_rating; $i++)
                                     <i class="bi bi-star-fill text-warning"></i>

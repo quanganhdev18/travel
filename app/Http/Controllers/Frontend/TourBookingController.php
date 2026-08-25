@@ -28,7 +28,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class TourBookingController extends Controller
@@ -185,14 +184,14 @@ class TourBookingController extends Controller
         }
 
         $password = $request->input('password');
-        if (!$password || strlen($password) < 6) {
+        if (! $password || strlen($password) < 6) {
             return redirect()->back()->with('error', 'Mật khẩu phải có ít nhất 6 ký tự.');
         }
 
         // Để chống Account Enumeration, chúng ta xử lý âm thầm và luôn trả về cùng một thông báo
         $user = User::where('email', $email)->first();
         // Yêu cầu đăng nhập ở bước tiếp theo.
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'name' => $request->input('name', 'Customer'),
                 'email' => $email,
@@ -200,7 +199,7 @@ class TourBookingController extends Controller
                 'password' => Hash::make($password),
             ]);
             $user->assignRole('Customer');
-            
+
             // Liên kết booking
             $booking->user_id = $user->id;
             $booking->save();
@@ -283,17 +282,17 @@ class TourBookingController extends Controller
         $costServiceFee = $tour->cost_service_fee ?? 0;
 
         $basePrice = $costTransport + $costMeal + $costInsurance + $costServiceFee;
-        
+
         $ticketAdultCost = 0;
         $ticketChildCost = 0;
         foreach ($tour->tickets as $ticket) {
             $ticketAdultCost += $ticket->adult_price ?? 0;
             $ticketChildCost += $ticket->child_price ?? 0;
         }
-        
+
         $basePrice += $ticketAdultCost;
-        $childPrice = (($costTransport + $costMeal + $costInsurance + $costServiceFee) * 0.75) + $ticketChildCost;
-        
+        $childPrice = (($costTransport + $costMeal + $costInsurance + $costServiceFee) * config('booking.child_price_rate')) + $ticketChildCost;
+
         if ($holidaySurcharge > 0) {
             $basePrice = $basePrice * (1 + $holidaySurcharge / 100);
             $childPrice = $childPrice * (1 + $holidaySurcharge / 100);

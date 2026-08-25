@@ -16,7 +16,17 @@
         </div>
         <div>
             <h4 class="mb-1 fw-bold text-dark">Xin chào, {{ $tourGuide->name }}!</h4>
-            <p class="text-muted mb-0 mb-0">Chúc bạn một ngày làm việc hiệu quả và tràn đầy năng lượng.</p>
+            <p class="text-muted mb-0">Chúc bạn một ngày làm việc hiệu quả và tràn đầy năng lượng.</p>
+            @if($tourGuide->kpi_score > 0)
+                <div class="mt-2 d-inline-flex align-items-center bg-warning bg-opacity-10 text-warning px-3 py-1 rounded-pill border border-warning border-opacity-25 shadow-sm">
+                    <i class="bi bi-star-fill me-2"></i>
+                    <span class="fw-bold">Điểm đánh giá từ khách hàng: {{ number_format($tourGuide->kpi_score, 1) }} / 5.0</span>
+                </div>
+            @else
+                <div class="mt-2 d-inline-flex align-items-center bg-secondary bg-opacity-10 text-secondary px-3 py-1 rounded-pill border border-secondary border-opacity-25 shadow-sm text-sm">
+                    <i class="bi bi-info-circle me-2"></i> Chưa có đánh giá nào
+                </div>
+            @endif
         </div>
     </div>
 

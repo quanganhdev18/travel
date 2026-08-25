@@ -374,33 +374,43 @@
                                 <input type="hidden" name="issue_place" id="issue_place"
                                     value="{{ $identity->issue_place ?? 'Hà Nội' }}">
 
-                                <!-- CCCD Scan block -->
+                                @if(($tour->duration_nights ?? 0) > 0)
                                 <div class="col-12 mt-3">
                                     <div class="p-3 bg-light rounded border">
-                                        <label
-                                            class="form-label fw-600 text-dark">{{ __('Quét CCCD tự động điền (Tùy chọn)') }}</label>
-                                        <div class="row g-2 align-items-end">
-                                            <div class="col-md-5">
-                                                <label for="front_image" class="form-label small text-muted mb-1"><i
-                                                        class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt trước') }}</label>
-                                                <input type="file" name="front_image" id="front_image"
-                                                    class="form-control" accept="image/*" placeholder="Mặt trước">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="upload_cccd_check">
+                                            <label class="form-check-label fw-600 text-dark" for="upload_cccd_check">
+                                                Tôi muốn tải lên ảnh CCCD/Hộ chiếu để hỗ trợ làm thủ tục lưu trú (Tùy chọn)
+                                            </label>
+                                        </div>
+                                        <div class="row g-2 align-items-end" id="cccd_upload_fields" style="display: none;">
+                                            <div class="col-md-6">
+                                                <label for="front_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt trước') }}</label>
+                                                <input type="file" name="front_image" id="front_image" class="form-control" accept="image/*" placeholder="Mặt trước">
                                             </div>
-                                            <div class="col-md-5">
-                                                <label for="back_image" class="form-label small text-muted mb-1"><i
-                                                        class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt sau') }}</label>
-                                                <input type="file" name="back_image" id="back_image"
-                                                    class="form-control" accept="image/*" placeholder="Mặt sau">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <button type="button" class="btn btn-primary w-100" id="btn-scan-cccd"
-                                                    style="height: 38px;">
-                                                    <i class="bi bi-upc-scan"></i> Quét
-                                                </button>
+                                            <div class="col-md-6">
+                                                <label for="back_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt sau') }}</label>
+                                                <input type="file" name="back_image" id="back_image" class="form-control" accept="image/*" placeholder="Mặt sau">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const check = document.getElementById('upload_cccd_check');
+                                        const fields = document.getElementById('cccd_upload_fields');
+                                        if (check && fields) {
+                                            check.addEventListener('change', function() {
+                                                fields.style.display = this.checked ? 'flex' : 'none';
+                                                if (!this.checked) {
+                                                    document.getElementById('front_image').value = '';
+                                                    document.getElementById('back_image').value = '';
+                                                }
+                                            });
+                                        }
+                                    });
+                                </script>
+                                @endif
                             </div>
                         </div>
 
@@ -1002,107 +1012,7 @@
 <script>
     const DRAFT_KEY = 'tour_draft_booking_{{ $schedule->id }}_{{ $adults }}_{{ $children }}';
 
-    document.getElementById('btn-scan-cccd').addEventListener('click', function() {
-        const frontImage = document.getElementById('front_image').files[0];
-        const backImage = document.getElementById('back_image').files[0];
 
-        if (!frontImage) {
-            alert('Vui lòng tải lên ảnh mặt trước CCCD để hệ thống đọc dữ liệu.');
-            return;
-        }
-
-        const btn = this;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang phân tích...';
-        btn.disabled = true;
-
-        const formData = new FormData();
-        formData.append('front_image', frontImage);
-        if (backImage) {
-            formData.append('back_image', backImage);
-        }
-
-        fetch('/api/scan-cccd', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                    'Accept': 'application/json'
-                }
-            })
-            .then(async response => {
-                if (!response.ok) {
-                    const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.message || 'Lỗi server');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    const idInput = document.getElementById('identity_number');
-                    const nameInput = document.getElementById('customer_name');
-                    const dobInput = document.getElementById('date_of_birth');
-                    const genderInput = document.getElementById('gender');
-                    const issueDateInput = document.getElementById('issue_date');
-                    const expiryDateInput = document.getElementById('expiry_date');
-                    const issuePlaceInput = document.getElementById('issue_place');
-
-                    if (idInput) idInput.value = data.id || '';
-                    if (nameInput) {
-                        nameInput.value = data.name || '';
-                        document.getElementById('hidden_adult_name').value = nameInput.value;
-                    }
-                    if (dobInput) dobInput.value = formatDob(data.dob) || '';
-                    if (issueDateInput && data.issue_date) issueDateInput.value = formatDob(data.issue_date);
-                    if (expiryDateInput && data.expiry_date && data.expiry_date !== 'N/A' && data
-                        .expiry_date !== 'KHÔNG THỜI HẠN') {
-                        expiryDateInput.value = formatDob(data.expiry_date);
-                    }
-                    if (issuePlaceInput && data.issue_place) issuePlaceInput.value = data.issue_place;
-
-                    if (genderInput) {
-                        if (data.sex === 'nam') genderInput.value = 'male';
-                        else if (data.sex === 'nữ') genderInput.value = 'female';
-                    }
-                } else {
-                    fillMockData();
-                }
-            })
-            .catch(error => {
-                console.error("OCR Error:", error);
-                fillMockData();
-            })
-            .finally(() => {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
-    });
-
-    function fillMockData() {
-        const timestamp = Date.now().toString().slice(-6);
-        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        const uniqueId = `036${timestamp}${random}`;
-
-        const nameInput = document.getElementById('customer_name');
-        if (nameInput && !nameInput.value) {
-            nameInput.value = 'Nguyễn Văn A (Mock)';
-            document.getElementById('hidden_adult_name').value = nameInput.value;
-        }
-
-        document.getElementById('identity_number').value = uniqueId;
-        document.getElementById('date_of_birth').value = '1996-05-18';
-        document.getElementById('gender').value = 'male';
-        document.getElementById('issue_date').value = '2021-05-18';
-        document.getElementById('expiry_date').value = '2036-05-18';
-        document.getElementById('issue_place').value = 'cục cảnh sát quản lý hành chính về trật tự xã hội';
-    }
-
-    function formatDob(dobStr) {
-        if (!dobStr) return '';
-        const parts = dobStr.split('/');
-        if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        return dobStr;
-    }
 
     // TRANSPORT DYNAMIC LOGIC
     @php
@@ -1139,6 +1049,8 @@
 
     const baseTourPrice = {{ $totalPrice }};
     const totalPersonsCount = {{ $totalPersons }};
+    const DEPOSIT_RATE = {{ config('booking.deposit_rate') }};
+    const CHILD_PRICE_RATE = {{ config('booking.child_price_rate') }};
 
     let currentTransportPrice = 0;
     let currentTicketPrice = 0;
@@ -2069,7 +1981,7 @@
         const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
         const depositRow = document.getElementById('deposit_amount_row');
         if (paymentType === 'deposit') {
-            const depositAmount = finalTotal * 0.3;
+            const depositAmount = finalTotal * DEPOSIT_RATE;
             const remainingAmount = finalTotal - depositAmount;
             document.getElementById('display_deposit_price').innerHTML = formatCurrencyDynamic(depositAmount);
             document.getElementById('display_remaining_price').innerHTML = formatCurrencyDynamic(remainingAmount);
