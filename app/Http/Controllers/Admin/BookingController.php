@@ -26,6 +26,7 @@ class BookingController extends Controller
             'user.identity',
             'tour_schedule.tour',
             'booking_passengers',
+            'booking_accommodations',
             'coupon',
         ]);
 

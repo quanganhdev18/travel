@@ -35,7 +35,7 @@ class TourBookingMail extends Mailable
         $this->schedule = $schedule ? $schedule->loadMissing([
             'tour.tour_itineraries',
             'tour.departure_location',
-            'schedule_guides.guide',
+            'schedule_guides.tour_guide',
         ]) : null;
 
         $this->customerName = $customerName ?? ($this->booking->user->name ?? ($this->booking->booking_passengers->first()?->full_name ?? 'Quý khách'));

@@ -9,14 +9,10 @@ use App\Models\Booking;
 use App\Models\Coupon;
 use App\Models\Holiday;
 use App\Models\Payment;
-use App\Models\TourSchedule;
-use App\Models\UserIdentity;
-use App\Models\TicketOption;
-use App\Models\Addon;
 use App\Models\TicketBooking;
-use App\Models\BookingAddon;
-use App\Models\BookingPassenger;
-use App\Events\SeatAvailabilityUpdated;
+use App\Models\TourSchedule;
+use App\Models\User;
+use App\Notifications\AdminBookingNotification;
 use App\Services\FlightBookingService;
 use App\Services\TourBookingService;
 use App\Services\VnPayService;
@@ -28,12 +24,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
-use App\Models\User;
-use App\Notifications\AdminBookingNotification;
-
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class TourBookingController extends Controller
 {
@@ -81,6 +77,9 @@ class TourBookingController extends Controller
             'payment_method' => 'required|in:transfer,vnpay',
             'transport_price' => 'nullable|numeric',
             'transport_data' => 'nullable|string',
+            'accommodation_id' => 'nullable|exists:accommodations,id',
+            'single_rooms_count' => 'nullable|integer|min:0',
+            'extra_beds_count' => 'nullable|integer|min:0',
         ], [
             'passengers.adult.0.date_of_birth.required' => 'Vui lòng nhập ngày sinh của người đặt tour.',
 
@@ -98,12 +97,12 @@ class TourBookingController extends Controller
             $schedule = $booking->tour_schedule;
 
             // Bắn thông báo cho Admin
-            $admins = User::role('Admin')->get();
+            $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
             if ($admins->count() > 0) {
                 Notification::send($admins, new AdminBookingNotification(
                     $booking,
                     'booking_created',
-                    'Khách hàng ' . $request->customer_name . ' vừa đặt tour mới: ' . ($schedule->tour->title ?? '')
+                    'Khách hàng '.$request->customer_name.' vừa đặt tour mới: '.($schedule->tour->title ?? '')
                 ));
             }
 
@@ -149,7 +148,7 @@ class TourBookingController extends Controller
     {
         $booking = Booking::with(['tour_schedule.tour'])->findOrFail($id);
 
-        if ($booking->user_id !== Auth::id()) {
+        if ($booking->user_id && $booking->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -160,7 +159,7 @@ class TourBookingController extends Controller
     {
         $booking = Booking::with('tour_schedule')->findOrFail($id);
 
-        if ($booking->user_id !== Auth::id() && ! (Auth::check() && Auth::user()->hasAnyRole(['Admin', 'Staff', 'cskh']))) {
+        if ($booking->user_id && $booking->user_id !== Auth::id() && ! (Auth::check() && Auth::user()->hasAnyRole(['Admin', 'Staff', 'cskh']))) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -173,6 +172,46 @@ class TourBookingController extends Controller
         ]);
     }
 
+    public function createAccount(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        if ($booking->user_id) {
+            return redirect()->back()->with('error', 'Đơn hàng này đã được liên kết với một tài khoản.');
+        }
+
+        $email = $request->input('email');
+        if (! $email || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return redirect()->back()->with('error', 'Email không hợp lệ.');
+        }
+
+        $password = $request->input('password');
+        if (!$password || strlen($password) < 6) {
+            return redirect()->back()->with('error', 'Mật khẩu phải có ít nhất 6 ký tự.');
+        }
+
+        // Để chống Account Enumeration, chúng ta xử lý âm thầm và luôn trả về cùng một thông báo
+        $user = User::where('email', $email)->first();
+        // Yêu cầu đăng nhập ở bước tiếp theo.
+        if (!$user) {
+            $user = User::create([
+                'name' => $request->input('name', 'Customer'),
+                'email' => $email,
+                'phone' => $request->input('phone', ''),
+                'password' => Hash::make($password),
+            ]);
+            $user->assignRole('Customer');
+            
+            // Liên kết booking
+            $booking->user_id = $user->id;
+            $booking->save();
+            TicketBooking::where('booking_id', $booking->id)->update(['user_id' => $user->id]);
+        }
+
+        // Tuyệt đối không Auto-login để chặn Squatting có quyền truy cập thay đổi dữ liệu
+        // Redirect ra trang login với thông báo Generic
+        return redirect()->route('login')->with('info', 'Vui lòng đăng nhập để hệ thống bảo mật có thể xác thực và gán đơn hàng vào tài khoản của bạn. Nếu bạn quên mật khẩu, hãy sử dụng tính năng Quên mật khẩu.');
+    }
+
     public function checkout(Request $request)
     {
         $request->validate([
@@ -181,7 +220,7 @@ class TourBookingController extends Controller
             'children' => 'required|integer|min:0',
         ]);
 
-        $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons'])->findOrFail($request->schedule_id);
+        $schedule = TourSchedule::with(['tour.tickets.ticket_options', 'tour.addons', 'tour.accommodation_tiers.room_type.accommodation'])->findOrFail($request->schedule_id);
 
         if ($schedule->status !== 'available' || Carbon::parse($schedule->departure_date)->lt(Carbon::today()->addDays(3))) {
             return redirect()->back()->with('error', 'Tour khởi hành trong vòng 3 ngày tới không thể đặt trực tuyến. Vui lòng chọn lịch trình khác.');
@@ -237,19 +276,38 @@ class TourBookingController extends Controller
 
         $holidaySurcharge = Holiday::getIncreasePercentage($schedule->departure_date);
 
-        $basePrice = $schedule->tour->base_price;
-        $childPrice = $schedule->tour->child_price ?? ($schedule->tour->base_price * 0.75);
+        $tour = $schedule->tour;
+        $costTransport = $tour->cost_transport ?? 0;
+        $costMeal = $tour->cost_meal ?? 0;
+        $costInsurance = $tour->cost_insurance ?? 0;
+        $costServiceFee = $tour->cost_service_fee ?? 0;
 
+        $basePrice = $costTransport + $costMeal + $costInsurance + $costServiceFee;
+        
+        $ticketAdultCost = 0;
+        $ticketChildCost = 0;
+        foreach ($tour->tickets as $ticket) {
+            $ticketAdultCost += $ticket->adult_price ?? 0;
+            $ticketChildCost += $ticket->child_price ?? 0;
+        }
+        
+        $basePrice += $ticketAdultCost;
+        $childPrice = (($costTransport + $costMeal + $costInsurance + $costServiceFee) * 0.75) + $ticketChildCost;
+        
         if ($holidaySurcharge > 0) {
             $basePrice = $basePrice * (1 + $holidaySurcharge / 100);
             $childPrice = $childPrice * (1 + $holidaySurcharge / 100);
         }
 
+        // Note: Total price here is without accommodation. Frontend will recalculate.
         $totalPrice = ($basePrice * $request->adults) + ($childPrice * $request->children);
 
         $user = Auth::user();
-        $user->load('identity');
-        $identity = $user->identity;
+        $identity = null;
+        if ($user) {
+            $user->load('identity');
+            $identity = $user->identity;
+        }
 
         $holidays = Holiday::all(['start_date', 'end_date', 'price_increase_percentage']);
         $tourCategoryIds = $schedule->tour->categories->pluck('id')->toArray();

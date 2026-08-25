@@ -24,6 +24,10 @@ beforeEach(function () {
         'duration_days' => 3,
         'duration_nights' => 2,
         'base_price' => 3500000,
+        'cost_transport' => 2000000,
+        'cost_meal' => 500000,
+        'cost_insurance' => 500000,
+        'cost_service_fee' => 500000,
     ]);
 
     // Create tour schedule
@@ -37,14 +41,15 @@ beforeEach(function () {
     ]);
 });
 
-test('guest cannot access checkout', function () {
+test('guest can access checkout', function () {
     $response = $this->get(route('frontend.tours.checkout', [
         'schedule_id' => $this->schedule->id,
         'adults' => 2,
         'children' => 0,
     ]));
 
-    $response->assertRedirect('/login');
+    $response->assertOk();
+    $response->assertViewIs('frontend.tours.checkout');
 });
 
 test('authenticated user can access checkout with valid parameters', function () {

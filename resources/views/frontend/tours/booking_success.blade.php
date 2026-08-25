@@ -13,13 +13,13 @@
                                 <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
                             </div>
                             <h2 class="fw-bold mb-3 text-success">Đã Thanh Toán Đặt Cọc (30%) Thành Công!</h2>
-                            <p class="text-muted mb-4">Cảm ơn bạn! Đơn hàng #{{ $booking->id }} đã được bảo lưu giữ chỗ thành công với số tiền cọc <strong>{{ format_currency($booking->paid_amount) }}</strong>. Số tiền còn lại (<strong>{{ format_currency($booking->total_price - $booking->paid_amount) }}</strong>) vui lòng hoàn tất trước ngày khởi hành.</p>
+                            <p class="text-muted mb-4">Cảm ơn bạn! Đơn hàng <strong>{{ $booking->code }}</strong> đã được bảo lưu giữ chỗ thành công với số tiền cọc <strong>{{ format_currency($booking->paid_amount) }}</strong>. Số tiền còn lại (<strong>{{ format_currency($booking->total_price - $booking->paid_amount) }}</strong>) vui lòng hoàn tất trước ngày khởi hành.</p>
                         @elseif(in_array($booking->payment_status, ['paid', 'paid_100']))
                             <div class="mb-4">
                                 <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
                             </div>
                             <h2 class="fw-bold mb-3 text-success">Đã Thanh Toán Thành Công!</h2>
-                            <p class="text-muted mb-4">Cảm ơn bạn! Đơn hàng #{{ $booking->id }} của bạn đã được xác nhận thanh toán đầy đủ 100%.</p>
+                            <p class="text-muted mb-4">Cảm ơn bạn! Đơn hàng <strong>{{ $booking->code }}</strong> của bạn đã được xác nhận thanh toán đầy đủ 100%.</p>
                         @elseif($booking->booking_status === 'cancelled')
                             <div class="mb-4">
                                 <i class="bi bi-x-circle-fill text-danger" style="font-size: 5rem;"></i>
@@ -87,13 +87,34 @@
                         </div>
                     @endif
 
+                    @if(is_null($booking->user_id))
+                        <div class="bg-primary bg-opacity-10 p-4 rounded-4 my-4 text-start border border-primary border-opacity-25">
+                            <h5 class="fw-bold text-primary mb-2"><i class="bi bi-person-plus-fill me-2"></i>Tạo tài khoản để theo dõi đơn hàng dễ dàng!</h5>
+                            <p class="text-muted mb-3">Bạn vừa đặt tour với tư cách Khách. Tạo tài khoản ngay bây giờ với email <strong>{{ $booking->customer_email }}</strong> để lưu ưu đãi và dễ dàng xem lịch trình.</p>
+                            <form action="{{ route('frontend.tours.create_account', $booking->id) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="email" value="{{ $booking->customer_email }}">
+                                <input type="hidden" name="name" value="{{ $booking->customer_name }}">
+                                <input type="hidden" name="phone" value="{{ $booking->customer_phone }}">
+                                <div class="input-group mb-3" style="max-width: 400px;">
+                                    <input type="password" name="password" class="form-control" placeholder="Nhập mật khẩu tự chọn" required minlength="6">
+                                    <button type="submit" class="btn btn-primary px-4">
+                                        Đăng ký nhanh
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    @endif
+
                     <div class="mt-4 d-flex gap-3 justify-content-center">
                         <a href="{{ route('home') }}" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
                             <i class="bi bi-house me-2"></i> Về trang chủ
                         </a>
-                        <a href="{{ route('user.profile', ['tab' => 'bookings']) }}" class="btn btn-primary px-4 py-2 rounded-pill">
-                            Xem lịch sử đặt tour <i class="bi bi-arrow-right ms-2"></i>
-                        </a>
+                        @if($booking->user_id || Auth::check())
+                            <a href="{{ route('user.profile', ['tab' => 'bookings']) }}" class="btn btn-primary px-4 py-2 rounded-pill">
+                                Xem lịch sử đặt tour <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -121,18 +142,19 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const bookingId = {{ $booking->id }};
-    const createdAtMs = new Date("{{ $booking->created_at->toIso8601String() }}").getTime();
-    const deadlineMs = createdAtMs + (15 * 60 * 1000);
     const csrfToken = "{{ csrf_token() }}";
+    
+    @php
+        $remainingSeconds = max(0, $booking->created_at->addMinutes(15)->timestamp - now()->timestamp);
+    @endphp
+    
+    let remainingSeconds = {{ $remainingSeconds }};
 
     function updateTimer() {
-        const nowMs = new Date().getTime();
-        const diffMs = deadlineMs - nowMs;
         const timerEl = document.getElementById('countdownTimer');
-
         if (!timerEl) return;
 
-        if (diffMs <= 0) {
+        if (remainingSeconds <= 0) {
             timerEl.innerText = "00:00";
             timerEl.classList.add('text-muted');
             if (!window.hasShownExpireAlert) {
@@ -154,9 +176,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             return;
         } else {
-            const minutes = Math.floor(diffMs / (1000 * 60));
-            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
             timerEl.innerText = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+            remainingSeconds--;
         }
     }
 

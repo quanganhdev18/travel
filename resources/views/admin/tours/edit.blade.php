@@ -72,11 +72,12 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label text-muted">Giá cơ bản (Người lớn)</label>
-                            <input type="number" name="base_price" value="{{$tour->base_price}}" class="form-control" placeholder="VD: 1500000" required>
+                            <input type="text" value="{!! format_currency($tour->base_price) !!}" class="form-control" readonly>
+                            <small class="text-muted">Giá tự động cộng dồn (Vé, Xe, Ăn, BH...)</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label text-muted">Giá trẻ em (VNĐ)</label>
-                            <input type="number" name="child_price" value="{{$tour->child_price}}" class="form-control" placeholder="VD: 1000000 (Tùy chọn)">
+                            <input type="text" value="{!! format_currency($tour->child_price) !!}" class="form-control" readonly>
                         </div>
                         <div class="col-md-2 mb-3">
                             <label class="form-label text-muted">Số ngày</label>
@@ -175,6 +176,63 @@
                             </div>
                             @endforeach
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h4 class="h5 mb-3 text-primary">Dịch vụ đi kèm Tour</h4>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-muted fw-bold">Vé tham quan</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($tickets as $ticket)
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="tickets[]"
+                                value="{{ $ticket->id }}" id="ticket_{{ $ticket->id }}"
+                                {{ in_array($ticket->id, $tourTicketIds) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="ticket_{{ $ticket->id }}">
+                                {{ $ticket->title }}
+                            </label>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-muted fw-bold">Lưu trú (Hạng phòng)</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($accommodations as $acc)
+                            <div class="mb-2">
+                                <strong>{{ $acc->name }}</strong>
+                                @foreach($acc->room_types as $room)
+                                    <div class="form-check ms-3">
+                                        <input class="form-check-input" type="checkbox" name="room_types[]"
+                                            value="{{ $room->id }}" id="room_{{ $room->id }}"
+                                            {{ in_array($room->id, $tourRoomTypeIds ?? []) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="room_{{ $room->id }}">
+                                            {{ $room->name }} ({{ number_format($room->base_price) }}đ)
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-muted fw-bold">Dịch vụ bổ sung (Addons)</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($addons as $addon)
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="addons[]"
+                                value="{{ $addon->id }}" id="addon_{{ $addon->id }}"
+                                {{ in_array($addon->id, $tourAddonIds) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="addon_{{ $addon->id }}">
+                                {{ $addon->name }}
+                            </label>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>

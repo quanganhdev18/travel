@@ -48,6 +48,19 @@
                                         @enderror
                                     </div>
 
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Giá Người Lớn (VNĐ) <span class="text-danger">*</span></label>
+                                            <input type="number" name="adult_price" class="form-control" 
+                                                   required placeholder="VD: 500000" min="0" value="{{ old('adult_price', $ticket->adult_price ?? 0) }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-bold">Giá Trẻ Em (VNĐ) <span class="text-danger">*</span></label>
+                                            <input type="number" name="child_price" class="form-control" 
+                                                   required placeholder="VD: 350000" min="0" value="{{ old('child_price', $ticket->child_price ?? 0) }}">
+                                        </div>
+                                    </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Nhà cung cấp</label>
                                         <input type="text" name="provider_name" class="form-control" 

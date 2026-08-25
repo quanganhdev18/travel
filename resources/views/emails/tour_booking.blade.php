@@ -259,13 +259,24 @@
                     <span style="color:#64748b;">({{ $breakfasts }} sáng, {{ $lunches }} trưa, {{ $dinners }} tối)</span>
                 </td>
             </tr>
+            @if($booking->booking_accommodations && $booking->booking_accommodations->isNotEmpty())
+            @php $bAcc = $booking->booking_accommodations->first(); @endphp
+            <tr>
+                <td class="t-label">Hạng lưu trú</td>
+                <td class="t-value">
+                    <span class="em">{{ $bAcc->accommodation_name_snapshot }}</span>
+                    <br><span style="color:#64748b;">Hạng phòng: {{ $bAcc->room_type_name_snapshot }}</span>
+                    <br><span style="color:#64748b;">(Số phòng: {{ $bAcc->single_rooms_count }}, Giường phụ: {{ $bAcc->extra_bed_qty }})</span>
+                </td>
+            </tr>
+            @endif
             @if($schedule->schedule_guides && $schedule->schedule_guides->count() > 0)
             <tr>
                 <td class="t-label">Hướng dẫn viên</td>
                 <td class="t-value">
                     @foreach($schedule->schedule_guides as $sg)
-                        {{ $sg->guide->name ?? ($sg->guide->user->name ?? 'Chưa phân công') }}
-                        @if(isset($sg->guide->user) && $sg->guide->user->phone) – {{ $sg->guide->user->phone }}@endif
+                        {{ $sg->tour_guide->name ?? ($sg->tour_guide->user->name ?? 'Chưa phân công') }}
+                        @if(isset($sg->tour_guide->user) && $sg->tour_guide->user->phone) – {{ $sg->tour_guide->user->phone }}@endif
                         @if(!$loop->last)<br>@endif
                     @endforeach
                 </td>
@@ -405,17 +416,58 @@
         <span class="section-title">Bảng Kê Chi Tiết Chi Phí</span>
         <div class="price-box">
             @php
-                $baseTourPrice = $booking->total_price - ($booking->transport_price ?? 0) + ($booking->discount_amount ?? 0);
+                $bk = $booking->price_breakdown ?? [];
+                $baseTourPrice = array_sum([
+                    $bk['transport'] ?? 0,
+                    $bk['meal'] ?? 0,
+                    $bk['insurance'] ?? 0,
+                    $bk['service_fee'] ?? 0,
+                    $bk['accommodation_base'] ?? 0,
+                    $bk['accommodation_single_supplement'] ?? 0,
+                    $bk['accommodation_extra_bed'] ?? 0,
+                    $bk['accommodation_child'] ?? 0,
+                    $bk['ticket'] ?? 0,
+                ]);
             @endphp
             <div class="price-line">
                 <div class="price-line-label">Giá tour cơ bản</div>
                 <div class="price-line-value">{!! format_currency($baseTourPrice) !!}</div>
             </div>
+            @if($booking->price_breakdown)
+                @php $bk = $booking->price_breakdown; @endphp
+                <div style="font-size: 12px; color: #64748b; margin-left: 20px; margin-bottom: 10px;">
+                    - Vận chuyển: {!! format_currency($bk['transport'] ?? 0) !!}<br>
+                    - Ăn uống: {!! format_currency($bk['meal'] ?? 0) !!}<br>
+                    - Lưu trú: {!! format_currency($bk['accommodation_base'] ?? 0) !!}
+                      @if(($bk['accommodation_single_supplement'] ?? 0) > 0) + Phụ thu phòng đơn {!! format_currency($bk['accommodation_single_supplement']) !!} @endif
+                      @if(($bk['accommodation_extra_bed'] ?? 0) > 0) + Giường phụ {!! format_currency($bk['accommodation_extra_bed']) !!} @endif
+                      @if(($bk['accommodation_child'] ?? 0) > 0) + Phụ thu trẻ em {!! format_currency($bk['accommodation_child']) !!} @endif<br>
+                    - Bảo hiểm: {!! format_currency($bk['insurance'] ?? 0) !!}<br>
+                    - Phí dịch vụ: {!! format_currency($bk['service_fee'] ?? 0) !!}<br>
+                    @if(($bk['ticket'] ?? 0) > 0)
+                    - Vé tham quan (Đã bao gồm): {!! format_currency($bk['ticket']) !!}
+                      @if($booking->tour_schedule && $booking->tour_schedule->tour && $booking->tour_schedule->tour->tickets->isNotEmpty())
+                          <br><span style="margin-left: 10px; color: #94a3b8;">+ Gồm: {{ $booking->tour_schedule->tour->tickets->pluck('title')->join(', ') }}</span>
+                      @endif
+                    @endif
+                </div>
+            @endif
             @if(($booking->transport_price ?? 0) > 0)
             <div class="price-line">
                 <div class="price-line-label">Phụ thu phương tiện ({{ $booking->transport_type == 'flight' ? 'Vé máy bay' : 'Xe khách' }})</div>
                 <div class="price-line-value">{!! format_currency($booking->transport_price) !!}</div>
             </div>
+            @endif
+            @if($booking->addons && $booking->addons->count() > 0)
+            <div class="price-line">
+                <div class="price-line-label">Dịch vụ bổ sung (Addons)</div>
+                <div class="price-line-value">{!! format_currency($booking->addons->sum(function($a) { return $a->pivot->price * $a->pivot->quantity; })) !!}</div>
+            </div>
+                <div style="font-size: 12px; color: #64748b; margin-left: 20px; margin-bottom: 10px;">
+                    @foreach($booking->addons as $addon)
+                        - {{ $addon->pivot->addon_name ?? $addon->name }} (x{{ $addon->pivot->quantity }}): {!! format_currency($addon->pivot->price * $addon->pivot->quantity) !!}<br>
+                    @endforeach
+                </div>
             @endif
             @if(($booking->discount_amount ?? 0) > 0)
             <div class="price-line discount">

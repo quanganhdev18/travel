@@ -118,6 +118,39 @@
             </span>
         </div>
 
+        @php
+            $bAcc = $booking->booking_accommodations->first();
+        @endphp
+        @if($bAcc)
+        {{-- Lưu trú --}}
+        <div class="info-row">
+            <span class="text-muted small">
+                <i class="bi bi-building me-2"></i>
+                Lưu trú
+            </span>
+            <div class="text-end" style="max-width: 65%;">
+                <span class="fw-bold">{{ $bAcc->accommodation_name_snapshot }}</span>
+                <br><span class="small text-muted">{{ $bAcc->room_type->accommodation->address ?? '' }}</span>
+                <br><span class="badge bg-secondary">{{ $bAcc->room_type_name_snapshot }}</span>
+                @if($bAcc->single_rooms_count > 0 || $bAcc->extra_bed_qty > 0)
+                    <br><span class="small text-muted">({{ $bAcc->single_rooms_count }} phòng, {{ $bAcc->extra_bed_qty }} giường phụ)</span>
+                @endif
+            </div>
+        </div>
+        @elseif($booking->accommodation_id && $booking->accommodation)
+        {{-- Lưu trú cũ --}}
+        <div class="info-row">
+            <span class="text-muted small">
+                <i class="bi bi-building me-2"></i>
+                Lưu trú
+            </span>
+            <div class="text-end" style="max-width: 65%;">
+                <span class="fw-bold">{{ $booking->accommodation->name }}</span>
+                <br><span class="small text-muted">{{ $booking->accommodation->address }}</span>
+            </div>
+        </div>
+        @endif
+
         {{-- Điểm tập kết --}}
         <div class="info-row">
             <span class="text-muted small">

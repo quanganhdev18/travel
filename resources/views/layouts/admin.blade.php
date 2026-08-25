@@ -459,6 +459,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/accommodations*') ? 'active' : '' }}" href="{{ route('admin.accommodations.index') }}">
+                    <i class="bi bi-building"></i> Lưu trú (Khách sạn)
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/categories*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">
                     <i class="bi bi-tags"></i> Danh mục Tour
                 </a>

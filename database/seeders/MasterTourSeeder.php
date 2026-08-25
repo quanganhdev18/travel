@@ -603,6 +603,25 @@ class MasterTourSeeder extends Seeder
                         'description' => 'Dịch vụ tiện ích tại '.$destName,
                         'price' => $addonData['price'],
                         'is_active' => true,
+                        'type' => 'included', // Set old ones to included
+                    ]
+                );
+            }
+
+            // Create global extra addons requested by user
+            $extraAddons = [
+                ['name' => 'Thuê xe lăn', 'price' => 150000, 'description' => 'Xe lăn tay tiêu chuẩn, hỗ trợ di chuyển cho người cao tuổi/khuyết tật.'],
+                ['name' => 'Đồ ăn chay (suất)', 'price' => 100000, 'description' => 'Thực đơn thuần chay đặc biệt (vui lòng chọn số lượng suất).'],
+                ['name' => 'Xe đẩy cho bé', 'price' => 200000, 'description' => 'Xe đẩy gấp gọn tiện lợi cho trẻ dưới 3 tuổi.'],
+            ];
+            foreach ($extraAddons as $ext) {
+                $createdAddons[] = Addon::firstOrCreate(
+                    ['name' => $ext['name']],
+                    [
+                        'description' => $ext['description'],
+                        'price' => $ext['price'],
+                        'is_active' => true,
+                        'type' => 'extra',
                     ]
                 );
             }

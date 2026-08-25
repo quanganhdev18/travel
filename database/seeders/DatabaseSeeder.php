@@ -156,7 +156,12 @@ class DatabaseSeeder extends Seeder
             VietnamHolidaySeeder::class,
         ]);
 
-        // 9. Dashboard Seeder (100 đơn hàng mẫu và dữ liệu thống kê)
+        // 9. Accommodation + Room Types + Inventory (kiến trúc 3 lớp mới)
+        $this->call([
+            AccommodationRoomTypeSeeder::class,
+        ]);
+
+        // 10. Dashboard Seeder (100 đơn hàng mẫu và dữ liệu thống kê)
         $this->call([
             DashboardSeeder::class,
         ]);

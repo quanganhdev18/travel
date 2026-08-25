@@ -13,7 +13,7 @@ class StoreTourBookingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return true;
     }
 
     /**
@@ -40,7 +40,7 @@ class StoreTourBookingRequest extends FormRequest
             'passengers.child.*.date_of_birth' => 'nullable|date',
             'passengers.child.*.gender' => 'nullable|in:male,female,other',
             'total_price' => 'required|numeric',
-            'transport_type' => 'required|in:self',
+            'transport_type' => 'required|in:flight,bus,self',
             'issue_date' => 'nullable|date',
             'expiry_date' => 'nullable|date',
             'issue_place' => 'nullable|string|max:255',
@@ -53,6 +53,9 @@ class StoreTourBookingRequest extends FormRequest
             'tickets' => 'nullable|array',
             'addons' => 'nullable|array',
             'coupon_code' => 'nullable|string',
+            'accommodation_id' => 'nullable|exists:accommodations,id',
+            'single_rooms_count' => 'nullable|integer|min:0',
+            'extra_beds_count' => 'nullable|integer|min:0',
         ];
     }
 

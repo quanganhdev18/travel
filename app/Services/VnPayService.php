@@ -176,7 +176,7 @@ class VnPayService
                 $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
 
                 // Bắn thông báo cho Admin
-                $admins = User::role('Admin')->get();
+                $admins = \Spatie\Permission\Models\Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
                 if ($admins->count() > 0) {
                     Notification::send($admins, new AdminBookingNotification(
                         $bookingFresh,

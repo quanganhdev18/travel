@@ -69,6 +69,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 // Admin Controllers
+use App\Http\Controllers\Admin\AccommodationController;
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\OngoingTourController;
@@ -144,18 +145,37 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 |--------------------------------------------------------------------------
 */
 
-Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
-Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
+// Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
+// Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
 
 // Ticket Booking Routes removed - tickets can only be booked along with tours
 // Ticket detail - MUST be last to avoid conflicts
-Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
+// Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
 
 /*
 |--------------------------------------------------------------------------
 | Profile
 |--------------------------------------------------------------------------
 */
+
+Route::post('/api/coupons/apply', [TourBookingController::class, 'applyCoupon'])
+    ->name('coupons.apply');
+
+// Đặt Tour
+Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
+    ->name('frontend.tours.checkout');
+
+Route::post('/tours/book', [TourBookingController::class, 'store'])
+    ->name('frontend.tours.store');
+
+Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
+    ->name('frontend.tours.booking_success');
+
+Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
+    ->name('frontend.tours.booking_status');
+
+Route::post('/tours/booking-success/{id}/create-account', [TourBookingController::class, 'createAccount'])
+    ->name('frontend.tours.create_account');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])
@@ -174,33 +194,17 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+// Demo Bar Routes (Public cho phép Guest dùng)
+Route::post('/demo/bookings/{id}/simulate-payment', [DemoController::class, 'simulatePayment'])
+    ->name('demo.bookings.simulate_payment');
+
+Route::post('/demo/bookings/{id}/fast-forward-cancel', [DemoController::class, 'fastForwardCancel'])
+    ->name('demo.bookings.fast_forward_cancel');
+
 Route::middleware(['auth'])->group(function () {
     // OCR CCCD
     Route::post('/api/scan-cccd', [OcrController::class, 'scanCccd'])
         ->name('ocr.scan-cccd');
-
-    Route::post('/api/coupons/apply', [TourBookingController::class, 'applyCoupon'])
-        ->name('coupons.apply');
-
-    // Đặt Tour
-    Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
-        ->name('frontend.tours.checkout');
-
-    Route::post('/tours/book', [TourBookingController::class, 'store'])
-        ->name('frontend.tours.store');
-
-    Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
-        ->name('frontend.tours.booking_success');
-
-    Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
-        ->name('frontend.tours.booking_status');
-
-    // Demo Bar Routes
-    Route::post('/demo/bookings/{id}/simulate-payment', [DemoController::class, 'simulatePayment'])
-        ->name('demo.bookings.simulate_payment');
-
-    Route::post('/demo/bookings/{id}/fast-forward-cancel', [DemoController::class, 'fastForwardCancel'])
-        ->name('demo.bookings.fast_forward_cancel');
 
     // Đặt vé máy bay
     Route::get('/flights/checkout', [FlightController::class, 'checkout'])
@@ -348,6 +352,11 @@ Route::get('/bookings/{id}/invoice', [
     Route::resource('destinations', DestinationController::class)
         ->except(['show'])
         ->names('admin.destinations');
+
+    // Lưu trú (Accommodations)
+    Route::resource('accommodations', AccommodationController::class)
+        ->except(['show'])
+        ->names('admin.accommodations');
 
     // Danh mục
     Route::get('/categories/trash', [CategoryController::class, 'trash'])->name('admin.categories.trash');

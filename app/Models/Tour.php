@@ -53,7 +53,30 @@ class Tour extends Model
         'departure_ward_id',
         'destination_province_id',
         'destination_ward_id',
+        'cost_transport',
+        'cost_meal',
+        'cost_insurance',
+        'cost_service_fee',
     ];
+
+    public function accommodation_tiers()
+    {
+        return $this->hasMany(TourAccommodationTier::class);
+    }
+
+    public function getBasePrice(Accommodation $accommodation = null, $isHoliday = false)
+    {
+        $base = $this->cost_transport + $this->cost_meal + $this->cost_insurance + $this->cost_service_fee;
+        
+        $ticketTotal = $this->tickets->sum('adult_price');
+        $base += $ticketTotal;
+
+        if ($accommodation) {
+            $base += $isHoliday ? $accommodation->holiday_price_per_adult : $accommodation->price_per_adult;
+        }
+
+        return $base;
+    }
 
     public function departure_location()
     {

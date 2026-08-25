@@ -70,7 +70,7 @@ class CancelUnpaidBookingsCommand extends Command
                 });
 
                 // Gửi email thông báo hủy đơn kèm link đặt lại
-                $email = $booking->user->email ?? null;
+                $email = $booking->customer_email ?? ($booking->user->email ?? null);
                 if ($email) {
                     try {
                         Mail::to($email)->send(new TourBookingCancelledMail($booking));

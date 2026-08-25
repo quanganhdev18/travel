@@ -192,7 +192,7 @@
                             </a>
                         </li>
                         @endauth
-                        <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tickets.index') }}">{{ __('Vé tham quan') }}</a></li>
+                        {{-- <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tickets.index') }}">{{ __('Vé tham quan') }}</a></li> --}}
                     </ul>
 
                     <!-- Mobile Only Top Utilities -->
@@ -312,7 +312,7 @@
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-title">{{ __('Sản phẩm') }}</h5>
                     <a href="{{ route('frontend.tours.index') }}" class="footer-link">{{ __('Tour trọn gói') }}</a>
-                    <a href="{{ route('frontend.tickets.index') }}" class="footer-link">{{ __('Vé tham quan') }}</a>
+                    {{-- <a href="{{ route('frontend.tickets.index') }}" class="footer-link">{{ __('Vé tham quan') }}</a> --}}
                     @auth
                         <a href="{{ route('user.profile') }}?tab=wishlists" class="footer-link">{{ __('Tour đã lưu') }}</a>
                     @else

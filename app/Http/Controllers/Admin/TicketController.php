@@ -37,18 +37,12 @@ class TicketController extends Controller
             'destination_id' => 'required|exists:destinations,id',
             'title' => 'required|string|max:255|unique:tickets,title',
             'description' => 'nullable|string',
+            'adult_price' => 'required|numeric|min:0',
+            'child_price' => 'required|numeric|min:0',
             'provider_name' => 'nullable|string|max:255',
             'cancellation_policy' => 'nullable|string',
             'images' => 'nullable|array',
             'images.*' => 'image|max:2048',
-            'option_names' => 'required|array|min:1',
-            'option_names.*' => 'required|string|max:255',
-            'option_descriptions' => 'nullable|array',
-            'option_prices' => 'required|array',
-            'option_prices.*' => 'required|numeric|min:0',
-            'option_original_prices' => 'nullable|array',
-            'option_original_prices.*' => 'nullable|numeric|min:0',
-            'option_conditions' => 'nullable|array',
             'tours' => 'nullable|array',
             'tours.*' => 'exists:tours,id',
         ], [
@@ -62,6 +56,8 @@ class TicketController extends Controller
                 'title' => $request->title,
                 'slug' => Str::slug($request->title),
                 'description' => $request->description,
+                'adult_price' => $request->adult_price,
+                'child_price' => $request->child_price,
                 'provider_name' => $request->provider_name,
                 'cancellation_policy' => $request->cancellation_policy,
             ]);
@@ -76,25 +72,6 @@ class TicketController extends Controller
                         'is_primary' => $index === 0,
                     ]);
                 }
-            }
-
-            // Lưu các option vé
-            foreach ($request->option_names as $index => $name) {
-                $conditions = $request->option_conditions[$index] ?? null;
-
-                // Chỉ encode nếu có giá trị và không rỗng
-                if ($conditions !== null && trim($conditions) !== '') {
-                    $conditions = json_encode(['text' => $conditions]);
-                }
-
-                TicketOption::create([
-                    'ticket_id' => $ticket->id,
-                    'name' => $name,
-                    'description' => $request->option_descriptions[$index] ?? null,
-                    'price' => $request->option_prices[$index],
-                    'original_price' => $request->option_original_prices[$index] ?? null,
-                    'conditions' => $conditions,
-                ]);
             }
 
             // Liên kết với tours
@@ -128,19 +105,12 @@ class TicketController extends Controller
             'destination_id' => 'required|exists:destinations,id',
             'title' => 'required|string|max:255|unique:tickets,title,' . $ticket->id,
             'description' => 'nullable|string',
+            'adult_price' => 'required|numeric|min:0',
+            'child_price' => 'required|numeric|min:0',
             'provider_name' => 'nullable|string|max:255',
             'cancellation_policy' => 'nullable|string',
             'images' => 'nullable|array',
             'images.*' => 'image|max:2048',
-            'option_ids' => 'nullable|array',
-            'option_names' => 'required|array|min:1',
-            'option_names.*' => 'required|string|max:255',
-            'option_descriptions' => 'nullable|array',
-            'option_prices' => 'required|array',
-            'option_prices.*' => 'required|numeric|min:0',
-            'option_original_prices' => 'nullable|array',
-            'option_original_prices.*' => 'nullable|numeric|min:0',
-            'option_conditions' => 'nullable|array',
             'tours' => 'nullable|array',
             'tours.*' => 'exists:tours,id',
         ], [
@@ -154,6 +124,8 @@ class TicketController extends Controller
                 'title' => $request->title,
                 'slug' => Str::slug($request->title),
                 'description' => $request->description,
+                'adult_price' => $request->adult_price,
+                'child_price' => $request->child_price,
                 'provider_name' => $request->provider_name,
                 'cancellation_policy' => $request->cancellation_policy,
             ]);
@@ -171,50 +143,6 @@ class TicketController extends Controller
                     $hasExisting = true;
                 }
             }
-
-            // Cập nhật các option
-            $existingIds = $request->option_ids ?? [];
-            $currentIds = [];
-
-            foreach ($request->option_names as $index => $name) {
-                $optionId = $existingIds[$index] ?? null;
-
-                $conditions = $request->option_conditions[$index] ?? null;
-
-                // Chỉ encode nếu có giá trị và không rỗng
-                if ($conditions !== null && trim($conditions) !== '') {
-                    $conditions = json_encode(['text' => $conditions]);
-                }
-
-                if ($optionId && TicketOption::where('id', $optionId)->where('ticket_id', $ticket->id)->exists()) {
-                    // Cập nhật option hiện có
-                    $option = TicketOption::find($optionId);
-                    $option->update([
-                        'name' => $name,
-                        'description' => $request->option_descriptions[$index] ?? null,
-                        'price' => $request->option_prices[$index],
-                        'original_price' => $request->option_original_prices[$index] ?? null,
-                        'conditions' => $conditions,
-                    ]);
-                    $currentIds[] = $optionId;
-                } else {
-                    // Tạo mới option
-                    $newOption = TicketOption::create([
-                        'ticket_id' => $ticket->id,
-                        'name' => $name,
-                        'description' => $request->option_descriptions[$index] ?? null,
-                        'price' => $request->option_prices[$index],
-                        'original_price' => $request->option_original_prices[$index] ?? null,
-                        'conditions' => $conditions,
-                    ]);
-                    $currentIds[] = $newOption->id;
-                }
-            }
-
-            // Xóa các option không còn
-            TicketOption::where('ticket_id', $ticket->id)
-                ->whereNotIn('id', $currentIds)
-                ->delete();
 
             // Cập nhật liên kết với tours
             if ($request->has('tours')) {

@@ -609,12 +609,41 @@
                                         @endif
 
                                         @if(isset($tour->addons) && $tour->addons->isNotEmpty())
-                                            <div class="mb-3">
+                                            @php
+                                                $includedAddons = $tour->addons->where('type', 'included');
+                                                $extraAddons = $tour->addons->where('type', 'extra');
+                                            @endphp
+                                            
+                                            @if($includedAddons->isNotEmpty())
+                                            <div class="mb-4">
                                                 <h5 class="fw-bold text-dark mb-3">
-                                                    <i class="bi bi-box2-heart me-2 text-primary"></i>{{ __('Dịch vụ bổ sung') }}
+                                                    <i class="bi bi-check-circle-fill me-2 text-success"></i>{{ __('Dịch vụ đi kèm (Đã bao gồm)') }}
                                                 </h5>
                                                 <div class="row g-3">
-                                                    @foreach($tour->addons as $addon)
+                                                    @foreach($includedAddons as $addon)
+                                                        <div class="col-md-6">
+                                                            <div class="activity-simple-item h-100 mb-0 shadow-sm d-flex flex-column border-success border-start border-4">
+                                                                <div class="fw-bold text-dark mb-1 fs-6">{{ $addon->name }}</div>
+                                                                @if($addon->description)
+                                                                    <div class="small text-muted mb-2 flex-grow-1">{{ \Illuminate\Support\Str::limit($addon->description, 100) }}</div>
+                                                                @endif
+                                                                <div class="fw-bold text-success mt-auto">
+                                                                    Miễn phí
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            @if($extraAddons->isNotEmpty())
+                                            <div class="mb-3">
+                                                <h5 class="fw-bold text-dark mb-3">
+                                                    <i class="bi bi-box2-heart me-2 text-primary"></i>{{ __('Dịch vụ bổ sung (Tùy chọn)') }}
+                                                </h5>
+                                                <div class="row g-3">
+                                                    @foreach($extraAddons as $addon)
                                                         <div class="col-md-6">
                                                             <div class="activity-simple-item h-100 mb-0 shadow-sm d-flex flex-column">
                                                                 <div class="fw-bold text-dark mb-1 fs-6">{{ $addon->name }}</div>
@@ -629,6 +658,7 @@
                                                     @endforeach
                                                 </div>
                                             </div>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
@@ -744,15 +774,15 @@
                     <div class="d-flex flex-column mb-4 pb-3 border-bottom">
                         <div class="d-flex align-items-end mb-2">
                             <div class="booking-price">
-                                {{ format_currency($tour->base_price ?? 0) }}
+                                {{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}
                             </div>
-                            <span class="ms-2 text-muted mb-2">
-                                / {{ __('người lớn') }}
+                            <span class="ms-2 text-muted mb-2" data-bs-toggle="tooltip" title="Bao gồm: Vận chuyển ({{ format_currency($tour->cost_transport ?? 0) }}), Ăn uống ({{ format_currency($tour->cost_meal ?? 0) }}), Bảo hiểm ({{ format_currency($tour->cost_insurance ?? 0) }}), Phí dịch vụ ({{ format_currency($tour->cost_service_fee ?? 0) }}). Giá CHƯA bao gồm chi phí lưu trú.">
+                                / {{ __('người lớn') }} <i class="bi bi-info-circle"></i>
                             </span>
                         </div>
                         <div class="d-flex align-items-end">
                             <div class="fs-5 fw-bold text-info">
-                                {{ format_currency($tour->child_price ?? (($tour->base_price ?? 0) * 0.75)) }}
+                                {{ format_currency( ($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) * 0.75 ) }}
                             </div>
                             <span class="ms-2 text-muted">
                                 / {{ __('trẻ em') }}
@@ -956,21 +986,13 @@
                                 </span>
 
                                 <span class="booking-total" id="totalPrice">
-                                    {{ format_currency($tour->base_price ?? 0) }}
+                                    {{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}
                                 </span>
                             </div>
 
-                            @auth
-                                <button type="submit" class="btn btn-register-premium w-100 py-3 fs-5">
-                                    {{ __('Đặt Ngay Chuyến Đi') }}
-                                </button>
-                            @else
-                                <a href="{{ route('login', ['redirect' => url()->current()]) }}"
-                                   class="btn btn-login-premium w-100 py-3 text-center d-block bg-white text-primary"
-                                   style="border: 2px solid var(--primary-color);">
-                                    {{ __('Đăng nhập để Đặt') }}
-                                </a>
-                            @endauth
+                            <button type="submit" class="btn btn-register-premium w-100 py-3 fs-5">
+                                {{ __('Đặt Ngay Chuyến Đi') }}
+                            </button>
                         </form>
                     @endif
                 </div>
@@ -1027,7 +1049,7 @@
                                         <div class="combo-footer">
                                             <div>
                                                 <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                                                <div class="combo-price-val">{{ format_currency($relatedTour->base_price ?? 0) }}</div>
+                                                <div class="combo-price-val">{{ format_currency($relatedTour->getBasePrice() > 0 ? $relatedTour->getBasePrice() : ($relatedTour->base_price ?? 0)) }}</div>
                                             </div>
                                             <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                                         </div>
@@ -1049,10 +1071,10 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        let basePriceVND = {{ $tour->base_price ?? 0 }};
-        let childPriceVND = {{ $tour->child_price ?? (($tour->base_price ?? 0) * 0.75) }};
-        const originalBasePrice = {{ $tour->base_price ?? 0 }};
-        const originalChildPrice = {{ $tour->child_price ?? (($tour->base_price ?? 0) * 0.75) }};
+        let basePriceVND = {{ $tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0) }};
+        let childPriceVND = basePriceVND * 0.75;
+        const originalBasePrice = basePriceVND;
+        const originalChildPrice = childPriceVND;
         const currency = '{{ Session::get("currency", "VND") }}';
 
         let rate = 1;
@@ -1253,7 +1275,7 @@
     <div class="d-flex flex-column">
         <div class="small text-muted mb-1" style="font-size: 0.75rem;">{{ __('Giá từ:') }}</div>
         <div class="d-flex align-items-baseline gap-1">
-            <strong class="fs-4 text-primary" style="font-weight: 800;">{{ format_currency($tour->base_price ?? 0) }}</strong>
+            <strong class="fs-4 text-primary" style="font-weight: 800;">{{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}</strong>
             <span class="small text-muted" style="font-size: 0.75rem;">/ {{ __('người lớn') }}</span>
         </div>
     </div>

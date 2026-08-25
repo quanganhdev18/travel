@@ -172,6 +172,7 @@ class UserController extends Controller
             'tour_schedule.tour.tour_images',
             'booking_passengers',
             'payments',
+            'booking_accommodations.room_type.accommodation',
         ])
             ->where('user_id', Auth::id())
             ->findOrFail($id);

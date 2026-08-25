@@ -98,8 +98,21 @@ class Booking extends Model
         'invoice_email',
         'invoice_requested_at',
         'invoice_sent_at',
-
+        'accommodation_id',
+        'single_rooms_count',
+        'extra_beds_count',
+        'price_breakdown',
     ];
+
+    public function accommodation()
+    {
+        return $this->belongsTo(Accommodation::class); // Legacy
+    }
+
+    public function booking_accommodations()
+    {
+        return $this->hasMany(BookingAccommodation::class);
+    }
 
     public function user()
     {
@@ -244,6 +257,7 @@ class Booking extends Model
         return [
             'invoice_requested_at' => 'datetime',
             'invoice_sent_at' => 'datetime',
+            'price_breakdown' => 'array',
         ];
     }
 }
