@@ -251,6 +251,14 @@
                 <h5 class="admin-card-title">Thông tin Tour</h5>
             </div>
             <div class="card-body">
+                @php
+                    $tourGuide = auth()->user()->tour_guide;
+                    $pendingAbsenceRequest = $tourGuide ? \App\Models\TourAbsenceRequest::where('tour_schedule_id', $tourSchedule->id)
+                        ->where('main_guide_id', $tourGuide->id)
+                        ->whereIn('status', ['pending_review', 'pending_review_urgent'])
+                        ->first() : null;
+                @endphp
+
                 @if($tour->primary_image)
                     <img src="{{ Storage::url($tour->primary_image) }}" alt="{{ $tour->title }}" class="img-fluid rounded mb-3 w-100" style="object-fit: cover; height: 180px;">
                 @endif
@@ -268,7 +276,7 @@
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Trạng thái Tour:</span>
-                        <span class="badge {{ $ss[0] }}">{{ $ss[1] }}</span>
+                        <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
                     </li>
                     <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                         <span class="text-muted">Vai trò của bạn:</span>
@@ -287,6 +295,18 @@
                         <span class="fw-bold text-success" id="checkin-counter">{{ $checkedInCount }} / {{ $totalCount }}</span>
                     </li>
                 </ul>
+
+                @if(!$scheduleGuide->is_backup && $groupStatus === 'upcoming' && \Carbon\Carbon::parse($tourSchedule->departure_date)->isFuture())
+                    @if($pendingAbsenceRequest)
+                        <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning mt-3 mb-0 text-center py-2 fw-medium" style="font-size: 0.85rem;">
+                            <i class="bi bi-hourglass-split me-1"></i> Yêu cầu đang chờ admin duyệt
+                        </div>
+                    @else
+                        <a href="{{ route('guide.schedules.absence', $tourSchedule->id) }}" class="btn btn-outline-danger w-100 mt-3 fw-bold">
+                            <i class="bi bi-calendar-x me-1"></i> Báo bận tour
+                        </a>
+                    @endif
+                @endif
 
                 </div>
         </div>

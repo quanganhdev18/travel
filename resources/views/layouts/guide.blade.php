@@ -229,6 +229,7 @@
         .badge-soft-danger { background: #fee2e2; color: #991b1b; }
         .badge-soft-primary { background: #dbeafe; color: #1e40af; }
         .badge-soft-secondary { background: #f1f5f9; color: #475569; }
+        .badge-soft-info { background: #e0f2fe; color: #0369a1; }
 
         /* Buttons */
         .btn-admin {

@@ -82,6 +82,7 @@ use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\ReviewController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
@@ -100,6 +101,7 @@ use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
+use App\Http\Controllers\Guide\AbsenceRequestController;
 use App\Http\Controllers\Guide\GroupSplitController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
@@ -527,6 +529,12 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     // Guide Reports
     Route::get('/schedules/{schedule}/report', [TourReportController::class, 'create'])->name('guide.reports.create');
     Route::post('/schedules/{schedule}/report', [TourReportController::class, 'store'])->name('guide.reports.store');
+
+    // Guide Absence Request
+    Route::get('/schedules/{schedule}/absence', [AbsenceRequestController::class, 'create'])
+        ->name('guide.schedules.absence');
+    Route::post('/schedules/{schedule}/absence', [AbsenceRequestController::class, 'store'])
+        ->name('guide.schedules.absence.store');
 });
 
 // Thêm Admin TourReport
@@ -534,6 +542,20 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tour-reports', [App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
     Route::get('/tour-reports/{report}', [App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
     Route::post('/tour-reports/{report}/approve', [App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
+
+    // Admin Absence Requests
+    Route::get('/absence-requests/available-guides/{schedule}', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'getAvailableGuides'])
+        ->name('admin.absence_requests.available_guides');
+    Route::post('/absence-requests/{absenceRequest}/approve', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'approve'])
+        ->name('admin.absence_requests.approve');
+    Route::post('/absence-requests/{absenceRequest}/reject', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'reject'])
+        ->name('admin.absence_requests.reject');
+
+    // Admin Settings
+    Route::get('/settings', [SettingController::class, 'index'])
+        ->name('admin.settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])
+        ->name('admin.settings.update');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

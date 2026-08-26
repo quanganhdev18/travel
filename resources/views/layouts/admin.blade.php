@@ -361,7 +361,8 @@
             ->doesntHave('schedule_guides')
             ->count();
             
-        $pendingReportsCount = \App\Models\TourReport::where('status', 'pending')->count();
+        $pendingReportsCount = \App\Models\TourReport::where('status', 'pending')->count() +
+            \App\Models\TourAbsenceRequest::whereIn('status', ['pending_review', 'pending_review_urgent'])->count();
     }
 @endphp
 
@@ -465,6 +466,11 @@
 
         <div class="group-title">Cấu hình hệ thống</div>
         <ul class="nav flex-column mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/settings*') ? 'active' : '' }}" href="{{ route('admin.settings.index') }}">
+                    <i class="bi bi-sliders"></i> Cấu hình chung
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/destinations*') ? 'active' : '' }}" href="{{ route('admin.destinations.index') }}">
                     <i class="bi bi-geo-alt"></i> Điểm đến

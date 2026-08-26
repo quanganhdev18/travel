@@ -6,15 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingPassenger;
 use App\Models\GroupSplit;
+use App\Models\TourAbsenceRequest;
 use App\Models\TourReport;
+use Illuminate\Http\Request;
 
 class TourReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reports = TourReport::with(['tour_schedule.tour', 'tour_guide'])->latest()->paginate(15);
+        $tab = $request->input('tab', 'reports');
 
-        return view('admin.tour_reports.index', compact('reports'));
+        $reports = TourReport::with(['tour_schedule.tour', 'tour_guide'])->latest()->paginate(15, ['*'], 'reports_page');
+
+        $absenceRequests = TourAbsenceRequest::with(['tour', 'tour_schedule', 'main_guide', 'new_main_guide', 'new_backup_guide', 'reviewer'])
+            ->orderByRaw("CASE 
+                WHEN status = 'pending_review_urgent' THEN 1 
+                WHEN status = 'pending_review' THEN 2 
+                ELSE 3 
+            END")
+            ->orderByDesc('created_at')
+            ->paginate(15, ['*'], 'absence_page');
+
+        return view('admin.tour_reports.index', compact('reports', 'absenceRequests', 'tab'));
     }
 
     public function show(TourReport $report)
