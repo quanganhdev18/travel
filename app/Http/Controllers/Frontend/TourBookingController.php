@@ -41,52 +41,6 @@ class TourBookingController extends Controller
     public function store(StoreTourBookingRequest $request)
     {
 
-        $maximumBookerDateOfBirth = Carbon::today()
-            ->subYears(18)
-            ->format('Y-m-d');
-        $request->validate([
-            'schedule_id' => 'required|exists:tour_schedules,id',
-            'adults' => 'required|integer|min:1',
-            'children' => 'required|integer|min:0',
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'customer_email' => 'required|email|max:255',
-            'meeting_point' => 'nullable|string|max:255',
-            'passengers' => 'required|array',
-            'passengers.adult.*.full_name' => 'required|string|max:255',
-            'passengers.adult.*.identity_number' => 'required|string|max:50',
-            'passengers.adult.0.date_of_birth' => [
-                'required',
-                'date',
-                'before_or_equal:'.$maximumBookerDateOfBirth,
-            ],
-            'passengers.adult.*.date_of_birth' => 'required|date',
-            'passengers.adult.*.gender' => 'required|in:male,female,other',
-            'passengers.child.*.full_name' => 'nullable|string|max:255',
-            'passengers.child.*.date_of_birth' => 'nullable|date',
-            'passengers.child.*.gender' => 'nullable|in:male,female,other',
-            'total_price' => 'required|numeric',
-            'transport_type' => 'required|in:flight,bus,self',
-            'issue_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date',
-            'issue_place' => 'nullable|string|max:255',
-            'front_image' => 'nullable|image|max:5120',
-            'back_image' => 'nullable|image|max:5120',
-            'payment_type' => 'required|in:full,deposit',
-            'payment_method' => 'required|in:transfer,vnpay',
-            'transport_price' => 'nullable|numeric',
-            'transport_data' => 'nullable|string',
-            'accommodation_id' => 'nullable|exists:accommodations,id',
-            'single_rooms_count' => 'nullable|integer|min:0',
-            'extra_beds_count' => 'nullable|integer|min:0',
-        ], [
-            'passengers.adult.0.date_of_birth.required' => 'Vui lòng nhập ngày sinh của người đặt tour.',
-
-            'passengers.adult.0.date_of_birth.date' => 'Ngày sinh của người đặt tour không hợp lệ.',
-
-            'passengers.adult.0.date_of_birth.before_or_equal' => 'Người đặt tour phải đủ 18 tuổi trở lên mới được phép đặt tour.',
-        ]);
-
         $user = Auth::user();
         $sessionId = session()->getId();
 
@@ -281,7 +235,15 @@ class TourBookingController extends Controller
         $costInsurance = $tour->cost_insurance ?? 0;
         $costServiceFee = $tour->cost_service_fee ?? 0;
 
-        $basePrice = $costTransport + $costMeal + $costInsurance + $costServiceFee;
+        $baseCosts = $costTransport + $costMeal + $costInsurance + $costServiceFee;
+        if ($baseCosts == 0) {
+            $baseCosts = $tour->base_price ?? 0;
+            $childBaseCosts = $tour->child_price ?? ($baseCosts * 0.75);
+        } else {
+            $childBaseCosts = $baseCosts * 0.75;
+        }
+
+        $basePrice = $baseCosts;
 
         $ticketAdultCost = 0;
         $ticketChildCost = 0;

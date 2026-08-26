@@ -1,223 +1,130 @@
 @extends('layouts.admin')
 
-@section('title', 'Chi tiết tài khoản')
+@section('page-title', 'Chi tiết Tài Khoản')
 
 @section('content')
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header pb-0">
-                    <div class="d-flex align-items-center">
-                        <h6 class="mb-0">Chi tiết tài khoản</h6>
-                        <div class="ms-auto">
-                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-pencil-alt"></i> Chỉnh sửa
-                            </a>
-                            <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-arrow-left"></i> Quay lại
-                            </a>
-                        </div>
+<div class="row">
+    <div class="col-md-4">
+        <!-- Thông tin cơ bản -->
+        <div class="admin-card border-0 mb-4 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="admin-card-header p-4" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-bottom: none;">
+                <div class="d-flex align-items-center">
+                    <div class="position-relative me-3">
+                        @if($user->avatar)
+                            <img src="{{ asset($user->avatar) }}" alt="Avatar" class="rounded-circle border border-4 border-white shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
+                        @else
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center border border-4 border-white shadow-sm" style="width: 80px; height: 80px; font-size: 2rem;">
+                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                            </div>
+                        @endif
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- User Information -->
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-body text-center">
-                                    <div class="avatar avatar-xxl mx-auto bg-gradient-primary">
-                                        <span class="text-white text-xl font-weight-bold">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
-                                    </div>
-                                    <h5 class="mt-3 mb-0">{{ $user->name }}</h5>
-                                    <p class="text-sm text-secondary">{{ $user->email }}</p>
-                                    
-                                    @if($user->role === 'admin')
-                                    <span class="badge badge-lg bg-gradient-danger">{{ $user->role_label ?? 'Admin' }}</span>
-                                    @elseif($user->role === 'staff')
-                                    <span class="badge badge-lg bg-gradient-success">{{ $user->role_label ?? 'Nhân viên' }}</span>
-                                    @elseif($user->role === 'cskh')
-                                    <span class="badge badge-lg bg-gradient-primary">{{ $user->role_label ?? 'Nhân viên CSKH' }}</span>
-                                    @elseif($user->role === 'guide')
-                                    <span class="badge badge-lg bg-gradient-info">{{ $user->role_label ?? 'Hướng dẫn viên' }}</span>
-                                    @else
-                                    <span class="badge badge-lg bg-gradient-secondary">{{ $user->role_label ?? 'Khách hàng' }}</span>
-                                    @endif
-
-                                    <hr class="horizontal dark my-3">
-
-                                    <div class="mb-3">
-                                        @if($user->is_active)
-                                        <span class="badge badge-lg bg-gradient-success">
-                                            <i class="fas fa-check-circle"></i> Đang hoạt động
-                                        </span>
-                                        @else
-                                        <span class="badge badge-lg bg-gradient-danger">
-                                            <i class="fas fa-lock"></i> Bị khóa
-                                        </span>
-                                        @endif
-                                    </div>
-
-                                    <hr class="horizontal dark my-3">
-                                    
-                                    <div class="text-start">
-                                        <p class="text-sm mb-2">
-                                            <i class="fas fa-phone text-primary me-2"></i>
-                                            <strong>Số điện thoại:</strong> {{ $user->phone ?? 'Chưa cập nhật' }}
-                                        </p>
-                                        <p class="text-sm mb-2">
-                                            <i class="fas fa-calendar text-primary me-2"></i>
-                                            <strong>Ngày tạo:</strong> {{ $user->created_at->format('d/m/Y H:i') }}
-                                        </p>
-                                        <p class="text-sm mb-0">
-                                            <i class="fas fa-clock text-primary me-2"></i>
-                                            <strong>Cập nhật:</strong> {{ $user->updated_at->format('d/m/Y H:i') }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Statistics -->
-                        <div class="col-md-8">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-body p-3">
-                                            <div class="row">
-                                                <div class="col-8">
-                                                    <div class="numbers">
-                                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Tổng đơn hàng</p>
-                                                        <h5 class="font-weight-bolder mb-0">{{ $bookingStats['total'] }}</h5>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4 text-end">
-                                                    <div class="icon icon-shape bg-gradient-primary shadow text-center border-radius-md">
-                                                        <i class="ni ni-cart text-lg opacity-10"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-body p-3">
-                                            <div class="row">
-                                                <div class="col-8">
-                                                    <div class="numbers">
-                                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Đã hoàn thành</p>
-                                                        <h5 class="font-weight-bolder mb-0">{{ $bookingStats['completed'] }}</h5>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4 text-end">
-                                                    <div class="icon icon-shape bg-gradient-success shadow text-center border-radius-md">
-                                                        <i class="ni ni-check-bold text-lg opacity-10"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-body p-3">
-                                            <div class="row">
-                                                <div class="col-8">
-                                                    <div class="numbers">
-                                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Đang xử lý</p>
-                                                        <h5 class="font-weight-bolder mb-0">{{ $bookingStats['pending'] }}</h5>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4 text-end">
-                                                    <div class="icon icon-shape bg-gradient-warning shadow text-center border-radius-md">
-                                                        <i class="ni ni-time-alarm text-lg opacity-10"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <div class="card">
-                                        <div class="card-body p-3">
-                                            <div class="row">
-                                                <div class="col-8">
-                                                    <div class="numbers">
-                                                        <p class="text-sm mb-0 text-capitalize font-weight-bold">Đã hủy</p>
-                                                        <h5 class="font-weight-bolder mb-0">{{ $bookingStats['cancelled'] }}</h5>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4 text-end">
-                                                    <div class="icon icon-shape bg-gradient-danger shadow text-center border-radius-md">
-                                                        <i class="ni ni-fat-remove text-lg opacity-10"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Recent Bookings -->
-                            <div class="card">
-                                <div class="card-header pb-0">
-                                    <h6>Đơn hàng gần đây</h6>
-                                </div>
-                                <div class="card-body px-0 pt-0 pb-2">
-                                    <div class="table-responsive p-0">
-                                        <table class="table align-items-center mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Mã đơn</th>
-                                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tour</th>
-                                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Trạng thái</th>
-                                                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Ngày đặt</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @forelse($user->bookings->take(5) as $booking)
-                                                <tr>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0">#{{ $booking->id }}</p>
-                                                    </td>
-                                                    <td>
-                                                        <p class="text-xs font-weight-bold mb-0">{{ $booking->tour->title ?? 'N/A' }}</p>
-                                                    </td>
-                                                    <td class="align-middle text-center text-sm">
-                                                        @if($booking->status === 'completed')
-                                                        <span class="badge badge-sm bg-gradient-success">Hoàn thành</span>
-                                                        @elseif($booking->status === 'confirmed')
-                                                        <span class="badge badge-sm bg-gradient-info">Đã xác nhận</span>
-                                                        @elseif($booking->status === 'pending')
-                                                        <span class="badge badge-sm bg-gradient-warning">Chờ xử lý</span>
-                                                        @else
-                                                        <span class="badge badge-sm bg-gradient-secondary">{{ $booking->status }}</span>
-                                                        @endif
-                                                    </td>
-                                                    <td class="align-middle text-center">
-                                                        <span class="text-secondary text-xs font-weight-bold">{{ $booking->created_at->format('d/m/Y') }}</span>
-                                                    </td>
-                                                </tr>
-                                                @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center py-3">
-                                                        <p class="text-xs text-secondary mb-0">Chưa có đơn hàng nào</p>
-                                                    </td>
-                                                </tr>
-                                                @endforelse
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div>
+                        <h5 class="mb-1 fw-bold text-dark">{{ $user->name }}</h5>
+                        <p class="text-muted mb-2 small">{{ $user->email }}</p>
+                        @if($user->role === 'admin')
+                            <span class="badge bg-secondary px-2 py-1 shadow-sm">Admin</span>
+                        @elseif($user->role === 'staff')
+                            <span class="badge bg-secondary px-2 py-1 shadow-sm">Nhân viên</span>
+                        @elseif($user->role === 'cskh')
+                            <span class="badge bg-secondary px-2 py-1 shadow-sm">Nhân viên CSKH</span>
+                        @elseif($user->role === 'guide')
+                            <span class="badge bg-secondary px-2 py-1 shadow-sm">Hướng dẫn viên</span>
+                        @else
+                            <span class="badge bg-secondary px-2 py-1 shadow-sm text-light">Khách hàng</span>
+                        @endif
                     </div>
                 </div>
             </div>
+            <div class="admin-card-body p-0">
+                <ul class="list-group list-group-flush" style="border-top: none;">
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center border-0 border-bottom">
+                        <span class="text-muted"><i class="bi bi-telephone me-2"></i> Số điện thoại</span>
+                        <span class="fw-medium">{{ $user->phone ?? 'Chưa cập nhật' }}</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center border-0 border-bottom">
+                        <span class="text-muted"><i class="bi bi-circle-fill {{ $user->is_active ? 'text-success' : 'text-danger' }} small me-2"></i> Trạng thái</span>
+                        <span class="{{ $user->is_active ? 'text-success' : 'text-danger' }} fw-medium">
+                            {{ $user->is_active ? 'Đang hoạt động' : 'Bị khóa' }}
+                        </span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center border-0 border-bottom">
+                        <span class="text-muted"><i class="bi bi-clock-history me-2"></i> Hoạt động gần nhất</span>
+                        <span class="fw-medium">{{ $user->last_seen_at ? $user->last_seen_at->format('d/m/Y H:i') : 'Chưa có' }}</span>
+                    </li>
+                    <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center border-0">
+                        <span class="text-muted"><i class="bi bi-calendar-plus me-2"></i> Ngày tạo</span>
+                        <span class="fw-medium">{{ $user->created_at->format('d/m/Y H:i') }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Thông tin Căn cước công dân -->
+        <div class="admin-card border-0 mb-4">
+            <div class="admin-card-header bg-white py-4 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success text-white rounded d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 48px; height: 48px;">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="admin-card-title mb-1 fw-bold text-dark">Thông tin định danh</h5>
+                        <div class="text-muted small">CCCD / Hộ chiếu được xác minh. Liên hệ hỗ trợ để thay đổi.</div>
+                    </div>
+                </div>
+                <div>
+                    @if($user->user_identity)
+                        <span class="badge rounded-pill bg-success px-3 py-2 fw-medium shadow-sm"><i class="bi bi-check-circle-fill me-1"></i>Đã xác minh</span>
+                    @else
+                        <span class="badge rounded-pill bg-secondary px-3 py-2 fw-medium shadow-sm"><i class="bi bi-x-circle-fill me-1"></i>Chưa xác minh</span>
+                    @endif
+                </div>
+            </div>
+            <div class="admin-card-body">
+                @if($user->user_identity)
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="border rounded p-3 bg-white flex-grow-1 shadow-sm" style="min-width: 200px; border-color: #e5e7eb !important;">
+                            <div class="text-secondary small mb-2 text-uppercase fw-semibold" style="font-size: 0.75rem;">Số CCCD / Hộ chiếu</div>
+                            <div class="fw-bold text-dark fs-6">{{ $user->user_identity->identity_number }}</div>
+                        </div>
+                        <div class="border rounded p-3 bg-white flex-grow-1 shadow-sm" style="min-width: 200px; border-color: #e5e7eb !important;">
+                            <div class="text-secondary small mb-2 text-uppercase fw-semibold" style="font-size: 0.75rem;">Họ và tên đầy đủ</div>
+                            <div class="fw-bold text-dark fs-6">{{ $user->user_identity->full_name }}</div>
+                        </div>
+                        <div class="border rounded p-3 bg-white flex-grow-1 shadow-sm" style="min-width: 150px; border-color: #e5e7eb !important;">
+                            <div class="text-secondary small mb-2 text-uppercase fw-semibold" style="font-size: 0.75rem;">Ngày sinh</div>
+                            <div class="fw-bold text-dark fs-6">{{ $user->user_identity->date_of_birth ? $user->user_identity->date_of_birth->format('d/m/Y') : 'N/A' }}</div>
+                        </div>
+                        <div class="border rounded p-3 bg-white flex-grow-1 shadow-sm" style="min-width: 150px; border-color: #e5e7eb !important;">
+                            <div class="text-secondary small mb-2 text-uppercase fw-semibold" style="font-size: 0.75rem;">Giới tính</div>
+                            <div class="fw-bold fs-6" style="color: #3b82f6;">
+                                @if(strtolower($user->user_identity->gender) === 'nam' || strtolower($user->user_identity->gender) === 'male')
+                                    <i class="bi bi-gender-male me-1"></i> Nam
+                                @elseif(strtolower($user->user_identity->gender) === 'nữ' || strtolower($user->user_identity->gender) === 'nu' || strtolower($user->user_identity->gender) === 'female')
+                                    <i class="bi bi-gender-female me-1"></i> Nữ
+                                @else
+                                    {{ $user->user_identity->gender ?? 'N/A' }}
+                                @endif
+                            </div>
+                        </div>
+                        <div class="border rounded p-3 bg-white flex-grow-1 shadow-sm" style="min-width: 200px; border-color: #e5e7eb !important;">
+                            <div class="text-secondary small mb-2 text-uppercase fw-semibold" style="font-size: 0.75rem;">Ngày hết hạn giấy tờ</div>
+                            <div class="fw-bold text-dark fs-6">{{ $user->user_identity->expiry_date ? $user->user_identity->expiry_date->format('d/m/Y') : 'N/A' }}</div>
+                        </div>
+                    </div>
+                @else
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-person-vcard fs-1 text-light mb-2 d-block"></i>
+                        Người dùng này chưa cập nhật thông tin Căn cước công dân.
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{{ route('admin.users.index') }}" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i> Quay lại</a>
+            <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary"><i class="bi bi-pencil-square me-1"></i> Chỉnh sửa tài khoản</a>
         </div>
     </div>
 </div>

@@ -9,6 +9,7 @@ use App\Models\Review;
 use App\Models\TicketBooking;
 use App\Models\TourGuide;
 use App\Services\RefundService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -196,6 +197,13 @@ class UserController extends Controller
 
         if ($booking->booking_status === 'cancelled') {
             return redirect()->back()->with('error', 'Đơn hàng đã được hủy trước đó.');
+        }
+
+        $isDeparted = Carbon::parse($booking->tour_schedule->departure_date)->startOfDay()->isPast()
+            || in_array($booking->tour_status, ['in_progress', 'checking_in', 'completed', 'closed']);
+
+        if ($isDeparted) {
+            return redirect()->back()->with('error', 'Tour đã khởi hành, không thể hủy đơn hàng.');
         }
 
         $bankData = null;

@@ -439,7 +439,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link d-flex justify-content-between align-items-center {{ request()->is('admin/tour-reports*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
-                    <div><i class="bi bi-file-earmark-check"></i> Báo cáo & Quyết toán</div>
+                    <div><i class="bi bi-file-earmark-check"></i> Báo cáo Tour</div>
                     @if(isset($pendingReportsCount) && $pendingReportsCount > 0)
                         <span class="badge bg-warning text-dark rounded-pill" title="Báo cáo chờ duyệt">{{ $pendingReportsCount }}</span>
                     @endif

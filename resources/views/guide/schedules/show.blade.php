@@ -77,7 +77,15 @@
     $tourSchedule = $scheduleGuide->tour_schedule;
     $tour = $tourSchedule->tour;
 
-    $firstBooking = $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->first();
+    $firstBooking = $tourSchedule->bookings
+        ->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])
+        ->whereIn('payment_status', ['paid_30', 'paid_100'])
+        ->first();
+    if (!$firstBooking) {
+        $firstBooking = $tourSchedule->bookings
+            ->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])
+            ->first();
+    }
     $groupStatus = $firstBooking ? $firstBooking->tour_status : 'upcoming';
 
     $tourStatusMap = [
@@ -106,6 +114,35 @@
         ->flatMap(fn($b) => $b->booking_passengers);
     $checkedInCount = $allPassengers->where('checked_in', true)->count();
     $totalCount = $allPassengers->count();
+    
+    $passengersArray = $tourSchedule->bookings->flatMap(fn($b) => $b->booking_passengers)->map(function($p) {
+        $activeSplit = $p->group_splits->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE'])->first();
+        $extensions = $activeSplit ? $activeSplit->extensions->map(function($e) {
+            return [
+                'old_end_time' => $e->old_end_time->format('Y-m-d H:i'),
+                'new_end_time' => $e->new_end_time->format('Y-m-d H:i'),
+                'extend_reason' => $e->extend_reason,
+                'confirmed_by_guide_name' => $e->confirmed_by_guide_name,
+                'created_at' => $e->created_at->format('Y-m-d H:i'),
+            ];
+        })->toArray() : [];
+        if ($activeSplit) {
+            $activeSplitArray = $activeSplit->toArray();
+            $activeSplitArray['extensions'] = $extensions;
+        } else {
+            $activeSplitArray = null;
+        }
+        return [
+            'id' => $p->id,
+            'full_name' => $p->full_name,
+            'passenger_type' => $p->passenger_type,
+            'activity_checkins' => $p->activity_checkins->pluck('tour_activity_id')->toArray(),
+            'active_split' => $activeSplitArray,
+            'is_free_time' => $activeSplit ? true : false,
+            'free_time_location' => $activeSplit ? $activeSplit->split_location : null,
+            'free_time_end' => $activeSplit ? $activeSplit->end_time->format('Y-m-d H:i:s') : null,
+        ];
+    })->values()->all();
 
     $isLocked = ($groupStatus === 'completed' || $tourSchedule->status === 'closed');
 @endphp
@@ -121,7 +158,7 @@
         @endphp
         @if(!$report)
             <a href="{{ route('guide.reports.create', $tourSchedule->id) }}" class="btn btn-sm btn-primary fw-bold">
-                <i class="bi bi-file-earmark-text"></i> Viết Báo Cáo & Quyết Toán
+                <i class="bi bi-file-earmark-text"></i> Viết Báo Cáo Tour
             </a>
         @else
             <span class="badge bg-success bg-opacity-10 text-success border border-success p-2">
@@ -269,6 +306,28 @@
                     <i class="bi bi-geo-alt-fill me-1 text-info"></i>Điểm Tham Quan
                 </button>
             </li>
+            @if($groupStatus !== 'completed')
+                @php
+                    $totalActivitiesCount = $tour->tour_itineraries->flatMap(fn($i) => $i->activities)->count();
+                    $checkedInActivitiesCount = $tourSchedule->activity_checkins->count();
+                    $allActivitiesChecked = ($totalActivitiesCount > 0 && $checkedInActivitiesCount === $totalActivitiesCount);
+                @endphp
+                <li class="ms-auto my-auto d-flex align-items-center">
+                    <form action="{{ route('guide.schedules.update_group_status', $tourSchedule->id) }}" method="POST" id="complete-tour-form" onsubmit="return confirm('Xác nhận hoàn thành tour này? Trạng thái sẽ được cập nhật đồng loạt cho cả đoàn.')">
+                        @csrf
+                        <input type="hidden" name="tour_status" value="completed">
+                        <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm" id="btn-complete-tour" {{ !$allActivitiesChecked ? 'disabled' : '' }} title="{{ !$allActivitiesChecked ? 'Bạn cần check-in toàn bộ các điểm tham quan để hoàn thành tour' : 'Xác nhận hoàn thành tour' }}">
+                            <i class="bi bi-check-circle-fill me-1"></i>Tour đã hoàn thành
+                        </button>
+                    </form>
+                </li>
+            @else
+                <li class="ms-auto my-auto d-flex align-items-center">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success p-2 fw-bold" style="font-size: 0.85rem;">
+                        <i class="bi bi-check-circle-fill me-1"></i>Tour đã hoàn thành
+                    </span>
+                </li>
+            @endif
         </ul>
 
         <div class="tab-content" id="scheduleTabContent">
@@ -421,7 +480,61 @@
                                                                                 </div>
                                                                             </div>
                                                                         </div>
+
+                                                                        @if($booking->booking_accommodations && $booking->booking_accommodations->count() > 0)
+                                                                            <div class="card border-0 bg-light p-3 mb-3 text-start">
+                                                                                <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="bi bi-building me-1"></i>Thông tin lưu trú</h6>
+                                                                                @foreach($booking->booking_accommodations as $index => $ba)
+                                                                                    <div class="{{ $index > 0 ? 'border-top pt-3 mt-3' : '' }}">
+                                                                                        <div class="row g-2 small">
+                                                                                            <div class="col-5 text-muted text-start">Khách sạn:</div>
+                                                                                            <div class="col-7 fw-bold text-dark text-start">
+                                                                                                {{ $ba->accommodation_name_snapshot ?? ($ba->room_type->accommodation->name ?? '—') }}
+                                                                                            </div>
+
+                                                                                            <div class="col-5 text-muted text-start">Địa chỉ:</div>
+                                                                                            <div class="col-7 fw-semibold text-dark text-start" style="font-size: 0.75rem;">
+                                                                                                {{ $ba->room_type->accommodation->address ?? '—' }}
+                                                                                            </div>
+
+                                                                                            <div class="col-5 text-muted text-start">Loại phòng:</div>
+                                                                                            <div class="col-7 fw-bold text-dark text-start">
+                                                                                                <span class="badge bg-secondary">{{ $ba->room_type_name_snapshot ?? ($ba->room_type->name ?? '—') }}</span>
+                                                                                            </div>
+
+                                                                                            <div class="col-5 text-muted text-start">Số lượng:</div>
+                                                                                            <div class="col-7 fw-bold text-dark text-start">
+                                                                                                ({{ $ba->single_rooms_count ?? 1 }} phòng, {{ $ba->extra_bed_qty ?? 0 }} giường phụ)
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                @endforeach
+                                                                            </div>
+                                                                        @endif
  
+                                                                        @php
+                                                                            $activeSplit = $passenger->group_splits->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE'])->first();
+                                                                        @endphp
+                                                                        @if($activeSplit)
+                                                                        <div class="card border-0 border-start border-3 border-primary bg-primary bg-opacity-10 p-3 mb-3">
+                                                                            <h6 class="fw-bold mb-2 text-primary text-start" style="font-size: 0.8rem;"><i class="bi bi-clock-history me-1"></i>Thông tin Tách đoàn:</h6>
+                                                                            <div class="row g-2 small text-start">
+                                                                                <div class="col-5 text-muted">Thời gian:</div>
+                                                                                <div class="col-7 fw-bold text-dark">{{ $activeSplit->start_time ? $activeSplit->start_time->format('H:i d/m') : '' }} - {{ $activeSplit->end_time ? $activeSplit->end_time->format('H:i d/m') : '' }}</div>
+                                                                                <div class="col-5 text-muted">Lý do:</div>
+                                                                                <div class="col-7 fw-bold text-dark">{{ $activeSplit->reason }}</div>
+                                                                                <div class="col-5 text-muted">SĐT liên hệ:</div>
+                                                                                <div class="col-7 fw-bold text-dark"><a href="tel:{{ $activeSplit->phone_number }}" class="text-decoration-none">{{ $activeSplit->phone_number }}</a></div>
+                                                                                @if($activeSplit->split_location)
+                                                                                    <div class="col-5 text-muted">Điểm tách:</div>
+                                                                                    <div class="col-7 fw-bold text-dark">{{ $activeSplit->split_location }}</div>
+                                                                                @endif
+                                                                                <div class="col-5 text-muted">Điểm quay lại:</div>
+                                                                                <div class="col-7 fw-bold text-dark">{{ $activeSplit->return_location }}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                        @endif
+
                                                                         @if($passenger->special_note)
                                                                         <div class="card border-0 border-start border-3 border-warning bg-warning bg-opacity-10 p-3">
                                                                             <h6 class="fw-bold mb-1 text-warning text-start" style="font-size: 0.8rem;"><i class="bi bi-sticky-fill me-1"></i>Ghi chú đặc biệt:</h6>
@@ -522,6 +635,7 @@
                                                                     data-id="{{ $activity->id }}" 
                                                                     data-url="{{ route('guide.activities.toggle_checkin', [$tourSchedule->id, $activity->id]) }}"
                                                                     id="btn-act-{{ $activity->id }}"
+                                                                    data-is-checked="{{ $isChecked ? '1' : '0' }}"
                                                                     {{ $isLocked ? 'disabled' : '' }}>
                                                                     @if($isChecked)
                                                                         <i class="bi bi-arrow-counterclockwise me-1"></i>Hủy
@@ -608,11 +722,19 @@
 <div class="modal fade" id="activityRollCallModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header border-bottom px-4 py-3 bg-light">
-                <h5 class="modal-title fw-bold">
+            <div class="modal-header border-bottom px-4 py-3 bg-light d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold mb-0">
                     <i class="bi bi-people-fill text-primary me-2"></i>Điểm danh: <span id="activity-rollcall-title" class="text-primary"></span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex gap-2 align-items-center">
+                    <button type="button" class="btn btn-sm btn-success fw-bold" id="btn-checkin-all-activity" {{ $isLocked ? 'disabled' : '' }}>
+                        <i class="bi bi-check-all me-1"></i>Chọn tất cả
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-bold" id="btn-uncheck-all-activity" {{ $isLocked ? 'disabled' : '' }}>
+                        <i class="bi bi-x-circle me-1"></i>Hủy tất cả
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body p-0">
                 <div class="table-responsive">
@@ -780,6 +902,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     let totalCount = {{ $totalCount }};
     let checkedCount = {{ $checkedInCount }};
+    const isLocked = {{ $isLocked ? 'true' : 'false' }};
+    const scheduleId = {{ $tourSchedule->id }};
+    let passengersData = @json($passengersArray);
 
     // ─── Toast helper ─────────────────────────────────────────────────
     function showToast(message, type = 'success') {
@@ -999,6 +1124,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Hàm cập nhật khóa tuần tự cho điểm đến
+    function updateActivityLocks() {
+        if (typeof isLocked !== 'undefined' && isLocked) return;
+        
+        const activityButtons = document.querySelectorAll('.btn-checkin-activity');
+        const rollcallButtons = document.querySelectorAll('.btn-activity-rollcall');
+        
+        let previousCheckedIn = true; // Điểm đầu tiên luôn luôn được mở khóa
+        
+        activityButtons.forEach((btn, index) => {
+            const isChecked = btn.getAttribute('data-is-checked') === '1';
+            const rollcallBtn = rollcallButtons[index];
+            
+            if (previousCheckedIn) {
+                btn.disabled = false;
+                if (rollcallBtn) rollcallBtn.disabled = false;
+            } else {
+                btn.disabled = true;
+                if (rollcallBtn) rollcallBtn.disabled = true;
+            }
+            
+            // Điều kiện để điểm tiếp theo mở là điểm HIỆN TẠI phải đã check-in
+            previousCheckedIn = isChecked;
+        });
+    }
+
+    function updateCompleteTourButton() {
+        const btn = document.getElementById('btn-complete-tour');
+        if (!btn) return;
+        
+        const activityButtons = document.querySelectorAll('.btn-checkin-activity');
+        const total = activityButtons.length;
+        const checked = Array.from(activityButtons).filter(btnEl => btnEl.getAttribute('data-is-checked') === '1').length;
+        
+        if (total > 0 && checked === total) {
+            btn.disabled = false;
+            btn.removeAttribute('title');
+        } else {
+            btn.disabled = true;
+            btn.setAttribute('title', 'Bạn cần check-in toàn bộ các điểm tham quan để hoàn thành tour');
+        }
+    }
+
+    // Chạy khi load trang
+    setTimeout(() => {
+        updateActivityLocks();
+        updateCompleteTourButton();
+    }, 100);
+
     // Toggle Activity Checkin
     document.querySelectorAll('.btn-checkin-activity').forEach(btn => {
         btn.addEventListener('click', function (e) {
@@ -1033,49 +1207,328 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.checked_in) {
                     selfBtn.className = 'btn btn-sm btn-outline-secondary fw-bold px-3 btn-checkin-activity';
                     selfBtn.innerHTML = '<i class="bi bi-arrow-counterclockwise me-1"></i>Hủy';
+                    selfBtn.setAttribute('data-is-checked', '1');
                     iconEl.className = 'bi bi-check-circle-fill text-success me-2';
                     timeEl.style.display = 'block';
                     timeEl.textContent = 'Đã check-in lúc ' + data.time;
                 } else {
                     selfBtn.className = 'btn btn-sm btn-success fw-bold px-3 btn-checkin-activity';
                     selfBtn.innerHTML = '<i class="bi bi-geo-alt-fill me-1"></i>Check-in';
+                    selfBtn.setAttribute('data-is-checked', '0');
                     iconEl.className = 'bi bi-check-circle-fill text-secondary me-2';
                     timeEl.style.display = 'none';
                     timeEl.textContent = '';
                 }
+                updateActivityLocks();
+                updateCompleteTourButton();
             })
             .catch((err) => {
                 showToast(err.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'danger');
                 selfBtn.innerHTML = originalHtml;
-            })
-            .finally(() => {
                 selfBtn.disabled = false;
             });
         });
     });
-    // ─── Activity Roll Call Logic ──────────────────────────────────────────────
-    @php
-        $passengersArray = $tourSchedule->bookings->flatMap(fn($b) => $b->booking_passengers)->map(function($p) {
-            return [
-                'id' => $p->id,
-                'full_name' => $p->full_name,
-                'passenger_type' => $p->passenger_type,
-                'is_free_time' => (bool)$p->is_free_time,
-                'free_time_start' => $p->free_time_start ? \Carbon\Carbon::parse($p->free_time_start)->format('Y-m-d\TH:i') : null,
-                'free_time_end' => $p->free_time_end ? \Carbon\Carbon::parse($p->free_time_end)->format('Y-m-d\TH:i') : null,
-                'free_time_location' => $p->free_time_location,
-                'activity_checkins' => $p->activity_checkins->pluck('tour_activity_id')->toArray()
-            ];
-        })->values()->all();
-    @endphp
-    const passengersData = @json($passengersArray);
-    const scheduleId = {{ $tourSchedule->id }};
-    const isLocked = {{ $isLocked ? 'true' : 'false' }};
+
+    // Countdown state map
+    let countdownIntervals = {};
+    let pollingInterval = null;
+
+    function formatDateTimeString(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        return `${hh}:${mm} (${day}/${month})`;
+    }
+
+    function getNowForDatetimeInput(offsetHours = 0) {
+        const now = new Date();
+        if (offsetHours !== 0) {
+            now.setHours(now.getHours() + offsetHours);
+        }
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    function renderSplitBadge(split, passengerId, isHistoryOpen = false) {
+        if (!split) return '';
+        let badgeHtml = '';
+        let returnBtnHtml = '';
+        let extendBtnHtml = '';
+        let historyHtml = '';
+        
+        const startFormatted = split.start_time ? formatDateTimeString(split.start_time) : '';
+        const endFormatted = split.end_time ? formatDateTimeString(split.end_time) : '';
+        
+        const now = new Date().getTime();
+        const endTime = split.end_time ? new Date(split.end_time).getTime() : 0;
+        const isLate = endTime > 0 && (endTime - now < 0);
+
+        if (split.status === 'ON_TIME') {
+            if (isLate) {
+                badgeHtml = `<span id="badge-status-${passengerId}" class="badge bg-danger text-white"><i class="bi bi-exclamation-triangle-fill me-1"></i>Đã quá giờ</span>`;
+            } else {
+                badgeHtml = `<span id="badge-status-${passengerId}" class="badge bg-primary text-white"><i class="bi bi-clock-history me-1"></i>Đang tách đoàn (<span id="countdown-${passengerId}">--:--</span>)</span>`;
+            }
+        } else if (split.status === 'OVERDUE') {
+            badgeHtml = `<span id="badge-status-${passengerId}" class="badge bg-danger text-white"><i class="bi bi-exclamation-triangle-fill me-1"></i>Đã quá giờ</span>`;
+        } else if (split.status === 'UNREACHABLE') {
+            badgeHtml = `<span id="badge-status-${passengerId}" class="badge" style="background-color: #8b0000; color: white; font-weight: bold;"><i class="bi bi-exclamation-octagon-fill me-1"></i>Không liên lạc được</span>`;
+        } else if (split.status === 'RETURNED') {
+            badgeHtml = `<span id="badge-status-${passengerId}" class="badge bg-success text-white"><i class="bi bi-check-circle-fill me-1"></i>Đã quay lại đoàn</span>`;
+        }
+
+        let splitDetailsHtml = `
+            <div class="mt-2 p-2 bg-light rounded border text-start small">
+                <div class="fw-bold text-primary mb-1"><i class="bi bi-clock-fill me-1"></i>Thời gian: ${startFormatted} <i class="bi bi-arrow-right text-muted mx-1"></i> ${endFormatted}</div>
+                ${split.reason ? `<div><span class="text-muted"><i class="bi bi-chat-left-text me-1"></i>Lý do:</span> <strong class="text-dark">${split.reason}</strong></div>` : ''}
+                ${split.phone_number ? `<div><span class="text-muted"><i class="bi bi-telephone me-1"></i>SĐT:</span> <a href="tel:${split.phone_number}" class="fw-bold text-decoration-none">${split.phone_number}</a></div>` : ''}
+                ${split.split_location ? `<div><span class="text-muted"><i class="bi bi-geo-alt me-1"></i>Điểm tách:</span> <strong class="text-dark">${split.split_location}</strong></div>` : ''}
+                ${split.return_location ? `<div><span class="text-muted"><i class="bi bi-geo-fill me-1"></i>Điểm quay lại:</span> <strong class="text-dark">${split.return_location}</strong></div>` : ''}
+            </div>
+        `;
+
+        if (['ON_TIME', 'OVERDUE'].includes(split.status)) {
+            extendBtnHtml = `<button type="button" class="btn btn-sm btn-outline-warning mt-2 d-block w-100 fw-bold btn-extend-guest" data-passenger-id="${passengerId}" data-split-id="${split.id}"><i class="bi bi-hourglass-split me-1"></i>Gia hạn</button>`;
+        }
+
+        if (['ON_TIME', 'OVERDUE', 'UNREACHABLE'].includes(split.status)) {
+            returnBtnHtml = `<button type="button" class="btn btn-sm btn-outline-success mt-2 d-block w-100 fw-bold btn-return-guest" data-passenger-id="${passengerId}" data-split-id="${split.id}"><i class="bi bi-person-check-fill me-1"></i>Khách đã quay lại</button>`;
+        }
+
+        if (split.extensions && split.extensions.length > 0) {
+            let listHtml = split.extensions.map(e => `
+                <div class="small border-bottom border-secondary pb-1 mb-1 border-opacity-25">
+                    <div><span class="text-muted"><i class="bi bi-arrow-right-short"></i></span> ${formatDateTimeString(e.old_end_time)} <i class="bi bi-arrow-right text-warning mx-1"></i> <strong>${formatDateTimeString(e.new_end_time)}</strong></div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Lý do: ${e.extend_reason}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">HDV xác nhận: ${e.confirmed_by_guide_name}</div>
+                </div>
+            `).join('');
+            historyHtml = `
+                <div class="mt-2 text-start">
+                    <a class="text-decoration-none text-muted small ${isHistoryOpen ? '' : 'collapsed'} d-inline-block fw-semibold" data-bs-toggle="collapse" href="#history-${passengerId}" aria-expanded="${isHistoryOpen ? 'true' : 'false'}">
+                        <i class="bi bi-clock-history"></i> Lịch sử gia hạn (${split.extensions.length}) <i class="bi bi-chevron-down"></i>
+                    </a>
+                    <div class="collapse ${isHistoryOpen ? 'show' : ''} mt-2 bg-light p-2 rounded" id="history-${passengerId}">
+                        ${listHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        return badgeHtml + splitDetailsHtml + historyHtml + extendBtnHtml + returnBtnHtml;
+    }
+
+    function startCountdown(passengerId, endTimeStr, splitStatus) {
+        if (countdownIntervals[passengerId]) clearInterval(countdownIntervals[passengerId]);
+        
+        const endTime = new Date(endTimeStr).getTime();
+        
+        const update = () => {
+            const el = document.getElementById(`countdown-${passengerId}`);
+            const badgeEl = document.getElementById(`badge-status-${passengerId}`);
+            
+            const now = new Date().getTime();
+            const distance = endTime - now;
+            const isLate = distance < 0;
+
+            if (isLate) {
+                if (badgeEl) {
+                    badgeEl.className = 'badge bg-danger text-white';
+                    badgeEl.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>Đã quá giờ`;
+                }
+                clearInterval(countdownIntervals[passengerId]);
+                return;
+            }
+
+            if (el) {
+                const absDistance = Math.abs(distance);
+                const hours = Math.floor((absDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((absDistance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((absDistance % (1000 * 60)) / 1000);
+                
+                let timeStr = "";
+                if (hours > 0) timeStr += hours + "h ";
+                timeStr += String(minutes).padStart(2, '0') + "m " + String(seconds).padStart(2, '0') + "s";
+                
+                el.innerHTML = timeStr;
+            }
+        };
+
+        update();
+        countdownIntervals[passengerId] = setInterval(update, 1000);
+    }
+
+    function checkAllValid(passengerId) {
+        let isValid = true;
+        
+        const reasonEl = document.getElementById(`reason-ft-${passengerId}`);
+        if (!reasonEl || reasonEl.value.trim().length < 5) isValid = false;
+        
+        const phoneEl = document.getElementById(`phone-ft-${passengerId}`);
+        if (!phoneEl || !/^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(phoneEl.value.trim())) isValid = false;
+        
+        const locEl = document.getElementById(`loc-ft-${passengerId}`);
+        if (!locEl || !locEl.value.trim()) isValid = false;
+
+        const retLocEl = document.getElementById(`ret-loc-ft-${passengerId}`);
+        if (!retLocEl || !retLocEl.value.trim()) isValid = false;
+        
+        let startEl = document.getElementById(`start-ft-${passengerId}`);
+        let endEl = document.getElementById(`end-ft-${passengerId}`);
+        if (!startEl || !startEl.value) isValid = false;
+        if (!endEl || !endEl.value) isValid = false;
+        if (startEl && endEl && startEl.value && endEl.value && new Date(endEl.value) <= new Date(startEl.value)) isValid = false;
+        
+        const saveBtn = document.getElementById(`save-btn-${passengerId}`);
+        if (saveBtn) saveBtn.disabled = !isValid;
+    }
+
+    function checkExtendValid(passengerId) {
+        let isValid = true;
+        
+        const reasonEl = document.getElementById(`extend-reason-${passengerId}`);
+        if (!reasonEl || reasonEl.value.trim().length < 1) isValid = false;
+        
+        const timeEl = document.getElementById(`extend-time-${passengerId}`);
+        const p = passengersData.find(x => x.id == passengerId);
+        if (!timeEl || !timeEl.value) {
+            isValid = false;
+        } else if (p && p.active_split && new Date(timeEl.value) <= new Date(p.active_split.end_time)) {
+            isValid = false;
+        }
+        
+        const saveBtn = document.getElementById(`save-extend-btn-${passengerId}`);
+        if (saveBtn) saveBtn.disabled = !isValid;
+    }
+
+    window.validateField = function(el, type, passengerId) {
+        let errEl = document.getElementById(`err-${el.id.replace(`-${passengerId}`, '')}-${passengerId}`);
+        let isFieldValid = true;
+        let errorMsg = '';
+        
+        if (type === 'reason') {
+            if (el.value.trim().length < 5) { isFieldValid = false; errorMsg = 'Vui lòng nhập ít nhất 5 ký tự.'; }
+        } else if (type === 'phone') {
+            if (!/^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(el.value.trim())) { isFieldValid = false; errorMsg = 'SĐT không hợp lệ.'; }
+        } else if (type === 'required') {
+            if (!el.value.trim()) { isFieldValid = false; errorMsg = 'Không để trống.'; }
+        } else if (type === 'end_time') {
+            let startVal = document.getElementById(`start-ft-${passengerId}`).value;
+            if (!el.value) { isFieldValid = false; errorMsg = 'Vui lòng chọn.'; }
+            else if (startVal && new Date(el.value) <= new Date(startVal)) { isFieldValid = false; errorMsg = 'Phải sau giờ bắt đầu.'; }
+        } else if (type === 'extend_reason') {
+            if (!el.value.trim()) { isFieldValid = false; errorMsg = 'Vui lòng nhập lý do.'; }
+        } else if (type === 'extend_time') {
+            const p = passengersData.find(x => x.id == passengerId);
+            if (!el.value) {
+                isFieldValid = false; errorMsg = 'Vui lòng chọn thời gian.';
+            } else if (p && p.active_split && new Date(el.value) <= new Date(p.active_split.end_time)) {
+                isFieldValid = false; errorMsg = 'Phải lớn hơn thời gian hiện tại.';
+            }
+        }
+        
+        if (!isFieldValid) {
+            el.classList.add('is-invalid');
+            if(errEl) errEl.textContent = errorMsg;
+        } else {
+            el.classList.remove('is-invalid');
+            if(errEl) errEl.textContent = '';
+        }
+        
+        if (type.startsWith('extend')) {
+            checkExtendValid(passengerId);
+        } else {
+            checkAllValid(passengerId);
+        }
+    };
+
+    function updatePassengerRowUI(passengerId) {
+        const p = passengersData.find(x => x.id == passengerId);
+        if (!p) return;
+        
+        const tr = document.getElementById(`rollcall-row-${passengerId}`);
+        const badgeContainer = document.getElementById(`free-time-info-${passengerId}`);
+        const checkbox = tr.querySelector('.activity-passenger-checkbox');
+        const ftBtn = tr.querySelector('.btn-modal-free-time');
+        const ftRow = document.getElementById(`free-time-row-${passengerId}`);
+        const extRow = document.getElementById(`extend-row-${passengerId}`);
+
+        const activeSplit = p.active_split;
+        const isChecked = p.activity_checkins.includes(parseInt(currentActivityId));
+
+        let isHistoryOpen = false;
+        const historyEl = document.getElementById(`history-${passengerId}`);
+        if (historyEl && historyEl.classList.contains('show')) {
+            isHistoryOpen = true;
+        }
+
+        if (activeSplit) {
+            badgeContainer.innerHTML = renderSplitBadge(activeSplit, passengerId, isHistoryOpen);
+            tr.className = 'table-warning text-muted';
+            checkbox.checked = false;
+            checkbox.disabled = true;
+            ftBtn.className = 'btn btn-sm btn-success btn-modal-free-time';
+            ftBtn.innerHTML = '<i class="bi bi-clock-history"></i> Đang tách';
+            ftBtn.disabled = true;
+            ftRow.classList.add('d-none');
+            
+            if (activeSplit.status !== 'UNREACHABLE') {
+                startCountdown(passengerId, activeSplit.end_time, activeSplit.status);
+            }
+        } else {
+            if (countdownIntervals[passengerId]) clearInterval(countdownIntervals[passengerId]);
+            badgeContainer.innerHTML = '';
+            tr.className = isChecked ? 'table-success' : '';
+            checkbox.checked = isChecked;
+            checkbox.disabled = isLocked;
+            ftBtn.className = 'btn btn-sm btn-outline-secondary btn-modal-free-time';
+            ftBtn.innerHTML = '<i class="bi bi-clock-history"></i> Tách đoàn';
+            ftBtn.disabled = isLocked;
+            if (extRow) extRow.classList.add('d-none');
+        }
+    }
 
     const activityRollCallModalEl = document.getElementById('activityRollCallModal');
+    let currentActivityId = null;
+
     if (activityRollCallModalEl) {
         const activityRollCallModal = new bootstrap.Modal(activityRollCallModalEl);
-        let currentActivityId = null;
+
+        activityRollCallModalEl.addEventListener('show.bs.modal', function () {
+            pollingInterval = setInterval(() => {
+                if (!currentActivityId) return;
+                fetch(`/guide/group-splits?schedule_id=${scheduleId}&per_page=100`, {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    const splits = data.data;
+                    passengersData.forEach(p => {
+                        const s = splits.find(x => x.guest_id === p.id && ['ON_TIME', 'OVERDUE', 'UNREACHABLE'].includes(x.status));
+                        if (s) {
+                            p.active_split = s;
+                            updatePassengerRowUI(p.id);
+                        } else if (p.active_split) {
+                            p.active_split = null;
+                            updatePassengerRowUI(p.id);
+                        }
+                    });
+                }).catch(err => console.error(err));
+            }, 5000);
+        });
+
+        activityRollCallModalEl.addEventListener('hide.bs.modal', function () {
+            if (pollingInterval) clearInterval(pollingInterval);
+        });
 
         document.querySelectorAll('.btn-activity-rollcall').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -1091,24 +1544,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     const typeLabel = p.passenger_type === 'adult' ? '<span class="badge badge-soft-primary">Người lớn</span>' : 
                                       (p.passenger_type === 'child' ? '<span class="badge badge-soft-warning">Trẻ em</span>' : '<span class="badge badge-soft-secondary">Em bé</span>');
                     
-                    const checkedHtml = (isChecked && !p.is_free_time) ? 'checked' : '';
-                    const disabledHtml = isLocked ? 'disabled' : '';
-                    const checkboxDisabled = (isLocked || p.is_free_time) ? 'disabled' : '';
+                    const activeSplit = p.active_split;
+                    
+                    const checkedHtml = (isChecked && !activeSplit) ? 'checked' : '';
+                    const disabledHtml = (isLocked || activeSplit) ? 'disabled' : '';
+                    const checkboxDisabled = (isLocked || activeSplit) ? 'disabled' : '';
 
                     const tr = document.createElement('tr');
                     tr.id = `rollcall-row-${p.id}`;
-                    if (p.is_free_time) {
+                    if (activeSplit) {
                         tr.className = 'table-warning text-muted';
                     } else {
-                        tr.className = isChecked ? 'table-success' : '';
+                        tr.className = checkedHtml ? 'table-success' : '';
                     }
-
-                    const freeTimeBadge = p.is_free_time ? `<span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Tách đoàn (${p.free_time_location || 'Tự do'})</span>` : '';
 
                     tr.innerHTML = `
                         <td>
                             <div class="fw-bold text-dark">${p.full_name}</div>
-                            <div class="small text-muted" id="free-time-info-${p.id}">${freeTimeBadge}</div>
+                            <div class="small text-muted mt-1" id="free-time-info-${p.id}">${renderSplitBadge(activeSplit, p.id)}</div>
                         </td>
                         <td>${typeLabel}</td>
                         <td class="text-center">
@@ -1119,53 +1572,95 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm ${p.is_free_time ? 'btn-success' : 'btn-outline-secondary'} btn-modal-free-time" 
+                            <button type="button" class="btn btn-sm ${activeSplit ? 'btn-success' : 'btn-outline-secondary'} btn-modal-free-time" 
                                 data-passenger-id="${p.id}" ${disabledHtml}>
-                                <i class="bi bi-clock-history"></i> ${p.is_free_time ? 'Đang tách' : 'Tách đoàn'}
+                                <i class="bi bi-clock-history"></i> ${activeSplit ? 'Đang tách' : 'Tách đoàn'}
                             </button>
                         </td>
                     `;
                     tbody.appendChild(tr);
+
+                    const extTr = document.createElement('tr');
+                    extTr.id = `extend-row-${p.id}`;
+                    extTr.className = 'd-none bg-light';
+                    extTr.innerHTML = `
+                        <td colspan="4" class="p-3 border-top-0">
+                            <div class="row g-2 align-items-start text-start">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Thời gian quay lại mới <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control form-control-sm gs-input" id="extend-time-${p.id}" onblur="validateField(this, 'extend_time', ${p.id})">
+                                    <div class="invalid-feedback fw-bold" id="err-extend-time-${p.id}"></div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Lý do gia hạn <span class="text-danger">*</span></label>
+                                    <textarea class="form-control form-control-sm gs-input" id="extend-reason-${p.id}" rows="1" onblur="validateField(this, 'extend_reason', ${p.id})"></textarea>
+                                    <div class="invalid-feedback fw-bold" id="err-extend-reason-${p.id}"></div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Thao tác</label>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-primary w-100 btn-save-extend-ajax" data-passenger-id="${p.id}" data-split-id="${activeSplit ? activeSplit.id : ''}" id="save-extend-btn-${p.id}" disabled><i class="bi bi-floppy"></i> Lưu gia hạn</button>
+                                        <div class="small text-muted mt-1" style="font-size: 0.7rem;">Xác nhận bởi: <br>{{ auth()->user()->name ?? (auth()->user()->full_name ?? 'HDV') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(extTr);
 
                     const ftTr = document.createElement('tr');
                     ftTr.id = `free-time-row-${p.id}`;
                     ftTr.className = 'd-none bg-light';
                     ftTr.innerHTML = `
                         <td colspan="4" class="p-3 border-top-0">
-                            <div class="row g-2 align-items-end text-start">
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1 fw-semibold text-dark">Cho phép tách đoàn</label>
-                                    <div class="form-switch pt-1">
-                                        <input class="form-check-input free-time-toggle" type="checkbox" id="toggle-ft-${p.id}" ${p.is_free_time ? 'checked' : ''}>
-                                    </div>
+                            <div class="row g-2 align-items-start text-start">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Lý do tách đoàn <span class="text-danger">*</span></label>
+                                    <textarea class="form-control form-control-sm gs-input" id="reason-ft-${p.id}" rows="1" placeholder="Tối thiểu 5 ký tự" onblur="validateField(this, 'reason', ${p.id})"></textarea>
+                                    <div class="invalid-feedback fw-bold" id="err-reason-ft-${p.id}"></div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1 fw-semibold text-dark">Thời gian bắt đầu</label>
-                                    <input type="datetime-local" class="form-control form-control-sm free-time-start" id="start-ft-${p.id}" value="${p.free_time_start || ''}">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">SĐT liên hệ <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm gs-input" id="phone-ft-${p.id}" placeholder="09xxxxxxxx" onblur="validateField(this, 'phone', ${p.id})">
+                                    <div class="invalid-feedback fw-bold" id="err-phone-ft-${p.id}"></div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1 fw-semibold text-dark">Thời gian kết thúc</label>
-                                    <input type="datetime-local" class="form-control form-control-sm free-time-end" id="end-ft-${p.id}" value="${p.free_time_end || ''}">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Địa điểm tách <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm gs-input" id="loc-ft-${p.id}" placeholder="VD: Khách sạn..." onblur="validateField(this, 'required', ${p.id})">
+                                    <div class="invalid-feedback fw-bold" id="err-loc-ft-${p.id}"></div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small mb-1 fw-semibold text-dark">Địa điểm tách đoàn</label>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Thời gian bắt đầu <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control form-control-sm gs-input" id="start-ft-${p.id}" onblur="validateField(this, 'required', ${p.id})">
+                                    <div class="invalid-feedback fw-bold" id="err-start-ft-${p.id}"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Thời gian kết thúc <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" class="form-control form-control-sm gs-input" id="end-ft-${p.id}" onblur="validateField(this, 'end_time', ${p.id})">
+                                    <div class="invalid-feedback fw-bold" id="err-end-ft-${p.id}"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-1 fw-semibold text-dark">Địa điểm quay lại <span class="text-danger">*</span></label>
                                     <div class="d-flex gap-2">
-                                        <input type="text" class="form-control form-control-sm free-time-location" id="loc-ft-${p.id}" placeholder="VD: Khách sạn..." value="${p.free_time_location || ''}">
-                                        <button type="button" class="btn btn-sm btn-primary btn-save-free-time-ajax" data-passenger-id="${p.id}"><i class="bi bi-floppy"></i></button>
+                                        <input type="text" class="form-control form-control-sm gs-input" id="ret-loc-ft-${p.id}" placeholder="VD: Trạm xe..." onblur="validateField(this, 'required', ${p.id})">
+                                        <button type="button" class="btn btn-sm btn-primary btn-save-free-time-ajax" data-passenger-id="${p.id}" data-passenger-name="${p.full_name}" id="save-btn-${p.id}" disabled><i class="bi bi-floppy"></i></button>
                                     </div>
+                                    <div class="invalid-feedback fw-bold" id="err-ret-loc-ft-${p.id}"></div>
                                 </div>
                             </div>
                         </td>
                     `;
                     tbody.appendChild(ftTr);
+
+                    if (activeSplit && activeSplit.status !== 'UNREACHABLE') {
+                        startCountdown(p.id, activeSplit.end_time, activeSplit.status);
+                    }
                 });
             });
         });
 
-        // Event delegation inside modal
         const rollcallBody = document.getElementById('activity-rollcall-body');
         
-        // 1. Toggle collapse row on click Tách đoàn
         rollcallBody.addEventListener('click', function(e) {
             const btn = e.target.closest('.btn-modal-free-time');
             if (btn) {
@@ -1173,27 +1668,59 @@ document.addEventListener('DOMContentLoaded', function () {
                 const ftRow = document.getElementById(`free-time-row-${passengerId}`);
                 if (ftRow) {
                     ftRow.classList.toggle('d-none');
+                    if (!ftRow.classList.contains('d-none')) {
+                        const startInput = document.getElementById(`start-ft-${passengerId}`);
+                        const endInput = document.getElementById(`end-ft-${passengerId}`);
+                        if (startInput && !startInput.value) {
+                            startInput.value = getNowForDatetimeInput(0);
+                        }
+                        if (endInput && !endInput.value) {
+                            endInput.value = getNowForDatetimeInput(1);
+                        }
+                        ['start-ft', 'end-ft', 'reason-ft', 'phone-ft', 'loc-ft', 'ret-loc-ft'].forEach(fieldPrefix => {
+                            const field = document.getElementById(`${fieldPrefix}-${passengerId}`);
+                            if (field && !field.dataset.realtimeBound) {
+                                field.dataset.realtimeBound = '1';
+                                field.addEventListener('input', () => checkAllValid(passengerId));
+                                field.addEventListener('change', () => checkAllValid(passengerId));
+                            }
+                        });
+                        checkAllValid(passengerId);
+                    }
+                }
+            }
+
+            const btnExtend = e.target.closest('.btn-extend-guest');
+            if (btnExtend) {
+                const passengerId = btnExtend.getAttribute('data-passenger-id');
+                const extRow = document.getElementById(`extend-row-${passengerId}`);
+                if (extRow) {
+                    extRow.classList.toggle('d-none');
+                    // Pre-fill end time if showing
+                    if (!extRow.classList.contains('d-none')) {
+                        const p = passengersData.find(x => x.id == passengerId);
+                        if (p && p.active_split) {
+                            document.getElementById(`extend-time-${passengerId}`).value = p.active_split.end_time;
+                        }
+                    }
                 }
             }
         });
 
-        // 2. Save Tách đoàn via AJAX
         rollcallBody.addEventListener('click', function(e) {
-            const btn = e.target.closest('.btn-save-free-time-ajax');
-            if (btn) {
-                const passengerId = btn.getAttribute('data-passenger-id');
-                const isFreeTime = document.getElementById(`toggle-ft-${passengerId}`).checked ? 1 : 0;
-                const start = document.getElementById(`start-ft-${passengerId}`).value;
-                const end = document.getElementById(`end-ft-${passengerId}`).value;
-                const location = document.getElementById(`loc-ft-${passengerId}`).value;
+            const btnSaveExtend = e.target.closest('.btn-save-extend-ajax');
+            if (btnSaveExtend) {
+                const passengerId = btnSaveExtend.getAttribute('data-passenger-id');
+                const splitId = btnSaveExtend.getAttribute('data-split-id');
+                
+                const newEndTime = document.getElementById(`extend-time-${passengerId}`).value;
+                const reason = document.getElementById(`extend-reason-${passengerId}`).value;
 
-                btn.disabled = true;
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+                btnSaveExtend.disabled = true;
+                const originalHtml = btnSaveExtend.innerHTML;
+                btnSaveExtend.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
-                const url = `/guide/schedules/${scheduleId}/passengers/${passengerId}/free-time`;
-
-                fetch(url, {
+                fetch(`/guide/group-splits/${splitId}/extend`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
@@ -1201,61 +1728,180 @@ document.addEventListener('DOMContentLoaded', function () {
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
-                        is_free_time: isFreeTime,
-                        free_time_start: start,
-                        free_time_end: end,
-                        free_time_location: location
+                        new_end_time: newEndTime,
+                        extend_reason: reason
                     })
                 })
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errData => { throw errData; });
+                    }
+                    return res.json();
+                })
                 .then(data => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
+                    btnSaveExtend.disabled = false;
+                    btnSaveExtend.innerHTML = originalHtml;
 
-                    // Update local javascript data
-                    const p = passengersData.find(p => p.id == passengerId);
+                    const p = passengersData.find(x => x.id == passengerId);
                     if (p) {
-                        p.is_free_time = data.passenger.is_free_time;
-                        p.free_time_start = data.passenger.free_time_start;
-                        p.free_time_end = data.passenger.free_time_end;
-                        p.free_time_location = data.passenger.free_time_location;
+                        p.active_split = data.data;
+                        document.getElementById(`extend-row-${passengerId}`).classList.add('d-none');
+                        const nextBtn = document.getElementById(`save-extend-btn-${passengerId}`);
+                        if (nextBtn) nextBtn.setAttribute('data-split-id', data.data.id);
                     }
-
-                    // Update UI elements in row
-                    const tr = document.getElementById(`rollcall-row-${passengerId}`);
-                    const badgeContainer = document.getElementById(`free-time-info-${passengerId}`);
-                    const checkbox = tr.querySelector('.activity-passenger-checkbox');
-                    const ftBtn = tr.querySelector('.btn-modal-free-time');
-                    const ftRow = document.getElementById(`free-time-row-${passengerId}`);
-
-                    if (data.passenger.is_free_time) {
-                        badgeContainer.innerHTML = `<span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Tách đoàn (${data.passenger.free_time_location || 'Tự do'})</span>`;
-                        tr.className = 'table-warning text-muted';
-                        checkbox.checked = false;
-                        checkbox.disabled = true;
-                        ftBtn.className = 'btn btn-sm btn-success btn-modal-free-time';
-                        ftBtn.innerHTML = '<i class="bi bi-clock-history"></i> Đang tách';
-
-                        // If checked in, toggle to false in local data
-                        if (p && p.activity_checkins.includes(parseInt(currentActivityId))) {
-                            p.activity_checkins = p.activity_checkins.filter(id => id !== parseInt(currentActivityId));
-                        }
-                    } else {
-                        badgeContainer.innerHTML = '';
-                        tr.className = checkbox.checked ? 'table-success' : '';
-                        checkbox.disabled = isLocked;
-                        ftBtn.className = 'btn btn-sm btn-outline-secondary btn-modal-free-time';
-                        ftBtn.innerHTML = '<i class="bi bi-clock-history"></i> Tách đoàn';
-                    }
-
-                    ftRow.classList.add('d-none');
-                    showToast(data.message, 'success');
+                    
+                    updatePassengerRowUI(passengerId);
+                    showToast('Đã gia hạn thành công!', 'success');
                 })
                 .catch(err => {
                     console.error(err);
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                    showToast('Không thể lưu thông tin tách đoàn.', 'danger');
+                    btnSaveExtend.disabled = false;
+                    btnSaveExtend.innerHTML = originalHtml;
+                    
+                    let errorMsg = 'Không thể gia hạn.';
+                    if (err && err.errors) {
+                        const firstKey = Object.keys(err.errors)[0];
+                        if (firstKey && err.errors[firstKey][0]) {
+                            errorMsg = err.errors[firstKey][0];
+                        }
+                    } else if (err && err.message) {
+                        errorMsg = err.message;
+                    }
+                    showToast(errorMsg, 'danger');
+                });
+                return;
+            }
+
+            const btnReturn = e.target.closest('.btn-return-guest');
+            if (btnReturn) {
+                if (!confirm("Xác nhận khách đã quay lại đoàn?")) return;
+                
+                const passengerId = btnReturn.getAttribute('data-passenger-id');
+                const splitId = btnReturn.getAttribute('data-split-id');
+
+                btnReturn.disabled = true;
+                const originalHtml = btnReturn.innerHTML;
+                btnReturn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                fetch(`/guide/group-splits/${splitId}/return`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errData => { throw errData; });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    const p = passengersData.find(x => x.id == passengerId);
+                    if (p) p.active_split = null;
+                    
+                    if (p && !p.activity_checkins.includes(parseInt(currentActivityId))) {
+                        p.activity_checkins.push(parseInt(currentActivityId));
+                        fetch(`/guide/schedules/${scheduleId}/activities/${currentActivityId}/passengers/${passengerId}/toggle-checkin`, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' }
+                        }).catch(console.error);
+                    }
+                    
+                    updatePassengerRowUI(passengerId);
+                    
+                    const badgeContainer = document.getElementById(`free-time-info-${passengerId}`);
+                    if (badgeContainer) {
+                        badgeContainer.innerHTML = `<span class="badge bg-success text-white"><i class="bi bi-check-circle-fill me-1"></i>Đã quay lại đoàn</span>`;
+                        setTimeout(() => { badgeContainer.innerHTML = ''; }, 3000);
+                    }
+                    
+                    showToast('Khách đã quay lại đoàn thành công.', 'success');
+                })
+                .catch(err => {
+                    console.error(err);
+                    btnReturn.disabled = false;
+                    btnReturn.innerHTML = originalHtml;
+                    showToast('Có lỗi xảy ra, vui lòng thử lại.', 'danger');
+                });
+                return;
+            }
+
+            const btnSave = e.target.closest('.btn-save-free-time-ajax');
+            if (btnSave) {
+                const passengerId = btnSave.getAttribute('data-passenger-id');
+                const passengerName = btnSave.getAttribute('data-passenger-name');
+                const reason = document.getElementById(`reason-ft-${passengerId}`).value;
+                const phone = document.getElementById(`phone-ft-${passengerId}`).value;
+                const start = document.getElementById(`start-ft-${passengerId}`).value;
+                const end = document.getElementById(`end-ft-${passengerId}`).value;
+                const location = document.getElementById(`loc-ft-${passengerId}`).value;
+                const retLocation = document.getElementById(`ret-loc-ft-${passengerId}`).value;
+
+                btnSave.disabled = true;
+                const originalHtml = btnSave.innerHTML;
+                btnSave.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                fetch(`/guide/schedules/${scheduleId}/passengers/${passengerId}/group-split`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tour_id: {{ $tourSchedule->tour_id }},
+                        stop_id: parseInt(currentActivityId),
+                        guest_id: parseInt(passengerId),
+                        guest_name: passengerName,
+                        reason: reason,
+                        phone_number: phone,
+                        start_time: start,
+                        end_time: end,
+                        split_location: location,
+                        return_location: retLocation
+                    })
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().then(errData => { throw errData; });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = originalHtml;
+
+                    const p = passengersData.find(x => x.id == passengerId);
+                    if (p) {
+                        p.active_split = data.data;
+                        const nextBtn = document.getElementById(`save-extend-btn-${passengerId}`);
+                        if (nextBtn) nextBtn.setAttribute('data-split-id', data.data.id);
+                    }
+                    
+                    if (p && p.activity_checkins.includes(parseInt(currentActivityId))) {
+                        p.activity_checkins = p.activity_checkins.filter(id => id !== parseInt(currentActivityId));
+                    }
+                    
+                    updatePassengerRowUI(passengerId);
+                    showToast('Đã tách đoàn cho khách, đồng hồ đếm ngược bắt đầu', 'success');
+                })
+                .catch(err => {
+                    console.error(err);
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = originalHtml;
+                    
+                    let errorMsg = 'Không thể lưu thông tin tách đoàn.';
+                    if (err && err.errors) {
+                        const firstKey = Object.keys(err.errors)[0];
+                        if (firstKey && err.errors[firstKey][0]) {
+                            errorMsg = err.errors[firstKey][0];
+                        }
+                    } else if (err && err.message) {
+                        errorMsg = err.message;
+                    }
+                    showToast(errorMsg, 'danger');
                 });
             }
         });
@@ -1302,11 +1948,113 @@ document.addEventListener('DOMContentLoaded', function () {
                 .catch(err => {
                     console.error(err);
                     checkbox.disabled = false;
-                    checkbox.checked = !isChecked; // Revert
+                    checkbox.checked = !isChecked;
                     showToast('Có lỗi xảy ra, vui lòng thử lại!', 'danger');
                 });
             }
         });
+
+        // 4. Chọn tất cả điểm danh
+        const btnCheckinAll = document.getElementById('btn-checkin-all-activity');
+        const btnUncheckAll = document.getElementById('btn-uncheck-all-activity');
+
+        if (btnCheckinAll) {
+            btnCheckinAll.addEventListener('click', function() {
+                if (!currentActivityId) return;
+                if (isLocked) return;
+                
+                btnCheckinAll.disabled = true;
+                if (btnUncheckAll) btnUncheckAll.disabled = true;
+                const originalHtml = btnCheckinAll.innerHTML;
+                btnCheckinAll.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
+
+                const url = `/guide/schedules/${scheduleId}/activities/${currentActivityId}/checkin-all`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btnCheckinAll.disabled = isLocked;
+                    if (btnUncheckAll) btnUncheckAll.disabled = isLocked;
+                    btnCheckinAll.innerHTML = originalHtml;
+
+                    if (data.success) {
+                        const checkedIds = data.checked_in_ids || [];
+
+                        // Cập nhật lại UI và Data
+                        passengersData.forEach(p => {
+                            if (checkedIds.includes(p.id)) {
+                                if (!p.activity_checkins.includes(parseInt(currentActivityId))) {
+                                    p.activity_checkins.push(parseInt(currentActivityId));
+                                }
+                            }
+                            updatePassengerRowUI(p.id);
+                        });
+
+                        showToast(data.message, 'success');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    btnCheckinAll.disabled = isLocked;
+                    if (btnUncheckAll) btnUncheckAll.disabled = isLocked;
+                    btnCheckinAll.innerHTML = originalHtml;
+                    showToast('Có lỗi xảy ra khi điểm danh tất cả.', 'danger');
+                });
+            });
+        }
+
+        if (btnUncheckAll) {
+            btnUncheckAll.addEventListener('click', function() {
+                if (!currentActivityId) return;
+                if (isLocked) return;
+                
+                btnUncheckAll.disabled = true;
+                if (btnCheckinAll) btnCheckinAll.disabled = true;
+                const originalHtmlUncheck = btnUncheckAll.innerHTML;
+                btnUncheckAll.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
+
+                const url = `/guide/schedules/${scheduleId}/activities/${currentActivityId}/uncheck-all`;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btnUncheckAll.disabled = isLocked;
+                    if (btnCheckinAll) btnCheckinAll.disabled = isLocked;
+                    btnUncheckAll.innerHTML = originalHtmlUncheck;
+
+                    if (data.success) {
+                        // Cập nhật lại UI và Data
+                        passengersData.forEach(p => {
+                            p.activity_checkins = p.activity_checkins.filter(id => id !== parseInt(currentActivityId));
+                            updatePassengerRowUI(p.id);
+                        });
+
+                        showToast(data.message, 'success');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    btnUncheckAll.disabled = isLocked;
+                    if (btnCheckinAll) btnCheckinAll.disabled = isLocked;
+                    btnUncheckAll.innerHTML = originalHtmlUncheck;
+                    showToast('Có lỗi xảy ra khi hủy điểm danh.', 'danger');
+                });
+            });
+        }
     }
 });
 </script>

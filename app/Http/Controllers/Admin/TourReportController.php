@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\BookingPassenger;
+use App\Models\GroupSplit;
 use App\Models\TourReport;
 
 class TourReportController extends Controller
@@ -19,7 +21,33 @@ class TourReportController extends Controller
     {
         $report->load(['tour_schedule.tour', 'tour_guide']);
 
-        return view('admin.tour_reports.show', compact('report'));
+        $passengerIds = $report->tour_schedule->bookings()
+            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+            ->whereNotIn('booking_status', ['cancelled'])
+            ->get()
+            ->flatMap(fn ($b) => $b->booking_passengers->pluck('id'))
+            ->toArray();
+
+        $freeTimePassengers = BookingPassenger::whereIn('id', $passengerIds)
+            ->whereHas('group_splits', function ($q) {
+                $q->where('status', '!=', GroupSplit::STATUS_CANCELLED);
+            })
+            ->with(['group_splits' => function ($q) {
+                $q->where('status', '!=', GroupSplit::STATUS_CANCELLED)->orderBy('id', 'desc');
+            }])
+            ->get()
+            ->map(function ($p) {
+                $lastSplit = $p->group_splits->first();
+                if ($lastSplit) {
+                    $p->free_time_location = $p->free_time_location ?? ($lastSplit->split_location ?? $lastSplit->return_location);
+                    $p->free_time_start = $p->free_time_start ?? $lastSplit->start_time;
+                    $p->free_time_end = $p->free_time_end ?? $lastSplit->end_time;
+                }
+
+                return $p;
+            });
+
+        return view('admin.tour_reports.show', compact('report', 'freeTimePassengers'));
     }
 
     public function approve(TourReport $report)

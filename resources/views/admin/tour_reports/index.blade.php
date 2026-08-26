@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('page-title', 'Báo cáo & Quyết toán Tour')
+@section('page-title', 'Báo cáo Tour')
 
 @section('content')
 <div class="admin-card border-0 mb-4">
@@ -15,7 +15,6 @@
                         <th class="ps-4">Mã Tour</th>
                         <th>Hướng dẫn viên</th>
                         <th>Khách thực tế</th>
-                        <th>Hoàn ứng</th>
                         <th>Trạng thái</th>
                         <th class="text-end pe-4">Chi tiết</th>
                     </tr>
@@ -29,15 +28,6 @@
                         </td>
                         <td>{{ $report->tour_guide->name }}</td>
                         <td>{{ $report->actual_guests }}</td>
-                        <td>
-                            @if($report->balance > 0)
-                                <span class="text-success fw-bold">+{{ number_format($report->balance) }} đ</span>
-                            @elseif($report->balance < 0)
-                                <span class="text-danger fw-bold">{{ number_format($report->balance) }} đ</span>
-                            @else
-                                <span class="text-muted">0 đ</span>
-                            @endif
-                        </td>
                         <td>
                             @if($report->status === 'approved')
                                 <span class="badge bg-success">Đã duyệt</span>

@@ -44,8 +44,14 @@ class BookingController extends Controller
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhere('pnr_code', 'like', "%{$search}%")
+                // Xử lý tìm kiếm mã đơn (VD: BK-000106)
+                if (preg_match('/^BK-(\d+)$/i', $search, $matches)) {
+                    $q->where('id', (int) $matches[1]);
+                } elseif (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+
+                $q->orWhere('pnr_code', 'like', "%{$search}%")
                     ->orWhere('invoice_email', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($userQuery) use ($search) {
                         $userQuery
@@ -138,7 +144,7 @@ class BookingController extends Controller
         |--------------------------------------------------------------------------
         */
         $bookings = $query
-            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();
 
@@ -253,6 +259,7 @@ class BookingController extends Controller
             QrCode::format('svg')
                 ->size(140)
                 ->margin(1)
+                ->encoding('UTF-8')
                 ->generate($qrContent)
         );
     }

@@ -49,6 +49,10 @@
                         </td>
                         <td class="text-end pe-4">
                             <div class="d-inline-flex gap-1">
+                                <a href="{{ route('admin.users.show', $user->id) }}"
+                                    class="btn btn-action text-info bg-info bg-opacity-10" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
                                 <a href="{{ route('admin.users.edit', $user->id) }}"
                                     class="btn btn-action text-primary bg-primary bg-opacity-10" title="Chỉnh sửa">
                                     <i class="bi bi-pencil-square"></i>
