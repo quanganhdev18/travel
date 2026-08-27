@@ -28,3 +28,4 @@ Schedule::command('tours:send-reminders')->dailyAt('08:00');
 
 // Tự động xóa ảnh CCCD sau 10 ngày kết thúc tour
 Schedule::command('identities:cleanup')->hourly();
+Schedule::command('group-splits:update-status')->everyMinute();

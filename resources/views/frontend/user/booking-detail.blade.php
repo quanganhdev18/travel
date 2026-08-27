@@ -449,6 +449,9 @@
 
                         $isCancelled = in_array($bStatus, ['cancelled']) || in_array($tStatus, ['cancelled_by_customer', 'cancelled_by_admin']) || $pStatus === 'failed';
 
+                        $isDeparted = \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->startOfDay()->isPast()
+                            || in_array($tStatus, ['in_progress', 'checking_in', 'completed', 'closed']);
+
                         $step1Done = true; // Tạo đơn thành công
 
                         $step2Done = in_array($pStatus, ['paid_30', 'paid_100', 'paid']);
@@ -456,10 +459,12 @@
 
                         $step3Done = $step2Done || in_array($bStatus, ['confirmed', 'paid', 'completed']);
 
-                        $step4Done = in_array($tStatus, ['checking_in', 'in_progress', 'completed']);
-                        $step4Label = $tStatus === 'checking_in' ? 'Đang check-in' : ($tStatus === 'in_progress' ? 'Đang đi tour' : 'Chuyến đi tour');
+                        $step4Done = in_array($tStatus, ['checking_in', 'in_progress', 'completed', 'closed']);
+                        $step4Label = $tStatus === 'checking_in' 
+                            ? ($booking->current_checkin_step ? 'Check-in: ' . $booking->current_checkin_step : 'Đang check-in') 
+                            : ($tStatus === 'in_progress' ? 'Đang đi tour' : 'Chuyến đi tour');
 
-                        $step5Done = $tStatus === 'completed' || $bStatus === 'completed';
+                        $step5Done = in_array($tStatus, ['completed', 'closed']) || $bStatus === 'completed';
 
                         if ($step5Done) { $currentStep = 5; }
                         elseif ($step4Done) { $currentStep = 4; }
@@ -532,8 +537,15 @@
                                 <div>
                                     <div class="fw-bold text-dark small">{{ $step4Label }}</div>
                                     <div class="text-muted" style="font-size:0.75rem;">
-                                        @if($tStatus === 'checking_in') HDV đang mở Check-in
-                                        @elseif($tStatus === 'in_progress') Đoàn đang tham quan
+                                        @if($tStatus === 'checking_in')
+                                            @if($booking->current_checkin_step)
+                                                Đoàn đang có mặt tại <strong>{{ $booking->current_checkin_step }}</strong>
+                                            @else
+                                                HDV đang mở Check-in điểm tập trung
+                                            @endif
+                                        @elseif($tStatus === 'in_progress') Đoàn đang di chuyển/tham quan
+                                        @elseif(in_array($tStatus, ['completed', 'closed']))
+                                            Đã đi qua các điểm tham quan
                                         @else Ngày đi: {{ \Carbon\Carbon::parse($booking->tour_schedule->departure_date)->format('d/m/Y') }} @endif
                                     </div>
                                 </div>
@@ -591,7 +603,7 @@
     </div>
 @endif
 
-@if(!$isCancelled && !in_array($booking->tour_status, ['completed']))
+@if(!$isCancelled && !$isDeparted)
     <div class="mb-3">
         <button type="button"
                 class="btn btn-outline-danger w-100 rounded-pill"
@@ -830,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 @endif
 
-@if(!$isCancelled && !in_array($booking->tour_status, ['completed']))
+@if(!$isCancelled && !$isDeparted)
     <div class="modal fade" id="cancelBookingModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

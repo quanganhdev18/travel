@@ -88,12 +88,12 @@ use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\ReviewController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
 use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\Api\AiTranslationController;
-use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DemoController;
@@ -107,6 +107,8 @@ use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
+use App\Http\Controllers\Guide\AbsenceRequestController;
+use App\Http\Controllers\Guide\GroupSplitController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
 use App\Models\User;
@@ -120,12 +122,6 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
-
-Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
-    ->name('locale.switch');
-
-Route::get('/currency/{currency}', [AppSettingsController::class, 'switchCurrency'])
-    ->name('currency.switch');
 
 Route::post('/cookie-consent/accept', [CookieConsentController::class, 'accept'])
     ->name('cookie.consent.accept');
@@ -504,6 +500,10 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/schedules/{schedule}/activities/{activity}/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'togglePassengerActivityCheckin'])
         ->name('guide.activities.passengers.toggle_checkin');
+    Route::post('/schedules/{schedule}/activities/{activity}/checkin-all', [ScheduleController::class, 'checkinAllActivityPassengers'])
+        ->name('guide.activities.passengers.checkin_all');
+    Route::post('/schedules/{schedule}/activities/{activity}/uncheck-all', [ScheduleController::class, 'uncheckAllActivityPassengers'])
+        ->name('guide.activities.passengers.uncheck_all');
 
     Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
         ->name('guide.passengers.update_note');
@@ -525,9 +525,22 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
     Route::post('/schedules/{schedule}/passengers/{passenger}/free-time', [ScheduleController::class, 'updateFreeTime'])->name('guide.passengers.free_time');
 
+    // Group Splits
+    Route::post('/schedules/{schedule}/passengers/{passenger}/group-split', [GroupSplitController::class, 'store'])->name('guide.passengers.group_split.store');
+    Route::post('/group-splits/{groupSplit}/extend', [GroupSplitController::class, 'extend'])->name('guide.group_splits.extend');
+    Route::post('/group-splits/{groupSplit}/return', [GroupSplitController::class, 'return'])->name('guide.group_splits.return');
+    Route::post('/group-splits/{groupSplit}/cancel', [GroupSplitController::class, 'cancel'])->name('guide.group_splits.cancel');
+    Route::get('/group-splits', [GroupSplitController::class, 'index'])->name('guide.group_splits.index');
+
     // Guide Reports
     Route::get('/schedules/{schedule}/report', [TourReportController::class, 'create'])->name('guide.reports.create');
     Route::post('/schedules/{schedule}/report', [TourReportController::class, 'store'])->name('guide.reports.store');
+
+    // Guide Absence Request
+    Route::get('/schedules/{schedule}/absence', [AbsenceRequestController::class, 'create'])
+        ->name('guide.schedules.absence');
+    Route::post('/schedules/{schedule}/absence', [AbsenceRequestController::class, 'store'])
+        ->name('guide.schedules.absence.store');
 });
 
 // Thêm Admin TourReport
@@ -535,6 +548,20 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tour-reports', [App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
     Route::get('/tour-reports/{report}', [App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
     Route::post('/tour-reports/{report}/approve', [App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
+
+    // Admin Absence Requests
+    Route::get('/absence-requests/available-guides/{schedule}', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'getAvailableGuides'])
+        ->name('admin.absence_requests.available_guides');
+    Route::post('/absence-requests/{absenceRequest}/approve', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'approve'])
+        ->name('admin.absence_requests.approve');
+    Route::post('/absence-requests/{absenceRequest}/reject', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'reject'])
+        ->name('admin.absence_requests.reject');
+
+    // Admin Settings
+    Route::get('/settings', [SettingController::class, 'index'])
+        ->name('admin.settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])
+        ->name('admin.settings.update');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])

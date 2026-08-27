@@ -10,10 +10,14 @@ use App\Models\BookingPassenger;
 use App\Models\ScheduleActivityCheckin;
 use App\Models\TourActivity;
 use App\Models\TourSchedule;
+use App\Models\User;
+use App\Notifications\AdminBookingNotification;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
 
 class ScheduleController extends Controller
 {
@@ -50,7 +54,7 @@ class ScheduleController extends Controller
         }
 
         $scheduleGuide = $tourGuide->schedule_guides()
-            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers.activity_checkins', 'tour_schedule.bookings.user', 'tour_schedule.bookings.ticket_bookings.ticket_option.ticket', 'tour_schedule.bookings.addons'])
+            ->with(['tour_schedule.tour.tour_itineraries.activities', 'tour_schedule.activity_checkins', 'tour_schedule.bookings.booking_passengers.activity_checkins', 'tour_schedule.bookings.booking_passengers.group_splits', 'tour_schedule.bookings.user', 'tour_schedule.bookings.ticket_bookings.ticket_option.ticket', 'tour_schedule.bookings.addons', 'tour_schedule.bookings.booking_accommodations.room_type.accommodation'])
             ->where('tour_schedule_id', $id)
             ->firstOrFail();
 
@@ -168,6 +172,26 @@ class ScheduleController extends Controller
                 ]);
         }
 
+        // Gửi thông báo cho Admin khi check-in thành công
+        if ($status) {
+            $guideName = auth()->user()->name ?? 'Hướng dẫn viên';
+            $tourTitle = $schedule->tour->title ?? '';
+            $message = "Hướng dẫn viên {$guideName} đã check-in tại địa điểm \"{$activity->title}\" trong tour \"{$tourTitle}\" (Lịch trình #{$schedule->id}) lúc ".now()->format('H:i d/m/Y').'.';
+
+            $firstBooking = $schedule->bookings()->whereIn('payment_status', ['paid_30', 'paid_100'])->first();
+            if ($firstBooking) {
+                $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
+                if ($admins->count() > 0) {
+                    Notification::send($admins, new AdminBookingNotification(
+                        $firstBooking,
+                        'activity_checkin',
+                        $message,
+                        'HDV check-in địa điểm'
+                    ));
+                }
+            }
+        }
+
         return response()->json([
             'checked_in' => $status,
             'message' => $status ? 'Đã check-in điểm tham quan' : 'Đã hủy check-in điểm tham quan',
@@ -262,6 +286,30 @@ class ScheduleController extends Controller
 
         $booking->save();
 
+        // Bắn thông báo cho Admin
+        $tourTitle = $booking->tour_schedule->tour->title ?? '';
+        $guideName = auth()->user()->name ?? 'Hướng dẫn viên';
+        $statusLabels = [
+            'upcoming' => 'Sắp bắt đầu',
+            'in_progress' => 'Đang thực hiện',
+            'checking_in' => 'Đang check-in'.($request->current_checkin_step ? " ({$request->current_checkin_step})" : ''),
+            'completed' => 'Đã hoàn thành',
+            'closed' => 'Đã đóng',
+        ];
+        $newStatusLabel = $statusLabels[$request->tour_status] ?? $request->tour_status;
+
+        $message = "Đơn đặt chỗ #{$booking->code} của tour \"{$tourTitle}\" đã được Hướng dẫn viên {$guideName} chuyển trạng thái sang \"{$newStatusLabel}\".";
+
+        $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
+        if ($admins->count() > 0) {
+            Notification::send($admins, new AdminBookingNotification(
+                $booking,
+                'tour_status_updated',
+                $message,
+                'Tour thay đổi trạng thái'
+            ));
+        }
+
         return back()->with('success', 'Đã cập nhật trạng thái tour thành công.');
     }
 
@@ -350,6 +398,36 @@ class ScheduleController extends Controller
                 $booking->current_checkin_step = null;
             }
             $booking->save();
+        }
+
+        // Nếu hoàn thành tour, cập nhật trạng thái lịch trình luôn
+        if ($request->tour_status === 'completed') {
+            $schedule->update(['status' => 'completed']);
+        }
+
+        // Bắn thông báo cho Admin
+        $firstBooking = $bookings->first();
+        $tourTitle = $schedule->tour->title ?? '';
+        $guideName = auth()->user()->name ?? 'Hướng dẫn viên';
+        $statusLabels = [
+            'upcoming' => 'Sắp bắt đầu',
+            'in_progress' => 'Đang thực hiện',
+            'checking_in' => 'Đang check-in'.($request->current_checkin_step ? " ({$request->current_checkin_step})" : ''),
+            'completed' => 'Đã hoàn thành',
+            'closed' => 'Đã đóng',
+        ];
+        $newStatusLabel = $statusLabels[$request->tour_status] ?? $request->tour_status;
+
+        $message = "Đoàn của tour \"{$tourTitle}\" (Mã lịch trình: {$schedule->id}) đã được Hướng dẫn viên {$guideName} chuyển trạng thái sang \"{$newStatusLabel}\".";
+
+        $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
+        if ($admins->count() > 0) {
+            Notification::send($admins, new AdminBookingNotification(
+                $firstBooking,
+                'tour_status_updated',
+                $message,
+                'Tour thay đổi trạng thái'
+            ));
         }
 
         return back()->with('success', 'Trạng thái tập trung của cả đoàn đã được cập nhật.');
@@ -492,6 +570,54 @@ class ScheduleController extends Controller
         return response()->json([
             'checked_in' => $status,
             'message' => $status ? 'Đã điểm danh' : 'Đã bỏ điểm danh',
+        ]);
+    }
+
+    public function checkinAllActivityPassengers(Request $request, TourSchedule $schedule, TourActivity $activity)
+    {
+        $this->authorizeSchedule($schedule);
+
+        $passengers = $schedule->bookings()
+            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+            ->whereNotIn('booking_status', ['cancelled'])
+            ->with(['booking_passengers.group_splits' => function ($q) {
+                $q->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE']);
+            }])
+            ->get()
+            ->flatMap->booking_passengers;
+
+        $checkedInIds = [];
+
+        foreach ($passengers as $passenger) {
+            if ($passenger->group_splits->isEmpty()) {
+                ActivityPassengerCheckin::firstOrCreate([
+                    'tour_schedule_id' => $schedule->id,
+                    'tour_activity_id' => $activity->id,
+                    'booking_passenger_id' => $passenger->id,
+                ]);
+                $checkedInIds[] = $passenger->id;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã điểm danh tất cả khách tham gia.',
+            'checked_in_ids' => $checkedInIds,
+        ]);
+    }
+
+    public function uncheckAllActivityPassengers(Request $request, TourSchedule $schedule, TourActivity $activity)
+    {
+        $this->authorizeSchedule($schedule);
+
+        ActivityPassengerCheckin::where('tour_schedule_id', $schedule->id)
+            ->where('tour_activity_id', $activity->id)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã hủy điểm danh tất cả khách.',
+            'checked_in_ids' => [],
         ]);
     }
 }

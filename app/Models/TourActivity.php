@@ -42,8 +42,10 @@ class TourActivity extends Model
         $labels = [
             'Transportation' => 'Di chuyển',
             'Attractions' => 'Điểm tham quan',
+            'Accommodation' => 'Lưu trú',
             'Dining' => 'Ẩm thực',
             'Entertainment' => 'Giải trí',
+            'Shopping' => 'Mua sắm',
             'Others' => 'Khác',
         ];
 

@@ -164,6 +164,7 @@ class DatabaseSeeder extends Seeder
         // 10. Dashboard Seeder (100 đơn hàng mẫu và dữ liệu thống kê)
         $this->call([
             DashboardSeeder::class,
+            SettingSeeder::class,
         ]);
     }
 }

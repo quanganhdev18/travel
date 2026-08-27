@@ -60,4 +60,9 @@ class BookingPassenger extends Model
     {
         return $this->hasMany(ActivityPassengerCheckin::class);
     }
+
+    public function group_splits()
+    {
+        return $this->hasMany(GroupSplit::class, 'guest_id');
+    }
 }
