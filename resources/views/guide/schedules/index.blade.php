@@ -4,32 +4,45 @@
 
 @section('content')
 <style>
+    .admin-card-title {
+        font-weight: 700;
+        color: var(--admin-sidebar);
+    }
     @media (max-width: 767px) {
         /* Chuyển bảng sang dạng các thẻ card */
         .table-responsive {
             border: none;
+            overflow: visible !important;
         }
         .table {
             border: none;
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .table thead {
-            display: none;
+            display: none !important;
         }
         .table tbody {
-            display: flex;
+            display: flex !important;
             flex-direction: column;
             gap: 16px;
             padding: 12px 4px;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .table tbody tr {
-            display: block;
+            display: block !important;
             background: #fff;
             border: 1px solid var(--admin-border) !important;
-            border-radius: 12px;
+            border-radius: 16px;
             box-shadow: var(--shadow-sm);
             padding: 16px;
             margin-bottom: 0;
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .table tbody tr:hover {
             transform: translateY(-2px);
@@ -40,17 +53,76 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px dashed #f1f5f9;
+            border-bottom: 1px dashed #e2e8f0;
             font-size: 0.85rem;
             text-align: right;
         }
-        .table td:last-child {
+        
+        .table td[data-label="ID"] {
+            display: none !important;
+        }
+        
+        .table td[data-label="Tên Tour"] {
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            padding-top: 0;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--admin-border);
+            padding-right: 90px; /* Leave space for status badge */
+        }
+        .table td[data-label="Tên Tour"]::before {
+            display: none !important;
+        }
+        .table td[data-label="Tên Tour"] strong {
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            color: var(--admin-text-main) !important;
+            line-height: 1.4;
+        }
+        .table td[data-label="Tên Tour"] .text-muted {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem !important;
+            color: var(--admin-text-muted) !important;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .table td[data-label="Trạng thái"] {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            border-bottom: none;
+            padding: 0;
+            width: auto;
+        }
+        .table td[data-label="Trạng thái"]::before {
+            display: none !important;
+        }
+
+        .table td[data-label="Hành động"] {
+            width: 100%;
             border-bottom: none;
             padding-bottom: 0;
+            padding-top: 12px;
+            justify-content: center;
         }
-        .table td:first-child {
-            padding-top: 0;
+        .table td[data-label="Hành động"]::before {
+            display: none !important;
         }
+        .table td[data-label="Hành động"] a {
+            width: 100%;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem !important;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
         .table td::before {
             content: attr(data-label);
             font-weight: 600;

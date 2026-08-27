@@ -4,25 +4,98 @@
 
 @section('content')
 <style>
+    @keyframes pulseText {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(1.05); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+    .pulse-text {
+        animation: pulseText 1.2s infinite ease-in-out;
+        font-weight: 800 !important;
+        display: inline-block;
+    }
+    /* Tab Styling Overrides */
     @media (max-width: 767px) {
+        .nav-tabs .nav-link {
+            min-height: 48px;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px !important;
+        }
+    }
+    /* Collapsible Tour Info panel styles */
+    @media (min-width: 992px) {
+        #tourInfoCollapse {
+            display: block !important;
+        }
+        [data-bs-target="#tourInfoCollapse"] {
+            cursor: default !important;
+            pointer-events: none;
+        }
+    }
+    
+    @media (max-width: 991px) {
+        #tourInfoCollapse.collapse:not(.show) {
+            display: none;
+        }
+        #tourInfoCollapse.collapse.show {
+            display: block;
+        }
+        #tourInfoChevron {
+            transition: transform 0.2s;
+        }
+        [data-bs-toggle="collapse"][aria-expanded="true"] #tourInfoChevron {
+            transform: rotate(180deg);
+        }
+    }
+
+    /* Sticky Bottom Actions Bar for Mobile */
+    @media (max-width: 767px) {
+        #mobile-sticky-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid var(--admin-border);
+            padding: 8px 16px;
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+            display: flex !important;
+            gap: 12px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1030;
+        }
+        body {
+            padding-bottom: 70px !important;
+        }
+        
         /* Chuyển bảng sang dạng các thẻ card */
         .table-responsive {
             border: none;
+            overflow: visible !important;
         }
         .table {
             border: none;
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .table thead {
-            display: none;
+            display: none !important;
         }
         .table tbody {
-            display: flex;
+            display: flex !important;
             flex-direction: column;
             gap: 16px;
             padding: 12px 4px;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .table tbody tr {
-            display: block;
+            display: block !important;
             background: #fff;
             border: 1px solid var(--admin-border) !important;
             border-radius: 12px;
@@ -30,6 +103,8 @@
             padding: 16px;
             margin-bottom: 0;
             transition: transform 0.2s, box-shadow 0.2s;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .table tbody tr:hover {
             transform: translateY(-2px);
@@ -70,6 +145,282 @@
         }
         .table td.text-center > div {
             margin: 0 !important;
+        }
+
+        /* Dịch vụ nhóm mua thêm (màu vàng) trên mobile */
+        .table tbody tr.table-warning {
+            background-color: #fff3cd !important;
+            border: 1px solid #ffe69c !important;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+        }
+        .table tbody tr.table-warning td {
+            display: block;
+            padding: 0;
+            border: none;
+            text-align: left;
+        }
+        .table tbody tr.table-warning td::before {
+            display: none;
+        }
+        .table tbody tr.table-warning td > div {
+            text-align: left !important;
+        }
+        .table tbody tr.table-warning td > div > div.d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 8px !important;
+        }
+
+        /* Vùng chạm tối thiểu 44x44px - Chỉ định cho các nút trực tiếp của ô bảng, tránh nút trong modal */
+        .table td > button, .table td > a, .table td > form > button {
+            min-height: 44px;
+            min-width: 44px;
+            padding: 10px 16px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem !important;
+        }
+
+        /* Modal Điểm danh dạng Full-screen Sheet */
+        #activityRollCallModal.modal {
+            padding: 0 !important;
+        }
+        #activityRollCallModal .modal-dialog {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #activityRollCallModal .modal-content {
+            height: 100%;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #activityRollCallModal .modal-header {
+            position: relative;
+            flex-direction: column;
+            align-items: stretch !important;
+            padding: 16px !important;
+            background-color: #ffffff !important;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        #activityRollCallModal .modal-header h5 {
+            font-size: 1.1rem;
+            margin-bottom: 12px !important;
+            text-align: center;
+            width: 100%;
+            padding-right: 24px;
+        }
+        #activityRollCallModal .modal-header .btn-close {
+            position: absolute;
+            top: 18px;
+            right: 16px;
+            margin: 0 !important;
+            font-size: 1.1rem;
+        }
+        #activityRollCallModal .modal-header .d-flex.gap-2 {
+            display: flex !important;
+            width: 100%;
+            justify-content: space-between;
+            gap: 10px !important;
+        }
+        #activityRollCallModal .modal-header .d-flex.gap-2 button {
+            flex: 1;
+            font-size: 0.85rem !important;
+            padding: 10px 12px !important;
+            min-height: 40px !important;
+        }
+        #activityRollCallModal .modal-body {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        #activityRollCallModal .table-responsive {
+            overflow: visible;
+        }
+        #activityRollCallModal table,
+        #activityRollCallModal thead,
+        #activityRollCallModal tbody,
+        #activityRollCallModal tr,
+        #activityRollCallModal td {
+            display: block;
+            width: 100%;
+        }
+        #activityRollCallModal thead {
+            display: none;
+        }
+        #activityRollCallModal tbody {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #f8fafc;
+        }
+        /* Style card danh sách khách trong modal */
+        #activityRollCallModal tr[id^="rollcall-row-"] {
+            background: #fff;
+            border: 1px solid var(--admin-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 0;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            align-items: center;
+            gap: 8px;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"].table-success {
+            border-color: #a3cfbb !important;
+            background-color: #f1fdf7 !important;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"].table-warning {
+            border-color: #ffe69c !important;
+            background-color: #fffaf0 !important;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td {
+            padding: 0;
+            border: none;
+            text-align: left;
+            display: block;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(1) {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(2) {
+            grid-column: 1;
+            grid-row: 2;
+            text-align: left;
+            margin-top: 4px;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(3) {
+            grid-column: 2;
+            grid-row: 1 / span 2;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 4px;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(3) .form-check {
+            margin: 0;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(4) {
+            grid-column: 1 / span 2;
+            grid-row: 3;
+            border-top: 1px dashed #f1f5f9;
+            padding-top: 10px;
+            margin-top: 4px;
+            display: flex;
+            justify-content: stretch;
+            width: 100%;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(4) button {
+            width: 100%;
+            min-height: 44px;
+        }
+
+        /* Form Tách đoàn xếp dọc 1 cột trên mobile */
+        #activityRollCallModal tr[id^="extend-row-"],
+        #activityRollCallModal tr[id^="free-time-row-"] {
+            border: 1px solid var(--admin-border);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            margin-top: -16px;
+            margin-bottom: 8px;
+            background-color: #f8fafc;
+            padding: 16px;
+        }
+        #activityRollCallModal tr[id^="extend-row-"].d-none,
+        #activityRollCallModal tr[id^="free-time-row-"].d-none {
+            display: none !important;
+        }
+        #activityRollCallModal tr[id^="extend-row-"] td,
+        #activityRollCallModal tr[id^="free-time-row-"] td {
+            padding: 0 !important;
+            border: none !important;
+        }
+        #activityRollCallModal tr[id^="extend-row-"] .row,
+        #activityRollCallModal tr[id^="free-time-row-"] .row {
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #activityRollCallModal tr[id^="extend-row-"] .col-md-3,
+        #activityRollCallModal tr[id^="extend-row-"] .col-md-4,
+        #activityRollCallModal tr[id^="extend-row-"] .col-md-5,
+        #activityRollCallModal tr[id^="free-time-row-"] .col-md-4 {
+            width: 100% !important;
+            padding: 0 !important;
+        }
+        #activityRollCallModal tr[id^="extend-row-"] input,
+        #activityRollCallModal tr[id^="extend-row-"] textarea,
+        #activityRollCallModal tr[id^="free-time-row-"] input,
+        #activityRollCallModal tr[id^="free-time-row-"] textarea {
+            font-size: 16px !important;
+            padding: 10px 12px !important;
+        }
+        #activityRollCallModal tr[id^="free-time-row-"] .btn-save-free-time-ajax {
+            width: 100%;
+            min-height: 44px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #activityRollCallModal tr[id^="free-time-row-"] .btn-save-free-time-ajax::after {
+            content: " Lưu thông tin tách đoàn";
+            margin-left: 6px;
+            font-weight: 600;
+        }
+
+        /* 2 nút Gia hạn/Khách đã quay lại xếp ngang chia đôi, màu tương phản */
+        #activityRollCallModal tr[id^="rollcall-row-"] .btn-extend-guest,
+        #activityRollCallModal tr[id^="rollcall-row-"] .btn-return-guest {
+            display: inline-block !important;
+            width: 48% !important;
+            margin-top: 8px !important;
+            min-height: 44px;
+            font-size: 0.85rem !important;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] .btn-extend-guest {
+            float: left;
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+            border-color: #ffc107 !important;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] .btn-return-guest {
+            float: right;
+            background-color: #198754 !important;
+            color: #ffffff !important;
+            border-color: #198754 !important;
+        }
+        #activityRollCallModal tr[id^="rollcall-row-"] td:nth-child(1)::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        /* Nút đóng sticky bottom trong modal */
+        #activityRollCallModal .modal-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            background: #fff !important;
+            padding: 16px !important;
+            border-top: 1px solid var(--admin-border);
+            margin-top: auto;
+        }
+        #activityRollCallModal .modal-footer button {
+            width: 100%;
+            min-height: 44px;
+            font-size: 0.95rem !important;
+            font-weight: 600;
         }
     }
 </style>
@@ -247,68 +598,71 @@
     <!-- Cột thông tin Tour -->
     <div class="col-lg-4 mb-4">
         <div class="card border-0 shadow-sm h-100">
-            <div class="admin-card-header">
-                <h5 class="admin-card-title">Thông tin Tour</h5>
+            <div class="admin-card-header d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#tourInfoCollapse" aria-expanded="false" aria-controls="tourInfoCollapse" style="cursor: pointer;">
+                <h5 class="admin-card-title mb-0">Thông tin Tour</h5>
+                <i class="bi bi-chevron-down d-lg-none fs-5" id="tourInfoChevron"></i>
             </div>
-            <div class="card-body">
-                @php
-                    $tourGuide = auth()->user()->tour_guide;
-                    $pendingAbsenceRequest = $tourGuide ? \App\Models\TourAbsenceRequest::where('tour_schedule_id', $tourSchedule->id)
-                        ->where('main_guide_id', $tourGuide->id)
-                        ->whereIn('status', ['pending_review', 'pending_review_urgent'])
-                        ->first() : null;
-                @endphp
+            <div class="collapse" id="tourInfoCollapse">
+                <div class="card-body">
+                    @php
+                        $tourGuide = auth()->user()->tour_guide;
+                        $pendingAbsenceRequest = $tourGuide ? \App\Models\TourAbsenceRequest::where('tour_schedule_id', $tourSchedule->id)
+                            ->where('main_guide_id', $tourGuide->id)
+                            ->whereIn('status', ['pending_review', 'pending_review_urgent'])
+                            ->first() : null;
+                    @endphp
 
-                @if($tour->primary_image)
-                    <img src="{{ Storage::url($tour->primary_image) }}" alt="{{ $tour->title }}" class="img-fluid rounded mb-3 w-100" style="object-fit: cover; height: 180px;">
-                @endif
-                <h5 class="fw-bold">{{ $tour->title }}</h5>
-                <p class="text-muted small mb-3">Mã Tour: {{ $tour->code }}</p>
-
-                <ul class="list-group list-group-flush border-top pt-3">
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Khởi hành:</span>
-                        <strong>{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</strong>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Kết thúc:</span>
-                        <strong>{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</strong>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Trạng thái Tour:</span>
-                        <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Vai trò của bạn:</span>
-                        @if($scheduleGuide->is_backup)
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill px-2 py-1">HDV Dự phòng</span>
-                        @else
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-1">HDV Chính</span>
-                        @endif
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Tổng khách:</span>
-                        <strong>{{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
-                    </li>
-                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                        <span class="text-muted">Điểm danh:</span>
-                        <span class="fw-bold text-success" id="checkin-counter">{{ $checkedInCount }} / {{ $totalCount }}</span>
-                    </li>
-                </ul>
-
-                @if(!$scheduleGuide->is_backup && $groupStatus === 'upcoming' && \Carbon\Carbon::parse($tourSchedule->departure_date)->isFuture())
-                    @if($pendingAbsenceRequest)
-                        <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning mt-3 mb-0 text-center py-2 fw-medium" style="font-size: 0.85rem;">
-                            <i class="bi bi-hourglass-split me-1"></i> Yêu cầu đang chờ admin duyệt
-                        </div>
-                    @else
-                        <a href="{{ route('guide.schedules.absence', $tourSchedule->id) }}" class="btn btn-outline-danger w-100 mt-3 fw-bold">
-                            <i class="bi bi-calendar-x me-1"></i> Báo bận tour
-                        </a>
+                    @if($tour->primary_image)
+                        <img src="{{ Storage::url($tour->primary_image) }}" alt="{{ $tour->title }}" class="img-fluid rounded mb-3 w-100" style="object-fit: cover; height: 180px;">
                     @endif
-                @endif
+                    <h5 class="fw-bold">{{ $tour->title }}</h5>
+                    <p class="text-muted small mb-3">Mã Tour: {{ $tour->code }}</p>
+
+                    <ul class="list-group list-group-flush border-top pt-3">
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Khởi hành:</span>
+                            <strong>{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</strong>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Kết thúc:</span>
+                            <strong>{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</strong>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Trạng thái Tour:</span>
+                            <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Vai trò của bạn:</span>
+                            @if($scheduleGuide->is_backup)
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill px-2 py-1">HDV Dự phòng</span>
+                            @else
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-1">HDV Chính</span>
+                            @endif
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Tổng khách:</span>
+                            <strong>{{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Điểm danh:</span>
+                            <span class="fw-bold text-success" id="checkin-counter">{{ $checkedInCount }} / {{ $totalCount }}</span>
+                        </li>
+                    </ul>
+
+                    @if(!$scheduleGuide->is_backup && $groupStatus === 'upcoming' && \Carbon\Carbon::parse($tourSchedule->departure_date)->isFuture())
+                        @if($pendingAbsenceRequest)
+                            <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning mt-3 mb-0 text-center py-2 fw-medium" style="font-size: 0.85rem;">
+                                <i class="bi bi-hourglass-split me-1"></i> Yêu cầu đang chờ admin duyệt
+                            </div>
+                        @else
+                            <a href="{{ route('guide.schedules.absence', $tourSchedule->id) }}" class="btn btn-outline-danger w-100 mt-3 fw-bold">
+                                <i class="bi bi-calendar-x me-1"></i> Báo bận tour
+                            </a>
+                        @endif
+                    @endif
 
                 </div>
+            </div>
         </div>
     </div>
 
@@ -425,149 +779,9 @@
                                                         @endif
                                                     </td>
                                                     <td data-label="Chi tiết" class="text-center">
-                                                        <button type="button" class="btn btn-sm btn-outline-info py-0 px-2 text-end" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#passengerDetailModal-{{ $passenger->id }}" title="Xem chi tiết khách hàng">
-                                                            <i class="bi bi-info-circle"></i> Chi tiết
-                                                        </button>
-                                                        
-                                                        <!-- Modal Chi tiết khách hàng -->
-                                                        <div class="modal fade text-start" id="passengerDetailModal-{{ $passenger->id }}" tabindex="-1" aria-labelledby="passengerDetailModalLabel-{{ $passenger->id }}" aria-hidden="true">
-                                                            <div class="modal-dialog modal-dialog-centered">
-                                                                <div class="modal-content border-0 shadow">
-                                                                    <div class="modal-header border-bottom px-4 py-3 bg-light">
-                                                                        <h5 class="modal-title fw-600" id="passengerDetailModalLabel-{{ $passenger->id }}">
-                                                                            <i class="bi bi-person-badge text-primary me-2"></i>Chi tiết khách hàng
-                                                                        </h5>
-                                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                                    </div>
-                                                                    <div class="modal-body p-4">
-                                                                        <div class="text-center mb-4">
-                                                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-2" style="width: 60px; height: 60px;">
-                                                                                <i class="bi bi-person-fill fs-2"></i>
-                                                                            </div>
-                                                                            <h5 class="mb-1 fw-bold text-dark">{{ $passenger->full_name }}</h5>
-                                                                            <div>
-                                                                                @if($passenger->passenger_type == 'adult')
-                                                                                    <span class="badge badge-soft-primary">Người lớn</span>
-                                                                                @elseif($passenger->passenger_type == 'child')
-                                                                                    <span class="badge badge-soft-warning">Trẻ em</span>
-                                                                                @else
-                                                                                    <span class="badge badge-soft-secondary">Em bé</span>
-                                                                                @endif
-                                                                            </div>
-                                                                        </div>
- 
-                                                                        <div class="card border-0 bg-light p-3 mb-3">
-                                                                            <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Thông tin cá nhân</h6>
-                                                                            <div class="row g-2 small">
-                                                                                <div class="col-5 text-muted text-start">Giới tính:</div>
-                                                                                <div class="col-7 fw-bold text-dark text-start">{{ $passenger->gender == 'male' ? 'Nam' : ($passenger->gender == 'female' ? 'Nữ' : 'Khác') }}</div>
- 
-                                                                                <div class="col-5 text-muted text-start">Ngày sinh:</div>
-                                                                                <div class="col-7 fw-bold text-dark text-start">
-                                                                                    {{ $passenger->date_of_birth ? \Carbon\Carbon::parse($passenger->date_of_birth)->format('d/m/Y') : '—' }}
-                                                                                </div>
- 
-                                                                                <div class="col-5 text-muted text-start">Số CCCD/Hộ chiếu:</div>
-                                                                                <div class="col-7 fw-bold text-dark text-start">{{ $passenger->identity_number ?? '—' }}</div>
-                                                                            </div>
-                                                                        </div>
- 
-                                                                        <div class="card border-0 bg-light p-3 mb-3">
-                                                                            <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Thông tin liên hệ & Đơn hàng</h6>
-                                                                            <div class="row g-2 small">
-                                                                                <div class="col-5 text-muted text-start">Mã Booking:</div>
-                                                                                <div class="col-7 fw-bold text-primary text-start">#{{ $booking->id }}</div>
- 
-                                                                                <div class="col-5 text-muted text-start">Người đặt:</div>
-                                                                                <div class="col-7 fw-bold text-dark text-start">{{ $booking->user->name ?? '—' }}</div>
- 
-                                                                                <div class="col-5 text-muted text-start">Số điện thoại:</div>
-                                                                                <div class="col-7 fw-bold text-dark text-start">
-                                                                                    @if($booking->user && $booking->user->phone)
-                                                                                        <a href="tel:{{ $booking->user->phone }}" class="text-decoration-none"><i class="bi bi-telephone-fill me-1"></i>{{ $booking->user->phone }}</a>
-                                                                                    @else
-                                                                                        —
-                                                                                    @endif
-                                                                                </div>
- 
-                                                                                <div class="col-5 text-muted text-start">Email:</div>
-                                                                                <div class="col-7 fw-bold text-dark text-start text-truncate">
-                                                                                    @if($booking->user && $booking->user->email)
-                                                                                        <a href="mailto:{{ $booking->user->email }}" class="text-decoration-none"><i class="bi bi-envelope-fill me-1"></i>{{ $booking->user->email }}</a>
-                                                                                    @else
-                                                                                        —
-                                                                                    @endif
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        @if($booking->booking_accommodations && $booking->booking_accommodations->count() > 0)
-                                                                            <div class="card border-0 bg-light p-3 mb-3 text-start">
-                                                                                <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="bi bi-building me-1"></i>Thông tin lưu trú</h6>
-                                                                                @foreach($booking->booking_accommodations as $index => $ba)
-                                                                                    <div class="{{ $index > 0 ? 'border-top pt-3 mt-3' : '' }}">
-                                                                                        <div class="row g-2 small">
-                                                                                            <div class="col-5 text-muted text-start">Khách sạn:</div>
-                                                                                            <div class="col-7 fw-bold text-dark text-start">
-                                                                                                {{ $ba->accommodation_name_snapshot ?? ($ba->room_type->accommodation->name ?? '—') }}
-                                                                                            </div>
-
-                                                                                            <div class="col-5 text-muted text-start">Địa chỉ:</div>
-                                                                                            <div class="col-7 fw-semibold text-dark text-start" style="font-size: 0.75rem;">
-                                                                                                {{ $ba->room_type->accommodation->address ?? '—' }}
-                                                                                            </div>
-
-                                                                                            <div class="col-5 text-muted text-start">Loại phòng:</div>
-                                                                                            <div class="col-7 fw-bold text-dark text-start">
-                                                                                                <span class="badge bg-secondary">{{ $ba->room_type_name_snapshot ?? ($ba->room_type->name ?? '—') }}</span>
-                                                                                            </div>
-
-                                                                                            <div class="col-5 text-muted text-start">Số lượng:</div>
-                                                                                            <div class="col-7 fw-bold text-dark text-start">
-                                                                                                ({{ $ba->single_rooms_count ?? 1 }} phòng, {{ $ba->extra_bed_qty ?? 0 }} giường phụ)
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                @endforeach
-                                                                            </div>
-                                                                        @endif
- 
-                                                                        @php
-                                                                            $activeSplit = $passenger->group_splits->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE'])->first();
-                                                                        @endphp
-                                                                        @if($activeSplit)
-                                                                        <div class="card border-0 border-start border-3 border-primary bg-primary bg-opacity-10 p-3 mb-3">
-                                                                            <h6 class="fw-bold mb-2 text-primary text-start" style="font-size: 0.8rem;"><i class="bi bi-clock-history me-1"></i>Thông tin Tách đoàn:</h6>
-                                                                            <div class="row g-2 small text-start">
-                                                                                <div class="col-5 text-muted">Thời gian:</div>
-                                                                                <div class="col-7 fw-bold text-dark">{{ $activeSplit->start_time ? $activeSplit->start_time->format('H:i d/m') : '' }} - {{ $activeSplit->end_time ? $activeSplit->end_time->format('H:i d/m') : '' }}</div>
-                                                                                <div class="col-5 text-muted">Lý do:</div>
-                                                                                <div class="col-7 fw-bold text-dark">{{ $activeSplit->reason }}</div>
-                                                                                <div class="col-5 text-muted">SĐT liên hệ:</div>
-                                                                                <div class="col-7 fw-bold text-dark"><a href="tel:{{ $activeSplit->phone_number }}" class="text-decoration-none">{{ $activeSplit->phone_number }}</a></div>
-                                                                                @if($activeSplit->split_location)
-                                                                                    <div class="col-5 text-muted">Điểm tách:</div>
-                                                                                    <div class="col-7 fw-bold text-dark">{{ $activeSplit->split_location }}</div>
-                                                                                @endif
-                                                                                <div class="col-5 text-muted">Điểm quay lại:</div>
-                                                                                <div class="col-7 fw-bold text-dark">{{ $activeSplit->return_location }}</div>
-                                                                            </div>
-                                                                        </div>
-                                                                        @endif
-
-                                                                        @if($passenger->special_note)
-                                                                        <div class="card border-0 border-start border-3 border-warning bg-warning bg-opacity-10 p-3">
-                                                                            <h6 class="fw-bold mb-1 text-warning text-start" style="font-size: 0.8rem;"><i class="bi bi-sticky-fill me-1"></i>Ghi chú đặc biệt:</h6>
-                                                                            <p class="mb-0 small text-dark text-start">{{ $passenger->special_note }}</p>
-                                                                        </div>
-                                                                        @endif
-                                                                    </div>
-                                                                    <div class="modal-footer bg-light border-top px-4 py-3">
-                                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                                         <button type="button" class="btn btn-sm btn-outline-info py-0 px-2 text-end" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#passengerDetailModal-{{ $passenger->id }}" title="Xem chi tiết khách hàng">
+                                                             <i class="bi bi-info-circle"></i> Chi tiết
+                                                         </button>
                                                     </td>
                                                     <td data-label="Ghi chú" class="text-center">
                                                         <button
@@ -1307,21 +1521,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         let splitDetailsHtml = `
-            <div class="mt-2 p-2 bg-light rounded border text-start small">
-                <div class="fw-bold text-primary mb-1"><i class="bi bi-clock-fill me-1"></i>Thời gian: ${startFormatted} <i class="bi bi-arrow-right text-muted mx-1"></i> ${endFormatted}</div>
-                ${split.reason ? `<div><span class="text-muted"><i class="bi bi-chat-left-text me-1"></i>Lý do:</span> <strong class="text-dark">${split.reason}</strong></div>` : ''}
-                ${split.phone_number ? `<div><span class="text-muted"><i class="bi bi-telephone me-1"></i>SĐT:</span> <a href="tel:${split.phone_number}" class="fw-bold text-decoration-none">${split.phone_number}</a></div>` : ''}
-                ${split.split_location ? `<div><span class="text-muted"><i class="bi bi-geo-alt me-1"></i>Điểm tách:</span> <strong class="text-dark">${split.split_location}</strong></div>` : ''}
-                ${split.return_location ? `<div><span class="text-muted"><i class="bi bi-geo-fill me-1"></i>Điểm quay lại:</span> <strong class="text-dark">${split.return_location}</strong></div>` : ''}
+            <div class="mt-2 p-3 rounded border text-start small split-countdown-card" style="border-color: #ffe69c; background-color: #fffaf0; border-width: 1.5px;">
+                <div class="fw-bold mb-2" style="font-size: 0.9rem; color: var(--admin-text-main);"><i class="bi bi-clock-fill me-1"></i>Thời gian: ${startFormatted} <i class="bi bi-arrow-right text-muted mx-1"></i> ${endFormatted}</div>
+                ${split.reason ? `<div class="mb-1"><span class="text-muted"><i class="bi bi-chat-left-text me-1"></i>Lý do:</span> <strong class="text-dark">${split.reason}</strong></div>` : ''}
+                ${split.phone_number ? `<div class="mb-1"><span class="text-muted"><i class="bi bi-telephone me-1"></i>SĐT:</span> <a href="tel:${split.phone_number}" class="fw-bold text-decoration-none" style="font-size: 0.95rem; color: var(--admin-primary);"><i class="bi bi-telephone-outbound-fill me-1"></i>${split.phone_number}</a></div>` : ''}
+                ${split.split_location ? `<div class="mb-1"><span class="text-muted"><i class="bi bi-geo-alt me-1"></i>Điểm tách:</span> <strong class="text-dark">${split.split_location}</strong></div>` : ''}
+                ${split.return_location ? `<div class="mb-0"><span class="text-muted"><i class="bi bi-geo-fill me-1"></i>Điểm quay lại:</span> <strong class="text-dark">${split.return_location}</strong></div>` : ''}
             </div>
         `;
 
         if (['ON_TIME', 'OVERDUE'].includes(split.status)) {
-            extendBtnHtml = `<button type="button" class="btn btn-sm btn-outline-warning mt-2 d-block w-100 fw-bold btn-extend-guest" data-passenger-id="${passengerId}" data-split-id="${split.id}"><i class="bi bi-hourglass-split me-1"></i>Gia hạn</button>`;
+            extendBtnHtml = `<button type="button" class="btn btn-sm btn-outline-warning mt-2 d-block w-100 fw-bold btn-extend-guest" data-passenger-id="${passengerId}" data-split-id="${split.id}" style="min-height: 44px;"><i class="bi bi-hourglass-split me-1"></i>Gia hạn</button>`;
         }
 
         if (['ON_TIME', 'OVERDUE', 'UNREACHABLE'].includes(split.status)) {
-            returnBtnHtml = `<button type="button" class="btn btn-sm btn-outline-success mt-2 d-block w-100 fw-bold btn-return-guest" data-passenger-id="${passengerId}" data-split-id="${split.id}"><i class="bi bi-person-check-fill me-1"></i>Khách đã quay lại</button>`;
+            returnBtnHtml = `<button type="button" class="btn btn-sm btn-success mt-2 d-block w-100 fw-bold btn-return-guest" data-passenger-id="${passengerId}" data-split-id="${split.id}" style="min-height: 48px; background-color: var(--success-base); border-color: var(--success-base);"><i class="bi bi-person-check-fill me-1"></i>Khách đã quay lại</button>`;
         }
 
         if (split.extensions && split.extensions.length > 0) {
@@ -1380,6 +1594,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 timeStr += String(minutes).padStart(2, '0') + "m " + String(seconds).padStart(2, '0') + "s";
                 
                 el.innerHTML = timeStr;
+                
+                // Color transition & pulse under 5 minutes
+                const parentCard = el.closest('.split-countdown-card');
+                if (distance < 300000) { // < 5 mins
+                    el.style.color = '#dc2626';
+                    el.classList.add('pulse-text');
+                    if (parentCard) {
+                        parentCard.style.borderColor = '#dc2626';
+                        parentCard.style.backgroundColor = '#fef2f2';
+                    }
+                } else {
+                    el.style.color = 'var(--warning-text)';
+                    el.classList.remove('pulse-text');
+                    if (parentCard) {
+                        parentCard.style.borderColor = '#ffe69c';
+                        parentCard.style.backgroundColor = '#fffaf0';
+                    }
+                }
             }
         };
 
@@ -2075,8 +2307,224 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             });
         }
+
+        // Sticky Bottom Actions for mobile
+        const originalToggleBtn = document.getElementById('toggle-group-status-btn');
+        const originalCompleteBtn = document.getElementById('btn-complete-tour');
+        const stickyContainer = document.getElementById('mobile-sticky-actions');
+        
+        if (stickyContainer) {
+            if (originalToggleBtn) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-warning btn-sm fw-bold flex-grow-1 py-2';
+                btn.innerHTML = '<i class="bi bi-gear-fill me-1"></i>Trạng thái Tour';
+                btn.addEventListener('click', function() {
+                    originalToggleBtn.click();
+                    const formWrapper = document.getElementById('group-status-form-wrapper');
+                    if (formWrapper) {
+                        formWrapper.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+                stickyContainer.appendChild(btn);
+            }
+            
+            if (originalCompleteBtn) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-success btn-sm fw-bold flex-grow-1 py-2';
+                btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Hoàn thành Tour';
+                btn.disabled = originalCompleteBtn.disabled;
+                btn.title = originalCompleteBtn.title;
+                
+                const observer = new MutationObserver(function() {
+                    btn.disabled = originalCompleteBtn.disabled;
+                });
+                observer.observe(originalCompleteBtn, { attributes: true, attributeFilter: ['disabled'] });
+                
+                btn.addEventListener('click', function() {
+                    originalCompleteBtn.click();
+                });
+                stickyContainer.appendChild(btn);
+            }
+        }
+
+        // Prevent ghost click / tap-through on mobile
+        let lastModalHideTime = 0;
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('hide.bs.modal', function() {
+                lastModalHideTime = Date.now();
+            });
+        });
+
+        document.querySelectorAll('[data-bs-toggle="modal"]').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (Date.now() - lastModalHideTime < 400) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+        });
+
+        // Viewport resize helper for virtual keyboard inputs on mobile
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                const activeEl = document.activeElement;
+                if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                    setTimeout(() => {
+                        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    }, 100);
+                }
+            });
+        }
     }
 });
 </script>
+
+@foreach($tourSchedule->bookings as $booking)
+    @if(in_array($booking->payment_status, ['pending', 'paid_30', 'paid_100']) && !in_array($booking->tour_status, [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER]) && $booking->booking_status !== 'cancelled')
+        @foreach($booking->booking_passengers as $passenger)
+            <!-- Modal Chi tiết khách hàng -->
+            <div class="modal fade text-start" id="passengerDetailModal-{{ $passenger->id }}" tabindex="-1" aria-labelledby="passengerDetailModalLabel-{{ $passenger->id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header border-bottom px-4 py-3 bg-light">
+                            <h5 class="modal-title fw-600" id="passengerDetailModalLabel-{{ $passenger->id }}">
+                                <i class="bi bi-person-badge text-primary me-2"></i>Chi tiết khách hàng
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="text-center mb-4">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex justify-content-center align-items-center mb-2" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-person-fill fs-2"></i>
+                                </div>
+                                <h5 class="mb-1 fw-bold text-dark">{{ $passenger->full_name }}</h5>
+                                <div>
+                                    @if($passenger->passenger_type == 'adult')
+                                        <span class="badge badge-soft-primary">Người lớn</span>
+                                    @elseif($passenger->passenger_type == 'child')
+                                        <span class="badge badge-soft-warning">Trẻ em</span>
+                                    @else
+                                        <span class="badge badge-soft-secondary">Em bé</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="card border-0 bg-light p-3 mb-3">
+                                <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Thông tin cá nhân</h6>
+                                <div class="row g-2 small">
+                                    <div class="col-5 text-muted text-start">Giới tính:</div>
+                                    <div class="col-7 fw-bold text-dark text-start">{{ $passenger->gender == 'male' ? 'Nam' : ($passenger->gender == 'female' ? 'Nữ' : 'Khác') }}</div>
+
+                                    <div class="col-5 text-muted text-start">Ngày sinh:</div>
+                                    <div class="col-7 fw-bold text-dark text-start">
+                                        {{ $passenger->date_of_birth ? \Carbon\Carbon::parse($passenger->date_of_birth)->format('d/m/Y') : '—' }}
+                                    </div>
+
+                                    <div class="col-5 text-muted text-start">Số CCCD/Hộ chiếu:</div>
+                                    <div class="col-7 fw-bold text-dark text-start">{{ $passenger->identity_number ?? '—' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="card border-0 bg-light p-3 mb-3">
+                                <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Thông tin liên hệ & Đơn hàng</h6>
+                                <div class="row g-2 small">
+                                    <div class="col-5 text-muted text-start">Mã Booking:</div>
+                                    <div class="col-7 fw-bold text-primary text-start">#{{ $booking->id }}</div>
+
+                                    <div class="col-5 text-muted text-start">Người đặt:</div>
+                                    <div class="col-7 fw-bold text-dark text-start">{{ $booking->user->name ?? '—' }}</div>
+
+                                    <div class="col-5 text-muted text-start">Số điện thoại:</div>
+                                    <div class="col-7 fw-bold text-dark text-start">
+                                        @if($booking->user && $booking->user->phone)
+                                            <a href="tel:{{ $booking->user->phone }}" class="text-decoration-none"><i class="bi bi-telephone-fill me-1"></i>{{ $booking->user->phone }}</a>
+                                        @else
+                                            —
+                                        @endif
+                                    </div>
+
+                                    <div class="col-5 text-muted text-start">Email:</div>
+                                    <div class="col-7 fw-bold text-dark text-start text-truncate">
+                                        @if($booking->user && $booking->user->email)
+                                            <a href="mailto:{{ $booking->user->email }}" class="text-decoration-none"><i class="bi bi-envelope-fill me-1"></i>{{ $booking->user->email }}</a>
+                                        @else
+                                            —
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if($booking->booking_accommodations && $booking->booking_accommodations->count() > 0)
+                                <div class="card border-0 bg-light p-3 mb-3 text-start">
+                                    <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;"><i class="bi bi-building me-1"></i>Thông tin lưu trú</h6>
+                                    @foreach($booking->booking_accommodations as $index => $ba)
+                                        <div class="{{ $index > 0 ? 'border-top pt-3 mt-3' : '' }}">
+                                            <div class="row g-2 small">
+                                                <div class="col-5 text-muted text-start">Khách sạn:</div>
+                                                <div class="col-7 fw-bold text-dark text-start">
+                                                    {{ $ba->accommodation_name_snapshot ?? ($ba->room_type->accommodation->name ?? '—') }}
+                                                </div>
+
+                                                <div class="col-5 text-muted text-start">Địa chỉ:</div>
+                                                <div class="col-7 fw-semibold text-dark text-start" style="font-size: 0.75rem;">
+                                                    {{ $ba->room_type->accommodation->address ?? '—' }}
+                                                </div>
+
+                                                <div class="col-5 text-muted text-start">Loại phòng:</div>
+                                                <div class="col-7 fw-bold text-dark text-start">
+                                                    <span class="badge bg-secondary">{{ $ba->room_type_name_snapshot ?? ($ba->room_type->name ?? '—') }}</span>
+                                                </div>
+
+                                                <div class="col-5 text-muted text-start">Số lượng:</div>
+                                                <div class="col-7 fw-bold text-dark text-start">
+                                                    ({{ $ba->single_rooms_count ?? 1 }} phòng, {{ $ba->extra_bed_qty ?? 0 }} giường phụ)
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @php
+                                $activeSplit = $passenger->group_splits->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE'])->first();
+                            @endphp
+                            @if($activeSplit)
+                            <div class="card border-0 border-start border-3 border-primary bg-primary bg-opacity-10 p-3 mb-3">
+                                <h6 class="fw-bold mb-2 text-primary text-start" style="font-size: 0.8rem;"><i class="bi bi-clock-history me-1"></i>Thông tin Tách đoàn:</h6>
+                                <div class="row g-2 small text-start">
+                                    <div class="col-5 text-muted">Thời gian:</div>
+                                    <div class="col-7 fw-bold text-dark">{{ $activeSplit->start_time ? $activeSplit->start_time->format('H:i d/m') : '' }} - {{ $activeSplit->end_time ? $activeSplit->end_time->format('H:i d/m') : '' }}</div>
+                                    <div class="col-5 text-muted">Lý do:</div>
+                                    <div class="col-7 fw-bold text-dark">{{ $activeSplit->reason }}</div>
+                                    <div class="col-5 text-muted">SĐT liên hệ:</div>
+                                    <div class="col-7 fw-bold text-dark"><a href="tel:{{ $activeSplit->phone_number }}" class="text-decoration-none">{{ $activeSplit->phone_number }}</a></div>
+                                    @if($activeSplit->split_location)
+                                        <div class="col-5 text-muted">Điểm tách:</div>
+                                        <div class="col-7 fw-bold text-dark">{{ $activeSplit->split_location }}</div>
+                                    @endif
+                                    <div class="col-5 text-muted">Điểm quay lại:</div>
+                                    <div class="col-7 fw-bold text-dark">{{ $activeSplit->return_location }}</div>
+                                </div>
+                            </div>
+                            @endif
+
+                            @if($passenger->special_note)
+                            <div class="card border-0 border-start border-3 border-warning bg-warning bg-opacity-10 p-3">
+                                <h6 class="fw-bold mb-1 text-warning text-start" style="font-size: 0.8rem;"><i class="bi bi-sticky-fill me-1"></i>Ghi chú đặc biệt:</h6>
+                                <p class="mb-0 small text-dark text-start">{{ $passenger->special_note }}</p>
+                            </div>
+                            @endif
+                        </div>
+                        <div class="modal-footer bg-light border-top px-4 py-3">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endif
+@endforeach
+
+<div class="d-md-none" id="mobile-sticky-actions" style="display: none;"></div>
 
 @endsection
