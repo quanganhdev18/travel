@@ -20,6 +20,12 @@ Route::get('/debug-schema', function () {
     return implode(', ', $columns);
 });
 
+// Chatbot routes
+use App\Http\Controllers\Frontend\ChatbotController;
+
+Route::get('/api/chatbot/history', [ChatbotController::class, 'getHistory'])->name('chatbot.history');
+Route::post('/api/chatbot/send', [ChatbotController::class, 'sendMessage'])->name('chatbot.send');
+
 // Route tạm để seed ngày lễ (chạy 1 lần rồi có thể xóa)
 Route::get('/seed-holidays', function () {
     (new VietnamHolidaySeeder)->run();

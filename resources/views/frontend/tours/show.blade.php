@@ -166,7 +166,11 @@
         }
         
         .live-chatbox {
-            bottom: 95px !important;
+            bottom: 80px !important;
+        }
+        
+        #ai-chatbot-widget {
+            bottom: 155px !important;
         }
         
         body {
