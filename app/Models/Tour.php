@@ -225,6 +225,14 @@ class Tour extends Model
             ->withTimestamps();
     }
 
+    public function accommodations()
+    {
+        return $this->belongsToMany(Accommodation::class, 'tour_accommodation_tiers', 'tour_id', 'room_type_id')
+            ->join('room_types', 'room_types.id', '=', 'tour_accommodation_tiers.room_type_id')
+            ->select('accommodations.*')
+            ->distinct();
+    }
+
     protected static function booted()
     {
         static::created(function ($tour) {

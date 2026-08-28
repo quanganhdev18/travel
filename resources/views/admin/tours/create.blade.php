@@ -150,23 +150,15 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <label class="form-label text-muted fw-bold">Lưu trú (Hạng phòng)</label>
-                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                    <label class="form-label text-muted fw-bold">Điểm lưu trú</label>
+                    <select name="accommodation_id" id="accommodation_id" class="form-select">
+                        <option value="">-- Chọn điểm lưu trú --</option>
                         @foreach($accommodations as $acc)
-                            <div class="mb-2">
-                                <strong>{{ $acc->name }}</strong>
-                                @foreach($acc->room_types as $room)
-                                    <div class="form-check ms-3">
-                                        <input class="form-check-input" type="checkbox" name="room_types[]"
-                                            value="{{ $room->id }}" id="room_{{ $room->id }}">
-                                        <label class="form-check-label" for="room_{{ $room->id }}">
-                                            {{ $room->name }} ({{ number_format($room->base_price) }}đ)
-                                        </label>
-                                    </div>
-                                @endforeach
-                            </div>
+                            <option value="{{ $acc->id }}" data-destination-id="{{ $acc->destination_id }}" {{ old('accommodation_id') == $acc->id ? 'selected' : '' }}>
+                                {{ $acc->name }} ({{ $acc->star_rating }} Sao)
+                            </option>
                         @endforeach
-                    </div>
+                    </select>
                 </div>
 
                 <div class="col-md-4 mb-3">
@@ -268,6 +260,50 @@ document.addEventListener('DOMContentLoaded', function() {
         width: '100%',
         placeholder: '-- Chọn điểm đến --'
     });
+
+    $('#accommodation_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: '-- Chọn điểm lưu trú --'
+    });
+
+    const accommodationSelect = $('#accommodation_id');
+    const originalOptions = accommodationSelect.find('option').clone();
+
+    function filterAccommodations() {
+        const destId = $('#destination_id').val();
+        const currentVal = accommodationSelect.val();
+        accommodationSelect.empty();
+        accommodationSelect.append('<option value="">-- Chọn điểm lưu trú --</option>');
+        
+        let hasValidOption = false;
+        if (destId) {
+            originalOptions.each(function() {
+                const opt = $(this);
+                if (opt.data('destination-id') == destId) {
+                    const clonedOpt = opt.clone();
+                    if (clonedOpt.val() == currentVal) {
+                        clonedOpt.prop('selected', true);
+                        hasValidOption = true;
+                    }
+                    accommodationSelect.append(clonedOpt);
+                }
+            });
+            accommodationSelect.prop('disabled', false);
+        } else {
+            accommodationSelect.prop('disabled', true);
+        }
+        
+        if (!hasValidOption) {
+            accommodationSelect.val('').trigger('change');
+        } else {
+            accommodationSelect.trigger('change');
+        }
+    }
+
+    $('#destination_id').on('change', filterAccommodations);
+    // Run filter on initial load
+    filterAccommodations();
 });
 </script>
 @endpush

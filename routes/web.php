@@ -112,6 +112,7 @@ use App\Http\Controllers\Guide\AbsenceRequestController;
 use App\Http\Controllers\Guide\GroupSplitController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
+use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 
@@ -560,6 +561,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tour-reports', [App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
     Route::get('/tour-reports/{report}', [App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
     Route::post('/tour-reports/{report}/approve', [App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
+    Route::post('/tour-reports/{report}/reject', [App\Http\Controllers\Admin\TourReportController::class, 'reject'])->name('admin.reports.reject');
 
     // Admin Absence Requests
     Route::get('/absence-requests/available-guides/{schedule}', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'getAvailableGuides'])
@@ -612,12 +614,13 @@ Route::get('/api/check-email', function (Request $request) {
 
 require __DIR__.'/auth.php';
 
-Route::get('/report-wrong-email/{code}', function($code) {
+Route::get('/report-wrong-email/{code}', function ($code) {
     $id = (int) str_replace('BK-', '', $code);
-    $booking = \App\Models\Booking::findOrFail($id);
+    $booking = Booking::findOrFail($id);
     $booking->is_reported = true;
     $booking->save();
-    return "Cảm ơn bạn đã báo cáo. Chúng tôi đã ghi nhận và sẽ xử lý.";
+
+    return 'Cảm ơn bạn đã báo cáo. Chúng tôi đã ghi nhận và sẽ xử lý.';
 });
 // CHAT ROUTES
 Route::middleware(['auth'])->prefix('chat')->group(function () {

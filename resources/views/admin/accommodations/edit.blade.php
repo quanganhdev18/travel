@@ -39,7 +39,7 @@
 
                     <div class="col-md-3 mb-3">
                         <label class="form-label fw-bold">Điểm đến <span class="text-danger">*</span></label>
-                        <select class="form-select" name="destination_id" required>
+                        <select class="form-select" name="destination_id" id="destination_id" required>
                             <option value="">Chọn điểm đến</option>
                             @foreach($destinations as $dest)
                                 <option value="{{ $dest->id }}" {{ old('destination_id', $accommodation->destination_id) == $dest->id ? 'selected' : '' }}>{{ $dest->name ?? 'N/A' }}</option>
@@ -53,6 +53,18 @@
                             @for($i=1; $i<=5; $i++)
                                 <option value="{{ $i }}" {{ old('star_rating', $accommodation->star_rating) == $i ? 'selected' : '' }}>{{ $i }} Sao</option>
                             @endfor
+                        </select>
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Tour áp dụng <span class="text-muted">(Chỉ hiển thị các Tour thuộc Điểm đến đã chọn)</span></label>
+                        <select class="form-select" name="tour_ids[]" id="tour_ids" multiple>
+                            @foreach($tours as $tour)
+                                <option value="{{ $tour->id }}" data-destination-id="{{ $tour->destination_id }}"
+                                    {{ in_array($tour->id, $accommodation->tour_ids) || (is_array(old('tour_ids')) && in_array($tour->id, old('tour_ids'))) ? 'selected' : '' }}>
+                                    {{ $tour->title ?? 'N/A' }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -200,6 +212,48 @@
                 }
             });
         }
+
+        // Initialize Select2 on Tour select
+        $('#tour_ids').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: '-- Chọn Tour áp dụng --',
+            allowClear: true,
+            closeOnSelect: false
+        });
+
+        const tourSelect = $('#tour_ids');
+        const originalTourOptions = tourSelect.find('option').clone();
+        let isInitialLoad = true;
+
+        function filterTours() {
+            const destId = $('#destination_id').val();
+            const currentVals = isInitialLoad ? (tourSelect.val() || []) : [];
+            tourSelect.empty();
+            
+            if (destId) {
+                originalTourOptions.each(function() {
+                    const opt = $(this);
+                    if (opt.data('destination-id') == destId) {
+                        const clonedOpt = opt.clone();
+                        if (isInitialLoad && currentVals.includes(clonedOpt.val())) {
+                            clonedOpt.prop('selected', true);
+                        }
+                        tourSelect.append(clonedOpt);
+                    }
+                });
+                tourSelect.prop('disabled', false);
+            } else {
+                tourSelect.prop('disabled', true);
+            }
+            
+            tourSelect.trigger('change');
+            isInitialLoad = false;
+        }
+
+        $('#destination_id').on('change', filterTours);
+        // Run filter on initial load
+        filterTours();
     });
 </script>
 @endsection

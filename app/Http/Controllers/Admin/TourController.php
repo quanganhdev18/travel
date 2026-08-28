@@ -8,7 +8,6 @@ use App\Models\Addon;
 use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Province;
-use App\Models\RoomType;
 use App\Models\Ticket;
 use App\Models\Tour;
 use App\Models\TourImage;
@@ -61,6 +60,18 @@ class TourController extends Controller
             'child_price' => 'nullable|numeric',
             'meeting_point' => 'required|string|max:255',
             'destination_id' => 'required|exists:destinations,id',
+            'accommodation_id' => [
+                'nullable',
+                'exists:accommodations,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->filled('destination_id')) {
+                        $accommodation = Accommodation::find($value);
+                        if ($accommodation && $accommodation->destination_id != $request->destination_id) {
+                            $fail('Địa chỉ của điểm lưu trú phải trùng với điểm đến của tour.');
+                        }
+                    }
+                },
+            ],
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
@@ -112,14 +123,13 @@ class TourController extends Controller
         if ($request->has('tickets')) {
             $tour->tickets()->sync($request->tickets);
         }
-        if ($request->has('room_types')) {
-            foreach ($request->room_types as $roomId) {
-                // Get room type to figure out tier label (e.g. 4 Sao)
-                $rt = RoomType::with('accommodation')->find($roomId);
-                if ($rt) {
+        if ($request->filled('accommodation_id')) {
+            $accommodation = Accommodation::with('room_types')->find($request->accommodation_id);
+            if ($accommodation) {
+                foreach ($accommodation->room_types as $rt) {
                     $tour->accommodation_tiers()->create([
-                        'room_type_id' => $roomId,
-                        'tier_label' => ($rt->accommodation->star_rating ?? 3).' Sao',
+                        'room_type_id' => $rt->id,
+                        'tier_label' => ($accommodation->star_rating ?? 3).' Sao',
                         'price_adjustment' => 0,
                     ]);
                 }
@@ -229,10 +239,11 @@ class TourController extends Controller
         $tourTicketIds = $tour->tickets->pluck('id')->toArray();
         $tourRoomTypeIds = $tour->accommodation_tiers()->pluck('room_type_id')->toArray();
         $tourAddonIds = $tour->addons->pluck('id')->toArray();
+        $selectedAccommodationId = $tour->accommodation_tiers()->first()?->room_type?->accommodation_id;
 
         return view('admin.tours.edit', compact(
             'tour', 'provinces', 'categories', 'tourCategoryIds', 'destinations',
-            'tickets', 'accommodations', 'addons', 'tourTicketIds', 'tourRoomTypeIds', 'tourAddonIds'
+            'tickets', 'accommodations', 'addons', 'tourTicketIds', 'tourRoomTypeIds', 'tourAddonIds', 'selectedAccommodationId'
         ));
     }
 
@@ -257,6 +268,18 @@ class TourController extends Controller
             'child_price' => 'nullable|numeric',
             'meeting_point' => 'required|string|max:255',
             'destination_id' => 'required|exists:destinations,id',
+            'accommodation_id' => [
+                'nullable',
+                'exists:accommodations,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->filled('destination_id')) {
+                        $accommodation = Accommodation::find($value);
+                        if ($accommodation && $accommodation->destination_id != $request->destination_id) {
+                            $fail('Địa chỉ của điểm lưu trú phải trùng với điểm đến của tour.');
+                        }
+                    }
+                },
+            ],
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
@@ -316,13 +339,13 @@ class TourController extends Controller
             $tour->tickets()->detach();
         }
         $tour->accommodation_tiers()->delete();
-        if ($request->has('room_types')) {
-            foreach ($request->room_types as $roomId) {
-                $rt = RoomType::with('accommodation')->find($roomId);
-                if ($rt) {
+        if ($request->filled('accommodation_id')) {
+            $accommodation = Accommodation::with('room_types')->find($request->accommodation_id);
+            if ($accommodation) {
+                foreach ($accommodation->room_types as $rt) {
                     $tour->accommodation_tiers()->create([
-                        'room_type_id' => $roomId,
-                        'tier_label' => ($rt->accommodation->star_rating ?? 3).' Sao',
+                        'room_type_id' => $rt->id,
+                        'tier_label' => ($accommodation->star_rating ?? 3).' Sao',
                         'price_adjustment' => 0,
                     ]);
                 }

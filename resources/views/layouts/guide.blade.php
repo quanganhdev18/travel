@@ -18,6 +18,10 @@
     <!-- Chart.js (for dashboard) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Alpine.js & Vite for Echo -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @vite(['resources/js/app.js'])
+
     <style>
         :root {
             --admin-primary: #007CE8;
@@ -484,6 +488,8 @@
                 <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border d-none d-md-inline-flex align-items-center gap-1" title="Xem trang chủ">
                     <i class="bi bi-box-arrow-up-right"></i> <span>Xem Website</span>
                 </a>
+                
+                @include('components.guide-notification-bell')
                 
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
