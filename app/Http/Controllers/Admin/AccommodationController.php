@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Accommodation;
 use App\Models\Destination;
 use App\Models\RoomType;
+use App\Models\Tour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -21,8 +22,11 @@ class AccommodationController extends Controller
     public function create()
     {
         $destinations = Destination::select('id', 'name')->get();
+        $tours = Tour::select('id', 'title', 'destination_id')
+            ->where('duration_days', '>', 1)
+            ->get();
 
-        return view('admin.accommodations.create', compact('destinations'));
+        return view('admin.accommodations.create', compact('destinations', 'tours'));
     }
 
     public function store(Request $request)
@@ -34,6 +38,8 @@ class AccommodationController extends Controller
             'description' => 'nullable|string',
             'star_rating' => 'required|integer|min:1|max:5',
             'is_active' => 'boolean',
+            'tour_ids' => 'nullable|array',
+            'tour_ids.*' => 'exists:tours,id',
             'rooms' => 'required|array|min:1',
             'rooms.*.name' => 'required|string|max:255',
             'rooms.*.base_capacity' => 'required|integer|min:1',
@@ -63,6 +69,9 @@ class AccommodationController extends Controller
                 ]);
             }
 
+            // Sync tours after room types are created
+            $accommodation->syncTours($request->input('tour_ids', []));
+
             DB::commit();
 
             return redirect()->route('admin.accommodations.index')->with('success', 'Thêm lưu trú thành công.');
@@ -77,8 +86,11 @@ class AccommodationController extends Controller
     {
         $accommodation->load('room_types');
         $destinations = Destination::select('id', 'name')->get();
+        $tours = Tour::select('id', 'title', 'destination_id')
+            ->where('duration_days', '>', 1)
+            ->get();
 
-        return view('admin.accommodations.edit', compact('accommodation', 'destinations'));
+        return view('admin.accommodations.edit', compact('accommodation', 'destinations', 'tours'));
     }
 
     public function update(Request $request, Accommodation $accommodation)
@@ -90,6 +102,8 @@ class AccommodationController extends Controller
             'description' => 'nullable|string',
             'star_rating' => 'required|integer|min:1|max:5',
             'is_active' => 'boolean',
+            'tour_ids' => 'nullable|array',
+            'tour_ids.*' => 'exists:tours,id',
             'rooms' => 'required|array|min:1',
             'rooms.*.id' => 'nullable|exists:room_types,id',
             'rooms.*.name' => 'required|string|max:255',
@@ -138,6 +152,9 @@ class AccommodationController extends Controller
 
             // Xóa các room type không có trong danh sách update
             $accommodation->room_types()->whereNotIn('id', $currentRoomIds)->delete();
+
+            // Sync tours after room types are updated
+            $accommodation->syncTours($request->input('tour_ids', []));
 
             DB::commit();
 

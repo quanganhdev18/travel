@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Accommodation;
 use App\Models\Destination;
 use App\Models\Province;
+use App\Models\RoomType;
 use App\Models\Tour;
 use App\Models\User;
 use App\Models\Ward;
@@ -127,4 +129,73 @@ test('admin can store schedule for a one day tour with same departure and return
         'return_date' => '2026-08-01 00:00:00',
         'capacity' => 20,
     ]);
+});
+
+test('admin can store tour with matching accommodation destination and tiers are populated', function () {
+    $accommodation = Accommodation::create([
+        'destination_id' => $this->destination->id,
+        'name' => 'Khách sạn Hà Nội',
+        'address' => '123 Đường Hà Nội',
+        'star_rating' => 4,
+        'is_active' => true,
+    ]);
+    $roomType1 = RoomType::create([
+        'accommodation_id' => $accommodation->id,
+        'name' => 'Standard Room',
+        'base_price' => 500000,
+    ]);
+    $roomType2 = RoomType::create([
+        'accommodation_id' => $accommodation->id,
+        'name' => 'VIP Room',
+        'base_price' => 1000000,
+    ]);
+
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.tours.store'), [
+            'title' => [
+                'vi' => 'Tour kiểm thử lưu trú hợp lệ',
+            ],
+            'base_price' => 2000000,
+            'meeting_point' => 'Hà Nội',
+            'destination_id' => $this->destination->id,
+            'accommodation_id' => $accommodation->id,
+            'duration_days' => 2,
+            'duration_nights' => 1,
+        ]);
+
+    $response->assertRedirect();
+    $tour = Tour::where('slug', 'like', 'tour-kiem-thu-luu-tru-hop-le%')->first();
+    expect($tour)->not->toBeNull();
+    expect($tour->accommodation_tiers)->toHaveCount(2);
+});
+
+test('admin cannot store tour with mismatching accommodation destination', function () {
+    $otherDestination = Destination::create([
+        'name' => 'Hồ Chí Minh',
+        'description' => 'Sài Gòn',
+    ]);
+    $accommodation = Accommodation::create([
+        'destination_id' => $otherDestination->id,
+        'name' => 'Khách sạn Sài Gòn',
+        'address' => '123 Đường Sài Gòn',
+        'star_rating' => 4,
+        'is_active' => true,
+    ]);
+
+    $response = $this->actingAs($this->adminUser)
+        ->from(route('admin.tours.create'))
+        ->post(route('admin.tours.store'), [
+            'title' => [
+                'vi' => 'Tour kiểm thử lưu trú sai điểm đến',
+            ],
+            'base_price' => 2000000,
+            'meeting_point' => 'Hà Nội',
+            'destination_id' => $this->destination->id, // Hà Nội
+            'accommodation_id' => $accommodation->id, // Hồ Chí Minh
+            'duration_days' => 2,
+            'duration_nights' => 1,
+        ]);
+
+    $response->assertRedirect(route('admin.tours.create'));
+    $response->assertSessionHasErrors(['accommodation_id']);
 });

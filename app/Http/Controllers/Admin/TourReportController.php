@@ -8,6 +8,8 @@ use App\Models\BookingPassenger;
 use App\Models\GroupSplit;
 use App\Models\TourAbsenceRequest;
 use App\Models\TourReport;
+use App\Notifications\Guide\TourReportApprovedNotification;
+use App\Notifications\Guide\TourReportRejectedNotification;
 use Illuminate\Http\Request;
 
 class TourReportController extends Controller
@@ -81,6 +83,36 @@ class TourReportController extends Controller
                 ->update(['tour_status' => 'closed']);
         }
 
+        // Notify guide
+        $guideUser = $report->tour_guide?->user;
+        if ($guideUser) {
+            $guideUser->notify(new TourReportApprovedNotification($report));
+        }
+
         return redirect()->route('admin.reports.index')->with('success', 'Đã duyệt báo cáo và quyết toán thành công. Tour đã được đóng.');
+    }
+
+    public function reject(Request $request, TourReport $report)
+    {
+        if ($report->status === 'approved') {
+            return redirect()->back()->with('error', 'Không thể từ chối báo cáo đã được duyệt.');
+        }
+
+        $request->validate([
+            'reject_reason' => 'required|string|max:1000',
+        ]);
+
+        // Get the guide user before deleting the report
+        $guideUser = $report->tour_guide?->user;
+
+        // Notify guide
+        if ($guideUser) {
+            $guideUser->notify(new TourReportRejectedNotification($report, $request->reject_reason));
+        }
+
+        // Delete the report from database so the guide can resubmit a new one
+        $report->delete();
+
+        return redirect()->route('admin.reports.index')->with('success', 'Đã từ chối báo cáo và thông báo cho hướng dẫn viên.');
     }
 }

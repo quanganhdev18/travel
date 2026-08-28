@@ -78,12 +78,32 @@
                 @endif
 
                 @if($report->status === 'pending')
-                    <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" class="text-end mt-4">
-                        @csrf
-                        <button type="submit" class="btn btn-success px-4" onclick="return confirm('Xác nhận đã xem báo cáo và duyệt đóng tour này?')">
-                            <i class="bi bi-check-circle me-1"></i> Duyệt Báo Cáo & Khóa Tour
+                    <div class="d-flex justify-content-end gap-2 mt-4" x-data="{ showRejectForm: false }">
+                        <button type="button" @click="showRejectForm = !showRejectForm" class="btn btn-danger px-4">
+                            <i class="bi bi-x-circle me-1"></i> Từ chối Báo cáo
                         </button>
-                    </form>
+                        
+                        <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-success px-4" onclick="return confirm('Xác nhận đã xem báo cáo và duyệt đóng tour này?')">
+                                <i class="bi bi-check-circle me-1"></i> Duyệt Báo Cáo & Khóa Tour
+                            </button>
+                        </form>
+                    </div>
+
+                    <div x-show="showRejectForm" class="mt-3 p-3 border rounded bg-light text-start" x-cloak x-transition>
+                        <form action="{{ route('admin.reports.reject', $report->id) }}" method="POST">
+                            @csrf
+                            <div class="mb-3">
+                                <label for="reject_reason" class="form-label fw-bold">Lý do từ chối <span class="text-danger">*</span></label>
+                                <textarea name="reject_reason" id="reject_reason" rows="3" class="form-control" placeholder="Nhập lý do từ chối..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="button" @click="showRejectForm = false" class="btn btn-sm btn-secondary me-2">Hủy</button>
+                                <button type="submit" class="btn btn-sm btn-danger">Xác nhận Từ chối</button>
+                            </div>
+                        </form>
+                    </div>
                 @else
                     <div class="alert alert-success text-center">
                         <i class="bi bi-check-circle-fill me-2"></i> Báo cáo này đã được duyệt.

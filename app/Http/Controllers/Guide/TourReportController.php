@@ -8,6 +8,7 @@ use App\Models\BookingPassenger;
 use App\Models\GroupSplit;
 use App\Models\TourReport;
 use App\Models\TourSchedule;
+use App\Notifications\Guide\TourReportSubmittedNotification;
 use Illuminate\Http\Request;
 
 class TourReportController extends Controller
@@ -83,7 +84,7 @@ class TourReportController extends Controller
             'actual_guests.max' => 'Số khách thực tế không được vượt quá số lượng tối đa của tour ('.$schedule->capacity.' người).',
         ]);
 
-        TourReport::create([
+        $tourReport = TourReport::create([
             'tour_schedule_id' => $schedule->id,
             'guide_id' => auth()->user()->tour_guide->id,
             'actual_guests' => $request->actual_guests,
@@ -93,6 +94,9 @@ class TourReportController extends Controller
             'balance' => 0,
             'status' => 'pending',
         ]);
+
+        // Send notification to the guide
+        auth()->user()->notify(new TourReportSubmittedNotification($tourReport));
 
         return redirect()->route('guide.schedules.show', $schedule->id)->with('success', 'Đã nộp Báo cáo sự cố thành công. Chờ Admin duyệt.');
     }
