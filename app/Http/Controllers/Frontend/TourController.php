@@ -66,10 +66,10 @@ class TourController extends Controller
 
         if (Cache::has($cacheKey)) {
             $summary = Cache::get($cacheKey);
-            if (!in_array($summary, [
+            if (! in_array($summary, [
                 'Không thể kết nối đến dịch vụ AI.',
                 'Không thể tạo tóm tắt vào lúc này do lỗi từ dịch vụ AI.',
-                'Hệ thống chưa được cấu hình AI. Vui lòng liên hệ quản trị viên để cập nhật GEMINI_API_KEY.'
+                'Hệ thống chưa được cấu hình AI. Vui lòng liên hệ quản trị viên để cập nhật GEMINI_API_KEY.',
             ])) {
                 return response()->json([
                     'success' => true,
@@ -86,6 +86,7 @@ class TourController extends Controller
         if ($tour->reviews->isEmpty()) {
             $summary = 'Chưa có đánh giá nào để tóm tắt.';
             Cache::put($cacheKey, $summary, now()->addDay());
+
             return response()->json(['success' => true, 'summary' => $summary]);
         }
 
@@ -117,14 +118,17 @@ class TourController extends Controller
                 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                     $summary = $result['candidates'][0]['content']['parts'][0]['text'];
                     Cache::put($cacheKey, $summary, now()->addDay());
+
                     return response()->json(['success' => true, 'summary' => $summary]);
                 }
             }
 
             Log::error('Gemini API Error', ['response' => $response->body()]);
+
             return response()->json(['success' => true, 'summary' => 'Không thể tạo tóm tắt vào lúc này do lỗi từ dịch vụ AI.']);
         } catch (\Exception $e) {
             Log::error('Gemini API Exception', ['message' => $e->getMessage()]);
+
             return response()->json(['success' => true, 'summary' => 'Không thể kết nối đến dịch vụ AI.']);
         }
     }

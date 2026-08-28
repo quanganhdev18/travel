@@ -195,8 +195,18 @@
                     </div>
                 </div>
 
-                <form action="{{ route('frontend.tours.store') }}" method="POST" id="checkout-form"
-                    enctype="multipart/form-data">
+                    @if ($errors->any())
+                        <div class="alert alert-danger mb-4">
+                            <strong>Vui lòng kiểm tra lại thông tin:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <form action="{{ route('frontend.tours.store') }}" method="POST" id="checkout-form"
+                        enctype="multipart/form-data">
                     @csrf
                     <input type="hidden" name="schedule_id" value="{{ $schedule->id }}">
                     <input type="hidden" name="adults" value="{{ $adults }}">
@@ -263,9 +273,36 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-600 text-dark">{{ __('Email') }} <span
                                             class="text-danger">*</span></label>
-                                    <input type="email" name="customer_email" class="form-control search-form-control"
-                                        value="{{ $user?->email }}" required placeholder="email@example.com">
+                                    <input type="email" name="customer_email" id="customer_email" class="form-control search-form-control @error('customer_email') is-invalid @enderror"
+                                        value="{{ old('customer_email', $user?->email) }}" required placeholder="email@example.com">
+                                    @error('customer_email')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div id="email_suggestion_banner" class="alert alert-warning mt-2 mb-0 p-2 d-none" style="font-size: 0.85rem; border-left: 4px solid #ffc107;">
+                                        <i class="bi bi-exclamation-triangle me-1"></i> Có phải ý bạn là <strong id="email_suggestion_text"></strong>? <a href="#" id="email_suggestion_btn" class="fw-bold text-dark">Sửa lại</a>
+                                    </div>
+                                    <div id="email_exists_banner" class="alert alert-info mt-2 mb-0 p-2 d-none" style="font-size: 0.85rem; border-left: 4px solid #0dcaf0;">
+                                        <i class="bi bi-info-circle me-1"></i> Email này đã có tài khoản. Đăng nhập để tự động điền thông tin và theo dõi đơn hàng dễ hơn?
+                                        <div class="mt-2 d-flex gap-2">
+                                            <a href="{{ route('login', ['redirect' => request()->fullUrl()]) }}" class="btn btn-sm btn-primary">Đăng nhập</a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('email_exists_banner').classList.add('d-none')">Tiếp tục không cần đăng nhập</button>
+                                        </div>
+                                    </div>
                                 </div>
+                                @if(!$user)
+                                <div class="col-md-6">
+                                    <label class="form-label fw-600 text-dark">{{ __('Nhập lại Email') }} <span
+                                            class="text-danger">*</span></label>
+                                    <input type="email" name="customer_email_confirmation" id="customer_email_confirmation" class="form-control search-form-control @error('customer_email_confirmation') is-invalid @enderror"
+                                        value="{{ old('customer_email_confirmation') }}" required placeholder="Nhập lại email để xác nhận" oninput="checkEmailMatch()">
+                                    @error('customer_email_confirmation')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div id="email_match_error" class="invalid-feedback" style="display:none;">Email nhập lại không khớp!</div>
+                                </div>
+                                @else
+                                    <input type="hidden" name="customer_email_confirmation" value="{{ $user->email }}">
+                                @endif
                                 <input type="hidden" name="meeting_point" id="meeting_point"
                                     value="{{ old('meeting_point', $schedule->tour->meeting_point ?? 'Theo thông báo') }}">
 
@@ -374,16 +411,28 @@
                                 <input type="hidden" name="issue_place" id="issue_place"
                                     value="{{ $identity->issue_place ?? 'Hà Nội' }}">
 
-                                @if(($tour->duration_nights ?? 0) > 0)
+                                @php
+                                    $isMultiDayTour = (($schedule->tour->duration_nights ?? $tour->duration_nights ?? 0) > 0)
+                                        || (($schedule->tour->duration_days ?? $tour->duration_days ?? 0) > 1);
+                                @endphp
+                                @if($isMultiDayTour)
                                 <div class="col-12 mt-3">
                                     <div class="p-3 bg-light rounded border">
                                         <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" id="upload_cccd_check">
+                                            <input class="form-check-input" type="checkbox" id="upload_cccd_check" {{ (isset($identity) && ($identity->front_image_url || $identity->back_image_url)) ? 'checked' : '' }}>
                                             <label class="form-check-label fw-600 text-dark" for="upload_cccd_check">
-                                                Tôi muốn tải lên ảnh CCCD/Hộ chiếu để hỗ trợ làm thủ tục lưu trú (Tùy chọn)
+                                                {{ __('Tôi muốn tải lên ảnh CCCD/Hộ chiếu để hỗ trợ làm thủ tục lưu trú (Tùy chọn)') }}
                                             </label>
                                         </div>
-                                        <div class="row g-2 align-items-end" id="cccd_upload_fields" style="display: none;">
+                                        <div class="row g-2 align-items-end" id="cccd_upload_fields" style="display: {{ (isset($identity) && ($identity->front_image_url || $identity->back_image_url)) ? 'flex' : 'none' }};">
+                                            @if(isset($identity) && ($identity->front_image_url || $identity->back_image_url))
+                                            <div class="col-12 mb-1">
+                                                <div class="alert alert-success py-2 px-3 mb-0 small d-flex align-items-center">
+                                                    <i class="bi bi-check-circle-fill me-2"></i>
+                                                    {{ __('Bạn đã có ảnh CCCD/Hộ chiếu trong hồ sơ. Tải lên ảnh mới bên dưới nếu muốn cập nhật.') }}
+                                                </div>
+                                            </div>
+                                            @endif
                                             <div class="col-md-6">
                                                 <label for="front_image" class="form-label small text-muted mb-1"><i class="bi bi-card-image me-1"></i>{{ __('Ảnh mặt trước') }}</label>
                                                 <input type="file" name="front_image" id="front_image" class="form-control" accept="image/*" placeholder="Mặt trước">
@@ -403,13 +452,34 @@
                                             check.addEventListener('change', function() {
                                                 fields.style.display = this.checked ? 'flex' : 'none';
                                                 if (!this.checked) {
-                                                    document.getElementById('front_image').value = '';
-                                                    document.getElementById('back_image').value = '';
+                                                    const front = document.getElementById('front_image');
+                                                    const back = document.getElementById('back_image');
+                                                    if (front) front.value = '';
+                                                    if (back) back.value = '';
                                                 }
                                             });
                                         }
                                     });
-                                </script>
+                                    function checkEmailMatch() {
+        const email = document.getElementById("customer_email")?.value;
+        const confirm = document.getElementById("customer_email_confirmation");
+        const error = document.getElementById("email_match_error");
+        
+        if (confirm && error) {
+            if (confirm.value && email !== confirm.value) {
+                confirm.classList.add("is-invalid");
+                error.style.display = "block";
+                confirm.setCustomValidity("Email nhập lại không khớp!");
+            } else {
+                confirm.classList.remove("is-invalid");
+                error.style.display = "none";
+                confirm.setCustomValidity("");
+            }
+        }
+    }
+    
+    document.getElementById("customer_email")?.addEventListener("input", checkEmailMatch);
+</script>
                                 @endif
                             </div>
                         </div>
@@ -2196,6 +2266,25 @@
         setTimeout(updateTimer, 1000);
     };
     updateTimer();
+    function checkEmailMatch() {
+        const email = document.getElementById("customer_email")?.value;
+        const confirm = document.getElementById("customer_email_confirmation");
+        const error = document.getElementById("email_match_error");
+        
+        if (confirm && error) {
+            if (confirm.value && email !== confirm.value) {
+                confirm.classList.add("is-invalid");
+                error.style.display = "block";
+                confirm.setCustomValidity("Email nhập lại không khớp!");
+            } else {
+                confirm.classList.remove("is-invalid");
+                error.style.display = "none";
+                confirm.setCustomValidity("");
+            }
+        }
+    }
+    
+    document.getElementById("customer_email")?.addEventListener("input", checkEmailMatch);
 </script>
 <style>
     .blink_me {
@@ -2208,4 +2297,83 @@
         }
     }
 </style>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const emailInput = document.getElementById("customer_email");
+        const banner = document.getElementById("email_exists_banner");
+        let timeout = null;
+        
+        function validateEmailField() {
+            clearTimeout(timeout);
+            const email = emailInput.value.trim();
+            
+            if (!email || !email.includes("@") || !email.includes(".")) {
+                banner.classList.add("d-none");
+                document.getElementById("email_suggestion_banner").classList.add("d-none");
+                emailInput.setCustomValidity("");
+                emailInput.classList.remove("is-invalid");
+                return;
+            }
+            
+            // Block typos logic
+            const parts = email.split("@");
+            if (parts.length === 2) {
+                const domain = parts[1].toLowerCase();
+                let suggestion = null;
+                // Strict block for bad domains
+                const blockedDomains = ["gmial.com", "gmal.com", "gamil.com", "gmail.con", "yaho.com", "yahoo.con", "hotmal.com", "hotmail.con"];
+                
+                if (blockedDomains.includes(domain)) {
+                    emailInput.setCustomValidity("Tên miền email không hợp lệ. Vui lòng kiểm tra lại.");
+                    emailInput.classList.add("is-invalid");
+                    
+                    if (domain.includes("gm")) suggestion = "gmail.com";
+                    else if (domain.includes("yah")) suggestion = "yahoo.com";
+                    else if (domain.includes("hot")) suggestion = "hotmail.com";
+                } else {
+                    emailInput.setCustomValidity("");
+                    emailInput.classList.remove("is-invalid");
+                }
+                
+                const suggBanner = document.getElementById("email_suggestion_banner");
+                if (suggestion) {
+                    const fullSugg = parts[0] + "@" + suggestion;
+                    document.getElementById("email_suggestion_text").innerText = fullSugg;
+                    suggBanner.classList.remove("d-none");
+                    document.getElementById("email_suggestion_btn").onclick = function(e) {
+                        e.preventDefault();
+                        emailInput.value = fullSugg;
+                        suggBanner.classList.add("d-none");
+                        emailInput.setCustomValidity("");
+                        emailInput.classList.remove("is-invalid");
+                        emailInput.dispatchEvent(new Event("input"));
+                    };
+                } else {
+                    suggBanner.classList.add("d-none");
+                }
+            }
+            
+            timeout = setTimeout(() => {
+                fetch(`/api/check-email?email=${encodeURIComponent(email)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists && !"{{ $user ? 'logged_in' : '' }}") {
+                            banner.classList.remove("d-none");
+                        } else {
+                            banner.classList.add("d-none");
+                        }
+                    })
+                    .catch(err => console.error(err));
+            }, 500);
+        }
+
+        if (emailInput && banner) {
+            emailInput.addEventListener("input", validateEmailField);
+            // Run on load in case of old() values
+            if (emailInput.value) {
+                validateEmailField();
+            }
+        }
+    });
+</script>
 @endsection

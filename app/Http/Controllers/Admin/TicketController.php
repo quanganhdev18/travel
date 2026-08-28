@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Destination;
 use App\Models\Ticket;
 use App\Models\TicketImage;
-use App\Models\TicketOption;
 use App\Models\Tour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -103,7 +102,7 @@ class TicketController extends Controller
     {
         $request->validate([
             'destination_id' => 'required|exists:destinations,id',
-            'title' => 'required|string|max:255|unique:tickets,title,' . $ticket->id,
+            'title' => 'required|string|max:255|unique:tickets,title,'.$ticket->id,
             'description' => 'nullable|string',
             'adult_price' => 'required|numeric|min:0',
             'child_price' => 'required|numeric|min:0',

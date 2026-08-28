@@ -87,7 +87,7 @@
                         </div>
                     @endif
 
-                    @if(is_null($booking->user_id))
+                    @if(is_null($booking->user_id) && in_array($booking->payment_status, ['paid', 'paid_30', 'paid_100']))
                         <div class="bg-primary bg-opacity-10 p-4 rounded-4 my-4 text-start border border-primary border-opacity-25">
                             <h5 class="fw-bold text-primary mb-2"><i class="bi bi-person-plus-fill me-2"></i>Tạo tài khoản để theo dõi đơn hàng dễ dàng!</h5>
                             <p class="text-muted mb-3">Bạn vừa đặt tour với tư cách Khách. Tạo tài khoản ngay bây giờ với email <strong>{{ $booking->customer_email }}</strong> để lưu ưu đãi và dễ dàng xem lịch trình.</p>

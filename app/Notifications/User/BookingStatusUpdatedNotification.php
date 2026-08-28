@@ -2,16 +2,17 @@
 
 namespace App\Notifications\User;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use App\Models\Booking;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Notification;
 
 class BookingStatusUpdatedNotification extends Notification
 {
     use Queueable;
 
     public $booking;
+
     public $messageStr;
 
     /**
@@ -45,7 +46,7 @@ class BookingStatusUpdatedNotification extends Notification
             'title' => 'Cập nhật trạng thái Tour',
             'message' => $this->messageStr,
             'booking_id' => $this->booking->id,
-            'link' => route('user.bookings.detail', $this->booking->id)
+            'link' => route('user.bookings.detail', $this->booking->id),
         ];
     }
 

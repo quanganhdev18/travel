@@ -1,4 +1,5 @@
 <?php
+
 $file = 'resources/views/frontend/tours/checkout.blade.php';
 $content = file_get_contents($file);
 
@@ -9,11 +10,11 @@ $startPos = strpos($content, $startMarker);
 $endPos = strpos($content, $endMarker, $startPos);
 
 if ($startPos !== false && $endPos !== false) {
-    $newLogic = <<<EOF
+    $newLogic = <<<'EOF'
 // --- AUTO ROOM SUGGESTION LOGIC ---
     function generateRoomAllocation(strategy) {
-        let A = parseInt("{{ \$adults }}") || 0;
-        let C = parseInt("{{ \$children }}") || 0;
+        let A = parseInt("{{ $adults }}") || 0;
+        let C = parseInt("{{ $children }}") || 0;
         
         let singleRoomsCount = 1;
         let extraBedsCount = 0;

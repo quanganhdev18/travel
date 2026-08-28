@@ -2432,23 +2432,25 @@ document.addEventListener('DOMContentLoaded', function () {
                                     <div class="col-7 fw-bold text-primary text-start">#{{ $booking->id }}</div>
 
                                     <div class="col-5 text-muted text-start">Người đặt:</div>
-                                    <div class="col-7 fw-bold text-dark text-start">{{ $booking->user->name ?? '—' }}</div>
+                                    <div class="col-7 fw-bold text-dark text-start">{{ $booking->customer_name ?? ($booking->user->name ?? '—') }}</div>
 
                                     <div class="col-5 text-muted text-start">Số điện thoại:</div>
                                     <div class="col-7 fw-bold text-dark text-start">
-                                        @if($booking->user && $booking->user->phone)
-                                            <a href="tel:{{ $booking->user->phone }}" class="text-decoration-none"><i class="bi bi-telephone-fill me-1"></i>{{ $booking->user->phone }}</a>
+                                        @php $phone = $booking->customer_phone ?? ($booking->user->phone ?? null); @endphp
+                                        @if($phone)
+                                            <a href="tel:{{ $phone }}" class="text-decoration-none"><i class="bi bi-telephone-fill me-1"></i>{{ $phone }}</a>
                                         @else
-                                            —
+                                            �
                                         @endif
                                     </div>
 
                                     <div class="col-5 text-muted text-start">Email:</div>
                                     <div class="col-7 fw-bold text-dark text-start text-truncate">
-                                        @if($booking->user && $booking->user->email)
-                                            <a href="mailto:{{ $booking->user->email }}" class="text-decoration-none"><i class="bi bi-envelope-fill me-1"></i>{{ $booking->user->email }}</a>
+                                        @php $email = $booking->customer_email ?? ($booking->user->email ?? null); @endphp
+                                        @if($email)
+                                            <a href="mailto:{{ $email }}" class="text-decoration-none"><i class="bi bi-envelope-fill me-1"></i>{{ $email }}</a>
                                         @else
-                                            —
+                                            �
                                         @endif
                                     </div>
                                 </div>
@@ -2528,3 +2530,4 @@ document.addEventListener('DOMContentLoaded', function () {
 <div class="d-md-none" id="mobile-sticky-actions" style="display: none;"></div>
 
 @endsection
+

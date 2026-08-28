@@ -164,27 +164,28 @@ class VnPayService
             ]);
 
             $bookingFresh = $booking->fresh();
+            $email = $bookingFresh->customer_email ?? ($bookingFresh->user->email ?? null);
+            if ($email) {
+                try {
+                    Mail::to($email)->send(new TourBookingMail($bookingFresh));
+                } catch (\Exception $me) {
+                    Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
+                }
+            }
+
+            // Send notification
             if ($bookingFresh->user) {
-                if ($bookingFresh->user->email) {
-                    try {
-                        Mail::to($bookingFresh->user->email)->send(new TourBookingMail($bookingFresh));
-                    } catch (\Exception $me) {
-                        Log::warning("VnPayService: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
-                    }
-                }
-
-                // Send notification
                 $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
-
-                // Bắn thông báo cho Admin
-                $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
-                if ($admins->count() > 0) {
-                    Notification::send($admins, new AdminBookingNotification(
-                        $bookingFresh,
-                        'payment_success',
-                        'Đơn hàng '.$bookingFresh->code.' vừa được thanh toán thành công.'
-                    ));
-                }
+            }
+            
+            // Bắn thông báo cho Admin
+            $admins = \App\Models\User::role('Admin')->get();
+            if ($admins->count() > 0) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminBookingNotification(
+                    $bookingFresh,
+                    'payment_success',
+                    'Đơn hàng '.$bookingFresh->code.' vừa được thanh toán thành công.'
+                ));
             }
         }
 

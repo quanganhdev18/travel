@@ -99,7 +99,7 @@
                 <div class="w-100">
                     <small class="d-block">Giá từ</small>
                     <div class="d-flex align-items-baseline justify-content-between">
-                        <strong class="fs-5">{{ format_currency($tour->base_price ?? 0) }}</strong>
+                        <strong class="fs-5">{{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}</strong>
                     </div>
                 </div>
             </div>

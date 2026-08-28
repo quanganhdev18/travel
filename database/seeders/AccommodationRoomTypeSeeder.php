@@ -6,6 +6,8 @@ use App\Models\Accommodation;
 use App\Models\Destination;
 use App\Models\RoomInventory;
 use App\Models\RoomType;
+use App\Models\Tour;
+use App\Models\TourAccommodationTier;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -76,42 +78,42 @@ class AccommodationRoomTypeSeeder extends Seeder
                 $this->command?->line("  └ RT: {$roomType->name} ({$rtData['base_price']}đ, cap {$rtData['base_capacity']}/{$rtData['max_capacity']})");
             }
         }
-        
+
         // Link all multi-day tours to available accommodations
-        $this->command?->info("Linking accommodations to multi-day tours...");
-        $tours = \App\Models\Tour::where('duration_nights', '>', 0)->get();
+        $this->command?->info('Linking accommodations to multi-day tours...');
+        $tours = Tour::where('duration_nights', '>', 0)->get();
         foreach ($tours as $tour) {
             $destId = $tour->destination_id;
             // Get all 3-star and 4-star room types for this destination
-            $roomTypes3Star = RoomType::whereHas('accommodation', function($q) use ($destId) {
+            $roomTypes3Star = RoomType::whereHas('accommodation', function ($q) use ($destId) {
                 $q->where('destination_id', $destId)->where('star_rating', 3);
             })->get();
-            
-            $roomTypes4Star = RoomType::whereHas('accommodation', function($q) use ($destId) {
+
+            $roomTypes4Star = RoomType::whereHas('accommodation', function ($q) use ($destId) {
                 $q->where('destination_id', $destId)->where('star_rating', 4);
             })->get();
-            
+
             // Assign one 3-star room type as Tiêu chuẩn
             if ($roomTypes3Star->isNotEmpty()) {
                 $rt3 = $roomTypes3Star->first();
-                \App\Models\TourAccommodationTier::firstOrCreate(
+                TourAccommodationTier::firstOrCreate(
                     ['tour_id' => $tour->id, 'room_type_id' => $rt3->id],
                     ['tier_label' => 'Tiêu chuẩn (3 sao)', 'price_adjustment' => 0, 'is_active' => true]
                 );
             }
-            
+
             // Assign one 4-star room type as Cao cấp
             if ($roomTypes4Star->isNotEmpty()) {
                 $rt4 = $roomTypes4Star->first();
                 // Price adjustment = Difference in base price
                 $diff = $rt4->base_price - ($roomTypes3Star->isNotEmpty() ? $roomTypes3Star->first()->base_price : 0);
-                \App\Models\TourAccommodationTier::firstOrCreate(
+                TourAccommodationTier::firstOrCreate(
                     ['tour_id' => $tour->id, 'room_type_id' => $rt4->id],
                     ['tier_label' => 'Nâng cao (4 sao)', 'price_adjustment' => max(0, $diff), 'is_active' => true]
                 );
             }
         }
-        
+
     }
 
     /**

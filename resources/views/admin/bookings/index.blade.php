@@ -90,8 +90,8 @@
                             <div class="small text-muted">{{ $booking->created_at->format('H:i d/m/Y') }}</div>
                         </td>
                         <td>
-                            <div class="fw-bold text-dark">{{ $booking->user->name ?? 'Khách lẻ' }}</div>
-                            <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ $booking->user->phone ?? 'N/A' }}</div>
+                            <div class="fw-bold text-dark">{{ $booking->customer_name ?? ($booking->user->name ?? 'Khách lẻ') }}</div>
+                            <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ $booking->customer_phone ?? ($booking->user->phone ?? 'N/A') }}</div>
                         </td>
                         <td>
                             <div class="fw-500 text-dark text-truncate" style="max-width: 220px;" title="{{ $booking->tour_schedule->tour->title ?? '' }}">
@@ -223,9 +223,9 @@
                 <div class="row g-4">
                     <div class="col-md-6 border-end pe-md-4">
                         <h6 class="text-primary mb-3 fw-bold text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;"><i class="bi bi-person-badge me-2"></i>Thông tin người đặt</h6>
-                        <div class="mb-2"><span class="text-muted me-2">Họ tên:</span> <strong class="text-dark">{{ $booking->user->name ?? 'N/A' }}</strong></div>
-                        <div class="mb-2"><span class="text-muted me-2">SĐT:</span> <strong class="text-dark">{{ $booking->user->phone ?? 'N/A' }}</strong></div>
-                        <div class="mb-2"><span class="text-muted me-2">Email:</span> <strong class="text-dark">{{ $booking->user->email ?? 'N/A' }}</strong></div>
+                        <div class="mb-2"><span class="text-muted me-2">Họ tên:</span> <strong class="text-dark">{{ $booking->customer_name ?? ($booking->user->name ?? 'N/A') }}</strong></div>
+                        <div class="mb-2"><span class="text-muted me-2">SĐT:</span> <strong class="text-dark">{{ $booking->customer_phone ?? ($booking->user->phone ?? 'N/A') }}</strong></div>
+                        <div class="mb-2"><span class="text-muted me-2">Email:</span> <strong class="text-dark">{{ $booking->customer_email ?? ($booking->user->email ?? 'N/A') }}</strong></div>
                         <div class="mb-2"><span class="text-muted me-2">Ngày đặt:</span> <strong class="text-dark">{{ $booking->created_at->format('H:i d/m/Y') }}</strong></div>
                         @if($booking->cancel_reason)
                             <div class="mb-2"><span class="text-danger me-2">Lý do hủy:</span> <strong class="text-danger">{{ $booking->cancel_reason }}</strong></div>

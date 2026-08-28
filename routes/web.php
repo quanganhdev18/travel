@@ -94,6 +94,7 @@ use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
 use App\Http\Controllers\Admin\TourItineraryController;
 use App\Http\Controllers\Api\AiTranslationController;
+use App\Http\Controllers\AppSettingsController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DemoController;
@@ -122,6 +123,12 @@ use Illuminate\Support\Facades\Schema;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::redirect('/dashboard', '/admin/dashboard')->name('dashboard');
+
+Route::get('/locale/{locale}', [AppSettingsController::class, 'switchLocale'])
+    ->name('locale.switch');
+
+Route::get('/currency/{currency}', [AppSettingsController::class, 'switchCurrency'])
+    ->name('currency.switch');
 
 Route::post('/cookie-consent/accept', [CookieConsentController::class, 'accept'])
     ->name('cookie.consent.accept');
@@ -180,6 +187,10 @@ Route::post('/tours/book', [TourBookingController::class, 'store'])
 
 Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
     ->name('frontend.tours.booking_success');
+
+Route::get('/tours/booking/{id}/verify-email', [TourBookingController::class, 'verifyEmail'])
+    ->name('frontend.tours.verify_email');
+Route::post('/tours/booking/{id}/verify-email', [TourBookingController::class, 'submitVerifyEmail']);
 
 Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
     ->name('frontend.tours.booking_status');
@@ -241,6 +252,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-bookings', fn () => redirect()->route('user.profile', ['tab' => 'bookings']))->name('user.bookings');
     Route::get('/my-bookings/{id}', [UserController::class, 'bookingDetail'])->name('user.bookings.detail');
     Route::post('/my-bookings/{id}/cancel', [UserController::class, 'cancelBooking'])->name('user.bookings.cancel');
+    Route::post('/my-bookings/{id}/link', [UserController::class, 'handleBookingLink'])->name('frontend.user.bookings.link');
 
     Route::post('/reviews', [UserController::class, 'storeReview'])->name('user.reviews.store');
 
@@ -599,6 +611,14 @@ Route::get('/api/check-email', function (Request $request) {
 })->name('api.check-email');
 
 require __DIR__.'/auth.php';
+
+Route::get('/report-wrong-email/{code}', function($code) {
+    $id = (int) str_replace('BK-', '', $code);
+    $booking = \App\Models\Booking::findOrFail($id);
+    $booking->is_reported = true;
+    $booking->save();
+    return "Cảm ơn bạn đã báo cáo. Chúng tôi đã ghi nhận và sẽ xử lý.";
+});
 // CHAT ROUTES
 Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::post('/start', [ChatController::class, 'startConversation'])->name('chat.start');

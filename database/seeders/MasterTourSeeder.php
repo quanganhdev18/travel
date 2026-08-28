@@ -749,6 +749,28 @@ class MasterTourSeeder extends Seeder
 
                 // Sync Tickets
                 $tour->tickets()->sync([$ticket->id]);
+
+                // Calculate cost breakdown to match base_price
+                $ticketAdultCost = $tour->tickets()->sum('adult_price');
+                $ticketChildCost = $tour->tickets()->sum('child_price');
+                $targetBase = (float) ($tourData['price'] > 0 ? $tourData['price'] : 1000000);
+                if ($ticketAdultCost >= $targetBase) {
+                    $targetBase = $ticketAdultCost + 500000;
+                }
+                $remaining = max(0, $targetBase - $ticketAdultCost);
+                $transport = round($remaining * 0.35, -3);
+                $meal = round($remaining * 0.35, -3);
+                $insurance = round($remaining * 0.05, -3);
+                $service = $remaining - ($transport + $meal + $insurance);
+                $childRate = config('booking.child_price_rate', 0.7);
+
+                $tour->cost_transport = $transport;
+                $tour->cost_meal = $meal;
+                $tour->cost_insurance = $insurance;
+                $tour->cost_service_fee = $service;
+                $tour->base_price = $transport + $meal + $insurance + $service + $ticketAdultCost;
+                $tour->child_price = round((($transport + $meal + $insurance + $service) * $childRate) + $ticketChildCost, -3);
+                $tour->save();
             }
         }
 

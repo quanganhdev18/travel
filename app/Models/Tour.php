@@ -66,10 +66,17 @@ class Tour extends Model
 
     public function getBasePrice(?Accommodation $accommodation = null, $isHoliday = false)
     {
-        $base = $this->cost_transport + $this->cost_meal + $this->cost_insurance + $this->cost_service_fee;
-
+        $costSum = ($this->cost_transport ?? 0) + ($this->cost_meal ?? 0) + ($this->cost_insurance ?? 0) + ($this->cost_service_fee ?? 0);
         $ticketTotal = $this->tickets->sum('adult_price');
-        $base += $ticketTotal;
+        $calculated = $costSum + $ticketTotal;
+
+        if ($costSum > 0) {
+            $base = $calculated;
+        } elseif (($this->base_price ?? 0) > 0) {
+            $base = (float) $this->base_price;
+        } else {
+            $base = $calculated;
+        }
 
         if ($accommodation) {
             $base += $isHoliday ? $accommodation->holiday_price_per_adult : $accommodation->price_per_adult;
@@ -83,11 +90,19 @@ class Tour extends Model
      */
     public function getChildPrice(): float
     {
-        $rate = config('booking.child_price_rate');
-        $baseCosts = ($this->cost_transport + $this->cost_meal + $this->cost_insurance + $this->cost_service_fee) * $rate;
+        $rate = config('booking.child_price_rate', 0.7);
+        $costSum = ($this->cost_transport ?? 0) + ($this->cost_meal ?? 0) + ($this->cost_insurance ?? 0) + ($this->cost_service_fee ?? 0);
         $ticketChildCost = $this->tickets->sum('child_price');
 
-        return $baseCosts + $ticketChildCost;
+        if ($costSum <= 0 && ($this->base_price ?? 0) > 0) {
+            if (($this->child_price ?? 0) > 0) {
+                return (float) $this->child_price;
+            }
+            $ticketAdultCost = $this->tickets->sum('adult_price');
+            $costSum = max(0, $this->base_price - $ticketAdultCost);
+        }
+
+        return ($costSum * $rate) + $ticketChildCost;
     }
 
     public function departure_location()

@@ -134,6 +134,11 @@
 <div class="body">
 
     <p class="greeting">Kính gửi Quý khách <strong>{{ $customerName }}</strong>,</p>
+    @if($linkedUser ?? false)
+    <div style="background-color: #e0f2fe; color: #0369a1; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; border-left: 4px solid #0ea5e9;">
+        Đơn hàng này đã được liên kết với tài khoản <strong>{{ $booking->customer_email }}</strong> của bạn. <a href="{{ route('login') }}" style="color: #0284c7; font-weight: 600; text-decoration: none;">[Đăng nhập để xem chi tiết]</a>
+    </div>
+    @endif
     <p class="intro">
         @if($booking->payment_status === 'paid_30')
             Travel Wonder đã nhận được khoản đặt cọc 30% cho đơn tour <strong>{{ $booking->code }}</strong>. Vị trí trên chuyến đi của Quý khách đã được bảo lưu an toàn.
@@ -534,6 +539,10 @@
     <div class="disclaimer">Email này được gửi tự động từ hệ thống. Quý khách vui lòng không trả lời trực tiếp email này.</div>
 </div>
 
-</div>
+    <div class="footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center;">
+        <p style="font-size: 12px; color: #64748b; font-style: italic;">
+            Nếu bạn nhận được email này nhưng không đặt tour tại Travel Wonder, vui lòng bỏ qua hoặc <a href="{{ url('/report-wrong-email/' . $booking->code) }}" style="color: #ef4444; text-decoration: underline;">Bấm vào đây để báo cáo nhầm lẫn</a> để chúng tôi hỗ trợ.
+        </p>
+    </div>
 </body>
 </html>

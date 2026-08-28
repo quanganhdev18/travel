@@ -53,7 +53,7 @@ class InvoiceRequestController extends Controller
         | Chỉ cho yêu cầu khi đã thanh toán
         |--------------------------------------------------------------------------
         */
-        if (!in_array(
+        if (! in_array(
             $booking->payment_status,
             ['paid_30', 'paid_100'],
             true
@@ -125,7 +125,7 @@ class InvoiceRequestController extends Controller
             Notification::send($admins, new AdminBookingNotification(
                 $booking,
                 'invoice_requested',
-                'Khách hàng yêu cầu xuất hóa đơn cho đơn hàng: ' . $booking->code
+                'Khách hàng yêu cầu xuất hóa đơn cho đơn hàng: '.$booking->code
             ));
         }
 

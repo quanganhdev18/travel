@@ -1,11 +1,13 @@
 <?php
+
 require 'vendor/autoload.php';
 $app = require_once 'bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 $kernel->bootstrap();
 
 use App\Models\Accommodation;
 use App\Models\Tour;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
 $destinations = [
@@ -91,8 +93,8 @@ try {
     }
 
     DB::commit();
-    echo "Thành công! Đã tạo địa chỉ khách sạn chi tiết theo từng điểm đến.";
-} catch (\Exception $e) {
+    echo 'Thành công! Đã tạo địa chỉ khách sạn chi tiết theo từng điểm đến.';
+} catch (Exception $e) {
     DB::rollBack();
-    echo "Lỗi: " . $e->getMessage();
+    echo 'Lỗi: '.$e->getMessage();
 }

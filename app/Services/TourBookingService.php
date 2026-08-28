@@ -215,9 +215,14 @@ class TourBookingService
             $ticketChildCost += $ticket->child_price ?? 0;
         }
 
-        $tourBasePerAdult = ($tour->base_price ?? 0) + $costTransport + $costMeal + $costInsurance + $costServiceFee + $ticketAdultCost;
-        $childRate = config('booking.child_price_rate');
-        $tourBasePerChild = ($tour->child_price ?? (($tour->base_price ?? 0) * $childRate)) + ($costTransport * $childRate) + ($costMeal * $childRate) + ($costInsurance * $childRate) + ($costServiceFee * $childRate) + $ticketChildCost;
+        $baseCostSum = $costTransport + $costMeal + $costInsurance + $costServiceFee;
+        if ($baseCostSum <= 0 && ($tour->base_price ?? 0) > 0) {
+            $baseCostSum = max(0, $tour->base_price - $ticketAdultCost);
+        }
+
+        $childRate = config('booking.child_price_rate', 0.7);
+        $tourBasePerAdult = $baseCostSum + $ticketAdultCost;
+        $tourBasePerChild = ($baseCostSum * $childRate) + $ticketChildCost;
 
         if ($isHoliday) {
             $tourBasePerAdult = $tourBasePerAdult * (1 + $holidaySurcharge / 100);

@@ -29,20 +29,28 @@ class CostBreakdownAndAccommodationSeeder extends Seeder
                 $accommodations->random(rand(1, 3))->pluck('id')->toArray()
             );
 
-            // Generate fake cost breakdown
+            // Generate cost breakdown matching base_price and tickets
             $basePrice = $tour->base_price > 0 ? $tour->base_price : rand(1000000, 5000000);
-            
-            // Assuming base_price in current db was total. Let's split it.
-            $transport = $basePrice * 0.2;
-            $meal = $basePrice * 0.3;
-            $insurance = $basePrice * 0.05;
-            $service = $basePrice * 0.15; // 70% total. The rest 30% could be tickets or something. We just update the fields.
+            $ticketAdultCost = $tour->tickets->sum('adult_price');
+            $ticketChildCost = $tour->tickets->sum('child_price');
+            if ($ticketAdultCost >= $basePrice) {
+                $basePrice = $ticketAdultCost + 500000;
+            }
+
+            $remaining = max(0, $basePrice - $ticketAdultCost);
+            $transport = round($remaining * 0.35, -3);
+            $meal = round($remaining * 0.35, -3);
+            $insurance = round($remaining * 0.05, -3);
+            $service = $remaining - ($transport + $meal + $insurance);
+            $childRate = config('booking.child_price_rate', 0.7);
 
             $tour->update([
                 'cost_transport' => $transport,
                 'cost_meal' => $meal,
                 'cost_insurance' => $insurance,
                 'cost_service_fee' => $service,
+                'base_price' => $transport + $meal + $insurance + $service + $ticketAdultCost,
+                'child_price' => round((($transport + $meal + $insurance + $service) * $childRate) + $ticketChildCost, -3),
             ]);
         }
 

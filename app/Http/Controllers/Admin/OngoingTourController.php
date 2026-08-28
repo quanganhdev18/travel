@@ -19,7 +19,7 @@ class OngoingTourController extends Controller
         $query = TourSchedule::with(['tour', 'schedule_guides.tour_guide'])
             ->withCount(['bookings as total_guests' => function ($q) {
                 $q->select(\DB::raw('SUM(adults_count + children_count)'))
-                  ->whereNotIn('booking_status', ['cancelled', 'failed']);
+                    ->whereNotIn('booking_status', ['cancelled', 'failed']);
             }]);
 
         if ($status === 'upcoming') {
@@ -56,8 +56,8 @@ class OngoingTourController extends Controller
         }
 
         $schedules = $query->orderByRaw("CASE WHEN tour_schedules.status IN ('completed', 'closed') OR tour_schedules.return_date < CURRENT_DATE() THEN 1 ELSE 0 END")
-                           ->orderBy('departure_date', 'asc')
-                           ->paginate(15);
+            ->orderBy('departure_date', 'asc')
+            ->paginate(15);
         $tourGuides = TourGuide::all(); // Cho modal gán hướng dẫn viên
 
         // Xác định các HDV bị trùng lịch cho mỗi schedule

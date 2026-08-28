@@ -4,8 +4,6 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -15,6 +13,7 @@ class TourBooked implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $tourId;
+
     public $message;
 
     /**
@@ -34,7 +33,7 @@ class TourBooked implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('tour.' . $this->tourId),
+            new Channel('tour.'.$this->tourId),
         ];
     }
 

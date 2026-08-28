@@ -3,6 +3,7 @@
 use App\Http\Middleware\CheckUserActive;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsGuide;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\UpdateLastSeenAt;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            SetLocale::class,
             CheckUserActive::class,
             UpdateLastSeenAt::class,
         ]);

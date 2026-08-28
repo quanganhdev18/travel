@@ -51,7 +51,9 @@ class UserController extends Controller
             Booking::TOUR_CANCELLED_CUSTOMER,
         ]);
 
-        return view('frontend.user.bookings', compact('bookings', 'activeBookings', 'pastBookings'));
+        $pendingLinkedBookings = Booking::with('tour_schedule.tour')->where('customer_email', Auth::user()->email)->whereNull('user_id')->where('ignored_by_user', false)->get();
+
+        return view('frontend.user.bookings', compact('bookings', 'activeBookings', 'pastBookings', 'pendingLinkedBookings'));
     }
 
     public function profile(): View
@@ -104,7 +106,9 @@ class UserController extends Controller
             ->latest()
             ->get();
 
-        return view('frontend.user.profile', compact('user', 'bookings', 'activeBookings', 'pastBookings', 'wishlists', 'ticketBookings'));
+        $pendingLinkedBookings = Booking::with('tour_schedule.tour')->where('customer_email', Auth::user()->email)->whereNull('user_id')->where('ignored_by_user', false)->get();
+
+        return view('frontend.user.profile', compact('user', 'bookings', 'activeBookings', 'pastBookings', 'wishlists', 'ticketBookings', 'pendingLinkedBookings'));
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -317,5 +321,27 @@ class UserController extends Controller
             ->delete();
 
         return redirect()->back()->with('success', 'Đã xóa khỏi danh sách yêu thích.');
+    }
+
+    public function handleBookingLink(Request $request, $id): RedirectResponse
+    {
+        $booking = Booking::findOrFail($id);
+        
+        if ($booking->customer_email !== Auth::user()->email) {
+            abort(403);
+        }
+        
+        if ($request->action === 'accept') {
+            $booking->user_id = Auth::id();
+            $booking->save();
+            \App\Models\TicketBooking::where('booking_id', $booking->id)->update(['user_id' => Auth::id()]);
+            return redirect()->back()->with('success', 'Đã liên kết đơn hàng thành công.');
+        } elseif ($request->action === 'ignore') {
+            $booking->ignored_by_user = true;
+            $booking->save();
+            return redirect()->back()->with('success', 'Đã bỏ qua đơn hàng này.');
+        }
+        
+        return redirect()->back();
     }
 }

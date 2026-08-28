@@ -3,8 +3,6 @@
 namespace App\Notifications\User;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class BookingSuccessNotification extends Notification
@@ -12,6 +10,7 @@ class BookingSuccessNotification extends Notification
     use Queueable;
 
     public $bookingId;
+
     public $tourName;
 
     /**
@@ -43,8 +42,8 @@ class BookingSuccessNotification extends Notification
         return [
             'booking_id' => $this->bookingId,
             'tour_name' => $this->tourName,
-            'message' => 'Đặt tour "' . $this->tourName . '" thành công!',
-            'type' => 'booking_success'
+            'message' => 'Đặt tour "'.$this->tourName.'" thành công!',
+            'type' => 'booking_success',
         ];
     }
 }

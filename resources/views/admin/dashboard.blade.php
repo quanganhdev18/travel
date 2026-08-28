@@ -488,7 +488,7 @@
                                     // Randomize avatar color based on user id or name length
                                     $colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
                                     $avatarColor = $colors[($booking->user_id ?? 0) % count($colors)];
-                                    $userName = $booking->user->name ?? 'Khách lẻ';
+                                    $userName = $booking->customer_name ?? ($booking->user->name ?? 'Khách lẻ');
                                     $initials = collect(explode(' ', $userName))->map(fn($part) => mb_substr($part, 0, 1))->take(2)->join('');
                                     
                                     // Status Badge mapping

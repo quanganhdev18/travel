@@ -42,6 +42,17 @@ class TourBookingController extends Controller
     {
 
         $user = Auth::user();
+        
+        // Layer 2: Không auto-link user. Chỉ ghi chú biến $linkedUser để truyền vào mail nếu email trùng.
+        $linkedUser = false;
+        if (!$user && $request->filled('customer_email')) {
+            $existingUser = User::where('email', $request->customer_email)->first();
+            if ($existingUser) {
+                // Không gán $user = $existingUser; để đơn hàng vẫn là Guest (user_id = null)
+                $linkedUser = true;
+            }
+        }
+        
         $sessionId = session()->getId();
 
         try {
@@ -67,9 +78,24 @@ class TourBookingController extends Controller
             return redirect()->back()->with('error', $e->getMessage() ?: 'Đã có lỗi xảy ra trong quá trình đặt tour. Vui lòng thử lại.');
         }
 
+        // Layer 1: Nếu là Guest và thanh toán online hoặc giá trị lớn, bắt xác thực email
+        if (!$user && ($request->payment_method === 'vnpay' || $booking->total_price > 5000000)) {
+            $booking->email_verify_token = rand(100000, 999999);
+            $booking->is_email_verified = false;
+            $booking->save();
+
+            try {
+                Mail::to($request->customer_email)->send(new \App\Mail\TourBookingOtpMail($booking));
+            } catch (Exception $e) {
+                Log::error('Lỗi gửi OTP email: '.$e->getMessage());
+            }
+
+            return redirect()->route('frontend.tours.verify_email', $booking->id);
+        }
+
         try {
             Mail::to($request->customer_email)->send(
-                new TourBookingMail($booking, $schedule, $request->customer_name, $request->customer_phone)
+                new TourBookingMail($booking, $schedule, $request->customer_name, $request->customer_phone, $linkedUser)
             );
         } catch (Exception $e) {
             Log::error('Lỗi gửi mail đặt tour: '.$e->getMessage());
@@ -123,6 +149,54 @@ class TourBookingController extends Controller
             'cancel_reason' => $booking->cancel_reason,
             'available_seats' => $booking->tour_schedule ? $booking->tour_schedule->available_seats : 0,
         ]);
+    }
+
+    public function verifyEmail($id)
+    {
+        $booking = Booking::findOrFail($id);
+        
+        if ($booking->is_email_verified || $booking->user_id) {
+            return redirect()->route('frontend.tours.booking_success', $booking->id);
+        }
+        
+        return view('frontend.tours.verify_email', compact('booking'));
+    }
+
+    public function submitVerifyEmail(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+        
+        $request->validate(['otp' => 'required|string']);
+        
+        if ($booking->email_verify_token !== $request->otp) {
+            return back()->with('error', 'Mã xác nhận không chính xác.');
+        }
+        
+        $booking->is_email_verified = true;
+        $booking->email_verify_token = null;
+        $booking->save();
+        
+        $linkedUser = User::where('email', $booking->customer_email)->exists();
+        
+        try {
+            Mail::to($booking->customer_email)->send(
+                new TourBookingMail($booking, $booking->tour_schedule, $booking->customer_name, $booking->customer_phone, $linkedUser)
+            );
+        } catch (Exception $e) {
+            Log::error('Lỗi gửi mail đặt tour sau OTP: '.$e->getMessage());
+        }
+        
+        if ($booking->payment_method === 'vnpay') {
+            $vnpayUrl = $this->vnPayService->generateUrl($booking, $request->ip());
+            return redirect()->away($vnpayUrl);
+        }
+        
+        if ($booking->transport_type === 'flight') {
+            $this->flightService->bookFlightForBooking($booking);
+            return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Xác thực thành công. Đặt tour và vé máy bay thành công.');
+        }
+        
+        return redirect()->route('frontend.tours.booking_success', $booking->id)->with('success', 'Xác thực thành công.');
     }
 
     public function createAccount(Request $request, $id)
@@ -235,16 +309,6 @@ class TourBookingController extends Controller
         $costInsurance = $tour->cost_insurance ?? 0;
         $costServiceFee = $tour->cost_service_fee ?? 0;
 
-        $baseCosts = $costTransport + $costMeal + $costInsurance + $costServiceFee;
-        if ($baseCosts == 0) {
-            $baseCosts = $tour->base_price ?? 0;
-            $childBaseCosts = $tour->child_price ?? ($baseCosts * 0.75);
-        } else {
-            $childBaseCosts = $baseCosts * 0.75;
-        }
-
-        $basePrice = $baseCosts;
-
         $ticketAdultCost = 0;
         $ticketChildCost = 0;
         foreach ($tour->tickets as $ticket) {
@@ -252,8 +316,14 @@ class TourBookingController extends Controller
             $ticketChildCost += $ticket->child_price ?? 0;
         }
 
-        $basePrice += $ticketAdultCost;
-        $childPrice = (($costTransport + $costMeal + $costInsurance + $costServiceFee) * config('booking.child_price_rate')) + $ticketChildCost;
+        $baseCostSum = $costTransport + $costMeal + $costInsurance + $costServiceFee;
+        if ($baseCostSum <= 0 && ($tour->base_price ?? 0) > 0) {
+            $baseCostSum = max(0, $tour->base_price - $ticketAdultCost);
+        }
+
+        $childRate = config('booking.child_price_rate', 0.7);
+        $basePrice = $baseCostSum + $ticketAdultCost;
+        $childPrice = ($baseCostSum * $childRate) + $ticketChildCost;
 
         if ($holidaySurcharge > 0) {
             $basePrice = $basePrice * (1 + $holidaySurcharge / 100);
@@ -292,6 +362,7 @@ class TourBookingController extends Controller
 
         return view('frontend.tours.checkout', [
             'schedule' => $schedule,
+            'tour' => $tour,
             'adults' => $request->adults,
             'children' => $request->children,
             'totalPersons' => $totalPersons,

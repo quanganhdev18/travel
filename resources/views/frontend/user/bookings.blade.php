@@ -398,6 +398,34 @@
 
 {{-- ===== MAIN CONTENT ===== --}}
 <div class="container py-5">
+    @if(isset($pendingLinkedBookings) && $pendingLinkedBookings->count() > 0)
+    <div class="alert alert-info shadow-sm mb-4" style="border-left: 4px solid #0dcaf0;">
+        <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Có đơn hàng đang chờ bạn nhận</h5>
+        <p class="mb-0">Chúng tôi tìm thấy <strong>{{ $pendingLinkedBookings->count() }}</strong> đơn hàng (đã được tạo bằng email <strong>{{ Auth::user()->email }}</strong>) nhưng chưa được liên kết với tài khoản này.</p>
+        <div class="mt-3">
+            @foreach($pendingLinkedBookings as $pendingBooking)
+                <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-white rounded border">
+                    <div>
+                        <strong>{{ $pendingBooking->code }}</strong> - {{ $pendingBooking->tour_schedule->tour->title ?? 'Tour không xác định' }}
+                        <span class="text-muted ms-2">{{ \Carbon\Carbon::parse($pendingBooking->created_at)->format('d/m/Y H:i') }}</span>
+                    </div>
+                    <div>
+                        <form action="{{ route('frontend.user.bookings.link', $pendingBooking->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <input type="hidden" name="action" value="accept">
+                            <button class="btn btn-sm btn-primary">Nhận đơn hàng</button>
+                        </form>
+                        <form action="{{ route('frontend.user.bookings.link', $pendingBooking->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <input type="hidden" name="action" value="ignore">
+                            <button class="btn btn-sm btn-outline-secondary">Không phải của tôi</button>
+                        </form>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     @if($bookings->isEmpty())
     {{-- Empty State --}}

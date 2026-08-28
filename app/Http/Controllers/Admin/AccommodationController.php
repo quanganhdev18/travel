@@ -21,6 +21,7 @@ class AccommodationController extends Controller
     public function create()
     {
         $destinations = Destination::select('id', 'name')->get();
+
         return view('admin.accommodations.create', compact('destinations'));
     }
 
@@ -47,7 +48,7 @@ class AccommodationController extends Controller
         try {
             $data = $request->only(['name', 'destination_id', 'address', 'description', 'star_rating']);
             $data['is_active'] = $request->has('is_active');
-            
+
             $accommodation = Accommodation::create($data);
 
             foreach ($request->rooms as $roomData) {
@@ -63,10 +64,12 @@ class AccommodationController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('admin.accommodations.index')->with('success', 'Thêm lưu trú thành công.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Lỗi: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'Lỗi: '.$e->getMessage());
         }
     }
 
@@ -74,6 +77,7 @@ class AccommodationController extends Controller
     {
         $accommodation->load('room_types');
         $destinations = Destination::select('id', 'name')->get();
+
         return view('admin.accommodations.edit', compact('accommodation', 'destinations'));
     }
 
@@ -101,12 +105,12 @@ class AccommodationController extends Controller
         try {
             $data = $request->only(['name', 'destination_id', 'address', 'description', 'star_rating']);
             $data['is_active'] = $request->has('is_active');
-            
+
             $accommodation->update($data);
 
             $currentRoomIds = [];
             foreach ($request->rooms as $roomData) {
-                if (!empty($roomData['id'])) {
+                if (! empty($roomData['id'])) {
                     $room = RoomType::findOrFail($roomData['id']);
                     $room->update([
                         'name' => $roomData['name'],
@@ -136,10 +140,12 @@ class AccommodationController extends Controller
             $accommodation->room_types()->whereNotIn('id', $currentRoomIds)->delete();
 
             DB::commit();
+
             return redirect()->route('admin.accommodations.index')->with('success', 'Cập nhật lưu trú thành công.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Lỗi: ' . $e->getMessage());
+
+            return back()->withInput()->with('error', 'Lỗi: '.$e->getMessage());
         }
     }
 

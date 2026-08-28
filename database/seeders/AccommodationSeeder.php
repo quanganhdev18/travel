@@ -56,7 +56,7 @@ class AccommodationSeeder extends Seeder
             foreach ($accList as $accInfo) {
                 $p = $prices[$accInfo['name']];
                 Accommodation::firstOrCreate([
-                    'name' => $accInfo['name'] . ' - ' . $destName,
+                    'name' => $accInfo['name'].' - '.$destName,
                 ], [
                     'address' => $accInfo['address'],
                     'description' => 'Dịch vụ lưu trú tiêu chuẩn, tiện nghi đầy đủ, vị trí vô cùng thuận lợi.',

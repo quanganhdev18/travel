@@ -3,28 +3,28 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
     public function index()
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
         $notifications = $user->notifications()->paginate(10);
+
         return response()->json([
             'notifications' => $notifications,
-            'unread_count' => $user->unreadNotifications->count()
+            'unread_count' => $user->unreadNotifications->count(),
         ]);
     }
 
     public function markAsRead($id)
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
@@ -39,7 +39,7 @@ class NotificationController extends Controller
     public function markAllAsRead()
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
@@ -51,12 +51,12 @@ class NotificationController extends Controller
     public function unreadCount()
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
         return response()->json([
-            'unread_count' => $user->unreadNotifications->count()
+            'unread_count' => $user->unreadNotifications->count(),
         ]);
     }
 }

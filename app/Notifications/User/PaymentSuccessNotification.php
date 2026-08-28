@@ -2,16 +2,17 @@
 
 namespace App\Notifications\User;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use App\Models\Booking;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Notification;
 
 class PaymentSuccessNotification extends Notification
 {
     use Queueable;
 
     public $booking;
+
     public $amount;
 
     /**
@@ -43,10 +44,10 @@ class PaymentSuccessNotification extends Notification
         return [
             'type' => 'payment_success',
             'title' => 'Thanh toán thành công',
-            'message' => 'Bạn đã thanh toán thành công ' . number_format($this->amount) . ' ₫ cho tour ' . $this->booking->tour_schedule->tour->name,
+            'message' => 'Bạn đã thanh toán thành công '.number_format($this->amount).' ₫ cho tour '.$this->booking->tour_schedule->tour->name,
             'booking_id' => $this->booking->id,
             'amount' => $this->amount,
-            'link' => route('user.bookings.detail', $this->booking->id)
+            'link' => route('user.bookings.detail', $this->booking->id),
         ];
     }
 
