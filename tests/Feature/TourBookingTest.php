@@ -10,8 +10,12 @@ use App\Models\UserIdentity;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
+    // Seed Spatie Role Admin
+    Role::firstOrCreate(['name' => 'Admin']);
+
     // Create destination
     $destination = Destination::create([
         'name' => 'Đà Nẵng',
