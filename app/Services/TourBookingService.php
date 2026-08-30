@@ -157,7 +157,7 @@ class TourBookingService
         } else {
             $primaryIdentityNumber = $data['passengers']['adult'][0]['identity_number'] ?? null;
             if ($primaryIdentityNumber) {
-                $existingIdentity = UserIdentity::where('identity_number', $primaryIdentityNumber)
+                $existingIdentity = UserIdentity::where('identity_number_hash', hash('sha256', $primaryIdentityNumber))
                     ->where('user_id', '!=', $user->id)
                     ->first();
 

@@ -181,7 +181,7 @@
                     <div class="alert alert-warning mt-3 mb-0 d-flex align-items-center">
                         <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning"></i>
                         <div>
-                            <strong>Lưu ý phụ thu dịp Lễ/Tết:</strong> Tour khởi hành vào dịp lễ nên áp dụng phụ thu
+                            <strong>Lưu ý phụ thu dịp Lễ:</strong> Tour khởi hành vào dịp Lễ áp dụng phụ thu
                             {{ $holidaySurcharge }}%. Giá trên đã bao gồm phụ thu.
                         </div>
                     </div>
@@ -506,30 +506,31 @@
 
                         <!-- Vé tham quan đã gộp vào base_price, không hiển thị lựa chọn nữa -->
 
-                        <!-- Section: Lưu trú -->
+                        <!-- Section: Lưu trú (Đã chỉ định sẵn) -->
                         @if($schedule->tour->accommodation_tiers && $schedule->tour->accommodation_tiers->isNotEmpty())
+                        @php
+                            $firstTier = $schedule->tour->accommodation_tiers->first();
+                            $room = $firstTier ? $firstTier->room_type : null;
+                            $acc = $room ? $room->accommodation : null;
+                        @endphp
                         <div class="mb-5">
+                            @if($acc && $acc->is_active)
                             <h4 class="form-section-title">
                                 <i class="bi bi-building"></i>
-                                {{ __('Lựa chọn Hạng lưu trú') }}
+                                {{ __('Thông tin Nơi lưu trú') }}
                             </h4>
 
-                            <!-- Danh sách hạng lưu trú -->
+                            <!-- Hiển thị thông tin lưu trú đã chỉ định -->
                             <div class="row g-4 mb-4">
-                                @foreach($schedule->tour->accommodation_tiers as $index => $tier)
-                                @php
-                                    $room = $tier->room_type;
-                                    $acc = $room->accommodation;
-                                @endphp
-                                @if($acc && $acc->is_active)
                                 <div class="col-12">
-                                    <label class="card shadow-sm cursor-pointer accommodation-label w-100 {{ $index == 0 ? 'border-primary bg-primary bg-opacity-10' : 'border' }}" style="cursor: pointer; transition: all 0.2s;">
+                                    <div class="card shadow-sm border border-primary bg-primary bg-opacity-10 w-100 accommodation-label" style="transition: all 0.2s;">
                                         <div class="card-body p-3 d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
                                             <div class="d-flex align-items-center">
-                                                <input class="form-check-input accommodation-radio" style="transform: scale(1.3); margin-right: 15px;" type="radio"
+                                                <!-- Input ẩn radio để javascript vẫn nhận diện và tính toán giá phòng -->
+                                                <input class="form-check-input accommodation-radio d-none" style="transform: scale(1.3); margin-right: 15px;" type="radio"
                                                     name="accommodation_id" value="{{ $room->id }}"
                                                     data-name="{{ $room->name }} ({{ $acc->name }})"
-                                                    {{ $index == 0 ? 'checked' : '' }} required
+                                                    checked required
                                                     data-base-capacity="{{ $room->base_capacity }}"
                                                     data-max-capacity="{{ $room->max_capacity }}"
                                                     data-base-price="{{ $room->base_price }}"
@@ -546,10 +547,11 @@
                                             </div>
                                             
                                             <div class="flex-grow-1 w-100 mt-2 mt-md-0">
-                                                <h6 class="mb-1 fw-bold text-primary fs-5">{{ $room->name }} <span class="badge bg-warning text-dark">{{ $tier->tier_label }}</span></h6>
+                                                <h6 class="mb-1 fw-bold text-primary fs-5">{{ $acc->name }} <span class="badge bg-warning text-dark">{{ $acc->star_rating }} Sao</span></h6>
                                                 <div class="text-muted small mb-2"><i class="bi bi-geo-alt"></i> {{ $acc->name }} - {{ $acc->address }}</div>
+                                                <div class="text-dark small">Hạng phòng chỉ định: <strong>{{ $room->name }}</strong></div>
                                                 
-                                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                                <div class="d-flex flex-wrap gap-2 mb-2 mt-2">
                                                     @php
                                                         $desc = strtolower($acc->description ?? '');
                                                     @endphp
@@ -558,10 +560,6 @@
                                                     @if(str_contains($desc, 'buffet') || str_contains($desc, 'sáng')) <span class="badge bg-light text-dark border"><i class="bi bi-cup-hot"></i> Buffet sáng</span> @endif
                                                     @if(str_contains($desc, 'spa')) <span class="badge bg-light text-dark border"><i class="bi bi-flower1"></i> Spa</span> @endif
                                                 </div>
-                                                
-                                                <a href="#" class="small text-decoration-none" onclick="alert('Tính năng xem chi tiết đang được cập nhật.'); return false;">
-                                                    <i class="bi bi-info-circle"></i> Xem chi tiết khách sạn
-                                                </a>
                                             </div>
                                             
                                             <div class="text-start text-md-end mt-2 mt-md-0 w-100" style="max-width: 200px;">
@@ -571,11 +569,10 @@
                                                 <small class="text-muted d-block">/ phòng / {{ $schedule->tour->duration_nights ?? 1 }} đêm<br>(sức chứa cơ bản: {{ $room->base_capacity }} người)</small>
                                             </div>
                                         </div>
-                                    </label>
+                                    </div>
                                 </div>
-                                @endif
-                                @endforeach
                             </div>
+                            @endif
 
                             <!-- Tùy chọn xếp phòng thông minh -->
                             <div class="card bg-light border-0 rounded-3 p-3 mt-4">
