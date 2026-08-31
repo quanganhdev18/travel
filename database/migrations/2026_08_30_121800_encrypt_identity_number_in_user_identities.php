@@ -15,13 +15,20 @@ return new class extends Migration
     {
         // 1. Drop the unique index on identity_number if it exists
         // The index is named 'identity_number' in DB
-        Schema::table('user_identities', function (Blueprint $table) {
-            $table->dropUnique('identity_number');
-        });
+        try {
+            Schema::table('user_identities', function (Blueprint $table) {
+                $table->dropUnique('identity_number');
+            });
+        } catch (Exception $e) {
+            // Ignore if index doesn't exist
+        }
 
-        // 2. Add identity_number_hash column
+        // 2. Add identity_number_hash column and change identity_number to text
         Schema::table('user_identities', function (Blueprint $table) {
-            $table->string('identity_number_hash', 64)->nullable()->after('identity_number');
+            $table->text('identity_number')->change();
+            if (! Schema::hasColumn('user_identities', 'identity_number_hash')) {
+                $table->string('identity_number_hash', 64)->nullable()->after('identity_number');
+            }
         });
 
         // 3. Encrypt existing values and generate hashes
@@ -50,9 +57,8 @@ return new class extends Migration
                 ]);
         }
 
-        // 4. Change identity_number to text and make identity_number_hash not nullable and unique
+        // 4. Make identity_number_hash not nullable and unique
         Schema::table('user_identities', function (Blueprint $table) {
-            $table->text('identity_number')->change();
             $table->string('identity_number_hash', 64)->nullable(false)->unique()->change();
         });
     }
