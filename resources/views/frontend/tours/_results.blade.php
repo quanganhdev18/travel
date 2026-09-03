@@ -67,7 +67,7 @@
                     <div class="combo-footer">
                         <div>
                             <div class="combo-price-label">{{ __('Giá từ:') }}</div>
-                            <div class="combo-price-val">{{ format_currency($tour->base_price ?? 0) }}</div>
+                            <div class="combo-price-val">{{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}</div>
                         </div>
                         <span class="btn btn-combo-detail">{{ __('Xem chi tiết') }}</span>
                     </div>

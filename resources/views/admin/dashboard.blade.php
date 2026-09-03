@@ -139,7 +139,7 @@
         
         $growthBookings = calculateGrowth($diffBookings, $totalBookings - $diffBookings);
         $growthRevenue = calculateGrowth($diffRevenue, $totalRevenue - $diffRevenue);
-        $growthAov = calculateGrowth($diffAov, $avgOrderValue - $diffAov);
+        $growthNewUsers = calculateGrowth($diffNewUsers, $newUsersCount - $diffNewUsers);
         $growthCancel = calculateGrowth($diffCancelRate, $cancelRate - $diffCancelRate); // technically diff in points
     @endphp
 
@@ -191,12 +191,6 @@
                     <span>Vé: {{ number_format($totalTicketRevenue, 0, ',', '.') }}đ</span>
                 </div>
                 
-                @if($outstandingBalance > 0)
-                <div class="bg-danger bg-opacity-10 text-danger rounded px-2 py-1 text-xs mb-3 fw-500 text-center border border-danger border-opacity-25" title="Khách đã cọc nhưng chưa thanh toán đủ">
-                    <i class="bi bi-exclamation-circle"></i> Công nợ: {{ number_format($outstandingBalance, 0, ',', '.') }}đ
-                </div>
-                @endif
-                
                 <div class="d-flex justify-content-between align-items-center text-xs mt-auto pt-3 border-top">
                     <span class="text-muted">So với {{ $periodLength }}N trước</span>
                     <span class="fw-bold {{ $diffRevenue >= 0 ? 'text-success' : 'text-danger' }}">{{ $diffRevenue > 0 ? '+' : '-' }}{{ $diffRevFormatted }}</span>
@@ -204,26 +198,22 @@
             </div>
         </div>
         
-        <!-- Average Order Value -->
+        <!-- New Customers -->
         <div class="col-xl-3 col-md-6">
             <div class="card border-0 shadow-sm rounded-4 h-100 p-3 stat-card">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                        <i class="bi bi-receipt fs-5"></i>
+                    <div class="icon-box bg-info bg-opacity-10 text-info rounded-3 d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                        <i class="bi bi-person-plus fs-5"></i>
                     </div>
-                    <span class="badge {{ $diffAov >= 0 ? 'bg-success text-success' : 'bg-danger text-danger' }} bg-opacity-10 rounded-pill px-2 py-1 text-xs">
-                        <i class="bi bi-arrow-{{ $diffAov >= 0 ? 'up' : 'down' }}"></i> {{ abs($growthAov) }}%
+                    <span class="badge {{ $diffNewUsers >= 0 ? 'bg-success text-success' : 'bg-danger text-danger' }} bg-opacity-10 rounded-pill px-2 py-1 text-xs">
+                        <i class="bi bi-arrow-{{ $diffNewUsers >= 0 ? 'up' : 'down' }}"></i> {{ abs($growthNewUsers) }}%
                     </span>
                 </div>
-                @php 
-                    $aovFormatted = $avgOrderValue >= 1000000 ? round($avgOrderValue / 1000000, 2) . 'tr' : number_format($avgOrderValue, 0, ',', '.');
-                    $diffAovFormatted = abs($diffAov) >= 1000 ? round(abs($diffAov)/1000, 1) . 'k' : number_format(abs($diffAov), 0, ',', '.');
-                @endphp
-                <h3 class="fw-bold mb-1 text-dark">{{ $aovFormatted }}</h3>
-                <p class="text-muted text-sm mb-4">Giá trị đơn TB (VNĐ)</p>
+                <h3 class="fw-bold mb-1 text-dark">{{ number_format($newUsersCount, 0, ',', '.') }}</h3>
+                <p class="text-muted text-sm mb-4">Khách hàng đăng ký mới</p>
                 <div class="d-flex justify-content-between align-items-center text-xs mt-auto pt-3 border-top">
                     <span class="text-muted">So với {{ $periodLength }}N trước</span>
-                    <span class="fw-bold {{ $diffAov >= 0 ? 'text-success' : 'text-danger' }}">{{ $diffAov > 0 ? '+' : '-' }}{{ $diffAovFormatted }}</span>
+                    <span class="fw-bold {{ $diffNewUsers >= 0 ? 'text-success' : 'text-danger' }}">{{ $diffNewUsers > 0 ? '+' : '' }}{{ number_format($diffNewUsers, 0, ',', '.') }}</span>
                 </div>
             </div>
         </div>
@@ -322,7 +312,7 @@
     <!-- Lists Row -->
     <div class="row g-4 mb-4">
         <!-- Top Destinations -->
-        <div class="col-lg-6">
+        <div class="col-lg-4">
             <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
                 <div>
                     <h5 class="fw-bold mb-1 text-dark">Điểm đến dẫn đầu</h5>
@@ -366,12 +356,59 @@
             </div>
         </div>
 
+        <!-- Top Tours -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark">Tour HOT nhất</h5>
+                        <div class="text-muted text-sm">Theo số lượt đặt trong {{ $periodLength }} ngày</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light rounded-circle" style="width:32px; height:32px; display:flex; align-items:center; justify-content:center;" data-bs-toggle="modal" data-bs-target="#topToursModal" title="Xem danh sách đầy đủ">
+                        <i class="bi bi-arrows-angle-expand"></i>
+                    </button>
+                </div>
+                
+                <div class="d-flex flex-column gap-3">
+                    @forelse($topTours as $index => $tour)
+                        @php
+                            $width = ($tour->total_bookings / $maxTopToursBookings) * 100;
+                            $colors = ['#8b5cf6', '#ec4899', '#f43f5e', '#a855f7', '#d946ef'];
+                            $color = $colors[$index % count($colors)];
+                        @endphp
+                        <div class="d-flex align-items-center">
+                            <div class="text-muted fw-bold me-3 text-sm">0{{ $index + 1 }}</div>
+                            <div class="flex-grow-1" style="min-width:0;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="flex-grow-1 pe-2" style="min-width:0;">
+                                        <div class="fw-bold text-dark text-sm text-truncate" title="{{ $tour->title }}">{{ $tour->title }}</div>
+                                        <div class="text-muted text-xs">Tour</div>
+                                    </div>
+                                    <div class="fw-bold text-sm">{{ number_format($tour->total_bookings, 0, ',', '.') }}</div>
+                                </div>
+                                <div class="progress-slim mt-1">
+                                    <div class="progress-bar rounded-pill" style="width: {{ $width }}%; height: 100%; background-color: {{ $color }} !important;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-4">Không có dữ liệu tour.</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
         <!-- Tour Fill Rate -->
-        <div class="col-lg-6">
+        <div class="col-lg-4">
              <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
-                <div>
-                    <h5 class="fw-bold mb-1 text-dark">Tỷ lệ lấp đầy tour</h5>
-                    <div class="text-muted text-sm mb-4">Số ghế đã đặt / tổng số ghế — chuyến khởi hành gần nhất</div>
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark">Tỷ lệ lấp đầy tour</h5>
+                        <div class="text-muted text-sm">Số ghế đã đặt / tổng số ghế — chuyến khởi hành gần nhất</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light rounded-circle" style="width:32px; height:32px; display:flex; align-items:center; justify-content:center;" data-bs-toggle="modal" data-bs-target="#tourFillRatesModal" title="Xem danh sách đầy đủ">
+                        <i class="bi bi-arrows-angle-expand"></i>
+                    </button>
                 </div>
                 
                 <div class="d-flex flex-column gap-3">
@@ -390,9 +427,11 @@
                         <div class="{{ $isWarning ? 'bg-danger bg-opacity-10 p-2 rounded' : '' }}">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <div>
-                                    <div class="fw-bold {{ $isWarning ? 'text-danger' : 'text-dark' }} text-sm text-truncate" style="max-width:220px;" title="{{ $schedule->tour->title ?? 'Tour' }}">
-                                        {{ $schedule->tour->title ?? 'Tour' }}
-                                        @if($isWarning) <i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="Cần đẩy sale!"></i> @endif
+                                    <div class="d-flex align-items-center">
+                                        <div class="fw-bold {{ $isWarning ? 'text-danger' : 'text-dark' }} text-sm text-truncate" style="max-width:180px;" title="{{ $schedule->tour->title ?? 'Tour' }}">
+                                            {{ $schedule->tour->title ?? 'Tour' }}
+                                        </div>
+                                        @if($isWarning) <i class="bi bi-exclamation-triangle-fill text-danger ms-1 flex-shrink-0" title="Cần đẩy sale!"></i> @endif
                                     </div>
                                     <div class="text-muted text-xs d-flex align-items-center gap-2 mt-1">
                                         <span>Khởi hành {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m') }}</span>
@@ -449,7 +488,7 @@
                                     // Randomize avatar color based on user id or name length
                                     $colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
                                     $avatarColor = $colors[($booking->user_id ?? 0) % count($colors)];
-                                    $userName = $booking->user->name ?? 'Khách lẻ';
+                                    $userName = $booking->customer_name ?? ($booking->user->name ?? 'Khách lẻ');
                                     $initials = collect(explode(' ', $userName))->map(fn($part) => mb_substr($part, 0, 1))->take(2)->join('');
                                     
                                     // Status Badge mapping
@@ -536,7 +575,168 @@
             </div>
         </div>
     </div>
+
+    <!-- Guide Ratings Row -->
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark">Top Hướng dẫn viên</h5>
+                        <div class="text-muted text-sm">Điểm đánh giá trung bình cao nhất</div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-borderless table-custom align-middle">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Hướng dẫn viên</th>
+                                <th>Số lượt đánh giá</th>
+                                <th class="text-end">Điểm trung bình</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($guideRatings ?? [] as $index => $guide)
+                                <tr>
+                                    <td class="text-muted fw-bold">0{{ $index + 1 }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            @php
+                                                $colors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+                                                $color = $colors[strlen($guide->name) % count($colors)];
+                                            @endphp
+                                            <div class="avatar-circle rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width:35px; height:35px; background-color: {{ $color }}">
+                                                {{ mb_substr($guide->name, 0, 1) }}
+                                            </div>
+                                            <div class="fw-bold text-dark">{{ $guide->name }}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ number_format($guide->reviews_count) }} lượt</td>
+                                    <td class="text-end">
+                                        <div class="d-flex align-items-center justify-content-end gap-1">
+                                            <span class="fw-bold fs-5 text-dark">{{ number_format($guide->kpi_score, 1) }}</span>
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">Chưa có đánh giá nào cho HDV.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal Top Tours -->
+<div class="modal fade" id="topToursModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light pb-3">
+        <div>
+            <h5 class="modal-title fw-bold">Danh sách Tour HOT nhất đầy đủ</h5>
+            <div class="text-muted text-sm">Theo số lượt đặt trong {{ $periodLength }} ngày</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-4">
+        <div class="d-flex flex-column gap-4">
+            @forelse($topTours as $index => $tour)
+                @php
+                    $width = ($tour->total_bookings / $maxTopToursBookings) * 100;
+                    $colors = ['#8b5cf6', '#ec4899', '#f43f5e', '#a855f7', '#d946ef'];
+                    $color = $colors[$index % count($colors)];
+                @endphp
+                <div class="d-flex align-items-start">
+                    <div class="text-muted fw-bold me-3 fs-5 mt-1">0{{ $index + 1 }}</div>
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="pe-3">
+                                <div class="fw-bold text-dark fs-6">{{ $tour->title }}</div>
+                                <div class="text-muted text-sm">Tour</div>
+                            </div>
+                            <div class="fw-bold fs-5 text-dark">{{ number_format($tour->total_bookings, 0, ',', '.') }} <span class="text-sm text-muted fw-normal">lượt</span></div>
+                        </div>
+                        <div class="progress-slim mt-1">
+                            <div class="progress-bar rounded-pill" style="width: {{ $width }}%; height: 100%; background-color: {{ $color }} !important;"></div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center text-muted py-4">Không có dữ liệu tour.</div>
+            @endforelse
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tour Fill Rates -->
+<div class="modal fade" id="tourFillRatesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light pb-3">
+        <div>
+            <h5 class="modal-title fw-bold">Chi tiết Tỷ lệ lấp đầy tour</h5>
+            <div class="text-muted text-sm">Số ghế đã đặt / tổng số ghế — chuyến khởi hành gần nhất</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body py-4">
+        <div class="d-flex flex-column gap-4">
+            @forelse($tourFillRates as $schedule)
+                @php
+                    $guests = $schedule->total_guests ?? 0;
+                    $capacity = $schedule->capacity > 0 ? $schedule->capacity : 1;
+                    $percent = min(($guests / $capacity) * 100, 100);
+                    $color = $percent >= 90 ? '#ef4444' : ($percent >= 70 ? '#f59e0b' : '#10b981');
+                    
+                    $daysUntilDeparture = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($schedule->departure_date)->startOfDay(), false);
+                    $isWarning = $daysUntilDeparture <= 3 && $percent < 50;
+                    
+                    $hasGuide = $schedule->schedule_guides && $schedule->schedule_guides->count() > 0;
+                @endphp
+                <div class="{{ $isWarning ? 'bg-danger bg-opacity-10 p-3 rounded' : '' }}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="pe-3">
+                            <div class="d-flex align-items-center">
+                                <div class="fw-bold {{ $isWarning ? 'text-danger' : 'text-dark' }} fs-6">
+                                    {{ $schedule->tour->title ?? 'Tour' }}
+                                </div>
+                                @if($isWarning) <span class="badge bg-danger ms-2"><i class="bi bi-exclamation-triangle-fill"></i> Cần đẩy sale</span> @endif
+                            </div>
+                            <div class="text-muted text-sm d-flex align-items-center gap-3 mt-2">
+                                <span><i class="bi bi-calendar-event me-1"></i> Khởi hành: {{ \Carbon\Carbon::parse($schedule->departure_date)->format('d/m/Y') }}</span>
+                                <span class="badge {{ $hasGuide ? 'bg-success' : 'bg-secondary' }} bg-opacity-10 text-{{ $hasGuide ? 'success' : 'secondary' }} rounded-pill px-2 py-1">
+                                    <i class="bi bi-person-badge"></i> {{ $hasGuide ? 'Đã có HDV' : 'Chưa có HDV' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="fw-bold fs-5 text-end text-nowrap">
+                            {{ $guests }} / {{ $schedule->capacity }} <br>
+                            <span class="text-muted text-sm fw-normal">{{ round($percent) }}% đã lấp đầy</span>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 10px; border-radius: 5px;">
+                        <div class="progress-bar" style="width: {{ $percent }}%; background-color: {{ $color }}"></div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center text-muted py-4">Không có tour nào sắp tới.</div>
+            @endforelse
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 @endsection
 
 @push('scripts')

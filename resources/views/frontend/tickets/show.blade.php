@@ -433,7 +433,7 @@
                                                 <div class="text-muted small mb-2">
                                                     <i class="bi bi-calendar3 me-1"></i>{{ $tour->duration_days ?? 0 }}N{{ ($tour->duration_nights ?? 0) > 0 ? ($tour->duration_nights ?? 0) . 'Đ' : '' }}
                                                 </div>
-                                                <div class="fw-bold text-primary">{{ format_currency($tour->base_price ?? 0) }}</div>
+                                                <div class="fw-bold text-primary">{{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}</div>
                                             </div>
                                         </div>
                                     </div>

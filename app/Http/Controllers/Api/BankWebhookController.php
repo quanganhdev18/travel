@@ -61,9 +61,11 @@ class BankWebhookController extends Controller
                 Log::info("Booking #{$booking->id} updated via Bank Webhook. Paid: {$amountIn}");
 
                 $bookingFresh = $booking->fresh();
-                if ($bookingFresh->user && $bookingFresh->user->email) {
+                $email = $bookingFresh->customer_email ?? ($bookingFresh->user->email ?? null);
+
+                if ($email) {
                     try {
-                        Mail::to($bookingFresh->user->email)->send(new TourBookingMail($bookingFresh));
+                        Mail::to($email)->send(new TourBookingMail($bookingFresh));
                     } catch (\Exception $me) {
                         Log::warning("BankWebhook: Failed to send email for booking #{$booking->id}: ".$me->getMessage());
                     }

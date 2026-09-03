@@ -91,9 +91,9 @@
                 <i class="bi bi-ticket-perforated text-muted" style="font-size: 4rem;"></i>
                 <h5 class="text-muted mt-3">{{ __('Chưa có đơn đặt vé nào') }}</h5>
                 <p class="text-muted">{{ __('Khám phá và đặt vé tham quan ngay!') }}</p>
-                <a href="{{ route('frontend.tickets.index') }}" class="btn btn-primary rounded-pill px-4 mt-2">
+                {{-- <a href="{{ route('frontend.tickets.index') }}" class="btn btn-primary rounded-pill px-4 mt-2">
                     <i class="bi bi-search me-2"></i>{{ __('Tìm vé tham quan') }}
-                </a>
+                </a> --}}
             </div>
         </div>
         @endforelse

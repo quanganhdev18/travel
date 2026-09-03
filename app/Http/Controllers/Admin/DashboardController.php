@@ -8,7 +8,9 @@ use App\Models\Message;
 use App\Models\Review;
 use App\Models\TicketBooking;
 use App\Models\Tour;
+use App\Models\TourGuide;
 use App\Models\TourSchedule;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,12 +60,6 @@ class DashboardController extends Controller
         $currentBookings = Booking::whereBetween('created_at', [$startDate, $endDate]);
         $totalBookings = $currentBookings->count();
 
-        // Finance metrics
-        $outstandingBalance = (clone $currentBookings)
-            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
-            ->whereIn('payment_status', [Booking::PAYMENT_PENDING, Booking::PAYMENT_PAID_30])
-            ->sum(DB::raw('total_price - IFNULL(paid_amount, 0)'));
-
         $totalTourRevenue = (clone $currentBookings)->whereIn('payment_status', [Booking::PAYMENT_PAID_100, Booking::PAYMENT_PAID_30, Booking::PAYMENT_PAID])->sum(DB::raw('IFNULL(paid_amount, IF(payment_status = "paid_100", total_price, 0))'));
 
         $currentTicketBookings = TicketBooking::whereBetween('created_at', [$startDate, $endDate]);
@@ -72,8 +68,9 @@ class DashboardController extends Controller
         $totalRevenue = $totalTourRevenue + $totalTicketRevenue;
 
         $cancelledBookings = (clone $currentBookings)->whereIn('tour_status', [Booking::TOUR_CANCELLED_CUSTOMER, Booking::TOUR_CANCELLED_ADMIN])->count();
-        $avgOrderValue = $totalBookings > 0 ? $totalTourRevenue / $totalBookings : 0;
         $cancelRate = $totalBookings > 0 ? ($cancelledBookings / $totalBookings) * 100 : 0;
+
+        $newUsersCount = User::whereBetween('created_at', [$startDate, $endDate])->where('role', 'customer')->count();
 
         // Previous Period
         $prevBookings = Booking::whereBetween('created_at', [$prevStartDate, $prevEndDate]);
@@ -86,13 +83,14 @@ class DashboardController extends Controller
         $prevTotalRevenue = $prevTotalTourRevenue + $prevTotalTicketRevenue;
 
         $prevCancelledBookings = (clone $prevBookings)->whereIn('tour_status', [Booking::TOUR_CANCELLED_CUSTOMER, Booking::TOUR_CANCELLED_ADMIN])->count();
-        $prevAvgOrderValue = $prevTotalBookings > 0 ? $prevTotalTourRevenue / $prevTotalBookings : 0;
         $prevCancelRate = $prevTotalBookings > 0 ? ($prevCancelledBookings / $prevTotalBookings) * 100 : 0;
+
+        $prevNewUsersCount = User::whereBetween('created_at', [$prevStartDate, $prevEndDate])->where('role', 'customer')->count();
 
         // Diffs
         $diffBookings = $totalBookings - $prevTotalBookings;
         $diffRevenue = $totalRevenue - $prevTotalRevenue;
-        $diffAov = $avgOrderValue - $prevAvgOrderValue;
+        $diffNewUsers = $newUsersCount - $prevNewUsersCount;
         $diffCancelRate = $cancelRate - $prevCancelRate;
 
         // --- 1.5 ACTIONABLE ITEMS ---
@@ -183,6 +181,33 @@ class DashboardController extends Controller
 
         $maxTopDestBookings = $topDestinations->max('total_bookings') ?? 1; // avoid div by zero
 
+        // --- 4.5 TOP TOURS ---
+        $topTours = DB::table('bookings')
+            ->join('tour_schedules', 'bookings.tour_schedule_id', '=', 'tour_schedules.id')
+            ->join('tours', 'tour_schedules.tour_id', '=', 'tours.id')
+            ->whereBetween('bookings.created_at', [$startDate, $endDate])
+            ->select(
+                'tours.id',
+                'tours.title',
+                DB::raw('count(bookings.id) as total_bookings')
+            )
+            ->groupBy('tours.id', 'tours.title')
+            ->orderBy('total_bookings', 'desc')
+            ->take(5)
+            ->get();
+
+        $topTours->transform(function ($item) {
+            $title = $item->title;
+            if (is_string($title) && str_starts_with(trim($title), '{')) {
+                $decoded = json_decode($title, true);
+                $item->title = is_array($decoded) ? ($decoded['vi'] ?? $decoded['en'] ?? reset($decoded) ?: $title) : $title;
+            }
+
+            return $item;
+        });
+
+        $maxTopToursBookings = $topTours->max('total_bookings') ?? 1;
+
         // --- 5. TOUR FILL RATE ---
         $today = now()->startOfDay();
         $tourFillRates = TourSchedule::with(['tour', 'schedule_guides'])
@@ -217,19 +242,28 @@ class DashboardController extends Controller
             $ratings[$i] = ['count' => $count, 'percent' => round($percent)];
         }
 
+        // --- Guide Ratings ---
+        $guideRatings = TourGuide::where('kpi_score', '>', 0)
+            ->withCount('reviews')
+            ->orderByDesc('kpi_score')
+            ->take(10)
+            ->get();
+
         return view('admin.dashboard', compact(
             'periodLength', 'startDate', 'endDate',
-            'totalBookings', 'totalRevenue', 'totalTourRevenue', 'totalTicketRevenue', 'outstandingBalance',
-            'avgOrderValue', 'cancelRate',
-            'diffBookings', 'diffRevenue', 'diffAov', 'diffCancelRate',
+            'totalBookings', 'totalRevenue', 'totalTourRevenue', 'totalTicketRevenue',
+            'newUsersCount', 'cancelRate',
+            'diffBookings', 'diffRevenue', 'diffNewUsers', 'diffCancelRate',
             'pendingBookingsCount', 'unassignedGuidesCount', 'unreadMessagesCount',
             'couponUsageCount', 'totalDiscountAmount',
             'dates', 'groupBy',
             'checkinStatus',
             'topDestinations', 'maxTopDestBookings',
+            'topTours', 'maxTopToursBookings',
             'tourFillRates',
             'recentBookings',
-            'averageRating', 'totalReviews', 'ratings'
+            'averageRating', 'totalReviews', 'ratings',
+            'guideRatings'
         ));
     }
 }

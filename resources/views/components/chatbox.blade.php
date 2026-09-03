@@ -1,23 +1,26 @@
 @auth
 <div id="live-chatbox" class="live-chatbox">
     <!-- Bubble Button -->
-    <div id="chatbox-bubble" class="chatbox-bubble shadow position-relative" onclick="toggleChatbox()">
-        <i class="bi bi-chat-dots-fill"></i>
+    <div id="chatbox-bubble" class="chatbox-bubble position-relative" onclick="toggleChatbox()">
+        <i class="bi bi-headset"></i>
         <span id="chat-badge" class="chatbox-badge" style="display: none;"></span>
     </div>
     
     <!-- Chat Panel -->
-    <div id="chatbox-panel" class="chatbox-panel shadow-lg rounded-4" style="display: none;">
-        <div class="chatbox-body bg-white position-relative rounded-4" id="chatbox-body" style="height: 350px; flex-direction: column; display: flex;">
-            <!-- Close Button -->
-            <button type="button" class="btn-close position-absolute top-0 end-0 m-3 shadow-none z-3" aria-label="Close" onclick="toggleChatbox()" style="background-color: rgba(255,255,255,0.8); border-radius: 50%; padding: 0.5rem;"></button>
-            
-            <div class="chat-messages p-3 pt-5" id="chat-messages" style="flex: 1; overflow-y: auto; background-color: #f8f9fa;">
-                <!-- Messages will be injected here -->
-                <div class="text-center text-muted small my-2">Bắt đầu cuộc trò chuyện với CSKH</div>
+    <div id="chatbox-panel" class="chatbox-panel" style="display: none;">
+        <div class="chatbox-header">
+            <div>
+                <strong>Hỗ trợ trực tuyến</strong>
+                <span style="display:block; font-size:11px; font-weight:normal; opacity:0.8;">Nhân viên CSKH</span>
             </div>
+            <button onclick="toggleChatbox()" aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
+        </div>
         
-        <div class="chat-input p-2 border-top bg-white">
+        <div class="chatbox-messages" id="chat-messages">
+            <div class="text-center text-muted small my-2">Bắt đầu cuộc trò chuyện với CSKH</div>
+        </div>
+    
+        <div class="chatbox-footer">
             <div class="d-flex align-items-center mb-2">
                 <a href="{{ asset('downloads/danh_sach_hanh_khach_template.csv') }}" class="btn btn-sm btn-outline-success w-100" download>
                     <i class="bi bi-file-earmark-excel"></i> Tải template hành khách
@@ -28,13 +31,12 @@
                 <button type="button" class="btn btn-light border" onclick="document.getElementById('chat-attachment').click()">
                     <i class="bi bi-paperclip text-secondary"></i>
                 </button>
-                <input type="text" id="chat-message-input" class="form-control" placeholder="Nhập tin nhắn..." autocomplete="off">
-                <button type="submit" class="btn btn-primary" id="btn-send-msg">
-                    <i class="bi bi-send"></i>
+                <input type="text" id="chat-message-input" class="chatbox-input" placeholder="Nhập tin nhắn..." autocomplete="off">
+                <button type="submit" class="chatbox-send-btn" id="btn-send-msg">
+                    <i class="bi bi-send-fill"></i>
                 </button>
             </form>
             <div id="file-name-display" class="small text-muted mt-1" style="display: none;"></div>
-        </div>
         </div>
     </div>
 </div>
@@ -45,20 +47,22 @@
     bottom: 20px;
     right: 20px;
     z-index: 1050;
+    font-family: 'Inter', sans-serif;
 }
 .chatbox-bubble {
-    position: relative;
-    width: 60px;
-    height: 60px;
-    background-color: var(--primary-color, #0d6efd);
+    width: 55px;
+    height: 55px;
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
     color: white;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: 26px;
     cursor: pointer;
     transition: transform 0.3s ease;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    border: none;
 }
 .chatbox-badge {
     position: absolute;
@@ -82,31 +86,82 @@
 .chatbox-bubble:hover {
     transform: scale(1.1);
 }
-.unread-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background-color: #dc3545;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 12px;
-    font-weight: bold;
-    border: 2px solid white;
-}
 .chatbox-panel {
     position: absolute;
     bottom: 70px;
     right: 0;
-    width: 320px;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(0,0,0,0.1);
+    width: 350px;
+    height: 500px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform-origin: bottom right;
+    border: none;
 }
+.chatbox-header {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+}
+.chatbox-header button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+.chatbox-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #f8fafc;
+}
+.chatbox-footer {
+    padding: 10px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+}
+.chatbox-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+.chatbox-input:focus {
+    border-color: #0ea5e9;
+}
+.chatbox-send-btn {
+    background: #0ea5e9;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.chatbox-send-btn:hover {
+    background: #0284c7;
+}
+.chatbox-send-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+/* Message bubbles */
 .chat-msg {
     margin-bottom: 10px;
     max-width: 85%;
@@ -119,21 +174,22 @@
     float: left;
 }
 .msg-bubble {
-    padding: 8px 12px;
-    border-radius: 15px;
-    font-size: 0.9rem;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
     word-wrap: break-word;
     position: relative;
 }
 .chat-msg.sent .msg-bubble {
-    background-color: var(--primary-color, #0d6efd);
+    background: #0ea5e9;
     color: white;
-    border-bottom-right-radius: 0;
+    border-bottom-right-radius: 2px;
 }
 .chat-msg.received .msg-bubble {
-    background-color: #e9ecef;
-    color: #212529;
-    border-bottom-left-radius: 0;
+    background: #e2e8f0;
+    color: #1e293b;
+    border-bottom-left-radius: 2px;
 }
 .msg-star-btn {
     position: absolute;
@@ -158,6 +214,12 @@
 }
 .chat-msg.sent .msg-time {
     text-align: right;
+}
+@media (max-width: 576px) {
+    .chatbox-panel {
+        width: calc(100vw - 40px);
+        right: -10px;
+    }
 }
 </style>
 

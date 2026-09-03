@@ -6,9 +6,16 @@ use App\Models\Payment;
 use App\Models\Tour;
 use App\Models\TourSchedule;
 use App\Models\User;
+use App\Models\UserIdentity;
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
+    // Seed Spatie Role Admin
+    Role::firstOrCreate(['name' => 'Admin']);
+
     // Create destination
     $destination = Destination::create([
         'name' => 'Đà Nẵng',
@@ -24,6 +31,10 @@ beforeEach(function () {
         'duration_days' => 3,
         'duration_nights' => 2,
         'base_price' => 3500000,
+        'cost_transport' => 2000000,
+        'cost_meal' => 500000,
+        'cost_insurance' => 500000,
+        'cost_service_fee' => 500000,
     ]);
 
     // Create tour schedule
@@ -37,14 +48,15 @@ beforeEach(function () {
     ]);
 });
 
-test('guest cannot access checkout', function () {
+test('guest can access checkout', function () {
     $response = $this->get(route('frontend.tours.checkout', [
         'schedule_id' => $this->schedule->id,
         'adults' => 2,
         'children' => 0,
     ]));
 
-    $response->assertRedirect('/login');
+    $response->assertOk();
+    $response->assertViewIs('frontend.tours.checkout');
 });
 
 test('authenticated user can access checkout with valid parameters', function () {
@@ -71,6 +83,7 @@ test('booking stores successfully', function () {
         'customer_name' => 'Nguyễn Văn A',
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
+        'customer_email_confirmation' => 'customer@example.com',
         'meeting_point' => 'Sân bay',
         'total_price' => 7000000,
         'issue_date' => '2021-05-18',
@@ -117,6 +130,7 @@ test('booking redirects to vnpay when vnpay payment is chosen', function () {
         'customer_name' => 'Nguyễn Văn A',
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
+        'customer_email_confirmation' => 'customer@example.com',
         'meeting_point' => 'Sân bay',
         'total_price' => 7000000,
         'issue_date' => '2021-05-18',
@@ -327,6 +341,7 @@ test('booking store fails for schedule starting within 3 days', function () {
         'customer_name' => 'Nguyễn Văn A',
         'customer_phone' => '0987654321',
         'customer_email' => 'customer@example.com',
+        'customer_email_confirmation' => 'customer@example.com',
         'meeting_point' => 'Sân bay',
         'total_price' => 7000000,
         'passengers' => [
@@ -356,4 +371,122 @@ test('booking store fails for schedule starting within 3 days', function () {
     $this->assertDatabaseMissing('bookings', [
         'tour_schedule_id' => $closeSchedule->id,
     ]);
+});
+
+test('checkout shows identity upload section for multi-day tours', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get(route('frontend.tours.checkout', [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 2,
+        'children' => 0,
+    ]));
+
+    $response->assertOk();
+    $response->assertViewHas('tour');
+    $response->assertSee('upload_cccd_check');
+    $response->assertSee('front_image');
+    $response->assertSee('back_image');
+});
+
+test('checkout hides identity upload section for single day tours', function () {
+    $user = User::factory()->create();
+
+    $singleDayTour = Tour::create([
+        'destination_id' => $this->tour->destination_id,
+        'title' => 'City tour trong ngày',
+        'slug' => 'city-tour-trong-ngay',
+        'description' => 'Tour tham quan thành phố trong ngày',
+        'duration_days' => 1,
+        'duration_nights' => 0,
+        'base_price' => 500000,
+        'cost_transport' => 200000,
+        'cost_meal' => 150000,
+        'cost_insurance' => 50000,
+        'cost_service_fee' => 100000,
+    ]);
+
+    $singleDaySchedule = TourSchedule::create([
+        'tour_id' => $singleDayTour->id,
+        'departure_date' => Carbon::now()->addDays(10)->toDateTimeString(),
+        'return_date' => Carbon::now()->addDays(10)->toDateTimeString(),
+        'capacity' => 20,
+        'available_seats' => 20,
+        'status' => 'available',
+    ]);
+
+    $response = $this->actingAs($user)->get(route('frontend.tours.checkout', [
+        'schedule_id' => $singleDaySchedule->id,
+        'adults' => 2,
+        'children' => 0,
+    ]));
+
+    $response->assertOk();
+    $response->assertDontSee('upload_cccd_check');
+    $response->assertDontSee('front_image');
+    $response->assertDontSee('back_image');
+});
+
+test('booking stores identity images when uploaded', function () {
+    Storage::fake('local');
+    $user = User::factory()->create();
+
+    $frontImage = UploadedFile::fake()->image('front.jpg');
+    $backImage = UploadedFile::fake()->image('back.jpg');
+
+    $response = $this->actingAs($user)->post(route('frontend.tours.store'), [
+        'schedule_id' => $this->schedule->id,
+        'adults' => 1,
+        'children' => 0,
+        'customer_name' => 'Nguyễn Văn A',
+        'customer_phone' => '0987654321',
+        'customer_email' => 'customer@example.com',
+        'customer_email_confirmation' => 'customer@example.com',
+        'meeting_point' => 'Sân bay',
+        'total_price' => 3500000,
+        'front_image' => $frontImage,
+        'back_image' => $backImage,
+        'passengers' => [
+            'adult' => [
+                [
+                    'full_name' => 'Nguyễn Văn A',
+                    'identity_number' => '036123456789',
+                    'date_of_birth' => '1996-05-18',
+                    'gender' => 'male',
+                ],
+            ],
+        ],
+        'transport_type' => 'self',
+        'payment_type' => 'full',
+        'payment_method' => 'transfer',
+    ]);
+
+    $identity = UserIdentity::where('user_id', $user->id)->first();
+    expect($identity)->not->toBeNull();
+    expect($identity->front_image_url)->not->toBeNull();
+    expect($identity->back_image_url)->not->toBeNull();
+
+    $response->assertRedirect();
+});
+
+test('tour detail page displays correct base price matching tour base price', function () {
+    $tour = Tour::create([
+        'destination_id' => $this->tour->destination_id,
+        'title' => 'Tour Test Giá Đồng Nhất',
+        'slug' => 'tour-test-gia-dong-nhat',
+        'description' => 'Mô tả tour',
+        'duration_days' => 3,
+        'duration_nights' => 2,
+        'base_price' => 3500000,
+        'cost_transport' => 0,
+        'cost_meal' => 0,
+        'cost_insurance' => 0,
+        'cost_service_fee' => 0,
+    ]);
+
+    expect($tour->getBasePrice())->toEqual(3500000);
+
+    $response = $this->get(route('frontend.tours.show', $tour->slug));
+    $response->assertOk();
+    $response->assertSee('3.500.000');
 });

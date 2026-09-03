@@ -19,10 +19,21 @@
     });
 
     $ticketAmount = (float) $booking->ticket_bookings->sum('total_price');
+    
+    $accAmount = 0;
+    $accAmount = 0;
+    if ($booking->booking_accommodations && $booking->booking_accommodations->isNotEmpty()) {
+        $bAcc = $booking->booking_accommodations->first();
+        $accAmount = $bAcc->total_amount;
+    } elseif ($booking->accommodation_id && $booking->price_breakdown) {
+        $bk = $booking->price_breakdown;
+        $accAmount = ($bk['accommodation_base'] ?? 0) + ($bk['accommodation_single_supplement'] ?? 0) + ($bk['accommodation_extra_bed'] ?? 0) + ($bk['accommodation_child'] ?? 0);
+    }
+    
     $grossAmount = (float) $booking->total_price + $discountAmount;
-    $tourAmount = max(0, $grossAmount - $transportAmount - $addonAmount - $ticketAmount);
+    $tourAmount = max(0, $grossAmount - $transportAmount - $addonAmount - $ticketAmount - $accAmount);
 
-    $normalAdultPrice = (float) ($tour?->base_price ?? 0);
+    $normalAdultPrice = (float) ($tour?->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour?->base_price ?? 0));
     $normalChildPrice = (float) ($tour?->child_price ?? ($normalAdultPrice * 0.75));
     $normalTourAmount = ($normalAdultPrice * $adultCount) + ($normalChildPrice * $childCount);
     $priceRatio = $normalTourAmount > 0 ? ($tourAmount / $normalTourAmount) : 1;
@@ -686,6 +697,29 @@
                     </td>
                 </tr>
 
+                @if($booking->booking_accommodations && $booking->booking_accommodations->isNotEmpty())
+                @php $bAcc = $booking->booking_accommodations->first(); @endphp
+                <tr>
+                    <td class="tour-detail-label">Hạng lưu trú:</td>
+                    <td class="tour-detail-value">
+                        <strong>{{ $bAcc->accommodation_name_snapshot }}</strong><br>
+                        <small class="text-muted">Hạng phòng: {{ $bAcc->room_type_name_snapshot }}</small>
+                        <br><small class="text-muted">(Phòng: {{ $bAcc->single_rooms_count }}, Giường phụ: {{ $bAcc->extra_bed_qty }})</small>
+                    </td>
+                </tr>
+                @elseif($booking->accommodation_id && $booking->accommodation)
+                <tr>
+                    <td class="tour-detail-label">Hạng lưu trú:</td>
+                    <td class="tour-detail-value">
+                        <strong>{{ $booking->accommodation->name }}</strong><br>
+                        <small class="text-muted">{{ $booking->accommodation->address }}</small>
+                        @if($booking->single_rooms_count > 0 || $booking->extra_beds_count > 0)
+                            <br><small class="text-muted">(Phòng đơn: {{ $booking->single_rooms_count }}, Giường phụ: {{ $booking->extra_beds_count }})</small>
+                        @endif
+                    </td>
+                </tr>
+                @endif
+
                 <tr>
                     <td class="tour-detail-label">Phương tiện:</td>
                     <td class="tour-detail-value">
@@ -728,6 +762,36 @@
                         <td class="text-center">{{ $childCount }}</td>
                         <td class="text-right">{{ number_format($childTotal, 0, ',', '.') }} ₫</td>
                     </tr>
+                @endif
+
+                @if($booking->booking_accommodations && $booking->booking_accommodations->isNotEmpty())
+                    @php 
+                        $bAcc = $booking->booking_accommodations->first();
+                        $accTotal = $bAcc->total_amount;
+                    @endphp
+                    @if($accTotal > 0)
+                        <tr>
+                            <td class="text-center">{{ $stt++ }}</td>
+                            <td>Phí lưu trú ({{ $bAcc->accommodation_name_snapshot }} - {{ $bAcc->room_type_name_snapshot }})</td>
+                            <td class="text-right"></td>
+                            <td class="text-center">1</td>
+                            <td class="text-right">{{ number_format($accTotal, 0, ',', '.') }} ₫</td>
+                        </tr>
+                    @endif
+                @elseif($booking->accommodation_id && $booking->price_breakdown)
+                    @php 
+                        $bk = $booking->price_breakdown; 
+                        $accTotal = ($bk['accommodation_base'] ?? 0) + ($bk['accommodation_single_supplement'] ?? 0) + ($bk['accommodation_extra_bed'] ?? 0) + ($bk['accommodation_child'] ?? 0);
+                    @endphp
+                    @if($accTotal > 0)
+                        <tr>
+                            <td class="text-center">{{ $stt++ }}</td>
+                            <td>Phí lưu trú ({{ $booking->accommodation->name }})</td>
+                            <td class="text-right"></td>
+                            <td class="text-center">1</td>
+                            <td class="text-right">{{ number_format($accTotal, 0, ',', '.') }} ₫</td>
+                        </tr>
+                    @endif
                 @endif
 
                 @if($transportAmount > 0)

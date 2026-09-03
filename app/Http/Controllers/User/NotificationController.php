@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Artisan;
 
 class NotificationController extends Controller
 {
@@ -11,6 +12,13 @@ class NotificationController extends Controller
         $user = auth()->user();
         if (! $user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
+        }
+
+        // Run the group split status check automatically so it works on local environment without cron setup
+        try {
+            Artisan::call('group-splits:update-status');
+        } catch (\Exception $e) {
+            // Ignore error
         }
 
         $notifications = $user->notifications()->paginate(10);

@@ -13,7 +13,7 @@ class AppSettingsController extends Controller
     /**
      * Thời gian lưu cookie: 1 năm (tính bằng phút).
      */
-    private const COOKIE_LIFETIME_MINUTES = 60 * 24 * 365; // 1 năm
+    private const COOKIE_LIFETIME_MINUTES = 60 * 24 * 365;
 
     /**
      * Kiểm tra xem người dùng đã đồng ý sử dụng cookie chưa.
@@ -30,7 +30,6 @@ class AppSettingsController extends Controller
             Session::put('locale', $locale);
             App::setLocale($locale);
 
-            // Chỉ lưu vào cookie nếu người dùng đã đồng ý sử dụng cookie
             if ($this->hasCookieConsent($request)) {
                 Cookie::queue('app_locale', $locale, self::COOKIE_LIFETIME_MINUTES);
             }
@@ -45,7 +44,6 @@ class AppSettingsController extends Controller
         if (in_array($currency, $currencies)) {
             Session::put('currency', $currency);
 
-            // Chỉ lưu vào cookie nếu người dùng đã đồng ý sử dụng cookie
             if ($this->hasCookieConsent($request)) {
                 Cookie::queue('app_currency', $currency, self::COOKIE_LIFETIME_MINUTES);
             }

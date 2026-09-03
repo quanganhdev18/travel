@@ -125,7 +125,7 @@ class InvoiceRequestController extends Controller
             Notification::send($admins, new AdminBookingNotification(
                 $booking,
                 'invoice_requested',
-                'Khách hàng yêu cầu xuất hóa đơn cho đơn hàng: ' . $booking->code
+                'Khách hàng yêu cầu xuất hóa đơn cho đơn hàng: '.$booking->code
             ));
         }
 

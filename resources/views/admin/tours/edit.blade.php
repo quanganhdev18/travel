@@ -72,11 +72,12 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label text-muted">Giá cơ bản (Người lớn)</label>
-                            <input type="number" name="base_price" value="{{$tour->base_price}}" class="form-control" placeholder="VD: 1500000" required>
+                            <input type="text" value="{!! format_currency($tour->base_price) !!}" class="form-control" readonly>
+                            <small class="text-muted">Giá tự động cộng dồn (Vé, Xe, Ăn, BH...)</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label text-muted">Giá trẻ em (VNĐ)</label>
-                            <input type="number" name="child_price" value="{{$tour->child_price}}" class="form-control" placeholder="VD: 1000000 (Tùy chọn)">
+                            <input type="text" value="{!! format_currency($tour->child_price) !!}" class="form-control" readonly>
                         </div>
                         <div class="col-md-2 mb-3">
                             <label class="form-label text-muted">Số ngày</label>
@@ -175,6 +176,54 @@
                             </div>
                             @endforeach
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h4 class="h5 mb-3 text-primary">Dịch vụ đi kèm Tour</h4>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-muted fw-bold">Vé tham quan</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($tickets as $ticket)
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="tickets[]"
+                                value="{{ $ticket->id }}" id="ticket_{{ $ticket->id }}"
+                                {{ in_array($ticket->id, $tourTicketIds) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="ticket_{{ $ticket->id }}">
+                                {{ $ticket->title }}
+                            </label>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-muted fw-bold">Điểm lưu trú</label>
+                    <select name="accommodation_id" id="accommodation_id" class="form-select">
+                        <option value="">-- Chọn điểm lưu trú --</option>
+                        @foreach($accommodations as $acc)
+                            <option value="{{ $acc->id }}" data-destination-id="{{ $acc->destination_id }}" {{ (old('accommodation_id') ?? $selectedAccommodationId ?? '') == $acc->id ? 'selected' : '' }}>
+                                {{ $acc->name }} ({{ $acc->star_rating }} Sao)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label text-muted fw-bold">Dịch vụ bổ sung (Addons)</label>
+                    <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                        @foreach($addons as $addon)
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="addons[]"
+                                value="{{ $addon->id }}" id="addon_{{ $addon->id }}"
+                                {{ in_array($addon->id, $tourAddonIds) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="addon_{{ $addon->id }}">
+                                {{ $addon->name }}
+                            </label>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -319,6 +368,50 @@ document.addEventListener('DOMContentLoaded', function() {
         width: '100%',
         placeholder: '-- Chọn điểm đến --'
     });
+
+    $('#accommodation_id').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: '-- Chọn điểm lưu trú --'
+    });
+
+    const accommodationSelect = $('#accommodation_id');
+    const originalOptions = accommodationSelect.find('option').clone();
+
+    function filterAccommodations() {
+        const destId = $('#destination_id').val();
+        const currentVal = accommodationSelect.val();
+        accommodationSelect.empty();
+        accommodationSelect.append('<option value="">-- Chọn điểm lưu trú --</option>');
+        
+        let hasValidOption = false;
+        if (destId) {
+            originalOptions.each(function() {
+                const opt = $(this);
+                if (opt.data('destination-id') == destId) {
+                    const clonedOpt = opt.clone();
+                    if (clonedOpt.val() == currentVal) {
+                        clonedOpt.prop('selected', true);
+                        hasValidOption = true;
+                    }
+                    accommodationSelect.append(clonedOpt);
+                }
+            });
+            accommodationSelect.prop('disabled', false);
+        } else {
+            accommodationSelect.prop('disabled', true);
+        }
+        
+        if (!hasValidOption) {
+            accommodationSelect.val('').trigger('change');
+        } else {
+            accommodationSelect.trigger('change');
+        }
+    }
+
+    $('#destination_id').on('change', filterAccommodations);
+    // Run filter on initial load
+    filterAccommodations();
 });
 </script>
 @endpush

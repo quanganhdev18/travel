@@ -36,6 +36,8 @@ class Ticket extends Model
 
     protected $casts = [
         'destination_id' => 'int',
+        'adult_price' => 'float',
+        'child_price' => 'float',
     ];
 
     protected $fillable = [
@@ -43,6 +45,8 @@ class Ticket extends Model
         'title',
         'slug',
         'description',
+        'adult_price',
+        'child_price',
         'provider_name',
         'cancellation_policy',
     ];

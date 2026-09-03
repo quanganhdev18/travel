@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Guide;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\BookingPassenger;
+use App\Models\GroupSplit;
 use App\Models\TourReport;
 use App\Models\TourSchedule;
+use App\Notifications\Guide\TourReportSubmittedNotification;
 use Illuminate\Http\Request;
 
 class TourReportController extends Controller
@@ -18,7 +21,15 @@ class TourReportController extends Controller
             abort(403);
         }
 
-        $firstBooking = $schedule->bookings->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])->first();
+        $firstBooking = $schedule->bookings
+            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+            ->whereIn('payment_status', ['paid_30', 'paid_100'])
+            ->first();
+        if (! $firstBooking) {
+            $firstBooking = $schedule->bookings
+                ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+                ->first();
+        }
         $groupStatus = $firstBooking ? $firstBooking->tour_status : 'upcoming';
 
         if ($schedule->status !== 'completed' && $groupStatus !== 'completed') {
@@ -30,7 +41,33 @@ class TourReportController extends Controller
             return redirect()->back()->with('info', 'Bạn đã nộp báo cáo cho Tour này.');
         }
 
-        return view('guide.reports.create', compact('schedule'));
+        $passengerIds = $schedule->bookings()
+            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
+            ->whereNotIn('booking_status', ['cancelled'])
+            ->get()
+            ->flatMap(fn ($b) => $b->booking_passengers->pluck('id'))
+            ->toArray();
+
+        $freeTimePassengers = BookingPassenger::whereIn('id', $passengerIds)
+            ->whereHas('group_splits', function ($q) {
+                $q->where('status', '!=', GroupSplit::STATUS_CANCELLED);
+            })
+            ->with(['group_splits' => function ($q) {
+                $q->where('status', '!=', GroupSplit::STATUS_CANCELLED)->orderBy('id', 'desc');
+            }])
+            ->get()
+            ->map(function ($p) {
+                $lastSplit = $p->group_splits->first();
+                if ($lastSplit) {
+                    $p->free_time_location = $p->free_time_location ?? ($lastSplit->split_location ?? $lastSplit->return_location);
+                    $p->free_time_start = $p->free_time_start ?? $lastSplit->start_time;
+                    $p->free_time_end = $p->free_time_end ?? $lastSplit->end_time;
+                }
+
+                return $p;
+            });
+
+        return view('guide.reports.create', compact('schedule', 'freeTimePassengers'));
     }
 
     public function store(Request $request, TourSchedule $schedule)
@@ -41,25 +78,26 @@ class TourReportController extends Controller
         }
 
         $request->validate([
-            'actual_guests' => 'required|integer|min:0',
+            'actual_guests' => 'required|integer|min:0|max:'.$schedule->capacity,
             'incident_notes' => 'nullable|string',
-            'advance_amount' => 'required|numeric|min:0',
-            'actual_expense' => 'required|numeric|min:0',
+        ], [
+            'actual_guests.max' => 'Số khách thực tế không được vượt quá số lượng tối đa của tour ('.$schedule->capacity.' người).',
         ]);
 
-        $balance = $request->advance_amount - $request->actual_expense;
-
-        TourReport::create([
+        $tourReport = TourReport::create([
             'tour_schedule_id' => $schedule->id,
             'guide_id' => auth()->user()->tour_guide->id,
             'actual_guests' => $request->actual_guests,
             'incident_notes' => $request->incident_notes,
-            'advance_amount' => $request->advance_amount,
-            'actual_expense' => $request->actual_expense,
-            'balance' => $balance,
+            'advance_amount' => 0,
+            'actual_expense' => 0,
+            'balance' => 0,
             'status' => 'pending',
         ]);
 
-        return redirect()->route('guide.schedules.show', $schedule->id)->with('success', 'Đã nộp báo cáo và quyết toán thành công. Chờ Kế toán duyệt.');
+        // Send notification to the guide
+        auth()->user()->notify(new TourReportSubmittedNotification($tourReport));
+
+        return redirect()->route('guide.schedules.show', $schedule->id)->with('success', 'Đã nộp Báo cáo sự cố thành công. Chờ Admin duyệt.');
     }
 }

@@ -361,7 +361,8 @@
             ->doesntHave('schedule_guides')
             ->count();
             
-        $pendingReportsCount = \App\Models\TourReport::where('status', 'pending')->count();
+        $pendingReportsCount = \App\Models\TourReport::where('status', 'pending')->count() +
+            \App\Models\TourAbsenceRequest::whereIn('status', ['pending_review', 'pending_review_urgent'])->count();
     }
 @endphp
 
@@ -404,9 +405,15 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.insurance.*') ? 'active' : '' }}" href="{{ route('admin.insurance.index') }}">
-                    <i class="bi bi-shield-check me-2"></i>
-                    Bảo hiểm du lịch
+                <a class="nav-link {{ request()->routeIs('admin.refunds.*') ? 'active' : '' }}" href="{{ route('admin.refunds.index') }}">
+                    <i class="bi bi-cash-coin me-2"></i>
+                    Yêu cầu hoàn tiền
+                    @php
+                        $pendingRefunds = \App\Models\RefundRequest::where('status', 'pending')->count();
+                    @endphp
+                    @if($pendingRefunds > 0)
+                        <span class="badge bg-danger ms-auto rounded-pill">{{ $pendingRefunds }}</span>
+                    @endif
                 </a>
             </li>
         </ul>
@@ -433,7 +440,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link d-flex justify-content-between align-items-center {{ request()->is('admin/tour-reports*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}">
-                    <div><i class="bi bi-file-earmark-check"></i> Báo cáo & Quyết toán</div>
+                    <div><i class="bi bi-file-earmark-check"></i> Báo cáo Tour</div>
                     @if(isset($pendingReportsCount) && $pendingReportsCount > 0)
                         <span class="badge bg-warning text-dark rounded-pill" title="Báo cáo chờ duyệt">{{ $pendingReportsCount }}</span>
                     @endif
@@ -460,8 +467,18 @@
         <div class="group-title">Cấu hình hệ thống</div>
         <ul class="nav flex-column mb-3">
             <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/settings*') ? 'active' : '' }}" href="{{ route('admin.settings.index') }}">
+                    <i class="bi bi-sliders"></i> Cấu hình chung
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ request()->is('admin/destinations*') ? 'active' : '' }}" href="{{ route('admin.destinations.index') }}">
                     <i class="bi bi-geo-alt"></i> Điểm đến
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('admin/accommodations*') ? 'active' : '' }}" href="{{ route('admin.accommodations.index') }}">
+                    <i class="bi bi-building"></i> Lưu trú (Khách sạn)
                 </a>
             </li>
             <li class="nav-item">

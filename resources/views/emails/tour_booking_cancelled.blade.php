@@ -41,7 +41,7 @@
 
     {{-- BODY --}}
     <div class="body">
-        <p class="greeting">Kính gửi Quý khách <strong>{{ $booking->user->name ?? 'Quý khách' }}</strong>,</p>
+        <p class="greeting">Kính gửi Quý khách <strong>{{ $booking->customer_name ?? ($booking->user->name ?? 'Quý khách') }}</strong>,</p>
         <p class="intro">
             Hệ thống Travel Wonder xin thông báo đơn đặt tour <strong>{{ $booking->code }}</strong> của Quý khách đã bị tự động hủy theo quy định.
         </p>

@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\BookingsExport;
 use App\Http\Controllers\Controller;
+use App\Mail\TourCompletedMail;
 use App\Models\Booking;
 use App\Notifications\User\BookingStatusUpdatedNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
 
@@ -26,6 +31,7 @@ class BookingController extends Controller
             'user.identity',
             'tour_schedule.tour',
             'booking_passengers',
+            'booking_accommodations',
             'coupon',
         ]);
 
@@ -38,8 +44,14 @@ class BookingController extends Controller
             $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
-                $q->where('id', $search)
-                    ->orWhere('pnr_code', 'like', "%{$search}%")
+                // Xử lý tìm kiếm mã đơn (VD: BK-000106)
+                if (preg_match('/^BK-(\d+)$/i', $search, $matches)) {
+                    $q->where('id', (int) $matches[1]);
+                } elseif (is_numeric($search)) {
+                    $q->where('id', $search);
+                }
+
+                $q->orWhere('pnr_code', 'like', "%{$search}%")
                     ->orWhere('invoice_email', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($userQuery) use ($search) {
                         $userQuery
@@ -119,11 +131,20 @@ class BookingController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Xuất Excel
+        |--------------------------------------------------------------------------
+        */
+        if ($request->get('export') == 1) {
+            return Excel::download(new BookingsExport($query), 'bookings_'.now()->format('Ymd_His').'.xlsx');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | Các đơn mới nhất hiển thị trước
         |--------------------------------------------------------------------------
         */
         $bookings = $query
-            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate(15)
             ->withQueryString();
 
@@ -201,83 +222,85 @@ class BookingController extends Controller
      * Các trạng thái tour mà admin không được phép thay đổi.
      * Sau khi tour bắt đầu, quyền điều hành thuộc về Hướng dẫn viên.
      */
-private function makeInvoiceCode(Booking $booking): string
-{
-    return 'INV-'
-        . $booking->created_at->format('Ymd')
-        . '-'
-        . str_pad($booking->id, 3, '0', STR_PAD_LEFT);
-}
+    private function makeInvoiceCode(Booking $booking): string
+    {
+        return 'INV-'
+            .$booking->created_at->format('Ymd')
+            .'-'
+            .str_pad($booking->id, 3, '0', STR_PAD_LEFT);
+    }
 
-private function makeBookingCode(Booking $booking): string
-{
-    return 'BOOK-'
-        . $booking->created_at->format('Ymd')
-        . '-'
-        . str_pad($booking->id, 3, '0', STR_PAD_LEFT);
-}
+    private function makeBookingCode(Booking $booking): string
+    {
+        return 'BOOK-'
+            .$booking->created_at->format('Ymd')
+            .'-'
+            .str_pad($booking->id, 3, '0', STR_PAD_LEFT);
+    }
 
-private function makeInvoiceQrCode(Booking $booking): string
-{
-    $invoiceCode = $this->makeInvoiceCode($booking);
-    $bookingCode = $this->makeBookingCode($booking);
+    private function makeInvoiceQrCode(Booking $booking): string
+    {
+        $invoiceCode = $this->makeInvoiceCode($booking);
+        $bookingCode = $this->makeBookingCode($booking);
 
-    $qrContent = implode("\n", [
-        'Ma hoa don: ' . $invoiceCode,
-        'Ma don: ' . $bookingCode,
-        'Khach hang: ' . ($booking->user?->name ?? 'N/A'),
-        'So dien thoai: ' . ($booking->user?->phone ?? 'N/A'),
-        'Tong thanh toan: '
-            . number_format($booking->total_price, 0, ',', '.')
-            . ' VND',
-        'Ngay dat: '
-            . $booking->created_at->format('H:i d/m/Y'),
-    ]);
+        $qrContent = implode("\n", [
+            'Ma hoa don: '.$invoiceCode,
+            'Ma don: '.$bookingCode,
+            'Khach hang: '.($booking->user?->name ?? 'N/A'),
+            'So dien thoai: '.($booking->user?->phone ?? 'N/A'),
+            'Tong thanh toan: '
+                .number_format($booking->total_price, 0, ',', '.')
+                .' VND',
+            'Ngay dat: '
+                .$booking->created_at->format('H:i d/m/Y'),
+        ]);
 
-    return 'data:image/svg+xml;base64,' . base64_encode(
-        QrCode::format('svg')
-            ->size(140)
-            ->margin(1)
-            ->generate($qrContent)
-    );
-}
+        return 'data:image/svg+xml;base64,'.base64_encode(
+            QrCode::format('svg')
+                ->size(140)
+                ->margin(1)
+                ->encoding('UTF-8')
+                ->generate($qrContent)
+        );
+    }
+
     public function invoice(int $id)
-{
-    [$booking, $payment] = $this->getInvoiceData($id);
+    {
+        [$booking, $payment] = $this->getInvoiceData($id);
 
-    $qrCode = $this->makeInvoiceQrCode($booking);
+        $qrCode = $this->makeInvoiceQrCode($booking);
 
-    return view('admin.bookings.invoice', compact(
-        'booking',
-        'payment',
-        'qrCode'
-    ));
-}
+        return view('admin.bookings.invoice', compact(
+            'booking',
+            'payment',
+            'qrCode'
+        ));
+    }
 
     public function downloadInvoice(int $id)
-{
-    [$booking, $payment] = $this->getInvoiceData($id);
+    {
+        [$booking, $payment] = $this->getInvoiceData($id);
 
-    $invoiceCode = $this->makeInvoiceCode($booking);
-    $qrCode = $this->makeInvoiceQrCode($booking);
+        $invoiceCode = $this->makeInvoiceCode($booking);
+        $qrCode = $this->makeInvoiceQrCode($booking);
 
-    $fileName = 'hoa-don-' . $invoiceCode . '.pdf';
+        $fileName = 'hoa-don-'.$invoiceCode.'.pdf';
 
-    $pdf = Pdf::loadView(
-        'admin.bookings.invoice-pdf',
-        compact('booking', 'payment', 'qrCode')
-    );
+        $pdf = Pdf::loadView(
+            'admin.bookings.invoice-pdf',
+            compact('booking', 'payment', 'qrCode')
+        );
 
-    $pdf->setPaper('a4', 'portrait');
+        $pdf->setPaper('a4', 'portrait');
 
-    $pdf->setOptions([
-        'defaultFont' => 'DejaVu Sans',
-        'isRemoteEnabled' => true,
-        'isHtml5ParserEnabled' => true,
-    ]);
+        $pdf->setOptions([
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+        ]);
 
-    return $pdf->download($fileName);
-}
+        return $pdf->download($fileName);
+    }
 
     public function sendInvoice(int $id)
     {
@@ -451,7 +474,7 @@ private function makeInvoiceQrCode(Booking $booking): string
         if ($booking->payment_status === Booking::PAYMENT_PAID_100) {
             $booking->paid_amount = $booking->total_price;
         } elseif ($booking->payment_status === Booking::PAYMENT_PAID_30) {
-            $booking->paid_amount = $booking->total_price * 0.3;
+            $booking->paid_amount = $booking->deposit_amount;
         } elseif ($booking->payment_status === Booking::PAYMENT_FAILED || $booking->payment_status === Booking::PAYMENT_PENDING) {
             $booking->paid_amount = 0;
         }
@@ -465,6 +488,10 @@ private function makeInvoiceQrCode(Booking $booking): string
             if ($oldTourStatus !== $booking->tour_status) {
                 $statusName = $this->getTourStatusName($booking->tour_status);
                 $booking->user->notify(new BookingStatusUpdatedNotification($booking, 'Trạng thái tour của bạn đã được cập nhật thành: '.$statusName));
+
+                if ($booking->tour_status === Booking::TOUR_COMPLETED && $booking->customer_email) {
+                    Mail::to($booking->customer_email)->send(new TourCompletedMail($booking));
+                }
             } elseif ($oldPaymentStatus !== $booking->payment_status) {
                 $paymentStatusName = $this->getPaymentStatusName($booking->payment_status);
                 $booking->user->notify(new BookingStatusUpdatedNotification($booking, 'Trạng thái thanh toán của bạn đã được cập nhật thành: '.$paymentStatusName));
@@ -535,5 +562,22 @@ private function makeInvoiceQrCode(Booking $booking): string
         }
 
         return response()->json($data);
+    }
+
+    public function viewIdentityImage($filename)
+    {
+        $path = 'private/identities/'.$filename;
+        if (! Storage::disk('local')->exists($path)) {
+            abort(404);
+        }
+
+        $encryptedContent = Storage::disk('local')->get($path);
+        try {
+            $decryptedContent = Crypt::decrypt($encryptedContent);
+
+            return response($decryptedContent)->header('Content-Type', 'image/jpeg');
+        } catch (\Exception $e) {
+            abort(500, 'Could not decrypt the image.');
+        }
     }
 }

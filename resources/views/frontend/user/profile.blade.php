@@ -1003,8 +1003,36 @@
                         </div>
                     </div>{{-- end tab-info --}}
 
-                    {{-- ===== TAB: ĐƠN ĐẶT TOUR ===== --}}
+                    {{-- ===== TAB: ĐƠN HÀNG (BOOKINGS) ===== --}}
                     <div id="tab-bookings" style="display:none;">
+                        @if(isset($pendingLinkedBookings) && $pendingLinkedBookings->count() > 0)
+                        <div class="alert alert-info shadow-sm mb-4" style="border-left: 4px solid #0dcaf0;">
+                            <h5 class="alert-heading"><i class="bi bi-info-circle-fill me-2"></i>Có đơn hàng đang chờ bạn nhận</h5>
+                            <p class="mb-0">Chúng tôi tìm thấy <strong>{{ $pendingLinkedBookings->count() }}</strong> đơn hàng (đã được tạo bằng email <strong>{{ Auth::user()->email }}</strong>) nhưng chưa được liên kết với tài khoản này.</p>
+                            <div class="mt-3">
+                                @foreach($pendingLinkedBookings as $pendingBooking)
+                                    <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-white rounded border">
+                                        <div>
+                                            <strong>{{ $pendingBooking->code }}</strong> - {{ $pendingBooking->tour_schedule->tour->title ?? 'Tour không xác định' }}
+                                            <span class="text-muted ms-2">{{ \Carbon\Carbon::parse($pendingBooking->created_at)->format('d/m/Y H:i') }}</span>
+                                        </div>
+                                        <div>
+                                            <form action="{{ route('frontend.user.bookings.link', $pendingBooking->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <input type="hidden" name="action" value="accept">
+                                                <button class="btn btn-sm btn-primary">Nhận đơn hàng</button>
+                                            </form>
+                                            <form action="{{ route('frontend.user.bookings.link', $pendingBooking->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <input type="hidden" name="action" value="ignore">
+                                                <button class="btn btn-sm btn-outline-secondary">Không phải của tôi</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
                         <style>
                             /* Booking tab inline styles */
                             .bk-card {
@@ -1182,6 +1210,12 @@
                                 background: #f0fdf4;
                                 color: #15803d;
                                 border: 1px solid #bbf7d0;
+                            }
+
+                            .ps-refunded {
+                                background: #f3e8ff;
+                                color: #7e22ce;
+                                border: 1px solid #e9d5ff;
                             }
 
                             .ps-failed {
@@ -1462,10 +1496,10 @@
                                                         $tabAttr .= ' past';
                                                     if ($isPendingPay)
                                                         $tabAttr .= ' pending_payment';
-                                                    $depositAmt = $booking->total_price * 0.3;
-                                                    $remainAmt = $booking->total_price * 0.7;
+                                                    $depositAmt = $booking->deposit_amount;
+                                                    $remainAmt = $booking->remaining_amount;
                                                     $paidAmt = (float) ($booking->paid_amount ?? 0);
-                                                    $paidPercent = $booking->total_price > 0 ? min(100, round($paidAmt / $booking->total_price * 100)) : 0;
+                                                    $paidPercent = $booking->paid_percent;
                                                 @endphp
                                                 <div class="bk-card" data-bk-tab="{{ $tabAttr }}">
                                                     <div class="bk-card-header">
@@ -1604,17 +1638,26 @@
                                                                             </div>
                                                                         </div>
                                                                     @endif
-                                                                    @if($paymentStatus === 'paid_100')
-                                                                        <div class="ps-badge ps-paid100"><i class="bi bi-check-circle-fill"></i>Đã
-                                                                            thanh toán 100%</div>
-                                                                    @elseif($paymentStatus === 'paid_30')
-                                                                        <div class="ps-badge ps-paid30"><i class="bi bi-pie-chart-fill"></i>Đã thanh
-                                                                            toán 30% (Cọc)</div>
-                                                                        @if(!$isCancelled)
-                                                                            <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section"
-                                                                                class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
-                                                                                <i class="bi bi-credit-card-fill"></i>Thanh toán 70% còn lại
-                                                                            </a>
+                                                                    @if($paymentStatus === 'paid_100' || $paymentStatus === 'paid_30')
+                                                                        @if($isCancelled && $booking->refund_request)
+                                                                            @if($booking->refund_request->status === 'completed')
+                                                                                <div class="ps-badge ps-refunded"><i class="bi bi-arrow-return-left"></i>Đã hoàn tiền</div>
+                                                                            @elseif($booking->refund_request->status === 'pending')
+                                                                                <div class="ps-badge ps-pending"><i class="bi bi-hourglass-split"></i>Chờ hoàn tiền</div>
+                                                                            @else
+                                                                                <div class="ps-badge ps-failed"><i class="bi bi-x-circle-fill"></i>Từ chối hoàn tiền</div>
+                                                                            @endif
+                                                                        @else
+                                                                            @if($paymentStatus === 'paid_100')
+                                                                                <div class="ps-badge ps-paid100"><i class="bi bi-check-circle-fill"></i>Đã thanh toán 100%</div>
+                                                                            @else
+                                                                                <div class="ps-badge ps-paid30"><i class="bi bi-pie-chart-fill"></i>Đã thanh toán 30% (Cọc)</div>
+                                                                                @if(!$isCancelled)
+                                                                                    <a href="{{ route('user.bookings.detail', $booking->id) }}#pay70Section" class="bk-btn bk-btn-info w-100 justify-content-center mt-2">
+                                                                                        <i class="bi bi-credit-card-fill"></i>Thanh toán 70% còn lại
+                                                                                    </a>
+                                                                                @endif
+                                                                            @endif
                                                                         @endif
                                                                     @elseif($paymentStatus === 'pending')
                                                                         <div class="ps-badge ps-pending">
@@ -1830,7 +1873,7 @@
                                                                     <div>
                                                                         <div class="combo-price-label">Giá từ:</div>
                                                                         <div class="combo-price-val">
-                                                                            {{ format_currency($t?->base_price ?? 0) }}</div>
+                                                                            {{ format_currency($t?->getBasePrice() > 0 ? $t->getBasePrice() : ($t?->base_price ?? 0)) }}</div>
                                                                     </div>
                                                                     <span class="btn-combo-detail">Xem chi tiết</span>
                                                                 </div>

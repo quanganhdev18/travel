@@ -18,17 +18,49 @@
     <!-- Chart.js (for dashboard) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Alpine.js & Vite for Echo -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @vite(['resources/js/app.js'])
+
     <style>
         :root {
             --admin-primary: #007CE8;
+            --primary-50: #f0f9ff;
+            --primary-100: #e0f2fe;
+            --primary-200: #bae6fd;
+            --primary-300: #7dd3fc;
+            --primary-400: #38bdf8;
+            --primary-500: #007CE8;
+            --primary-600: #0284c7;
+            --primary-700: #0369a1;
+            --primary-800: #075985;
+            --primary-900: #0c4a6e;
+            
             --admin-secondary: #f8fafc;
             --admin-sidebar: #0f172a;
-            --admin-text-main: #334155;
-            --admin-text-muted: #64748b;
-            --admin-border: #e2e8f0;
+            --admin-text-main: #1e293b;
+            --admin-text-muted: #475569;
+            --admin-border: #cbd5e1;
             --font-family: 'Inter', sans-serif;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 12px 24px rgba(0,0,0,0.08);
+            
+            --success-base: #16a34a;
+            --success-bg: #f0fdf4;
+            --success-text: #14532d;
+            
+            --warning-base: #ca8a04;
+            --warning-bg: #fefce8;
+            --warning-text: #713f12;
+            
+            --danger-base: #dc2626;
+            --danger-bg: #fef2f2;
+            --danger-text: #7f1d1d;
+            
+            --info-base: #0891b2;
+            --info-bg: #ecfeff;
+            --info-text: #164e63;
         }
 
         body {
@@ -37,6 +69,12 @@
             color: var(--admin-text-main);
             margin: 0;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .min-w-0 {
+            min-width: 0 !important;
         }
 
         /* Custom Scrollbar */
@@ -220,15 +258,19 @@
         /* Badges */
         .badge-soft {
             padding: 6px 10px;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.75rem;
             border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
-        .badge-soft-success { background: #dcfce7; color: #166534; }
-        .badge-soft-warning { background: #fef9c3; color: #854d0e; }
-        .badge-soft-danger { background: #fee2e2; color: #991b1b; }
-        .badge-soft-primary { background: #dbeafe; color: #1e40af; }
-        .badge-soft-secondary { background: #f1f5f9; color: #475569; }
+        .badge-soft-success { background: var(--success-bg); color: var(--success-text); border: 1px solid rgba(22, 163, 74, 0.25); }
+        .badge-soft-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid rgba(202, 138, 4, 0.25); }
+        .badge-soft-danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid rgba(220, 38, 38, 0.25); }
+        .badge-soft-primary { background: var(--primary-100); color: var(--primary-800); border: 1px solid rgba(0, 124, 232, 0.25); }
+        .badge-soft-secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        .badge-soft-info { background: var(--info-bg); color: var(--info-text); border: 1px solid rgba(8, 145, 178, 0.25); }
 
         /* Buttons */
         .btn-admin {
@@ -300,6 +342,104 @@
                 display: block;
             }
         }
+        
+        @media (max-width: 767px) {
+            .sidebar {
+                display: none !important;
+            }
+            #sidebar-toggle {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 12px 16px calc(70px + env(safe-area-inset-bottom, 0px)) 16px !important;
+            }
+            .topbar {
+                position: sticky;
+                top: 0;
+                z-index: 998;
+                margin-bottom: 16px;
+                padding: 12px 16px;
+                border-radius: 0;
+                margin-left: -16px;
+                margin-right: -16px;
+                border-left: none;
+                border-right: none;
+                border-top: none;
+                background-color: rgba(255, 255, 255, 0.95) !important;
+                backdrop-filter: blur(8px);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+            }
+            
+            /* Bottom Navigation Bar for Mobile */
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: #ffffff;
+                border-top: 1px solid var(--admin-border);
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                z-index: 1000;
+                box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+            
+            .bottom-nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: var(--neutral-500);
+                text-decoration: none;
+                font-size: 0.72rem;
+                font-weight: 600;
+                width: 100%;
+                height: 100%;
+                transition: all 0.2s ease;
+                padding-top: 6px;
+            }
+            
+            .bottom-nav-item i {
+                font-size: 1.25rem;
+                margin-bottom: 2px;
+                transition: transform 0.2s;
+            }
+            
+            .bottom-nav-item:active i {
+                transform: scale(0.85);
+            }
+            
+            .bottom-nav-item.active {
+                color: var(--admin-primary);
+            }
+            
+            .bottom-nav-item.active .nav-icon-wrapper {
+                background: var(--primary-100);
+                color: var(--admin-primary);
+                padding: 4px 18px;
+                border-radius: 16px;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 2px;
+            }
+            
+            /* High contrast forms on mobile */
+            input, select, textarea {
+                font-size: 16px !important; /* Prevents iOS auto-zoom */
+                padding: 10px 12px !important;
+                border-color: #94a3b8 !important; /* High contrast borders */
+            }
+            
+            .card {
+                border-radius: var(--radius-md) !important;
+                border: 1px solid var(--admin-border) !important;
+            }
+        }
     </style>
 </head>
 
@@ -336,13 +476,20 @@
                 <button class="btn btn-outline-secondary d-lg-none" id="sidebar-toggle">
                     <i class="bi bi-list"></i>
                 </button>
-                <h1 class="page-title">@yield('page-title', 'Bảng Điều Khiển')</h1>
+                <div class="d-none d-md-block">
+                    <h1 class="page-title">@yield('page-title', 'Bảng Điều Khiển')</h1>
+                </div>
+                <div class="d-md-none fw-bold text-dark fs-5 d-flex align-items-center gap-2">
+                    <i class="bi bi-cursor-fill text-primary"></i> Travel<span style="color: var(--admin-primary)">Wonder</span>
+                </div>
             </div>
             
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border" title="Xem trang chủ">
-                    <i class="bi bi-box-arrow-up-right"></i> <span class="d-none d-sm-inline">Xem Website</span>
+                <a href="{{ url('/') }}" target="_blank" class="btn btn-sm btn-light border d-none d-md-inline-flex align-items-center gap-1" title="Xem trang chủ">
+                    <i class="bi bi-box-arrow-up-right"></i> <span>Xem Website</span>
                 </a>
+                
+                @include('components.guide-notification-bell')
                 
                 <div class="dropdown">
                     <a class="text-decoration-none text-dark dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
@@ -355,7 +502,7 @@
                         @endif
                         <span class="fw-500 d-none d-md-inline">{{ Auth::user()->name ?? 'Quản trị viên' }}</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="min-width: 200px;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" style="min-width: 200px; border-radius: var(--radius-md);">
                         <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2 text-muted"></i> Hồ sơ cá nhân</a></li>
                         <li><a class="dropdown-item py-2" href="#"><i class="bi bi-gear me-2 text-muted"></i> Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -404,6 +551,22 @@
         <!-- Footer -->
         <div class="text-center text-muted small mt-4 pt-4 border-top">
             &copy; {{ date('Y') }} Hệ thống Quản trị Travel Wonder. Bảo lưu mọi quyền.
+        </div>
+
+        <!-- Mobile Bottom Navigation (Moved inside main-content so PJAX updates it dynamically) -->
+        <div class="bottom-nav d-flex d-md-none">
+            <a class="bottom-nav-item {{ request()->routeIs('guide.dashboard') ? 'active' : '' }}" href="{{ route('guide.dashboard') }}">
+                <div class="nav-icon-wrapper">
+                    <i class="bi bi-grid-1x2"></i>
+                </div>
+                <span>Tổng quan</span>
+            </a>
+            <a class="bottom-nav-item {{ request()->routeIs('guide.schedules.*') ? 'active' : '' }}" href="{{ route('guide.schedules.index') }}">
+                <div class="nav-icon-wrapper">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <span>Lịch trình Tour</span>
+            </a>
         </div>
     </div>
 

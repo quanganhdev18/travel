@@ -2,40 +2,40 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use App\Models\Booking;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\BroadcastMessage;
+use Illuminate\Notifications\Notification;
 
 class AdminBookingNotification extends Notification
 {
     use Queueable;
 
     public $booking;
+
     public $type;
+
     public $message;
+
     public $title;
 
     /**
      * Create a new notification instance.
      *
-     * @param Booking|null $booking
-     * @param string $type Action type: booking_created, payment_success, booking_cancelled, invoice_requested
-     * @param string $message
-     * @param string|null $title
+     * @param  string  $type  Action type: booking_created, payment_success, booking_cancelled, invoice_requested
      */
     public function __construct(?Booking $booking, string $type, string $message, ?string $title = null)
     {
         $this->booking = $booking;
         $this->type = $type;
         $this->message = $message;
-        
-        if (!$title) {
+
+        if (! $title) {
             $titles = [
                 'booking_created' => 'Tour mới được đặt',
                 'payment_success' => 'Thanh toán thành công',
                 'booking_cancelled' => 'Yêu cầu hủy tour',
-                'invoice_requested' => 'Yêu cầu xuất hóa đơn'
+                'invoice_requested' => 'Yêu cầu xuất hóa đơn',
             ];
             $this->title = $titles[$type] ?? 'Thông báo hệ thống';
         } else {
@@ -65,7 +65,7 @@ class AdminBookingNotification extends Notification
             'title' => $this->title,
             'message' => $this->message,
             'booking_id' => $this->booking ? $this->booking->id : null,
-            'link' => $this->booking ? route('admin.bookings.index', ['search' => $this->booking->code]) : route('admin.bookings.index')
+            'link' => $this->booking ? route('admin.bookings.index', ['search' => $this->booking->code]) : route('admin.bookings.index'),
         ];
     }
 

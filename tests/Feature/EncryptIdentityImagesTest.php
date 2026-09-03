@@ -64,6 +64,7 @@ it('encrypts existing plaintext data via identity:encrypt-images command', funct
     DB::table('user_identities')->insert([
         'user_id' => $user->id,
         'identity_number' => '012345678903',
+        'identity_number_hash' => hash('sha256', '012345678903'),
         'full_name' => 'Lê Văn C',
         'date_of_birth' => '1985-03-20',
         'issue_date' => '2019-01-01',

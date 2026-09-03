@@ -98,34 +98,6 @@
         <div class="w-100 d-none d-lg-block border-bottom" style="border-color: rgba(128, 128, 128, 0.2) !important; background: rgba(0,0,0,0.03);">
             <div class="container d-flex justify-content-end py-1">
                 <ul class="navbar-nav flex-row align-items-center gap-3" style="font-size: 0.9rem;">
-                    <!-- Currency Selector -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center py-1" href="#" id="currencyDropdownTop" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight: 600;">
-                            {{ Session::get('currency', 'VND') }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="currencyDropdownTop" style="border-radius: 12px; margin-top: 5px; min-width: 200px;">
-                            <li><a class="dropdown-item py-2 {{ Session::get('currency', 'VND') == 'VND' ? 'active fw-bold' : '' }}" href="{{ route('currency.switch', 'VND') }}">VND - Việt Nam Đồng</a></li>
-                            <li><a class="dropdown-item py-2 {{ Session::get('currency') == 'USD' ? 'active fw-bold' : '' }}" href="{{ route('currency.switch', 'USD') }}">USD - US Dollar</a></li>
-                            <li><a class="dropdown-item py-2 {{ Session::get('currency') == 'EUR' ? 'active fw-bold' : '' }}" href="{{ route('currency.switch', 'EUR') }}">EUR - Euro</a></li>
-                            <li><a class="dropdown-item py-2 {{ Session::get('currency') == 'CNY' ? 'active fw-bold' : '' }}" href="{{ route('currency.switch', 'CNY') }}">CNY - Nhân dân tệ</a></li>
-                        </ul>
-                    </li>
-
-                    <!-- Language Selector -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center py-1" href="#" id="languageDropdownTop" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight: 600;">
-                            @php
-                                $localesShort = ['vi' => 'VI', 'en' => 'EN', 'zh' => 'ZH'];
-                                $currentLocale = App::getLocale();
-                            @endphp
-                            <i class="bi bi-globe me-1"></i> {{ $localesShort[$currentLocale] ?? 'VI' }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="languageDropdownTop" style="border-radius: 12px; margin-top: 5px; min-width: 150px;">
-                            <li><a class="dropdown-item py-2 {{ $currentLocale == 'vi' ? 'active fw-bold' : '' }}" href="{{ route('locale.switch', 'vi') }}">Tiếng Việt</a></li>
-                            <li><a class="dropdown-item py-2 {{ $currentLocale == 'en' ? 'active fw-bold' : '' }}" href="{{ route('locale.switch', 'en') }}">English</a></li>
-                            <li><a class="dropdown-item py-2 {{ $currentLocale == 'zh' ? 'active fw-bold' : '' }}" href="{{ route('locale.switch', 'zh') }}">中文</a></li>
-                        </ul>
-                    </li>
 
                     <!-- Support -->
                     <li class="nav-item">
@@ -192,33 +164,12 @@
                             </a>
                         </li>
                         @endauth
-                        <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tickets.index') }}">{{ __('Vé tham quan') }}</a></li>
-                        <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.insurance.index') }}">{{ __('Bảo hiểm du lịch') }}</a></li>
+                        {{-- <li class="nav-item"><a class="nav-link fs-6" href="{{ route('frontend.tickets.index') }}">{{ __('Vé tham quan') }}</a></li> --}}
                     </ul>
 
                     <!-- Mobile Only Top Utilities -->
                     <ul class="navbar-nav d-lg-none mt-3 border-top pt-3 gap-2">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="currencyDropdownMobile" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-cash-coin me-2"></i> {{ Session::get('currency', 'VND') }}
-                            </a>
-                            <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="currencyDropdownMobile">
-                                <li><a class="dropdown-item" href="{{ route('currency.switch', 'VND') }}">VND - Việt Nam Đồng</a></li>
-                                <li><a class="dropdown-item" href="{{ route('currency.switch', 'USD') }}">USD - US Dollar</a></li>
-                                <li><a class="dropdown-item" href="{{ route('currency.switch', 'EUR') }}">EUR - Euro</a></li>
-                                <li><a class="dropdown-item" href="{{ route('currency.switch', 'CNY') }}">CNY - Nhân dân tệ</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="languageDropdownMobile" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-globe me-2"></i> {{ $localesShort[$currentLocale] ?? 'VI' }}
-                            </a>
-                            <ul class="dropdown-menu shadow-sm border-0" aria-labelledby="languageDropdownMobile">
-                                <li><a class="dropdown-item" href="{{ route('locale.switch', 'vi') }}">Tiếng Việt</a></li>
-                                <li><a class="dropdown-item" href="{{ route('locale.switch', 'en') }}">English</a></li>
-                                <li><a class="dropdown-item" href="{{ route('locale.switch', 'zh') }}">中文</a></li>
-                            </ul>
-                        </li>
+
                         <li class="nav-item"><a class="nav-link" href="{{ route('frontend.support.index') }}"><i class="bi bi-question-circle me-2"></i> {{ __('Hỗ trợ') }}</a></li>
 
                         @guest
@@ -313,7 +264,7 @@
                 <div class="col-lg-3 col-md-6">
                     <h5 class="footer-title">{{ __('Sản phẩm') }}</h5>
                     <a href="{{ route('frontend.tours.index') }}" class="footer-link">{{ __('Tour trọn gói') }}</a>
-                    <a href="{{ route('frontend.tickets.index') }}" class="footer-link">{{ __('Vé tham quan') }}</a>
+                    {{-- <a href="{{ route('frontend.tickets.index') }}" class="footer-link">{{ __('Vé tham quan') }}</a> --}}
                     @auth
                         <a href="{{ route('user.profile') }}?tab=wishlists" class="footer-link">{{ __('Tour đã lưu') }}</a>
                     @else
@@ -338,7 +289,11 @@
         </div>
     </footer>
 
+    <!-- Chatbot Component -->
+    @include('frontend.components.chatbot')
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="{{ asset('js/animations.js') }}"></script>
     <script src="{{ asset('js/favorite-handler.js') }}"></script>

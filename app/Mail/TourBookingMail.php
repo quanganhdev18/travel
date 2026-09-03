@@ -19,8 +19,10 @@ class TourBookingMail extends Mailable
     public $customerName;
 
     public $customerPhone;
+    
+    public $linkedUser;
 
-    public function __construct($booking, $schedule = null, $customerName = null, $customerPhone = null)
+    public function __construct($booking, $schedule = null, $customerName = null, $customerPhone = null, $linkedUser = false)
     {
         // Eager load tất cả các quan hệ cần thiết để render email
         $this->booking = $booking->loadMissing([
@@ -35,11 +37,12 @@ class TourBookingMail extends Mailable
         $this->schedule = $schedule ? $schedule->loadMissing([
             'tour.tour_itineraries',
             'tour.departure_location',
-            'schedule_guides.guide',
+            'schedule_guides.tour_guide',
         ]) : null;
 
-        $this->customerName = $customerName ?? ($this->booking->user->name ?? ($this->booking->booking_passengers->first()?->full_name ?? 'Quý khách'));
-        $this->customerPhone = $customerPhone ?? ($this->booking->user->phone ?? '—');
+        $this->customerName = $customerName ?? ($this->booking->customer_name ?? ($this->booking->user->name ?? ($this->booking->booking_passengers->first()?->full_name ?? 'Quý khách')));
+        $this->customerPhone = $customerPhone ?? ($this->booking->customer_phone ?? ($this->booking->user->phone ?? '—'));
+        $this->linkedUser = $linkedUser;
     }
 
     public function envelope(): Envelope

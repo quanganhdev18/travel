@@ -54,7 +54,7 @@
                             </p>
 
                             <p class="fw-bold text-danger mb-3" style="font-size: 1.05rem;">
-                                {{ number_format($tour->base_price, 0, ',', '.') }}đ
+                                {{ format_currency($tour->getBasePrice() > 0 ? $tour->getBasePrice() : ($tour->base_price ?? 0)) }}
                             </p>
 
                             <a href="{{ route('frontend.tours.show', $tour->slug) }}"

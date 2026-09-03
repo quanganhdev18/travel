@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accommodation;
+use App\Models\Addon;
 use App\Models\Category;
 use App\Models\Destination;
 use App\Models\Province;
+use App\Models\Ticket;
 use App\Models\Tour;
 use App\Models\TourImage;
 use App\Models\TourSchedule;
@@ -30,8 +33,11 @@ class TourController extends Controller
         $provinces = Province::all();
         $categories = Category::all();
         $destinations = Destination::all();
+        $tickets = Ticket::all();
+        $accommodations = Accommodation::with('room_types')->where('is_active', true)->get();
+        $addons = Addon::all();
 
-        return view('admin.tours.create', compact('provinces', 'categories', 'destinations'));
+        return view('admin.tours.create', compact('provinces', 'categories', 'destinations', 'tickets', 'accommodations', 'addons'));
     }
 
     public function store(Request $request)
@@ -50,10 +56,22 @@ class TourController extends Controller
             ],
             'title.en' => 'nullable|max:255',
             'title.zh' => 'nullable|max:255',
-            'base_price' => 'required|numeric',
+            'base_price' => 'nullable|numeric',
             'child_price' => 'nullable|numeric',
             'meeting_point' => 'required|string|max:255',
             'destination_id' => 'required|exists:destinations,id',
+            'accommodation_id' => [
+                'nullable',
+                'exists:accommodations,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->filled('destination_id')) {
+                        $accommodation = Accommodation::find($value);
+                        if ($accommodation && $accommodation->destination_id != $request->destination_id) {
+                            $fail('Địa chỉ của điểm lưu trú phải trùng với điểm đến của tour.');
+                        }
+                    }
+                },
+            ],
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
@@ -98,11 +116,35 @@ class TourController extends Controller
                 'is_primary' => 1, // Đánh dấu đây là ảnh chính[cite: 8]
             ]);
         }
-
         // 3. Lưu danh mục (nhiều-nhiều) vào bảng tour_categories
         if ($request->has('categories')) {
             $tour->categories()->sync($request->categories);
         }
+        if ($request->has('tickets')) {
+            $tour->tickets()->sync($request->tickets);
+        }
+        if ($request->filled('accommodation_id')) {
+            $accommodation = Accommodation::with('room_types')->find($request->accommodation_id);
+            if ($accommodation) {
+                foreach ($accommodation->room_types as $rt) {
+                    $tour->accommodation_tiers()->create([
+                        'room_type_id' => $rt->id,
+                        'tier_label' => ($accommodation->star_rating ?? 3).' Sao',
+                        'price_adjustment' => 0,
+                    ]);
+                }
+            }
+        }
+        if ($request->has('addons')) {
+            $tour->addons()->sync($request->addons);
+        }
+
+        // Recalculate base price based on cost components + included tickets
+        $ticketAdultCost = $tour->tickets()->sum('adult_price');
+        $ticketChildCost = $tour->tickets()->sum('child_price');
+        $tour->base_price = ($tour->cost_transport ?? 0) + ($tour->cost_meal ?? 0) + ($tour->cost_insurance ?? 0) + ($tour->cost_service_fee ?? 0) + $ticketAdultCost;
+        $tour->child_price = (($tour->cost_transport ?? 0) * config('booking.child_price_rate')) + (($tour->cost_meal ?? 0) * config('booking.child_price_rate')) + (($tour->cost_insurance ?? 0) * config('booking.child_price_rate')) + (($tour->cost_service_fee ?? 0) * config('booking.child_price_rate')) + $ticketChildCost;
+        $tour->save();
 
         // Kiểm tra nếu là AJAX request
         if ($request->expectsJson() || $request->ajax()) {
@@ -188,11 +230,21 @@ class TourController extends Controller
         $provinces = Province::all();
         $categories = Category::all();
         $destinations = Destination::all();
+        $tickets = Ticket::all();
+        $accommodations = Accommodation::with('room_types')->where('is_active', true)->get();
+        $addons = Addon::all();
 
         // Lấy danh sách ID danh mục mà tour đang có để check vào checkbox
         $tourCategoryIds = $tour->categories->pluck('id')->toArray();
+        $tourTicketIds = $tour->tickets->pluck('id')->toArray();
+        $tourRoomTypeIds = $tour->accommodation_tiers()->pluck('room_type_id')->toArray();
+        $tourAddonIds = $tour->addons->pluck('id')->toArray();
+        $selectedAccommodationId = $tour->accommodation_tiers()->first()?->room_type?->accommodation_id;
 
-        return view('admin.tours.edit', compact('tour', 'provinces', 'categories', 'tourCategoryIds', 'destinations'));
+        return view('admin.tours.edit', compact(
+            'tour', 'provinces', 'categories', 'tourCategoryIds', 'destinations',
+            'tickets', 'accommodations', 'addons', 'tourTicketIds', 'tourRoomTypeIds', 'tourAddonIds', 'selectedAccommodationId'
+        ));
     }
 
     public function update(Request $request, $id)
@@ -212,10 +264,22 @@ class TourController extends Controller
             ],
             'title.en' => 'nullable|max:255',
             'title.zh' => 'nullable|max:255',
-            'base_price' => 'required|numeric',
+            'base_price' => 'nullable|numeric',
             'child_price' => 'nullable|numeric',
             'meeting_point' => 'required|string|max:255',
             'destination_id' => 'required|exists:destinations,id',
+            'accommodation_id' => [
+                'nullable',
+                'exists:accommodations,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->filled('destination_id')) {
+                        $accommodation = Accommodation::find($value);
+                        if ($accommodation && $accommodation->destination_id != $request->destination_id) {
+                            $fail('Địa chỉ của điểm lưu trú phải trùng với điểm đến của tour.');
+                        }
+                    }
+                },
+            ],
             'duration_days' => 'required|integer',
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
@@ -266,7 +330,39 @@ class TourController extends Controller
 
         if ($request->has('categories')) {
             $tour->categories()->sync($request->categories);
+        } else {
+            $tour->categories()->detach();
         }
+        if ($request->has('tickets')) {
+            $tour->tickets()->sync($request->tickets);
+        } else {
+            $tour->tickets()->detach();
+        }
+        $tour->accommodation_tiers()->delete();
+        if ($request->filled('accommodation_id')) {
+            $accommodation = Accommodation::with('room_types')->find($request->accommodation_id);
+            if ($accommodation) {
+                foreach ($accommodation->room_types as $rt) {
+                    $tour->accommodation_tiers()->create([
+                        'room_type_id' => $rt->id,
+                        'tier_label' => ($accommodation->star_rating ?? 3).' Sao',
+                        'price_adjustment' => 0,
+                    ]);
+                }
+            }
+        }
+        if ($request->has('addons')) {
+            $tour->addons()->sync($request->addons);
+        } else {
+            $tour->addons()->detach();
+        }
+
+        // Recalculate base price based on cost components + included tickets
+        $ticketAdultCost = $tour->tickets()->sum('adult_price');
+        $ticketChildCost = $tour->tickets()->sum('child_price');
+        $tour->base_price = ($tour->cost_transport ?? 0) + ($tour->cost_meal ?? 0) + ($tour->cost_insurance ?? 0) + ($tour->cost_service_fee ?? 0) + $ticketAdultCost;
+        $tour->child_price = (($tour->cost_transport ?? 0) * config('booking.child_price_rate')) + (($tour->cost_meal ?? 0) * config('booking.child_price_rate')) + (($tour->cost_insurance ?? 0) * config('booking.child_price_rate')) + (($tour->cost_service_fee ?? 0) * config('booking.child_price_rate')) + $ticketChildCost;
+        $tour->save();
 
         // Kiểm tra nếu là AJAX request
         if ($request->expectsJson() || $request->ajax()) {

@@ -294,7 +294,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <div style="font-size:0.72rem;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Từ</div>
-                                        <div class="wish-price">{{ number_format($t?->base_price ?? 0, 0, ',', '.') }}₫</div>
+                                        <div class="wish-price">{{ format_currency($t?->getBasePrice() > 0 ? $t->getBasePrice() : ($t?->base_price ?? 0)) }}</div>
                                     </div>
                                     @if($t)
                                     <a href="{{ route('frontend.tours.show', $t->slug) }}" class="btn-view-tour">

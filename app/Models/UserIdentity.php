@@ -42,11 +42,13 @@ class UserIdentity extends Model
         'expiry_date' => 'datetime',
         'front_image_url' => 'encrypted',
         'back_image_url' => 'encrypted',
+        'identity_number' => 'encrypted',
     ];
 
     protected $fillable = [
         'user_id',
         'identity_number',
+        'identity_number_hash',
         'full_name',
         'date_of_birth',
         'gender',
@@ -60,6 +62,17 @@ class UserIdentity extends Model
         'back_image_url',
         'verification_status',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            if ($model->isDirty('identity_number') && ! empty($model->identity_number)) {
+                $model->identity_number_hash = hash('sha256', $model->identity_number);
+            }
+        });
+    }
 
     public function user()
     {

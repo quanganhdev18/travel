@@ -50,6 +50,13 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'Tạo tài khoản thành công.');
     }
 
+    public function show(User $user)
+    {
+        $user->load('user_identity');
+
+        return view('admin.users.show', compact('user'));
+    }
+
     public function edit(User $user)
     {
         return view('admin.users.edit', compact('user'));
@@ -61,6 +68,11 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|max:20',
+            'identity_number' => 'nullable|string|max:50',
+            'full_name' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|string|max:20',
+            'expiry_date' => 'nullable|date',
         ];
 
         if ($request->filled('password')) {
@@ -86,6 +98,18 @@ class UserController extends Controller
 
         $user->update($validated);
         $this->syncSpatieRole($user);
+
+        $identityData = $request->only([
+            'identity_number', 'full_name', 'date_of_birth', 'gender',
+            'expiry_date',
+        ]);
+
+        if (array_filter($identityData) || $user->user_identity) {
+            $user->user_identity()->updateOrCreate(
+                ['user_id' => $user->id],
+                $identityData
+            );
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'Cập nhật tài khoản thành công.');
     }

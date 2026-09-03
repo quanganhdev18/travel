@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('page-title', 'Chi tiết Quyết Toán Tour')
+@section('page-title', 'Chi tiết Báo cáo Tour')
 
 @section('content')
 <div class="row">
@@ -33,37 +33,77 @@
                     </div>
                 </div>
 
-                <h6 class="fw-bold border-bottom pb-2 mb-3">Quyết Toán Tài Chính</h6>
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <td class="bg-light w-50">1. Số tiền đã tạm ứng</td>
-                            <td class="text-end fw-bold">{{ number_format($report->advance_amount) }} đ</td>
-                        </tr>
-                        <tr>
-                            <td class="bg-light">2. Tổng chi phí thực tế</td>
-                            <td class="text-end fw-bold">{{ number_format($report->actual_expense) }} đ</td>
-                        </tr>
-                        <tr class="table-warning">
-                            <td class="fw-bold">3. Hoàn ứng (Tạm ứng - Chi phí)</td>
-                            <td class="text-end fw-bold fs-5 {{ $report->balance >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($report->balance) }} đ
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="text-muted small mb-4">
-                    * Nếu số tiền &gt; 0: HDV phải nộp lại cho công ty.<br>
-                    * Nếu số tiền &lt; 0: Công ty phải bù thêm cho HDV.
-                </div>
+                <h6 class="fw-bold border-bottom pb-2 mb-3 mt-4">Danh sách Khách Tách Đoàn</h6>
+                @if(isset($freeTimePassengers) && count($freeTimePassengers) > 0)
+                    <div class="table-responsive border rounded mb-4">
+                        <table class="table table-striped table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 50px;">#</th>
+                                    <th scope="col">Tên khách hàng</th>
+                                    <th scope="col">Loại vé</th>
+                                    <th scope="col">Địa điểm tách</th>
+                                    <th scope="col">Thời gian tách</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($freeTimePassengers as $index => $passenger)
+                                    <tr>
+                                        <th scope="row">{{ $index + 1 }}</th>
+                                        <td class="fw-semibold text-dark">{{ $passenger->full_name }}</td>
+                                        <td>
+                                            @if($passenger->passenger_type == 'adult')
+                                                <span class="badge bg-primary bg-opacity-10 text-primary">Người lớn</span>
+                                            @elseif($passenger->passenger_type == 'child')
+                                                <span class="badge bg-warning bg-opacity-10 text-warning">Trẻ em</span>
+                                            @else
+                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">Em bé</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $passenger->free_time_location ?? 'Không ghi rõ' }}</td>
+                                        <td class="text-muted text-sm">
+                                            {{ $passenger->free_time_start ? \Carbon\Carbon::parse($passenger->free_time_start)->format('H:i d/m/Y') : '—' }} 
+                                            <i class="bi bi-arrow-right mx-1"></i> 
+                                            {{ $passenger->free_time_end ? \Carbon\Carbon::parse($passenger->free_time_end)->format('H:i d/m/Y') : '—' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="alert alert-info text-center mb-4">
+                        <i class="bi bi-info-circle me-1"></i> Không có khách nào tách đoàn trong chuyến đi này.
+                    </div>
+                @endif
 
                 @if($report->status === 'pending')
-                    <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" class="text-end mt-4">
-                        @csrf
-                        <button type="submit" class="btn btn-success px-4" onclick="return confirm('Xác nhận đã đối chiếu hóa đơn chứng từ và duyệt quyết toán này?')">
-                            <i class="bi bi-check-circle me-1"></i> Duyệt Báo Cáo & Khóa Tour
+                    <div class="d-flex justify-content-end gap-2 mt-4" x-data="{ showRejectForm: false }">
+                        <button type="button" @click="showRejectForm = !showRejectForm" class="btn btn-danger px-4">
+                            <i class="bi bi-x-circle me-1"></i> Từ chối Báo cáo
                         </button>
-                    </form>
+                        
+                        <form action="{{ route('admin.reports.approve', $report->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-success px-4" onclick="return confirm('Xác nhận đã xem báo cáo và duyệt đóng tour này?')">
+                                <i class="bi bi-check-circle me-1"></i> Duyệt Báo Cáo & Khóa Tour
+                            </button>
+                        </form>
+                    </div>
+
+                    <div x-show="showRejectForm" class="mt-3 p-3 border rounded bg-light text-start" x-cloak x-transition>
+                        <form action="{{ route('admin.reports.reject', $report->id) }}" method="POST">
+                            @csrf
+                            <div class="mb-3">
+                                <label for="reject_reason" class="form-label fw-bold">Lý do từ chối <span class="text-danger">*</span></label>
+                                <textarea name="reject_reason" id="reject_reason" rows="3" class="form-control" placeholder="Nhập lý do từ chối..." required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="button" @click="showRejectForm = false" class="btn btn-sm btn-secondary me-2">Hủy</button>
+                                <button type="submit" class="btn btn-sm btn-danger">Xác nhận Từ chối</button>
+                            </div>
+                        </form>
+                    </div>
                 @else
                     <div class="alert alert-success text-center">
                         <i class="bi bi-check-circle-fill me-2"></i> Báo cáo này đã được duyệt.

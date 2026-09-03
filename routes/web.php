@@ -1,8 +1,16 @@
 <?php
 
+use App\Http\Controllers\Admin\RefundController;
+use App\Http\Controllers\Frontend\InvoiceRequestController;
+use App\Http\Controllers\GuestBroadcastingController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\User\NotificationController;
+use App\Models\Category;
+use App\Models\Holiday;
+use App\Models\TourSchedule;
+use Database\Seeders\VietnamHolidaySeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +19,12 @@ Route::get('/debug-schema', function () {
 
     return implode(', ', $columns);
 });
+
+// Chatbot routes
+use App\Http\Controllers\Frontend\ChatbotController;
+
+Route::get('/api/chatbot/history', [ChatbotController::class, 'getHistory'])->name('chatbot.history');
+Route::post('/api/chatbot/send', [ChatbotController::class, 'sendMessage'])->name('chatbot.send');
 
 // Route tạm để seed ngày lễ (chạy 1 lần rồi có thể xóa)
 Route::get('/seed-holidays', function () {
@@ -61,19 +75,21 @@ Route::get('/tours/ai-suggest', [HomeController::class, 'aiSuggest'])->name('fro
 Route::get('/api/destinations/search', [HomeController::class, 'searchDestinations'])->name('api.destinations.search');
 Route::get('/api/provinces/{province}/wards', [LocationController::class, 'getWards'])->name('api.provinces.wards');
 
-use App\Http\Controllers\Admin\AddonController;
+use App\Http\Controllers\Admin\AccommodationController;
 // Frontend Controllers
+use App\Http\Controllers\Admin\AddonController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
-use App\Http\Controllers\Admin\DashboardController;
 // Admin Controllers
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
 use App\Http\Controllers\Admin\InsuranceController as AdminInsuranceController;
 use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\ReviewController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TourActivityController;
 use App\Http\Controllers\Admin\TourController;
 use App\Http\Controllers\Admin\TourGuideController;
@@ -94,15 +110,8 @@ use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
-use App\Http\Controllers\GuestBroadcastingController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
-use App\Http\Controllers\User\NotificationController;
-use App\Models\Category;
-use App\Models\Holiday;
-use App\Models\TourSchedule;
-use App\Models\User;
-use Database\Seeders\VietnamHolidaySeeder;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -152,18 +161,41 @@ Route::get('/api/flights/search', [FlightController::class, 'searchApi'])
 |--------------------------------------------------------------------------
 */
 
-Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
-Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
+// Route::get('/tickets', [TicketController::class, 'index'])->name('frontend.tickets.index');
+// Route::get('/tickets/search', [TicketController::class, 'search'])->name('frontend.tickets.search');
 
 // Ticket Booking Routes removed - tickets can only be booked along with tours
 // Ticket detail - MUST be last to avoid conflicts
-Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
+// Route::get('/tickets/{slug}', [TicketController::class, 'show'])->name('frontend.tickets.show');
 
 /*
 |--------------------------------------------------------------------------
 | Profile
 |--------------------------------------------------------------------------
 */
+
+Route::post('/api/coupons/apply', [TourBookingController::class, 'applyCoupon'])
+    ->name('coupons.apply');
+
+// Đặt Tour
+Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
+    ->name('frontend.tours.checkout');
+
+Route::post('/tours/book', [TourBookingController::class, 'store'])
+    ->name('frontend.tours.store');
+
+Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
+    ->name('frontend.tours.booking_success');
+
+Route::get('/tours/booking/{id}/verify-email', [TourBookingController::class, 'verifyEmail'])
+    ->name('frontend.tours.verify_email');
+Route::post('/tours/booking/{id}/verify-email', [TourBookingController::class, 'submitVerifyEmail']);
+
+Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
+    ->name('frontend.tours.booking_status');
+
+Route::post('/tours/booking-success/{id}/create-account', [TourBookingController::class, 'createAccount'])
+    ->name('frontend.tours.create_account');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])
@@ -182,33 +214,17 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+// Demo Bar Routes (Public cho phép Guest dùng)
+Route::post('/demo/bookings/{id}/simulate-payment', [DemoController::class, 'simulatePayment'])
+    ->name('demo.bookings.simulate_payment');
+
+Route::post('/demo/bookings/{id}/fast-forward-cancel', [DemoController::class, 'fastForwardCancel'])
+    ->name('demo.bookings.fast_forward_cancel');
+
 Route::middleware(['auth'])->group(function () {
     // OCR CCCD
     Route::post('/api/scan-cccd', [OcrController::class, 'scanCccd'])
         ->name('ocr.scan-cccd');
-
-    Route::post('/api/coupons/apply', [TourBookingController::class, 'applyCoupon'])
-        ->name('coupons.apply');
-
-    // Đặt Tour
-    Route::get('/tours/checkout', [TourBookingController::class, 'checkout'])
-        ->name('frontend.tours.checkout');
-
-    Route::post('/tours/book', [TourBookingController::class, 'store'])
-        ->name('frontend.tours.store');
-
-    Route::get('/tours/booking-success/{id}', [TourBookingController::class, 'bookingSuccess'])
-        ->name('frontend.tours.booking_success');
-
-    Route::get('/tours/booking-status/{id}', [TourBookingController::class, 'checkStatus'])
-        ->name('frontend.tours.booking_status');
-
-    // Demo Bar Routes
-    Route::post('/demo/bookings/{id}/simulate-payment', [DemoController::class, 'simulatePayment'])
-        ->name('demo.bookings.simulate_payment');
-
-    Route::post('/demo/bookings/{id}/fast-forward-cancel', [DemoController::class, 'fastForwardCancel'])
-        ->name('demo.bookings.fast_forward_cancel');
 
     // Đặt vé máy bay
     Route::get('/flights/checkout', [FlightController::class, 'checkout'])
@@ -235,6 +251,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-bookings', fn () => redirect()->route('user.profile', ['tab' => 'bookings']))->name('user.bookings');
     Route::get('/my-bookings/{id}', [UserController::class, 'bookingDetail'])->name('user.bookings.detail');
     Route::post('/my-bookings/{id}/cancel', [UserController::class, 'cancelBooking'])->name('user.bookings.cancel');
+    Route::post('/my-bookings/{id}/link', [UserController::class, 'handleBookingLink'])->name('frontend.user.bookings.link');
 
     Route::post('/reviews', [UserController::class, 'storeReview'])->name('user.reviews.store');
 
@@ -294,6 +311,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // User Management
     Route::get('/chat', [App\Http\Controllers\Admin\ChatController::class, 'index'])->name('admin.chat.index');
 
+    Route::get('/refunds', [RefundController::class, 'index'])->name('admin.refunds.index');
+    Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('admin.refunds.process');
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->names('admin.users');
     Route::post('users/{user}/toggle-status', [App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])
@@ -320,10 +339,13 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
         'invoice',
     ])->name('admin.bookings.invoice');
     // Quản lý tài khoản (Users)
+    Route::get('/refunds', [RefundController::class, 'index'])->name('admin.refunds.index');
+    Route::post('/refunds/{id}/process', [RefundController::class, 'process'])->name('admin.refunds.process');
     Route::resource('users', App\Http\Controllers\Admin\UserController::class)
         ->except(['show'])
         ->names('admin.users');
 
+    Route::get('/bookings/identity/{filename}', [BookingController::class, 'viewIdentityImage'])->name('admin.bookings.identity.image');
     Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus'])
         ->name('admin.bookings.update_status');
 
@@ -365,6 +387,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('destinations', DestinationController::class)
         ->except(['show'])
         ->names('admin.destinations');
+
+    // Lưu trú (Accommodations)
+    Route::resource('accommodations', AccommodationController::class)
+        ->except(['show'])
+        ->names('admin.accommodations');
 
     // Danh mục
     Route::get('/categories/trash', [CategoryController::class, 'trash'])->name('admin.categories.trash');
@@ -493,6 +520,10 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
 
     Route::post('/schedules/{schedule}/activities/{activity}/passengers/{passenger}/toggle-checkin', [ScheduleController::class, 'togglePassengerActivityCheckin'])
         ->name('guide.activities.passengers.toggle_checkin');
+    Route::post('/schedules/{schedule}/activities/{activity}/checkin-all', [ScheduleController::class, 'checkinAllActivityPassengers'])
+        ->name('guide.activities.passengers.checkin_all');
+    Route::post('/schedules/{schedule}/activities/{activity}/uncheck-all', [ScheduleController::class, 'uncheckAllActivityPassengers'])
+        ->name('guide.activities.passengers.uncheck_all');
 
     Route::post('/passengers/{passenger}/note', [ScheduleController::class, 'updateNote'])
         ->name('guide.passengers.update_note');
@@ -514,9 +545,22 @@ Route::prefix('guide')->middleware(['auth', 'guide'])->group(function () {
     Route::post('/schedules/{schedule}/bookings/{booking}/passengers/import', [ScheduleController::class, 'importExcelPassengers'])->name('guide.passengers.import');
     Route::post('/schedules/{schedule}/passengers/{passenger}/free-time', [ScheduleController::class, 'updateFreeTime'])->name('guide.passengers.free_time');
 
+    // Group Splits
+    Route::post('/schedules/{schedule}/passengers/{passenger}/group-split', [GroupSplitController::class, 'store'])->name('guide.passengers.group_split.store');
+    Route::post('/group-splits/{groupSplit}/extend', [GroupSplitController::class, 'extend'])->name('guide.group_splits.extend');
+    Route::post('/group-splits/{groupSplit}/return', [GroupSplitController::class, 'return'])->name('guide.group_splits.return');
+    Route::post('/group-splits/{groupSplit}/cancel', [GroupSplitController::class, 'cancel'])->name('guide.group_splits.cancel');
+    Route::get('/group-splits', [GroupSplitController::class, 'index'])->name('guide.group_splits.index');
+
     // Guide Reports
     Route::get('/schedules/{schedule}/report', [TourReportController::class, 'create'])->name('guide.reports.create');
     Route::post('/schedules/{schedule}/report', [TourReportController::class, 'store'])->name('guide.reports.store');
+
+    // Guide Absence Request
+    Route::get('/schedules/{schedule}/absence', [AbsenceRequestController::class, 'create'])
+        ->name('guide.schedules.absence');
+    Route::post('/schedules/{schedule}/absence', [AbsenceRequestController::class, 'store'])
+        ->name('guide.schedules.absence.store');
 });
 
 // Thêm Admin TourReport
@@ -524,6 +568,21 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tour-reports', [App\Http\Controllers\Admin\TourReportController::class, 'index'])->name('admin.reports.index');
     Route::get('/tour-reports/{report}', [App\Http\Controllers\Admin\TourReportController::class, 'show'])->name('admin.reports.show');
     Route::post('/tour-reports/{report}/approve', [App\Http\Controllers\Admin\TourReportController::class, 'approve'])->name('admin.reports.approve');
+    Route::post('/tour-reports/{report}/reject', [App\Http\Controllers\Admin\TourReportController::class, 'reject'])->name('admin.reports.reject');
+
+    // Admin Absence Requests
+    Route::get('/absence-requests/available-guides/{schedule}', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'getAvailableGuides'])
+        ->name('admin.absence_requests.available_guides');
+    Route::post('/absence-requests/{absenceRequest}/approve', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'approve'])
+        ->name('admin.absence_requests.approve');
+    Route::post('/absence-requests/{absenceRequest}/reject', [App\Http\Controllers\Admin\AbsenceRequestController::class, 'reject'])
+        ->name('admin.absence_requests.reject');
+
+    // Admin Settings
+    Route::get('/settings', [SettingController::class, 'index'])
+        ->name('admin.settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])
+        ->name('admin.settings.update');
 });
 
 Route::get('/admin/coupons', [CouponController::class, 'index'])
@@ -561,6 +620,15 @@ Route::get('/api/check-email', function (Request $request) {
 })->name('api.check-email');
 
 require __DIR__.'/auth.php';
+
+Route::get('/report-wrong-email/{code}', function ($code) {
+    $id = (int) str_replace('BK-', '', $code);
+    $booking = Booking::findOrFail($id);
+    $booking->is_reported = true;
+    $booking->save();
+
+    return 'Cảm ơn bạn đã báo cáo. Chúng tôi đã ghi nhận và sẽ xử lý.';
+});
 // CHAT ROUTES
 Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::post('/start', [ChatController::class, 'startConversation'])->name('chat.start');
@@ -571,7 +639,6 @@ Route::middleware(['auth'])->prefix('chat')->group(function () {
     Route::get('/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unread_count');
     Route::post('/{id}/mark-as-read', [ChatController::class, 'markAsRead'])->name('chat.mark_as_read');
 });
-use App\Http\Controllers\Frontend\InvoiceRequestController;
 
 Route::post('/my-bookings/{booking}/request-invoice', [
     InvoiceRequestController::class,

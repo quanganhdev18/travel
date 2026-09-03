@@ -18,8 +18,8 @@ class DemoController extends Controller
         $booking = Booking::findOrFail($id);
 
         $amountIn = ($booking->payment_status === Booking::PAYMENT_PAID_30)
-            ? ($booking->total_price - $booking->paid_amount)
-            : (($booking->payment_type === 'deposit') ? ($booking->total_price * 0.3) : $booking->total_price);
+            ? $booking->remaining_amount
+            : (($booking->payment_type === 'deposit') ? $booking->deposit_amount : $booking->total_price);
 
         // Gọi trực tiếp Webhook giả lập
         $controller = new BankWebhookController;

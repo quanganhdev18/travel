@@ -53,7 +53,57 @@ class Tour extends Model
         'departure_ward_id',
         'destination_province_id',
         'destination_ward_id',
+        'cost_transport',
+        'cost_meal',
+        'cost_insurance',
+        'cost_service_fee',
     ];
+
+    public function accommodation_tiers()
+    {
+        return $this->hasMany(TourAccommodationTier::class);
+    }
+
+    public function getBasePrice(?Accommodation $accommodation = null, $isHoliday = false)
+    {
+        $costSum = ($this->cost_transport ?? 0) + ($this->cost_meal ?? 0) + ($this->cost_insurance ?? 0) + ($this->cost_service_fee ?? 0);
+        $ticketTotal = $this->tickets->sum('adult_price');
+        $calculated = $costSum + $ticketTotal;
+
+        if ($costSum > 0) {
+            $base = $calculated;
+        } elseif (($this->base_price ?? 0) > 0) {
+            $base = (float) $this->base_price;
+        } else {
+            $base = $calculated;
+        }
+
+        if ($accommodation) {
+            $base += $isHoliday ? $accommodation->holiday_price_per_adult : $accommodation->price_per_adult;
+        }
+
+        return $base;
+    }
+
+    /**
+     * Giá tour cho trẻ em (dựa trên tỷ lệ child_price_rate trong config).
+     */
+    public function getChildPrice(): float
+    {
+        $rate = config('booking.child_price_rate', 0.7);
+        $costSum = ($this->cost_transport ?? 0) + ($this->cost_meal ?? 0) + ($this->cost_insurance ?? 0) + ($this->cost_service_fee ?? 0);
+        $ticketChildCost = $this->tickets->sum('child_price');
+
+        if ($costSum <= 0 && ($this->base_price ?? 0) > 0) {
+            if (($this->child_price ?? 0) > 0) {
+                return (float) $this->child_price;
+            }
+            $ticketAdultCost = $this->tickets->sum('adult_price');
+            $costSum = max(0, $this->base_price - $ticketAdultCost);
+        }
+
+        return ($costSum * $rate) + $ticketChildCost;
+    }
 
     public function departure_location()
     {
@@ -173,6 +223,14 @@ class Tour extends Model
     {
         return $this->belongsToMany(Addon::class, 'tour_addons', 'tour_id', 'addon_id')
             ->withTimestamps();
+    }
+
+    public function accommodations()
+    {
+        return $this->belongsToMany(Accommodation::class, 'tour_accommodation_tiers', 'tour_id', 'room_type_id')
+            ->join('room_types', 'room_types.id', '=', 'tour_accommodation_tiers.room_type_id')
+            ->select('accommodations.*')
+            ->distinct();
     }
 
     protected static function booted()
