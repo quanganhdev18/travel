@@ -17,21 +17,17 @@ class TestTourScheduleAugustSeeder extends Seeder
     public function run()
     {
         $tours = Tour::all();
-        $currentYear = date('Y');
 
         foreach ($tours as $tour) {
-            // Generate schedules for dates: 2, 7, 12, 17 in August
-            $dayOffsets = [2, 7, 12, 17];
+            // Generate future schedules: 5, 12, 19, 26, 33 days from now
+            $dayOffsets = [5, 12, 19, 26, 33];
 
-            foreach ($dayOffsets as $day) {
-                // Set departure time to 08:00 AM
-                $depDate = Carbon::create($currentYear, 8, $day, 8, 0, 0);
-
-                // Calculate return date based on duration
-                $duration = $tour->duration_days ?: 0;
+            foreach ($dayOffsets as $offset) {
+                $depDate = Carbon::now()->addDays($offset)->setHour(8)->setMinute(0)->setSecond(0);
+                $duration = $tour->duration_days ?: 3;
                 $retDate = (clone $depDate)->addDays($duration);
 
-                TourSchedule::firstOrCreate(
+                TourSchedule::updateOrCreate(
                     [
                         'tour_id' => $tour->id,
                         'departure_date' => $depDate->toDateTimeString(),
@@ -46,6 +42,6 @@ class TestTourScheduleAugustSeeder extends Seeder
             }
         }
 
-        $this->command->info('Successfully seeded tour schedules from Aug 1 to Aug 20.');
+        $this->command->info('Successfully seeded future tour schedules.');
     }
 }

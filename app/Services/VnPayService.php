@@ -5,13 +5,10 @@ namespace App\Services;
 use App\Mail\TourBookingMail;
 use App\Models\Booking;
 use App\Models\Payment;
-use App\Models\User;
-use App\Notifications\AdminBookingNotification;
 use App\Notifications\User\PaymentSuccessNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
-use Spatie\Permission\Models\Role;
 
 class VnPayService
 {
@@ -29,7 +26,6 @@ class VnPayService
         $vnp_OrderInfo = 'Thanh toan dat tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
         $vnp_OrderType = 'billpayment';
 
-        // Xác định số tiền cần thanh toán
         if ($booking->payment_type === 'deposit' && $booking->payment_status === Booking::PAYMENT_PAID_30) {
             $actualAmount = $booking->remaining_amount;
             $vnp_OrderInfo = 'Thanh toan phan con lai tour #'.str_pad((string) $booking->id, 6, '0', STR_PAD_LEFT);
@@ -138,7 +134,6 @@ class VnPayService
         $payment = Payment::where('transaction_code', $txnRef)->first();
 
         $isSuccess = ($requestData['vnp_ResponseCode'] ?? '') === '00';
-
         $wasPending = $payment && $payment->payment_status === 'pending';
 
         if ($payment) {
@@ -173,15 +168,13 @@ class VnPayService
                 }
             }
 
-            // Send notification
             if ($bookingFresh->user) {
                 $bookingFresh->user->notify(new PaymentSuccessNotification($bookingFresh, $payment ? $payment->amount : 0));
             }
-            
-            // Bắn thông báo cho Admin
+
             $admins = \App\Models\User::role('Admin')->get();
             if ($admins->count() > 0) {
-                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\AdminBookingNotification(
+                Notification::send($admins, new \App\Notifications\AdminBookingNotification(
                     $bookingFresh,
                     'payment_success',
                     'Đơn hàng '.$bookingFresh->code.' vừa được thanh toán thành công.'

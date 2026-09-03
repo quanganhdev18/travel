@@ -382,9 +382,9 @@
                 </span>
                 @endif
 
-                <span class="d-flex align-items-center text-success fw-600 bg-success bg-opacity-10 px-3 py-1 rounded-pill" style="font-size: 0.9rem;">
-                    <i class="bi bi-shield-check fs-5 me-2"></i>
-                    {{ __('Đã bao gồm ') }} <span style="cursor: pointer; text-decoration: underline;" class="ms-1" data-bs-toggle="modal" data-bs-target="#insuranceModal">{{ __('bảo hiểm tour') }}</span>
+                <span class="d-flex align-items-center bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill fw-bold" style="font-size: 0.9rem;">
+                    <i class="bi bi-shield-check fs-5 me-1 text-success"></i>
+                    Đã bao gồm Bảo hiểm Du lịch Miễn phí 100%
                 </span>
 
 

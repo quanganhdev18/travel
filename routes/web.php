@@ -86,6 +86,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DestinationController;
 use App\Http\Controllers\Admin\HolidayController;
+use App\Http\Controllers\Admin\InsuranceController as AdminInsuranceController;
 use App\Http\Controllers\Admin\OngoingTourController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\Admin\SettingController;
@@ -102,18 +103,15 @@ use App\Http\Controllers\Frontend\BookingPassengerController;
 use App\Http\Controllers\Frontend\CalendarController;
 use App\Http\Controllers\Frontend\FavoriteController;
 use App\Http\Controllers\Frontend\FlightController;
+use App\Http\Controllers\Frontend\InsuranceController;
 use App\Http\Controllers\Frontend\OcrController;
 use App\Http\Controllers\Frontend\SupportController;
 use App\Http\Controllers\Frontend\TicketController;
 use App\Http\Controllers\Frontend\TourBookingController;
 use App\Http\Controllers\Frontend\TourController as FrontendTourController;
 use App\Http\Controllers\Frontend\UserController;
-use App\Http\Controllers\Guide\AbsenceRequestController;
-use App\Http\Controllers\Guide\GroupSplitController;
 use App\Http\Controllers\Guide\ScheduleController;
 use App\Http\Controllers\Guide\TourReportController;
-use App\Models\Booking;
-use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 
 /*
@@ -280,6 +278,10 @@ Route::get('/destinations', [App\Http\Controllers\Frontend\DestinationController
 Route::get('/support', [SupportController::class, 'index'])
     ->name('frontend.support.index');
 
+// Bảo hiểm du lịch (trang giới thiệu tĩnh)
+Route::get('/bao-hiem-du-lich', [InsuranceController::class, 'index'])
+    ->name('frontend.insurance.index');
+
 // Chi tiết Tour
 Route::get('/tours/{slug}', [FrontendTourController::class, 'show'])
     ->name('frontend.tours.show');
@@ -349,6 +351,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     Route::post('/bookings/{id}/pnr', [BookingController::class, 'updatePnr'])
         ->name('admin.bookings.update_pnr');
+
+    // Quản lý Bảo hiểm du lịch
+    Route::get('/insurance', [AdminInsuranceController::class, 'index'])->name('admin.insurance.index');
+    Route::post('/insurance/{id}/status', [AdminInsuranceController::class, 'updateStatus'])->name('admin.insurance.update_status');
+    Route::delete('/insurance/{id}', [AdminInsuranceController::class, 'destroy'])->name('admin.insurance.destroy');
 
     // Lịch trình Tour
     Route::get('tours/{tour}/itineraries', [TourItineraryController::class, 'index'])
