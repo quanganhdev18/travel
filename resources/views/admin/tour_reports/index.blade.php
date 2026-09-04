@@ -109,7 +109,9 @@
                     <tbody>
                         @forelse($absenceRequests as $req)
                         @php
-                            $backupGuide = $req->tour_schedule->schedule_guides->where('is_backup', true)->first();
+                            $backupGuide = $req->tour_schedule ? $req->tour_schedule->schedule_guides->where('is_backup', true)->first() : null;
+                            $backupGuideName = ($backupGuide && $backupGuide->tour_guide) ? $backupGuide->tour_guide->name : '';
+                            $backupGuideId = ($backupGuide && $backupGuide->tour_guide) ? $backupGuide->guide_id : 'null';
                             $departure = \Carbon\Carbon::parse($req->tour_schedule->departure_date);
                             $isPast = $departure->isPast();
                             $timeLeft = now()->diffForHumans($departure, true);
@@ -144,7 +146,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if($backupGuide)
+                                @if($backupGuide && $backupGuide->tour_guide)
                                     <div class="fw-medium text-success">{{ $backupGuide->tour_guide->name }}</div>
                                     <div class="small text-muted">HDV Phụ -> Chuyển làm HDV Chính</div>
                                 @else
@@ -165,7 +167,7 @@
                             <td class="text-end pe-4">
                                 @if(in_array($req->status, ['pending_review', 'pending_review_urgent']))
                                     <button class="btn btn-sm btn-success me-1" 
-                                            onclick="openApproveModal({{ $req->id }}, {{ $req->tour_schedule_id }}, '{{ $backupGuide ? $backupGuide->tour_guide->name : '' }}', {{ $backupGuide ? $backupGuide->guide_id : 'null' }})">
+                                            onclick="openApproveModal({{ $req->id }}, {{ $req->tour_schedule_id }}, {{ json_encode($backupGuideName) }}, {{ $backupGuideId }})">
                                         Duyệt
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger" 
@@ -205,7 +207,7 @@
 <!-- Modal Approval -->
 <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <form id="approveForm" method="POST" action="">
+        <form id="approveForm" method="POST" action="javascript:void(0);">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
@@ -231,13 +233,13 @@
                         </select>
                     </div>
 
-                    <!-- Dropdown HDV phụ mới (Tùy chọn) -->
+                    <!-- Dropdown HDV phụ mới (Bắt buộc chọn) -->
                     <div class="mb-3">
-                        <label for="new_backup_guide_id" class="form-label fw-bold">Chọn HDV phụ mới <span class="text-muted fw-normal">(Không bắt buộc)</span></label>
-                        <select name="new_backup_guide_id" id="new_backup_guide_id" class="form-select select2-modal" style="width: 100%;">
+                        <label for="new_backup_guide_id" class="form-label fw-bold">Chọn HDV phụ mới <span class="text-danger">*</span></label>
+                        <select name="new_backup_guide_id" id="new_backup_guide_id" class="form-select select2-modal" style="width: 100%;" required>
                             <option value="">-- Đang tải danh sách HDV rảnh --</option>
                         </select>
-                        <div class="form-text text-muted">Chỉ gợi ý danh sách HDV đang rảnh trong khung giờ này.</div>
+                        <div class="form-text text-muted">Vui lòng chọn 1 Hướng dẫn viên đang rảnh để gán làm HDV phụ mới.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -252,7 +254,7 @@
 <!-- Modal Reject -->
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <form id="rejectForm" method="POST" action="">
+        <form id="rejectForm" method="POST" action="javascript:void(0);">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
@@ -308,11 +310,75 @@
         approveModalObj = new bootstrap.Modal(document.getElementById('approveModal'));
         rejectModalObj = new bootstrap.Modal(document.getElementById('rejectModal'));
         detailsModalObj = new bootstrap.Modal(document.getElementById('detailsModal'));
+
+        const approveForm = document.getElementById('approveForm');
+        if (approveForm) {
+            approveForm.addEventListener('submit', function(e) {
+                const action = this.getAttribute('action');
+                if (!action || action === 'javascript:void(0);' || action === '') {
+                    e.preventDefault();
+                    alert('Lỗi: Chưa xác định được ID yêu cầu báo bận. Vui lòng mở lại modal.');
+                    return false;
+                }
+
+                const backupSelect = document.getElementById('new_backup_guide_id');
+                if (backupSelect && backupSelect.disabled) {
+                    e.preventDefault();
+                    alert('Hệ thống đang tải danh sách HDV rảnh, vui lòng đợi trong giây lát!');
+                    return false;
+                }
+
+                if (!backupSelect || !backupSelect.value) {
+                    e.preventDefault();
+                    alert('Vui lòng chọn Hướng dẫn viên phụ mới trước khi xác nhận duyệt!');
+                    return false;
+                }
+
+                // Disallow double-click submit and show loading indicator on submit button
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Đang xử lý...';
+                }
+            });
+        }
+
+        const approveModalEl = document.getElementById('approveModal');
+        if (approveModalEl) {
+            approveModalEl.addEventListener('hidden.bs.modal', function() {
+                if (approveForm) {
+                    const submitBtn = approveForm.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Xác nhận duyệt';
+                    }
+                }
+            });
+        }
+
+        const rejectForm = document.getElementById('rejectForm');
+        if (rejectForm) {
+            rejectForm.addEventListener('submit', function(e) {
+                const action = this.getAttribute('action');
+                if (!action || action === 'javascript:void(0);' || action === '') {
+                    e.preventDefault();
+                    alert('Lỗi: Chưa xác định được ID yêu cầu từ chối. Vui lòng mở lại modal.');
+                    return false;
+                }
+            });
+        }
     });
 
     function openApproveModal(requestId, scheduleId, backupGuideName, backupGuideId = null) {
-        // Set action for approval form
-        document.getElementById('approveForm').action = `/admin/absence-requests/${requestId}/approve`;
+        const approveForm = document.getElementById('approveForm');
+        if (approveForm) {
+            approveForm.action = `/admin/absence-requests/${requestId}/approve`;
+            const submitBtn = approveForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Xác nhận duyệt';
+            }
+        }
 
         const backupInfo = document.getElementById('backup-guide-info');
         const noBackupWarning = document.getElementById('no-backup-guide-warning');
@@ -320,9 +386,11 @@
         const mainSelect = document.getElementById('new_main_guide_id');
         const backupSelect = document.getElementById('new_backup_guide_id');
 
-        // Reset selects
-        mainSelect.innerHTML = '<option value="">-- Chọn hướng dẫn viên --</option>';
-        backupSelect.innerHTML = '<option value="">-- Chọn hướng dẫn viên --</option>';
+        // Set loading placeholder & disable select elements while loading AJAX
+        mainSelect.innerHTML = '<option value="">⏳ Đang tải danh sách HDV rảnh...</option>';
+        backupSelect.innerHTML = '<option value="">⏳ Đang tải danh sách HDV rảnh...</option>';
+        mainSelect.disabled = true;
+        backupSelect.disabled = true;
 
         if (backupGuideName) {
             document.getElementById('backup-guide-name').textContent = backupGuideName;
@@ -343,6 +411,18 @@
         fetch(`/admin/absence-requests/available-guides/${scheduleId}`)
             .then(res => res.json())
             .then(guides => {
+                // Clear loading options & enable selects
+                mainSelect.innerHTML = '<option value="">-- Chọn hướng dẫn viên --</option>';
+                backupSelect.innerHTML = '<option value="">-- Chọn hướng dẫn viên phụ --</option>';
+                mainSelect.disabled = false;
+                backupSelect.disabled = false;
+
+                if (!guides || guides.length === 0) {
+                    mainSelect.innerHTML = '<option value="">-- Không có HDV rảnh trong khung giờ này --</option>';
+                    backupSelect.innerHTML = '<option value="">-- Không có HDV rảnh trong khung giờ này --</option>';
+                    return;
+                }
+
                 let normalGuides = [];
                 let promotedGuide = null;
 
@@ -354,7 +434,7 @@
                     }
                 });
 
-                // Populate main select (all available guides can be main)
+                // Populate main select
                 guides.forEach(g => {
                     const optionMain = document.createElement('option');
                     optionMain.value = g.id;
@@ -362,7 +442,7 @@
                     mainSelect.appendChild(optionMain);
                 });
 
-                // Populate backup select: normal guides first
+                // Populate backup select
                 normalGuides.forEach(g => {
                     const optionBackup = document.createElement('option');
                     optionBackup.value = g.id;
@@ -370,7 +450,7 @@
                     backupSelect.appendChild(optionBackup);
                 });
 
-                // Then append the promoted guide at the end, disabled
+                // Append promoted guide at the end (disabled)
                 if (promotedGuide) {
                     const optionBackup = document.createElement('option');
                     optionBackup.value = promotedGuide.id;
@@ -382,6 +462,10 @@
             })
             .catch(err => {
                 console.error('Error fetching available guides:', err);
+                mainSelect.disabled = false;
+                backupSelect.disabled = false;
+                mainSelect.innerHTML = '<option value="">-- Lỗi tải danh sách HDV --</option>';
+                backupSelect.innerHTML = '<option value="">-- Lỗi tải danh sách HDV --</option>';
                 alert('Không thể tải danh sách hướng dẫn viên rảnh.');
             });
 
