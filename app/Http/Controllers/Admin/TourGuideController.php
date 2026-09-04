@@ -18,8 +18,13 @@ class TourGuideController extends Controller
 
     public function create()
     {
-        // Lấy tất cả user chưa có hồ sơ HDV (không bắt buộc phải có role guide từ trước)
-        $users = User::doesntHave('tour_guide')->get();
+        // Lấy tất cả user có vai trò HDV (role 'guide' hoặc Spatie role 'Guide') chưa có hồ sơ HDV
+        $users = User::where(function ($q) {
+            $q->where('role', 'guide')
+                ->orWhereHas('roles', function ($r) {
+                    $r->whereIn('name', ['Guide', 'guide']);
+                });
+        })->doesntHave('tour_guide')->get();
 
         return view('admin.tour_guides.create', compact('users'));
     }
@@ -62,8 +67,13 @@ class TourGuideController extends Controller
 
     public function edit(TourGuide $tourGuide)
     {
-        // Lấy tất cả user chưa có hồ sơ HDV, hoặc là user đang được liên kết với HDV này
-        $users = User::where(function ($query) use ($tourGuide) {
+        // Lấy tất cả user có vai trò HDV chưa có hồ sơ HDV, hoặc là user đang được liên kết với HDV này
+        $users = User::where(function ($q) {
+            $q->where('role', 'guide')
+                ->orWhereHas('roles', function ($r) {
+                    $r->whereIn('name', ['Guide', 'guide']);
+                });
+        })->where(function ($query) use ($tourGuide) {
             $query->doesntHave('tour_guide')
                 ->orWhere('id', $tourGuide->user_id);
         })->get();

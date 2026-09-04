@@ -20,7 +20,7 @@ class TourReportController extends Controller
 
         $reports = TourReport::with(['tour_schedule.tour', 'tour_guide'])->latest()->paginate(15, ['*'], 'reports_page');
 
-        $absenceRequests = TourAbsenceRequest::with(['tour', 'tour_schedule', 'main_guide', 'new_main_guide', 'new_backup_guide', 'reviewer'])
+        $absenceRequests = TourAbsenceRequest::with(['tour', 'tour_schedule.schedule_guides.tour_guide', 'main_guide', 'new_main_guide', 'new_backup_guide', 'reviewer'])
             ->orderByRaw("CASE 
                 WHEN status = 'pending_review_urgent' THEN 1 
                 WHEN status = 'pending_review' THEN 2 

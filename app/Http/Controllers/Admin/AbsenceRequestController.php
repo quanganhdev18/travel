@@ -23,7 +23,7 @@ class AbsenceRequestController extends Controller
     public function index(Request $request)
     {
         // Sort pending_review_urgent first, then pending_review, then approved/rejected by latest
-        $requests = TourAbsenceRequest::with(['tour', 'tour_schedule', 'main_guide', 'new_main_guide', 'new_backup_guide', 'reviewer'])
+        $requests = TourAbsenceRequest::with(['tour', 'tour_schedule.schedule_guides.tour_guide', 'main_guide', 'new_main_guide', 'new_backup_guide', 'reviewer'])
             ->orderByRaw("CASE 
                 WHEN status = 'pending_review_urgent' THEN 1 
                 WHEN status = 'pending_review' THEN 2 

@@ -64,4 +64,36 @@ class StoreTourBookingRequest extends FormRequest
             'passengers.adult.0.date_of_birth.before_or_equal' => 'Người đặt tour (hành khách đầu tiên) phải từ đủ 18 tuổi trở lên.',
         ];
     }
+    
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->accommodation_id) {
+                $room = \App\Models\RoomType::find($this->accommodation_id);
+                if ($room) {
+                    $roomsCount = $this->single_rooms_count ?? 1;
+                    $extraBeds = $this->extra_beds_count ?? 0;
+                    
+                    $adults = $this->adults ?? 0;
+                    $children = $this->children ?? 0;
+                    $totalPersons = $adults + $children;
+
+                    $maxAllowedPersons = $roomsCount * $room->max_capacity;
+                    if ($totalPersons > $maxAllowedPersons) {
+                        $validator->errors()->add('single_rooms_count', "Số lượng phòng không đủ sức chứa cho tổng số hành khách (tối đa $maxAllowedPersons người).");
+                    }
+                    
+                    $maxExtraBeds = $roomsCount * ($room->max_capacity - $room->base_capacity);
+                    if ($extraBeds > $maxExtraBeds) {
+                        $validator->errors()->add('extra_beds_count', "Số giường phụ vượt quá mức cho phép (tối đa $maxExtraBeds giường).");
+                    }
+                    
+                    $adultCapacity = ($roomsCount * $room->base_capacity) + $extraBeds;
+                    if ($adults > $adultCapacity) {
+                        $validator->errors()->add('single_rooms_count', "Cần thêm phòng hoặc giường phụ. Sức chứa hiện tại chỉ đủ cho $adultCapacity người lớn.");
+                    }
+                }
+            }
+        });
+    }
 }
