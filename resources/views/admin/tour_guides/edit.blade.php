@@ -24,7 +24,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <div class="form-text">Tài khoản được chọn sẽ tự động được cấp quyền Hướng dẫn viên để đăng nhập.</div>
+                        <div class="form-text">Chỉ danh sách tài khoản đã được cấp vai trò Hướng Dẫn Viên mới được hiển thị tại đây.</div>
                         @error('user_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
