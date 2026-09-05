@@ -301,7 +301,24 @@
                                     <div id="email_match_error" class="invalid-feedback" style="display:none;">Email nhập lại không khớp!</div>
                                 </div>
                                 @else
-                                    <input type="hidden" name="customer_email_confirmation" value="{{ $user->email }}">
+                                    <input type="hidden" name="customer_email_confirmation" id="customer_email_confirmation" value="{{ $user->email }}">
+                                    <script>
+                                        document.addEventListener("DOMContentLoaded", function() {
+                                            const emailInput = document.getElementById("customer_email");
+                                            const confirmInput = document.getElementById("customer_email_confirmation");
+                                            if (emailInput && confirmInput) {
+                                                emailInput.addEventListener("input", function() {
+                                                    confirmInput.value = this.value;
+                                                });
+                                                // Đảm bảo đồng bộ ngay khi load trang phòng trường hợp trình duyệt autofill
+                                                setTimeout(() => {
+                                                    if (emailInput.value && emailInput.value !== confirmInput.value) {
+                                                        confirmInput.value = emailInput.value;
+                                                    }
+                                                }, 100);
+                                            }
+                                        });
+                                    </script>
                                 @endif
                                 <input type="hidden" name="meeting_point" id="meeting_point"
                                     value="{{ old('meeting_point', $schedule->tour->meeting_point ?? 'Theo thông báo') }}">

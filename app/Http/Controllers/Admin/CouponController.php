@@ -30,18 +30,34 @@ class CouponController extends Controller
         $maxValidUntil = $validFrom ? Carbon::parse($validFrom)->addYear()->format('Y-m-d') : null;
 
         $request->validate([
-            'code' => 'required|unique:coupons,code',
-            'discount_type' => 'required',
-            'discount_value' => 'required|numeric|min:0',
-            'valid_from' => 'required|date|after_or_equal:today',
-            'valid_until' => [
-                'required',
-                'date',
-                'after:valid_from',
-                $maxValidUntil ? 'before_or_equal:'.$maxValidUntil : null,
+            'code' => 'required|string|min:3|max:30|regex:/^[A-Z0-9_]+$/|unique:coupons,code',
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => [
+                'required', 'numeric', 'min:0.01',
+                $request->discount_type === 'percent' ? 'max:100' : 'max:999999999',
             ],
+            'min_order_value' => 'nullable|numeric|min:0',
+            'max_discount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'valid_from' => 'required|date|after_or_equal:today',
+            'valid_until' => array_filter([
+                'required', 'date', 'after:valid_from',
+                $maxValidUntil ? 'before_or_equal:'.$maxValidUntil : null,
+            ]),
             'category_id' => 'nullable|exists:categories,id',
         ], [
+            'code.min' => 'Mã giảm giá phải có ít nhất 3 ký tự.',
+            'code.max' => 'Mã giảm giá không được quá 30 ký tự.',
+            'code.regex' => 'Mã giảm giá chỉ được chứa chữ in hoa (A-Z), số (0-9) và dấu gạch dưới (_).',
+            'code.unique' => 'Mã giảm giá này đã tồn tại.',
+            'discount_type.in' => 'Loại giảm giá không hợp lệ.',
+            'discount_value.min' => 'Giá trị giảm phải lớn hơn 0.',
+            'discount_value.max' => $request->discount_type === 'percent'
+                ? 'Giá trị giảm theo phần trăm không được vượt quá 100%.'
+                : 'Giá trị giảm không hợp lệ.',
+            'min_order_value.min' => 'Giá trị đơn tối thiểu không được là số âm.',
+            'max_discount.min' => 'Giảm tối đa không được là số âm.',
+            'usage_limit.min' => 'Số lượt sử dụng phải ít nhất là 1.',
             'valid_from.after_or_equal' => 'Ngày bắt đầu không được nhỏ hơn thời gian hiện tại.',
             'valid_until.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu.',
             'valid_until.before_or_equal' => 'Hạn dùng mã giảm giá không được quá 1 năm kể từ ngày bắt đầu.',
@@ -78,18 +94,34 @@ class CouponController extends Controller
         $maxValidUntil = $validFrom ? Carbon::parse($validFrom)->addYear()->format('Y-m-d') : null;
 
         $request->validate([
-            'code' => 'required|unique:coupons,code,'.$coupon->id,
-            'discount_type' => 'required',
-            'discount_value' => 'required|numeric|min:0',
-            'valid_from' => 'required|date',
-            'valid_until' => [
-                'required',
-                'date',
-                'after:valid_from',
-                $maxValidUntil ? 'before_or_equal:'.$maxValidUntil : null,
+            'code' => 'required|string|min:3|max:30|regex:/^[A-Z0-9_]+$/|unique:coupons,code,'.$coupon->id,
+            'discount_type' => 'required|in:percent,fixed',
+            'discount_value' => [
+                'required', 'numeric', 'min:0.01',
+                $request->discount_type === 'percent' ? 'max:100' : 'max:999999999',
             ],
+            'min_order_value' => 'nullable|numeric|min:0',
+            'max_discount' => 'nullable|numeric|min:0',
+            'usage_limit' => 'nullable|integer|min:1',
+            'valid_from' => 'required|date',
+            'valid_until' => array_filter([
+                'required', 'date', 'after:valid_from',
+                $maxValidUntil ? 'before_or_equal:'.$maxValidUntil : null,
+            ]),
             'category_id' => 'nullable|exists:categories,id',
         ], [
+            'code.min' => 'Mã giảm giá phải có ít nhất 3 ký tự.',
+            'code.max' => 'Mã giảm giá không được quá 30 ký tự.',
+            'code.regex' => 'Mã giảm giá chỉ được chứa chữ in hoa (A-Z), số (0-9) và dấu gạch dưới (_).',
+            'code.unique' => 'Mã giảm giá này đã tồn tại.',
+            'discount_type.in' => 'Loại giảm giá không hợp lệ.',
+            'discount_value.min' => 'Giá trị giảm phải lớn hơn 0.',
+            'discount_value.max' => $request->discount_type === 'percent'
+                ? 'Giá trị giảm theo phần trăm không được vượt quá 100%.'
+                : 'Giá trị giảm không hợp lệ.',
+            'min_order_value.min' => 'Giá trị đơn tối thiểu không được là số âm.',
+            'max_discount.min' => 'Giảm tối đa không được là số âm.',
+            'usage_limit.min' => 'Số lượt sử dụng phải ít nhất là 1.',
             'valid_until.after' => 'Ngày kết thúc phải lớn hơn ngày bắt đầu.',
             'valid_until.before_or_equal' => 'Hạn dùng mã giảm giá không được quá 1 năm kể từ ngày bắt đầu.',
         ]);

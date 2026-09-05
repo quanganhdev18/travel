@@ -41,8 +41,11 @@ class RefundController extends Controller
         if ($request->action === 'approve') {
             $refund->status = 'completed';
             $refund->transaction_reference = $request->transaction_reference;
+            $refund->processed_by = Auth::id();
+            $refund->processed_at = now();
+            $refund->save();
 
-            // Gửi mail cho khách
+            // Gửi mail cho khách (sau khi save để queued mail có dữ liệu đầy đủ)
             if ($refund->booking && $refund->booking->customer_email) {
                 Mail::to($refund->booking->customer_email)
                     ->send(new RefundSuccessfulMail($refund));
@@ -50,11 +53,10 @@ class RefundController extends Controller
         } else {
             $refund->status = 'rejected';
             $refund->reason = $request->reason;
+            $refund->processed_by = Auth::id();
+            $refund->processed_at = now();
+            $refund->save();
         }
-
-        $refund->processed_by = Auth::id();
-        $refund->processed_at = now();
-        $refund->save();
 
         return redirect()->back()->with('success', 'Xử lý yêu cầu hoàn tiền thành công.');
     }

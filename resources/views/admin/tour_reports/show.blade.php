@@ -33,49 +33,7 @@
                     </div>
                 </div>
 
-                <h6 class="fw-bold border-bottom pb-2 mb-3 mt-4">Danh sách Khách Tách Đoàn</h6>
-                @if(isset($freeTimePassengers) && count($freeTimePassengers) > 0)
-                    <div class="table-responsive border rounded mb-4">
-                        <table class="table table-striped table-hover mb-0 align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th scope="col" style="width: 50px;">#</th>
-                                    <th scope="col">Tên khách hàng</th>
-                                    <th scope="col">Loại vé</th>
-                                    <th scope="col">Địa điểm tách</th>
-                                    <th scope="col">Thời gian tách</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($freeTimePassengers as $index => $passenger)
-                                    <tr>
-                                        <th scope="row">{{ $index + 1 }}</th>
-                                        <td class="fw-semibold text-dark">{{ $passenger->full_name }}</td>
-                                        <td>
-                                            @if($passenger->passenger_type == 'adult')
-                                                <span class="badge bg-primary bg-opacity-10 text-primary">Người lớn</span>
-                                            @elseif($passenger->passenger_type == 'child')
-                                                <span class="badge bg-warning bg-opacity-10 text-warning">Trẻ em</span>
-                                            @else
-                                                <span class="badge bg-secondary bg-opacity-10 text-secondary">Em bé</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $passenger->free_time_location ?? 'Không ghi rõ' }}</td>
-                                        <td class="text-muted text-sm">
-                                            {{ $passenger->free_time_start ? \Carbon\Carbon::parse($passenger->free_time_start)->format('H:i d/m/Y') : '—' }} 
-                                            <i class="bi bi-arrow-right mx-1"></i> 
-                                            {{ $passenger->free_time_end ? \Carbon\Carbon::parse($passenger->free_time_end)->format('H:i d/m/Y') : '—' }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="alert alert-info text-center mb-4">
-                        <i class="bi bi-info-circle me-1"></i> Không có khách nào tách đoàn trong chuyến đi này.
-                    </div>
-                @endif
+
 
                 @if($report->status === 'pending')
                     <div class="d-flex justify-content-end gap-2 mt-4" x-data="{ showRejectForm: false }">
