@@ -438,13 +438,18 @@
             ->first();
     }
     $groupStatus = $firstBooking ? $firstBooking->tour_status : 'upcoming';
+    if ($tourSchedule->status === 'closed') {
+        $groupStatus = 'closed';
+    } elseif ($tourSchedule->status === 'completed') {
+        $groupStatus = 'completed';
+    }
 
     $tourStatusMap = [
         'upcoming' => ['badge-soft-primary', 'Sắp bắt đầu'],
         'in_progress' => ['badge-soft-warning', 'Đang thực hiện'],
         'checking_in' => ['badge-soft-info', 'Đang check-in'],
         'completed' => ['badge-soft-success', 'Hoàn thành'],
-        'closed' => ['badge-soft-dark', 'Đã đóng'],
+        'closed' => ['bg-secondary bg-opacity-10 text-secondary border border-secondary', 'Đã đóng'],
         'cancelled_by_customer' => ['badge-soft-danger', 'Hủy (Khách)'],
         'cancelled_by_admin' => ['badge-soft-danger', 'Hủy (Admin)']
     ];
@@ -466,7 +471,12 @@
     $checkedInCount = $allPassengers->where('checked_in', true)->count();
     $totalCount = $allPassengers->count();
     
-    $passengersArray = $tourSchedule->bookings->flatMap(fn($b) => $b->booking_passengers)->map(function($p) {
+    $passengersArray = $tourSchedule->bookings
+        ->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])
+        ->whereNotIn('booking_status', ['cancelled'])
+        ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
+        ->flatMap(fn($b) => $b->booking_passengers)
+        ->map(function($p) {
         $activeSplit = $p->group_splits->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE'])->first();
         $extensions = $activeSplit ? $activeSplit->extensions->map(function($e) {
             return [
@@ -519,81 +529,6 @@
     @endif
 </div>
 
-<!-- Card điều hành trạng thái Tour của Nhóm -->
-<div class="card border-0 shadow-sm border-start border-4 border-warning mb-4">
-    <div class="card-body py-3">
-        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <div class="rounded-circle bg-warning bg-opacity-15 d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
-                    <i class="bi bi-geo-alt-fill text-warning fs-5"></i>
-                </div>
-                <div>
-                    <div class="fw-semibold" style="font-size:0.85rem;">Trạng thái Tour Đoàn hiện tại</div>
-                    <div class="text-muted" style="font-size:0.75rem;">
-                        Trạng thái: <span class="badge {{ $ts[0] }}">{{ $ts[1] }}</span>
-                        @if($groupStatus === 'checking_in')
-                            @php
-                                $checkinSteps = $tourSchedule->bookings->pluck('current_checkin_step')->filter()->unique();
-                            @endphp
-                            @if($checkinSteps->isNotEmpty())
-                                <span class="text-secondary ms-1">(Tại: <strong>{{ $checkinSteps->implode(', ') }}</strong>)</span>
-                            @endif
-                        @endif
-                    </div>
-                </div>
-            </div>
-            
-            <div class="d-flex gap-2 align-items-center">
-                @if($groupStatus !== 'completed' && !in_array($groupStatus, ['cancelled_by_customer', 'cancelled_by_admin']))
-                    <button id="toggle-group-status-btn" class="btn btn-warning btn-sm fw-bold">
-                        <i class="bi bi-gear-fill me-1"></i>Thay đổi trạng thái Tour
-                    </button>
-                @else
-                    <button class="btn btn-secondary btn-sm fw-bold" disabled>
-                        <i class="bi bi-lock-fill me-1"></i>Đã khóa trạng thái
-                    </button>
-                @endif
-            </div>
-        </div>
-
-        <!-- Khối nhập thay đổi trạng thái tour đoàn, mở ra khi click "Thay đổi trạng thái Tour" -->
-        <div id="group-status-form-wrapper" class="mt-3 p-3 bg-light rounded" style="display: none; border: 1px dashed #ffc107;">
-            <p class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i>Lưu ý: Thay đổi này sẽ cập nhật trạng thái đồng loạt cho tất cả các đơn đặt chỗ thuộc tour đoàn này.</p>
-            <form action="{{ route('guide.schedules.update_group_status', $tourSchedule->id) }}" method="POST">
-                @csrf
-                @php
-                    $validGroupNextStatuses = \App\Models\Booking::getValidNextStatuses($groupStatus);
-                @endphp
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label fw-bold small">Chọn trạng thái Tour</label>
-                        <select name="tour_status" class="form-select form-select-sm" id="group-tour-status-select">
-                            @if(in_array('in_progress', $validGroupNextStatuses))
-                                <option value="in_progress" {{ $groupStatus == 'in_progress' ? 'selected' : '' }}>Đang thực hiện</option>
-                            @endif
-                            @if(in_array('checking_in', $validGroupNextStatuses))
-                                <option value="checking_in" {{ $groupStatus == 'checking_in' ? 'selected' : '' }}>Đang ở điểm check-in</option>
-                            @endif
-                            @if(in_array('completed', $validGroupNextStatuses))
-                                <option value="completed" {{ $groupStatus == 'completed' ? 'selected' : '' }}>Đã hoàn thành</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div class="col-md-5" id="group-checkin-step-container" style="display: {{ $groupStatus == 'checking_in' ? 'block' : 'none' }};">
-                        <label class="form-label fw-bold small">Điểm check-in hiện tại</label>
-                        <input type="text" name="current_checkin_step" class="form-control form-control-sm" placeholder="VD: Sân bay, Trạm 1, Khách sạn..." value="{{ $firstBooking ? $firstBooking->current_checkin_step : '' }}">
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-warning btn-sm fw-bold text-dark w-100">
-                            <i class="bi bi-floppy me-1"></i>Lưu Thay Đổi
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <div class="row">
     <!-- Cột thông tin Tour -->
     <div class="col-lg-4 mb-4">
@@ -641,7 +576,7 @@
                         </li>
                         <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                             <span class="text-muted">Tổng khách:</span>
-                            <strong>{{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
+                            <strong>{{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}</strong>
                         </li>
                         <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                             <span class="text-muted">Điểm danh:</span>
@@ -680,7 +615,19 @@
                     <i class="bi bi-geo-alt-fill me-1 text-info"></i>Điểm Tham Quan
                 </button>
             </li>
-            @if($groupStatus !== 'completed')
+            @if($tourSchedule->status === 'closed')
+                <li class="ms-auto my-auto d-flex align-items-center">
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary p-2 fw-bold" style="font-size: 0.85rem;">
+                        <i class="bi bi-lock-fill me-1"></i>Tour đã đóng
+                    </span>
+                </li>
+            @elseif($tourSchedule->status === 'completed' || $groupStatus === 'completed')
+                <li class="ms-auto my-auto d-flex align-items-center">
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success p-2 fw-bold" style="font-size: 0.85rem;">
+                        <i class="bi bi-check-circle-fill me-1"></i>Tour đã hoàn thành
+                    </span>
+                </li>
+            @else
                 @php
                     $totalActivitiesCount = $tour->tour_itineraries->flatMap(fn($i) => $i->activities)->count();
                     $checkedInActivitiesCount = $tourSchedule->activity_checkins->count();
@@ -694,12 +641,6 @@
                             <i class="bi bi-check-circle-fill me-1"></i>Tour đã hoàn thành
                         </button>
                     </form>
-                </li>
-            @else
-                <li class="ms-auto my-auto d-flex align-items-center">
-                    <span class="badge bg-success bg-opacity-10 text-success border border-success p-2 fw-bold" style="font-size: 0.85rem;">
-                        <i class="bi bi-check-circle-fill me-1"></i>Tour đã hoàn thành
-                    </span>
                 </li>
             @endif
         </ul>
@@ -1182,30 +1123,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ─── Group Status Toggle ──────────────────────────────────────────
-    const toggleGroupBtn = document.getElementById('toggle-group-status-btn');
-    const groupWrapper = document.getElementById('group-status-form-wrapper');
-    if (toggleGroupBtn && groupWrapper) {
-        toggleGroupBtn.addEventListener('click', function() {
-            if (groupWrapper.style.display === 'none') {
-                groupWrapper.style.display = 'block';
-            } else {
-                groupWrapper.style.display = 'none';
-            }
-        });
-    }
-
-    const groupStatusSelect = document.getElementById('group-tour-status-select');
-    const groupCheckinContainer = document.getElementById('group-checkin-step-container');
-    if (groupStatusSelect && groupCheckinContainer) {
-        groupStatusSelect.addEventListener('change', function() {
-            if (this.value === 'checking_in') {
-                groupCheckinContainer.style.display = 'block';
-            } else {
-                groupCheckinContainer.style.display = 'none';
-            }
-        });
-    }
 
     document.querySelectorAll('.tour-status-select-guide').forEach(function(select) {
         select.addEventListener('change', function() {
@@ -2166,6 +2083,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 const tr = document.getElementById(`rollcall-row-${passengerId}`);
                 const checkbox = e.target;
 
+                // Optimistic UI: Đổi màu xanh / cập nhật ngay lập tức không chờ server
+                tr.className = isChecked ? 'table-success' : '';
+                const pData = passengersData.find(p => p.id == passengerId);
+                if (pData) {
+                    if (isChecked) {
+                        if (!pData.activity_checkins.includes(parseInt(currentActivityId))) {
+                            pData.activity_checkins.push(parseInt(currentActivityId));
+                        }
+                    } else {
+                        pData.activity_checkins = pData.activity_checkins.filter(id => id !== parseInt(currentActivityId));
+                    }
+                }
+
                 checkbox.disabled = true;
 
                 const url = `/guide/schedules/${scheduleId}/activities/${currentActivityId}/passengers/${passengerId}/toggle-checkin`;
@@ -2182,25 +2112,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     checkbox.disabled = false;
                     checkbox.checked = data.checked_in;
-                    
-                    if (data.checked_in) {
-                        tr.className = 'table-success';
-                        const pData = passengersData.find(p => p.id == passengerId);
-                        if(pData && !pData.activity_checkins.includes(parseInt(currentActivityId))) {
-                            pData.activity_checkins.push(parseInt(currentActivityId));
-                        }
-                    } else {
-                        tr.className = '';
-                        const pData = passengersData.find(p => p.id == passengerId);
-                        if(pData) {
-                            pData.activity_checkins = pData.activity_checkins.filter(id => id !== parseInt(currentActivityId));
-                        }
-                    }
+                    tr.className = data.checked_in ? 'table-success' : '';
                 })
                 .catch(err => {
                     console.error(err);
                     checkbox.disabled = false;
                     checkbox.checked = !isChecked;
+                    tr.className = !isChecked ? 'table-success' : '';
                     showToast('Có lỗi xảy ra, vui lòng thử lại!', 'danger');
                 });
             }
@@ -2309,24 +2227,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Sticky Bottom Actions for mobile
-        const originalToggleBtn = document.getElementById('toggle-group-status-btn');
         const originalCompleteBtn = document.getElementById('btn-complete-tour');
         const stickyContainer = document.getElementById('mobile-sticky-actions');
         
         if (stickyContainer) {
-            if (originalToggleBtn) {
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-warning btn-sm fw-bold flex-grow-1 py-2';
-                btn.innerHTML = '<i class="bi bi-gear-fill me-1"></i>Trạng thái Tour';
-                btn.addEventListener('click', function() {
-                    originalToggleBtn.click();
-                    const formWrapper = document.getElementById('group-status-form-wrapper');
-                    if (formWrapper) {
-                        formWrapper.scrollIntoView({ behavior: 'smooth' });
-                    }
-                });
-                stickyContainer.appendChild(btn);
-            }
             
             if (originalCompleteBtn) {
                 const btn = document.createElement('button');
@@ -2440,7 +2344,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         @if($phone)
                                             <a href="tel:{{ $phone }}" class="text-decoration-none"><i class="bi bi-telephone-fill me-1"></i>{{ $phone }}</a>
                                         @else
-                                            �
+                                            �
                                         @endif
                                     </div>
 
@@ -2450,7 +2354,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                         @if($email)
                                             <a href="mailto:{{ $email }}" class="text-decoration-none"><i class="bi bi-envelope-fill me-1"></i>{{ $email }}</a>
                                         @else
-                                            �
+                                            �
                                         @endif
                                     </div>
                                 </div>

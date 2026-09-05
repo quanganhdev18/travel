@@ -45,6 +45,7 @@
                     <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>-- Tất cả lịch trình --</option>
                     <option value="upcoming" {{ request('status') == 'upcoming' ? 'selected' : '' }}>Sắp khởi hành</option>
                     <option value="ongoing" {{ request('status') == 'ongoing' ? 'selected' : '' }}>Đang diễn ra</option>
+                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Đã hoàn thành / Kết thúc</option>
                 </select>
             </div>
         </form>

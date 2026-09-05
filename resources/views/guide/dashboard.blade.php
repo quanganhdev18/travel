@@ -169,7 +169,13 @@
                                         <div class="d-flex align-items-center justify-content-between gap-2 mb-1 min-w-0">
                                             <h6 class="mb-0 fw-bold text-truncate text-dark" style="font-size: 0.95rem;">{{ $sch->tour->title ?? 'Tour không xác định' }}</h6>
                                             <div class="flex-shrink-0">
-                                                @if($isOngoing)
+                                                @if($sch->status === 'in_progress')
+                                                    <span class="badge badge-soft-success">Đang diễn ra</span>
+                                                @elseif($sch->status === 'completed')
+                                                    <span class="badge bg-info bg-opacity-10 text-info border border-info">Đã hoàn thành</span>
+                                                @elseif($sch->status === 'closed')
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">Đã đóng</span>
+                                                @elseif($isOngoing)
                                                     <span class="badge badge-soft-success">Đang diễn ra</span>
                                                 @else
                                                     <span class="badge badge-soft-primary">Sắp tới</span>

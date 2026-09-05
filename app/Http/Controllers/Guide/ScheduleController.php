@@ -34,7 +34,7 @@ class ScheduleController extends Controller
 
         $schedules = $tourGuide->schedule_guides()
             ->with(['tour_schedule.tour', 'tour_schedule.bookings' => function ($q) {
-                $q->whereIn('payment_status', ['paid_30', 'paid_100']);
+                $q->whereIn('payment_status', ['pending', 'paid_30', 'paid_100']);
             }])
             ->orderByDesc('tour_schedule_id')
             ->paginate(15);
@@ -133,7 +133,7 @@ class ScheduleController extends Controller
         } else {
             // Check if all passengers are accounted for (checked-in or free time filled)
             $allPassengers = $schedule->bookings()
-                ->whereIn('payment_status', ['paid_30', 'paid_100'])
+                ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
                 ->where('booking_status', '!=', 'cancelled')
                 ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
                 ->get()
@@ -170,6 +170,11 @@ class ScheduleController extends Controller
                     'tour_status' => Booking::TOUR_CHECKING_IN,
                     'current_checkin_step' => $activity->title,
                 ]);
+
+            // Đồng bộ trạng thái lịch trình khi bắt đầu check-in
+            if (in_array($schedule->status, ['available', 'full'])) {
+                $schedule->update(['status' => 'in_progress']);
+            }
         }
 
         // Gửi thông báo cho Admin khi check-in thành công
@@ -178,7 +183,7 @@ class ScheduleController extends Controller
             $tourTitle = $schedule->tour->title ?? '';
             $message = "Hướng dẫn viên {$guideName} đã check-in tại địa điểm \"{$activity->title}\" trong tour \"{$tourTitle}\" (Lịch trình #{$schedule->id}) lúc ".now()->format('H:i d/m/Y').'.';
 
-            $firstBooking = $schedule->bookings()->whereIn('payment_status', ['paid_30', 'paid_100'])->first();
+            $firstBooking = $schedule->bookings()->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])->first();
             if ($firstBooking) {
                 $admins = Role::where('name', 'Admin')->exists() ? User::role('Admin')->get() : collect();
                 if ($admins->count() > 0) {
@@ -335,7 +340,7 @@ class ScheduleController extends Controller
 
         // Lấy tất cả các passenger_ids của các booking thuộc schedule này
         $allPassengerIds = $schedule->bookings
-            ->whereIn('payment_status', ['paid_30', 'paid_100'])
+            ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
             ->flatMap(fn ($b) => $b->booking_passengers->pluck('id'))
             ->toArray();
 
@@ -375,7 +380,9 @@ class ScheduleController extends Controller
         ]);
 
         $bookings = $schedule->bookings()
-            ->whereIn('payment_status', ['paid_30', 'paid_100'])
+            ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER, Booking::TOUR_COMPLETED, 'closed'])
+            ->whereNotIn('booking_status', ['cancelled'])
+            ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -580,6 +587,7 @@ class ScheduleController extends Controller
         $passengers = $schedule->bookings()
             ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
             ->whereNotIn('booking_status', ['cancelled'])
+            ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
             ->with(['booking_passengers.group_splits' => function ($q) {
                 $q->whereIn('status', ['ON_TIME', 'OVERDUE', 'UNREACHABLE']);
             }])
