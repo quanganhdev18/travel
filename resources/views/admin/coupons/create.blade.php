@@ -65,9 +65,9 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-6 mb-3" id="max_discount_wrapper">
                     <label class="form-label">Giảm tối đa</label>
-                    <input type="number" name="max_discount"
+                    <input type="number" name="max_discount" id="max_discount"
                         class="form-control @error('max_discount') is-invalid @enderror"
                         value="{{ old('max_discount') }}" placeholder="VD: 200000"
                         step="1000" min="0">
@@ -137,8 +137,28 @@
 @push('scripts')
 <script>
     (function () {
+        const discountTypeSelect = document.getElementById('discount_type');
+        const maxDiscountWrapper = document.getElementById('max_discount_wrapper');
+        const maxDiscountInput = document.getElementById('max_discount');
         const validFrom = document.getElementById('valid_from');
         const validUntil = document.getElementById('valid_until');
+
+        function toggleMaxDiscount() {
+            if (!discountTypeSelect || !maxDiscountWrapper) return;
+            if (discountTypeSelect.value === 'fixed') {
+                maxDiscountWrapper.style.display = 'none';
+                if (maxDiscountInput) {
+                    maxDiscountInput.value = '';
+                }
+            } else {
+                maxDiscountWrapper.style.display = 'block';
+            }
+        }
+
+        if (discountTypeSelect) {
+            discountTypeSelect.addEventListener('change', toggleMaxDiscount);
+            toggleMaxDiscount();
+        }
 
         function updateValidUntilRange() {
             if (!validFrom.value) return;

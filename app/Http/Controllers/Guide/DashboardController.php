@@ -25,24 +25,30 @@ class DashboardController extends Controller
 
             $stats['upcoming_schedules'] = $tourGuide->schedule_guides()
                 ->whereHas('tour_schedule', function ($q) {
-                    $q->where('departure_date', '>', now());
+                    $q->whereNotIn('status', ['completed', 'closed'])
+                        ->where('departure_date', '>', now());
                 })->count();
 
             $stats['ongoing_schedules'] = $tourGuide->schedule_guides()
                 ->whereHas('tour_schedule', function ($q) {
-                    $q->where('departure_date', '<=', now())
+                    $q->whereNotIn('status', ['completed', 'closed'])
+                        ->where('departure_date', '<=', now())
                         ->where('return_date', '>=', now()->startOfDay());
                 })->count();
 
             $stats['completed_schedules'] = $tourGuide->schedule_guides()
                 ->whereHas('tour_schedule', function ($q) {
-                    $q->where('return_date', '<', now()->startOfDay());
+                    $q->where(function ($sq) {
+                        $sq->whereIn('status', ['completed', 'closed'])
+                            ->orWhere('return_date', '<', now()->startOfDay());
+                    });
                 })->count();
 
             $recentSchedules = $tourGuide->schedule_guides()
                 ->with('tour_schedule.tour')
                 ->whereHas('tour_schedule', function ($q) {
-                    $q->where('return_date', '>=', now()->startOfDay());
+                    $q->whereNotIn('status', ['completed', 'closed'])
+                        ->where('return_date', '>=', now()->startOfDay());
                 })
                 ->get()
                 ->sortBy(function ($sg) {

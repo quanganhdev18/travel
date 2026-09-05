@@ -23,10 +23,17 @@ class OngoingTourController extends Controller
             }]);
 
         if ($status === 'upcoming') {
-            $query->where('departure_date', '>', $today);
+            $query->whereNotIn('status', ['completed', 'closed'])
+                ->where('departure_date', '>', $today);
         } elseif ($status === 'ongoing') {
-            $query->where('departure_date', '<=', $today)
+            $query->whereNotIn('status', ['completed', 'closed'])
+                ->where('departure_date', '<=', $today)
                 ->where('return_date', '>=', $today);
+        } elseif ($status === 'completed') {
+            $query->where(function ($q) use ($today) {
+                $q->whereIn('status', ['completed', 'closed'])
+                    ->orWhere('return_date', '<', $today);
+            });
         }
 
         // Search filters
@@ -64,7 +71,8 @@ class OngoingTourController extends Controller
         foreach ($schedules as $schedule) {
             $schedule->busy_guide_ids = ScheduleGuide::where('tour_schedule_id', '!=', $schedule->id)
                 ->whereHas('tour_schedule', function ($q) use ($schedule) {
-                    $q->where('departure_date', '<=', $schedule->return_date)
+                    $q->whereNotIn('status', ['completed', 'closed'])
+                        ->where('departure_date', '<=', $schedule->return_date)
                         ->where('return_date', '>=', $schedule->departure_date);
                 })
                 ->pluck('guide_id')
@@ -72,6 +80,7 @@ class OngoingTourController extends Controller
         }
 
         $unassignedUpcomingSchedules = TourSchedule::with('tour')
+            ->whereNotIn('status', ['completed', 'closed'])
             ->where('departure_date', '>=', $today)
             ->where('departure_date', '<=', $today->copy()->addDays(7))
             ->doesntHave('schedule_guides')
@@ -81,7 +90,8 @@ class OngoingTourController extends Controller
         foreach ($unassignedUpcomingSchedules as $schedule) {
             $schedule->busy_guide_ids = ScheduleGuide::where('tour_schedule_id', '!=', $schedule->id)
                 ->whereHas('tour_schedule', function ($q) use ($schedule) {
-                    $q->where('departure_date', '<=', $schedule->return_date)
+                    $q->whereNotIn('status', ['completed', 'closed'])
+                        ->where('departure_date', '<=', $schedule->return_date)
                         ->where('return_date', '>=', $schedule->departure_date);
                 })
                 ->pluck('guide_id')
@@ -112,7 +122,8 @@ class OngoingTourController extends Controller
             $isBusy = ScheduleGuide::where('tour_schedule_id', '!=', $schedule->id)
                 ->where('guide_id', $guideId)
                 ->whereHas('tour_schedule', function ($q) use ($schedule) {
-                    $q->where('departure_date', '<=', $schedule->return_date)
+                    $q->whereNotIn('status', ['completed', 'closed'])
+                        ->where('departure_date', '<=', $schedule->return_date)
                         ->where('return_date', '>=', $schedule->departure_date);
                 })
                 ->exists();

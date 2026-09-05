@@ -23,7 +23,7 @@ class TourReportController extends Controller
 
         $firstBooking = $schedule->bookings
             ->whereNotIn('tour_status', [Booking::TOUR_CANCELLED_ADMIN, Booking::TOUR_CANCELLED_CUSTOMER])
-            ->whereIn('payment_status', ['paid_30', 'paid_100'])
+            ->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])
             ->first();
         if (! $firstBooking) {
             $firstBooking = $schedule->bookings

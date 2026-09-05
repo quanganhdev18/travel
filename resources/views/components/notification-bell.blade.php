@@ -40,35 +40,19 @@
         </li>
     </ul>
 
-    <!-- Toast Container for Notifications (Tailwind + Alpine) -->
-    <div class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none" style="position: fixed; z-index: 9999; bottom: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none;">
+    <!-- Toast Container for Notifications (Bootstrap + Alpine) -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999; margin-bottom: 70px;">
         <template x-for="toast in toasts" :key="toast.id">
-            <div x-show="true" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 sm:scale-100"
-                 x-transition:leave-end="opacity-0 sm:scale-95"
-                 class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden" style="max-width: 24rem; width: 100%; background-color: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); border-radius: 0.5rem; pointer-events: auto; border: 1px solid rgba(0,0,0,0.05); overflow: hidden;">
-                <div class="p-4" style="padding: 1rem;">
-                    <div class="flex items-start" style="display: flex; align-items: flex-start;">
-                        <div class="flex-shrink-0" style="flex-shrink: 0;">
-                            <div class="rounded-full flex items-center justify-content-center text-white" style="width: 32px; height: 32px; display:flex; align-items:center; justify-content:center; border-radius: 9999px;" :class="getIconBgClass(toast.type).replace('bg-', 'bg-').replace('primary', 'blue-500').replace('success', 'green-500').replace('warning', 'orange-500')">
-                                <i :class="getIconClass(toast.type)"></i>
-                            </div>
-                        </div>
-                        <div class="ml-3 w-0 flex-1 pt-0.5" style="margin-left: 0.75rem; width: 0; flex: 1 1 0%; padding-top: 0.125rem;">
-                            <strong class="text-sm font-bold text-gray-900" style="font-size: 0.875rem; font-weight: 700; color: #111827; margin: 0; display: block;" x-text="toast.title || 'Thông báo mới'"></strong>
-                            <p class="text-sm font-medium text-gray-600 mt-1" style="font-size: 0.875rem; font-weight: 500; color: #4b5563; margin: 0; margin-top: 0.25rem;" x-text="toast.message"></p>
-                        </div>
-                        <div class="ml-4 flex-shrink-0 flex" style="margin-left: 1rem; flex-shrink: 0; display: flex;">
-                            <button @click="removeToast(toast.id)" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" style="background-color: white; border-radius: 0.375rem; display: inline-flex; color: #9ca3af; border: none; cursor: pointer; padding: 0;">
-                                <span class="sr-only">Close</span>
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
+            <div class="toast show shadow-lg border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; width: 340px; max-width: 90vw; display: block; overflow: hidden; background: #fff;">
+                <div class="toast-header border-0 text-white d-flex align-items-center justify-content-between py-2 px-3" :class="getIconBgClass(toast.type)">
+                    <div class="d-flex align-items-center gap-2">
+                        <i :class="getIconClass(toast.type)"></i>
+                        <strong class="me-auto" x-text="toast.title || 'Thông báo mới'"></strong>
                     </div>
+                    <button type="button" @click="removeToast(toast.id)" class="btn-close btn-close-white" aria-label="Close"></button>
+                </div>
+                <div class="toast-body bg-white p-3 text-dark">
+                    <p class="mb-0" style="font-size: 0.85rem; font-weight: 500; line-height: 1.4;" x-text="toast.message"></p>
                 </div>
             </div>
         </template>

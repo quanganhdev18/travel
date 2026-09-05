@@ -178,10 +178,19 @@
                             
                             $statusClass = 'secondary';
                             $statusText = 'Chưa xác định';
+                            $isClosedStyle = false;
                             
                             if ($tourSchedule->status === 'closed') {
                                 $statusClass = 'bg-secondary bg-opacity-10 text-secondary border border-secondary';
                                 $statusText = 'Đã đóng';
+                                $isClosedStyle = true;
+                            } elseif ($tourSchedule->status === 'completed') {
+                                $statusClass = 'bg-info bg-opacity-10 text-info border border-info';
+                                $statusText = 'Đã hoàn thành';
+                                $isClosedStyle = true;
+                            } elseif ($tourSchedule->status === 'in_progress') {
+                                $statusClass = 'success';
+                                $statusText = 'Đang diễn ra';
                             } elseif ($departureDateTime > now()) {
                                 $statusClass = 'primary';
                                 $statusText = 'Sắp tới';
@@ -202,10 +211,10 @@
                             <td data-label="Khởi hành">{{ \Carbon\Carbon::parse($tourSchedule->departure_date)->format('d/m/Y') }}</td>
                             <td data-label="Kết thúc">{{ \Carbon\Carbon::parse($tourSchedule->return_date)->format('d/m/Y') }}</td>
                             <td data-label="Số khách">
-                                {{ $tourSchedule->bookings->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}
+                                {{ $tourSchedule->bookings->whereNotIn('tour_status', [\App\Models\Booking::TOUR_CANCELLED_ADMIN, \App\Models\Booking::TOUR_CANCELLED_CUSTOMER])->whereNotIn('booking_status', ['cancelled'])->whereIn('payment_status', ['pending', 'paid_30', 'paid_100'])->sum(fn($b) => $b->adults_count + $b->children_count) }} / {{ $tourSchedule->capacity }}
                             </td>
                             <td data-label="Trạng thái">
-                                @if($tourSchedule->status === 'closed')
+                                @if($isClosedStyle)
                                     <span class="badge {{ $statusClass }}">{{ $statusText }}</span>
                                 @else
                                     <span class="badge badge-soft-{{ $statusClass }}">{{ $statusText }}</span>

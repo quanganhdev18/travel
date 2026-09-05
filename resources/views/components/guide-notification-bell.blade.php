@@ -47,7 +47,7 @@
     </div>
 
     <!-- Toast Container for Notifications -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999; margin-bottom: 70px;">
         <template x-for="toast in toasts" :key="toast.id">
             <div class="toast show shadow-lg border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; min-width: 320px; display: block; overflow: hidden;">
                 <div class="toast-header border-0 text-white d-flex align-items-center justify-content-between py-2 px-3" :class="getIconBgClass(toast.type)">
