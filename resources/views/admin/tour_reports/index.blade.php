@@ -302,9 +302,9 @@
 
 @section('scripts')
 <script>
-    let approveModalObj;
-    let rejectModalObj;
-    let detailsModalObj;
+    var approveModalObj;
+    var rejectModalObj;
+    var detailsModalObj;
 
     document.addEventListener('DOMContentLoaded', function() {
         approveModalObj = new bootstrap.Modal(document.getElementById('approveModal'));
@@ -470,7 +470,7 @@
             });
 
         // Add dynamic listener to avoid selecting the same guide for both main and backup
-        mainSelect.addEventListener('change', function() {
+        mainSelect.onchange = function() {
             const selectedMainId = this.value;
             Array.from(backupSelect.options).forEach(opt => {
                 if (opt.value && opt.value === selectedMainId) {
@@ -479,7 +479,7 @@
                     opt.disabled = false;
                 }
             });
-        });
+        };
     }
 
     function openRejectModal(requestId) {

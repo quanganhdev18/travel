@@ -53,7 +53,7 @@ test('admin can update coupon', function () {
 
     $response = $this->actingAs($this->adminUser)
         ->put(route('admin.coupons.update', $coupon), [
-            'code' => 'UPDATEDCOUPON',
+            'code' => 'UPDATED_COUPON',
             'discount_type' => 'fixed',
             'discount_value' => 50000,
             'min_order_value' => 200000,
@@ -67,7 +67,7 @@ test('admin can update coupon', function () {
     $response->assertRedirect(route('admin.coupons.index'));
 
     $coupon->refresh();
-    expect($coupon->code)->toBe('UPDATEDCOUPON');
+    expect($coupon->code)->toBe('UPDATED_COUPON');
     expect($coupon->discount_type)->toBe('fixed');
     expect((int) $coupon->discount_value)->toBe(50000);
     expect($coupon->category_id)->toBe($this->category->id);
@@ -217,4 +217,122 @@ test('applying coupon with mismatched category fails validation', function () {
         'success' => false,
         'message' => 'Mã giảm giá không áp dụng cho loại tour này.',
     ]);
+});
+
+test('store coupon fails with invalid discount_type', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'TESTCODE',
+            'discount_type' => 'invalid_type',
+            'discount_value' => 10,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(5)->toDateString(),
+        ]);
+
+    $response->assertSessionHasErrors('discount_type');
+});
+
+test('store coupon fails when percent discount exceeds 100', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'PERCENT150',
+            'discount_type' => 'percent',
+            'discount_value' => 150,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(5)->toDateString(),
+        ]);
+
+    $response->assertSessionHasErrors('discount_value');
+});
+
+test('store coupon fails with special characters in code', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'SALE@25!',
+            'discount_type' => 'percent',
+            'discount_value' => 25,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(5)->toDateString(),
+        ]);
+
+    $response->assertSessionHasErrors('code');
+});
+
+test('store coupon fails with code shorter than 3 characters', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'AB',
+            'discount_type' => 'percent',
+            'discount_value' => 10,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(5)->toDateString(),
+        ]);
+
+    $response->assertSessionHasErrors('code');
+});
+
+test('store coupon fails with usage_limit of zero', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'ZERO_LIMIT',
+            'discount_type' => 'percent',
+            'discount_value' => 10,
+            'usage_limit' => 0,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(5)->toDateString(),
+        ]);
+
+    $response->assertSessionHasErrors('usage_limit');
+});
+
+test('store coupon fails with negative min_order_value', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'NEG_ORDER',
+            'discount_type' => 'fixed',
+            'discount_value' => 50000,
+            'min_order_value' => -100000,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(5)->toDateString(),
+        ]);
+
+    $response->assertSessionHasErrors('min_order_value');
+});
+
+test('store coupon succeeds with valid data', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'VALID_CODE',
+            'discount_type' => 'percent',
+            'discount_value' => 25,
+            'min_order_value' => 500000,
+            'max_discount' => 200000,
+            'usage_limit' => 100,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(30)->toDateString(),
+            'category_id' => $this->category->id,
+        ]);
+
+    $response->assertRedirect(route('admin.coupons.index'));
+    $response->assertSessionHas('success');
+
+    $coupon = Coupon::where('code', 'VALID_CODE')->first();
+    expect($coupon)->not->toBeNull();
+    expect($coupon->discount_type)->toBe('percent');
+    expect((float) $coupon->discount_value)->toBe(25.0);
+    expect($coupon->used_count)->toBe(0);
+});
+
+test('store coupon allows fixed discount value above 100', function () {
+    $response = $this->actingAs($this->adminUser)
+        ->post(route('admin.coupons.store'), [
+            'code' => 'FIXED_HIGH',
+            'discount_type' => 'fixed',
+            'discount_value' => 500000,
+            'valid_from' => now()->toDateString(),
+            'valid_until' => now()->addDays(10)->toDateString(),
+        ]);
+
+    $response->assertRedirect(route('admin.coupons.index'));
+    $response->assertSessionHas('success');
 });
