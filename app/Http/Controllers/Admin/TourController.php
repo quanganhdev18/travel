@@ -48,7 +48,7 @@ class TourController extends Controller
                 'required',
                 'max:255',
                 function ($attribute, $value, $fail) {
-                    $exists = Tour::whereRaw("JSON_EXTRACT(title, '$.vi') = ?", [$value])->exists();
+                    $exists = Tour::where('title->vi', $value)->exists();
                     if ($exists) {
                         $fail('Tên tour (Tiếng Việt) đã tồn tại. Vui lòng chọn tên khác.');
                     }
@@ -76,6 +76,10 @@ class TourController extends Controller
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
             'departure_minute' => 'nullable|integer|between:0,59',
+            'cost_transport' => 'required|numeric|min:0',
+            'cost_meal' => 'required|numeric|min:0',
+            'cost_insurance' => 'required|numeric|min:0',
+            'cost_service_fee' => 'required|numeric|min:0',
         ]);
 
         // 2. Tạo Tour và tự động sinh slug
@@ -91,8 +95,12 @@ class TourController extends Controller
             'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
             'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
         ];
-        $tour->base_price = $request->base_price;
-        $tour->child_price = $request->child_price;
+        $tour->base_price = $request->base_price ?? 0;
+        $tour->child_price = $request->child_price ?? 0;
+        $tour->cost_transport = $request->cost_transport ?? 0;
+        $tour->cost_meal = $request->cost_meal ?? 0;
+        $tour->cost_insurance = $request->cost_insurance ?? 0;
+        $tour->cost_service_fee = $request->cost_service_fee ?? 0;
         $tour->meeting_point = $request->meeting_point;
         $tour->departure_province_id = null;
         $tour->departure_ward_id = null;
@@ -254,7 +262,7 @@ class TourController extends Controller
                 'required',
                 'max:255',
                 function ($attribute, $value, $fail) use ($id) {
-                    $exists = Tour::whereRaw("JSON_EXTRACT(title, '$.vi') = ?", [$value])
+                    $exists = Tour::where('title->vi', $value)
                         ->where('id', '!=', $id)
                         ->exists();
                     if ($exists) {
@@ -284,6 +292,10 @@ class TourController extends Controller
             'duration_nights' => 'required|integer',
             'departure_hour' => 'nullable|integer|between:0,23',
             'departure_minute' => 'nullable|integer|between:0,59',
+            'cost_transport' => 'required|numeric|min:0',
+            'cost_meal' => 'required|numeric|min:0',
+            'cost_insurance' => 'required|numeric|min:0',
+            'cost_service_fee' => 'required|numeric|min:0',
         ]);
 
         $tour = Tour::findOrFail($id);
@@ -297,8 +309,12 @@ class TourController extends Controller
             'en' => $request->description['en'] ?? ($request->description['vi'] ?? ''),
             'zh' => $request->description['zh'] ?? ($request->description['vi'] ?? ''),
         ];
-        $tour->base_price = $request->base_price;
-        $tour->child_price = $request->child_price;
+        $tour->base_price = $request->base_price ?? 0;
+        $tour->child_price = $request->child_price ?? 0;
+        $tour->cost_transport = $request->cost_transport ?? 0;
+        $tour->cost_meal = $request->cost_meal ?? 0;
+        $tour->cost_insurance = $request->cost_insurance ?? 0;
+        $tour->cost_service_fee = $request->cost_service_fee ?? 0;
         $tour->meeting_point = $request->meeting_point;
         $tour->departure_province_id = null;
         $tour->departure_ward_id = null;

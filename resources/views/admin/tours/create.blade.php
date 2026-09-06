@@ -48,6 +48,25 @@
                     </div>
 
                     <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">Chi phí vận chuyển (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" name="cost_transport" class="form-control cost-input" value="{{ old('cost_transport', 0) }}" min="0" step="1000" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">Chi phí ăn uống (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" name="cost_meal" class="form-control cost-input" value="{{ old('cost_meal', 0) }}" min="0" step="1000" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">Chi phí bảo hiểm (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" name="cost_insurance" class="form-control cost-input" value="{{ old('cost_insurance', 0) }}" min="0" step="1000" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label text-muted">Phí dịch vụ (VNĐ) <span class="text-danger">*</span></label>
+                            <input type="number" name="cost_service_fee" class="form-control cost-input" value="{{ old('cost_service_fee', 0) }}" min="0" step="1000" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label text-muted">Giá cơ bản (Người lớn)</label>
                             <input type="text" class="form-control" placeholder="Tự động tính toán (readonly)" readonly>

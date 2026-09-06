@@ -55,6 +55,10 @@ test('admin can create a tour with unique name', function () {
         'departure_hour' => 8,
         'departure_minute' => 30,
         'categories' => [$category->id],
+        'cost_transport' => 200000,
+        'cost_meal' => 300000,
+        'cost_insurance' => 50000,
+        'cost_service_fee' => 100000,
     ];
 
     $response = $this->post(route('admin.tours.store'), $tourData);
@@ -109,6 +113,10 @@ test('admin cannot create tour with duplicate Vietnamese name', function () {
         'duration_nights' => 2,
         'departure_hour' => 8,
         'departure_minute' => 30,
+        'cost_transport' => 0,
+        'cost_meal' => 0,
+        'cost_insurance' => 0,
+        'cost_service_fee' => 0,
     ];
 
     $response = $this->post(route('admin.tours.store'), $tourData);
@@ -160,6 +168,10 @@ test('admin can update tour while keeping same name', function () {
         'duration_nights' => 2,
         'departure_hour' => 8,
         'departure_minute' => 30,
+        'cost_transport' => 200000,
+        'cost_meal' => 300000,
+        'cost_insurance' => 50000,
+        'cost_service_fee' => 100000,
     ];
 
     $response = $this->put(route('admin.tours.update', $tour->id), $updateData);
@@ -232,6 +244,10 @@ test('admin cannot update tour to duplicate name', function () {
         'duration_nights' => 2,
         'departure_hour' => 8,
         'departure_minute' => 30,
+        'cost_transport' => 0,
+        'cost_meal' => 0,
+        'cost_insurance' => 0,
+        'cost_service_fee' => 0,
     ];
 
     $response = $this->put(route('admin.tours.update', $tour2->id), $updateData);
@@ -239,4 +255,101 @@ test('admin cannot update tour to duplicate name', function () {
     $response->assertSessionHasErrors('title.vi');
     expect(session('errors')->get('title.vi')[0])
         ->toBe('Tên tour (Tiếng Việt) đã tồn tại. Vui lòng chọn tên khác.');
+});
+
+test('admin can create tour with cost breakdown fields', function () {
+    $tourData = [
+        'title' => [
+            'vi' => 'Tour Chi Phí Test',
+            'en' => 'Cost Test Tour',
+            'zh' => '费用测试旅游',
+        ],
+        'description' => [
+            'vi' => 'Mô tả',
+            'en' => 'Description',
+            'zh' => '描述',
+        ],
+        'meeting_point' => 'Điểm tập kết',
+        'destination_id' => $this->destination->id,
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'cost_transport' => 500000,
+        'cost_meal' => 300000,
+        'cost_insurance' => 100000,
+        'cost_service_fee' => 200000,
+    ];
+
+    $response = $this->post(route('admin.tours.store'), $tourData);
+
+    $response->assertRedirect();
+
+    $tour = Tour::where('title->vi', 'Tour Chi Phí Test')->first();
+    expect($tour)->not->toBeNull();
+    expect((float) $tour->cost_transport)->toBe(500000.0);
+    expect((float) $tour->cost_meal)->toBe(300000.0);
+    expect((float) $tour->cost_insurance)->toBe(100000.0);
+    expect((float) $tour->cost_service_fee)->toBe(200000.0);
+    // base_price should be auto-calculated: 500k + 300k + 100k + 200k = 1,100,000
+    expect((float) $tour->base_price)->toBe(1100000.0);
+});
+
+test('admin can update tour cost breakdown fields', function () {
+    $tour = Tour::create([
+        'title' => ['vi' => 'Tour Update Cost', 'en' => 'Update Cost Tour', 'zh' => '更新费用'],
+        'slug' => 'tour-update-cost-'.time(),
+        'description' => ['vi' => 'Test', 'en' => 'Test', 'zh' => 'Test'],
+        'base_price' => 0,
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'meeting_point' => 'Điểm tập kết',
+        'destination_id' => $this->destination->id,
+        'cost_transport' => 0,
+        'cost_meal' => 0,
+        'cost_insurance' => 0,
+        'cost_service_fee' => 0,
+    ]);
+
+    $updateData = [
+        'title' => ['vi' => 'Tour Update Cost', 'en' => 'Update Cost Tour', 'zh' => '更新费用'],
+        'description' => ['vi' => 'Test', 'en' => 'Test', 'zh' => 'Test'],
+        'base_price' => 0,
+        'child_price' => 0,
+        'meeting_point' => 'Điểm tập kết',
+        'destination_id' => $this->destination->id,
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'cost_transport' => 800000,
+        'cost_meal' => 400000,
+        'cost_insurance' => 150000,
+        'cost_service_fee' => 250000,
+    ];
+
+    $response = $this->put(route('admin.tours.update', $tour->id), $updateData);
+
+    $tour->refresh();
+    expect((float) $tour->cost_transport)->toBe(800000.0);
+    expect((float) $tour->cost_meal)->toBe(400000.0);
+    expect((float) $tour->cost_insurance)->toBe(150000.0);
+    expect((float) $tour->cost_service_fee)->toBe(250000.0);
+    // base_price recalculated: 800k + 400k + 150k + 250k = 1,600,000
+    expect((float) $tour->base_price)->toBe(1600000.0);
+});
+
+test('cost breakdown validation rejects negative values', function () {
+    $tourData = [
+        'title' => ['vi' => 'Tour Negative Cost', 'en' => 'Negative', 'zh' => '负数'],
+        'description' => ['vi' => 'Test', 'en' => 'Test', 'zh' => 'Test'],
+        'meeting_point' => 'Điểm tập kết',
+        'destination_id' => $this->destination->id,
+        'duration_days' => 2,
+        'duration_nights' => 1,
+        'cost_transport' => -100000,
+        'cost_meal' => 300000,
+        'cost_insurance' => 100000,
+        'cost_service_fee' => 200000,
+    ];
+
+    $response = $this->post(route('admin.tours.store'), $tourData);
+
+    $response->assertSessionHasErrors('cost_transport');
 });
